@@ -38,7 +38,7 @@ func Run() error {
 		cli.StringFlag{
 			Name:  "config, c",
 			Value: "",
-			Usage: "default <USER_HOME>/.rbd/grctl.yaml",
+			Usage: "default <USER_HOME>/.wt/grctl.yaml",
 		},
 		cli.StringFlag{
 			Name:  "kubeconfig, kube",

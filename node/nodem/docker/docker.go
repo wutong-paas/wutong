@@ -14,7 +14,7 @@ import (
 )
 
 var defaultFileName = "server.crt"
-var defaultFilePath = "/etc/docker/certs.d/goodrain.me"
+var defaultFilePath = "/etc/docker/certs.d/wutong.me"
 
 // SyncDockerCertFromSecret sync docker cert from secret
 func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretName string) error {
@@ -38,7 +38,7 @@ func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretN
 	return nil
 }
 
-// sync as file saved int /etc/docker/goodrain.me/server.crt
+// sync as file saved int /etc/docker/wutong.me/server.crt
 func saveORUpdateFile(content []byte) error {
 	// If path is already a directory, MkdirAll does nothing and returns nil
 	if err := os.MkdirAll(defaultFilePath, 0666); err != nil {

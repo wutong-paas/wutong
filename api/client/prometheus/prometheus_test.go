@@ -50,7 +50,7 @@ func TestGetMetricOverTime(t *testing.T) {
 }
 
 func TestGetMetadata(t *testing.T) {
-	metas := cli.GetMetadata("rbd-system")
+	metas := cli.GetMetadata("wt-system")
 	if len(metas) == 0 {
 		t.Fatal("meta length is 0")
 	}
@@ -60,7 +60,7 @@ func TestGetMetadata(t *testing.T) {
 }
 
 func TestGetAppMetadata(t *testing.T) {
-	metas := cli.GetAppMetadata("rbd-system", "482")
+	metas := cli.GetAppMetadata("wt-system", "482")
 	if len(metas) == 0 {
 		t.Fatal("meta length is 0")
 	}

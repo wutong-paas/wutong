@@ -2,7 +2,7 @@
 if [ "$1" = "bash" ];then
     exec /bin/bash
 elif [ "$1" = "version" ];then
-    /run/rainbond-eventlog version
+    /run/wutong-eventlog version
 else
-    exec /run/rainbond-eventlog $@
+    exec /run/wutong-eventlog $@
 fi

@@ -45,7 +45,7 @@
         "containers": [
             {
                 "name": "05459b941f86156e1093c14ced4c4cc4",
-                "image": "goodrain.me/05459b941f86156e1093c14ced4c4cc4:20190829144831",
+                "image": "wutong.me/05459b941f86156e1093c14ced4c4cc4:20190829144831",
                 "ports": [
                     {
                         "containerPort": 5000,
@@ -228,8 +228,8 @@
                 },
                 "ready": false,
                 "restartCount": 0,
-                "image": "goodrain.me/05459b941f86156e1093c14ced4c4cc4:20190829144831",
-                "imageID": "docker-pullable://goodrain.me/05459b941f86156e1093c14ced4c4cc4@sha256:96f866c788862a9ba29b1b0377cb856136b73e02ed4f26a5b4b338f709d7d5ce",
+                "image": "wutong.me/05459b941f86156e1093c14ced4c4cc4:20190829144831",
+                "imageID": "docker-pullable://wutong.me/05459b941f86156e1093c14ced4c4cc4@sha256:96f866c788862a9ba29b1b0377cb856136b73e02ed4f26a5b4b338f709d7d5ce",
                 "containerID": "docker://b5a5e5a8a3a5274adf4d9cbe14827d1e483fb2ec0e791e8691db9a69bca2f8a3"
             }
         ],

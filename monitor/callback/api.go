@@ -75,7 +75,7 @@ func (b *RbdAPI) toScrape() *prometheus.ScrapeConfig {
 					Selectors: []prometheus.SelectorConfig{
 						prometheus.SelectorConfig{
 							Role:  prometheus.RoleEndpoint,
-							Field: "metadata.name=rbd-api-api-inner",
+							Field: "metadata.name=wt-api-api-inner",
 						},
 					},
 				},

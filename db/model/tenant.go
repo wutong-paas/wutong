@@ -438,8 +438,8 @@ var MemoryFSVolumeType VolumeType = "memoryfs"
 //ConfigFileVolumeType configuration file volume type
 var ConfigFileVolumeType VolumeType = "config-file"
 
-// CephRBDVolumeType ceph rbd volume type
-var CephRBDVolumeType VolumeType = "ceph-rbd"
+// CephRBDVolumeType ceph wt volume type
+var CephRBDVolumeType VolumeType = "ceph-wt"
 
 // AliCloudVolumeType alicloud volume type
 var AliCloudVolumeType VolumeType = "alicloud-disk"

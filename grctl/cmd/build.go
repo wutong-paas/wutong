@@ -48,7 +48,7 @@ func NewSourceBuildCmd() cli.Command {
 					cli.StringFlag{
 						Name:  "namespace,ns",
 						Usage: "rainbond default namespace",
-						Value: "rbd-system",
+						Value: "wt-system",
 					},
 				},
 				Action: func(ctx *cli.Context) {
@@ -66,7 +66,7 @@ func NewSourceBuildCmd() cli.Command {
 					cli.StringFlag{
 						Name:  "namespace,ns",
 						Usage: "rainbond default namespace",
-						Value: "rbd-system",
+						Value: "wt-system",
 					},
 				},
 				Action: func(ctx *cli.Context) {
@@ -92,7 +92,7 @@ func NewSourceBuildCmd() cli.Command {
 							cli.StringFlag{
 								Name:  "namespace,ns",
 								Usage: "rainbond default namespace",
-								Value: "rbd-system",
+								Value: "wt-system",
 							},
 						},
 						Usage: "list maven setting config file manage",
@@ -127,7 +127,7 @@ func NewSourceBuildCmd() cli.Command {
 							cli.StringFlag{
 								Name:  "namespace,ns",
 								Usage: "rainbond default namespace",
-								Value: "rbd-system",
+								Value: "wt-system",
 							},
 						},
 						Usage: "get maven setting config file manage",
@@ -157,7 +157,7 @@ func NewSourceBuildCmd() cli.Command {
 							cli.StringFlag{
 								Name:  "namespace,ns",
 								Usage: "rainbond default namespace",
-								Value: "rbd-system",
+								Value: "wt-system",
 							},
 						},
 						Action: func(ctx *cli.Context) {
@@ -206,7 +206,7 @@ func NewSourceBuildCmd() cli.Command {
 							cli.StringFlag{
 								Name:  "namespace,ns",
 								Usage: "rainbond default namespace",
-								Value: "rbd-system",
+								Value: "wt-system",
 							},
 						},
 						Action: func(ctx *cli.Context) {
@@ -251,7 +251,7 @@ func NewSourceBuildCmd() cli.Command {
 							cli.StringFlag{
 								Name:  "namespace,ns",
 								Usage: "rainbond default namespace",
-								Value: "rbd-system",
+								Value: "wt-system",
 							},
 						},
 						Action: func(ctx *cli.Context) {

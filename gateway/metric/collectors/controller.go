@@ -23,7 +23,7 @@ import "github.com/prometheus/client_golang/prometheus"
 // PrometheusNamespace default metric namespace
 var PrometheusNamespace = "gateway"
 
-// Controller defines base metrics about the rbd-gateway
+// Controller defines base metrics about the wt-gateway
 type Controller struct {
 	prometheus.Collector
 

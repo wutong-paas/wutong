@@ -993,7 +993,7 @@ func GetTCPMeshImageName() string {
 	if d := os.Getenv("TCPMESH_DEFAULT_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.REGISTRYDOMAIN + "/rbd-mesh-data-panel"
+	return builder.REGISTRYDOMAIN + "/wt-mesh-data-panel"
 }
 
 //GetOnlineTCPMeshImageName get online tcp mesh image name
@@ -1001,7 +1001,7 @@ func GetOnlineTCPMeshImageName() string {
 	if d := os.Getenv("TCPMESH_DEFAULT_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.ONLINEREGISTRYDOMAIN + "/rbd-mesh-data-panel:" + builder.CIVERSION
+	return builder.ONLINEREGISTRYDOMAIN + "/wt-mesh-data-panel:" + builder.CIVERSION
 }
 
 //GetProbeMeshImageName get probe init mesh image name
@@ -1009,7 +1009,7 @@ func GetProbeMeshImageName() string {
 	if d := os.Getenv("PROBE_MESH_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.REGISTRYDOMAIN + "/rbd-init-probe"
+	return builder.REGISTRYDOMAIN + "/wt-init-probe"
 }
 
 //GetOnlineProbeMeshImageName get online probe init mesh image name
@@ -1017,7 +1017,7 @@ func GetOnlineProbeMeshImageName() string {
 	if d := os.Getenv("PROBE_MESH_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.ONLINEREGISTRYDOMAIN + "/rbd-init-probe:" + builder.CIVERSION
+	return builder.ONLINEREGISTRYDOMAIN + "/wt-init-probe:" + builder.CIVERSION
 }
 
 //CalculatePodResource calculate pod resource

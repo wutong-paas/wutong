@@ -1,7 +1,7 @@
 GO_LDFLAGS=-ldflags " -w"
 VERSION=$(shell git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3)
-WORK_DIR=/go/src/github.com/goodrain/rainbond
-BASE_NAME=rainbond
+WORK_DIR=/go/src/github.com/wutong-paas/wutong
+BASE_NAME=wutong
 BASE_DOCKER=./hack/contrib/docker
 
 default: help
@@ -61,7 +61,7 @@ generate: controller-gen
 	chmod +x vendor/k8s.io/code-generator/generate-groups.sh
 	./hack/k8s/codegen/update-generated.sh
 	$(CONTROLLER_GEN) object:headerFile="hack/k8s/codegen/boilerplate.go.txt" paths="./pkg/apis/..."
-	cp -r github.com/goodrain/rainbond/pkg/ ./pkg/
+	cp -r github.com/wutong-paas/wutong/pkg/ ./pkg/
 	rm -rf github.com/
 
 # find or download controller-gen

@@ -71,7 +71,7 @@ func TestABCService(t *testing.T) {
 		"status":0,
 		"node_label":"",
 		"replicas":1,
-		"image_name":"goodrain.me/runner",
+		"image_name":"wutong.me/runner",
 		"service_alias":"gr45068c",
 		"service_id":"55c60b74a506261608f5c36f0f45068c",
 		"code_from":"gitlab_manual",

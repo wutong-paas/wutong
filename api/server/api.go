@@ -241,7 +241,7 @@ func (m *Manager) KuberntesDashboardAPI(w http.ResponseWriter, r *http.Request) 
 
 //Metric prometheus metric
 func (m *Manager) Metric() {
-	prometheus.MustRegister(version.NewCollector("rbd_api"))
+	prometheus.MustRegister(version.NewCollector("wt_api"))
 	exporter := metric.NewExporter()
 	m.exporter = exporter
 	prometheus.MustRegister(exporter)

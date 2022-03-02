@@ -11,8 +11,8 @@ trigger:
     - custom
 
 steps:
-- name: build rainbond
-  image: rainbond/docker:dind
+- name: build wutong
+  image: wutongpaas/docker:dind
   privileged: true
   volumes:
   - name: dockersock

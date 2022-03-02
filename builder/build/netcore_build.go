@@ -85,21 +85,21 @@ func (d *netcoreBuild) Build(re *Request) (*Response, error) {
 	}
 	_, err := sources.ImageBuild(re.DockerClient, d.sourceDir, runbuildOptions, re.Logger, 60)
 	if err != nil {
-		re.Logger.Error(fmt.Sprintf("build image %s failure, find log in rbd-chaos", d.buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+		re.Logger.Error(fmt.Sprintf("build image %s failure, find log in wt-chaos", d.buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("build image error: %s", err.Error())
 		return nil, err
 	}
 	// check build image exist
 	_, err = sources.ImageInspectWithRaw(re.DockerClient, d.imageName)
 	if err != nil {
-		re.Logger.Error(fmt.Sprintf("build image %s failure, find log in rbd-chaos", d.buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+		re.Logger.Error(fmt.Sprintf("build image %s failure, find log in wt-chaos", d.buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("get image inspect error: %s", err.Error())
 		return nil, err
 	}
 	re.Logger.Info("build image success, start to push local image registry", map[string]string{"step": "builder-exector"})
 	err = sources.ImagePush(re.DockerClient, d.imageName, builder.REGISTRYUSER, builder.REGISTRYPASS, re.Logger, 5)
 	if err != nil {
-		re.Logger.Error("push image to local image registry faliure, find log in rbd-chaos", map[string]string{"step": "builder-exector"})
+		re.Logger.Error("push image to local image registry faliure, find log in wt-chaos", map[string]string{"step": "builder-exector"})
 		logrus.Errorf("push image error: %s", err.Error())
 		return nil, err
 	}

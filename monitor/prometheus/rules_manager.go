@@ -113,8 +113,8 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 							For:    "1m",
 							Labels: commonLables,
 							Annotations: map[string]string{
-								"description": "builder(rbd-chaos) node {{ $labels.instance }} maybe down",
-								"summary":     "builder(rbd-chaos) is down",
+								"description": "builder(wt-chaos) node {{ $labels.instance }} maybe down",
+								"summary":     "builder(wt-chaos) is down",
 							},
 						},
 						&RulesConfig{

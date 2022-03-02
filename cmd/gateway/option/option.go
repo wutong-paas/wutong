@@ -118,7 +118,7 @@ func (g *GWServer) AddFlags(fs *pflag.FlagSet) {
 	// health check
 	fs.StringVar(&g.HealthPath, "health-path", "/healthz", "absolute path to the kubeconfig file")
 	fs.DurationVar(&g.HealthCheckTimeout, "health-check-timeout", 10, `Time limit, in seconds, for a probe to health-check-path to succeed.`)
-	fs.BoolVar(&g.EnableMetrics, "enable-metrics", true, "Enables the collection of rbd-gateway metrics")
+	fs.BoolVar(&g.EnableMetrics, "enable-metrics", true, "Enables the collection of wt-gateway metrics")
 	fs.StringVar(&g.NodeName, "node-name", "", "this gateway node host name")
 	fs.StringVar(&g.HostIP, "node-ip", "", "this gateway node ip")
 	fs.BoolVar(&g.Debug, "debug", false, "enable pprof debug")

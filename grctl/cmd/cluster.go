@@ -50,7 +50,7 @@ func NewCmdCluster() cli.Command {
 					cli.StringFlag{
 						Name:  "namespace, ns",
 						Usage: "rainbond default namespace",
-						Value: "rbd-system",
+						Value: "wt-system",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -65,7 +65,7 @@ func NewCmdCluster() cli.Command {
 					cli.StringFlag{
 						Name:  "namespace, ns",
 						Usage: "rainbond default namespace",
-						Value: "rbd-system",
+						Value: "wt-system",
 					},
 					cli.StringFlag{
 						Name:     "new-version",
@@ -87,7 +87,7 @@ func NewCmdCluster() cli.Command {
 			cli.StringFlag{
 				Name:  "namespace,ns",
 				Usage: "rainbond default namespace",
-				Value: "rbd-system",
+				Value: "wt-system",
 			},
 		},
 		Action: func(c *cli.Context) error {

@@ -44,8 +44,8 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 		EtcdEndPoints:       []string{"192.168.2.203:2379"},
 		MQAPI:               "192.168.2.203:6300",
 		EventLogServers:     []string{"192.168.2.203:6366"},
-		RbdRepoName:         "rbd-dns",
-		RbdNamespace:        "rbd-system",
+		RbdRepoName:         "wt-dns",
+		RbdNamespace:        "wt-system",
 		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
 	}
 	etcdArgs := etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints}

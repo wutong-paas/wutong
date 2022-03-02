@@ -25,7 +25,7 @@ func main() {
 	}
 	namespace := os.Getenv("RBD_NAMESPACE")
 	if namespace == "" {
-		namespace = "rbd-system"
+		namespace = "wt-system"
 	}
 	commands := []string{"sh"}
 	req := restClient.Post().

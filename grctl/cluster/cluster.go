@@ -112,16 +112,16 @@ func (c *Cluster) getCrds() []string {
 
 func (c *Cluster) updateRbdComponents() []string {
 	componentNames := []string{
-		"rbd-api",
-		"rbd-chaos",
-		"rbd-mq",
-		"rbd-eventlog",
-		"rbd-gateway",
-		"rbd-node",
-		"rbd-resource-proxy",
-		"rbd-webcli",
-		"rbd-worker",
-		"rbd-monitor",
+		"wt-api",
+		"wt-chaos",
+		"wt-mq",
+		"wt-eventlog",
+		"wt-gateway",
+		"wt-node",
+		"wt-resource-proxy",
+		"wt-webcli",
+		"wt-worker",
+		"wt-monitor",
 	}
 	var errs []string
 	for _, name := range componentNames {

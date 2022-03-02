@@ -21,6 +21,6 @@ Steps to reproduce the behavior:
 If applicable, add screenshots to help explain your problem.
 
 **The relevant information:**
- - Rainbond Version [e.g. 5.2.0]
+ - Wutong Version [e.g. 1.0.0]
  - Browser [e.g. chrome, safari] (if it is the front-end bugs, please provide)
- - Kubernetes version [e.g 1.16.3]
+ - Kubernetes version [e.g 1.19.0]

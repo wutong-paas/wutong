@@ -34,9 +34,9 @@ func TestK8sDiscover_AddProject(t *testing.T) {
 
 			pod := &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "rbd-gateway-abcde",
+					Name: "wt-gateway-abcde",
 					Labels: map[string]string{
-						"name": "rbd-gateway",
+						"name": "wt-gateway",
 					},
 				},
 				Status: corev1.PodStatus{
@@ -52,7 +52,7 @@ func TestK8sDiscover_AddProject(t *testing.T) {
 				epCh:  make(chan []*config.Endpoint),
 				errCh: make(chan error),
 			}
-			discover.AddProject("rbd-gateway", callback)
+			discover.AddProject("wt-gateway", callback)
 
 			go func() {
 				for {
@@ -122,14 +122,14 @@ func TestK8sDiscover_AddProject2(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cfg := &option.Conf{RbdNamespace: "rbd-system"}
+	cfg := &option.Conf{RbdNamespace: "wt-system"}
 	discover := NewK8sDiscover(ctx, clientset, cfg)
 	defer discover.Stop()
 	callback := &testCallback{
 		epCh:  make(chan []*config.Endpoint),
 		errCh: make(chan error),
 	}
-	discover.AddProject("rbd-gateway", callback)
+	discover.AddProject("wt-gateway", callback)
 
 	for {
 		select {

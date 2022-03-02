@@ -41,7 +41,7 @@ func NewCmdConfig() cli.Command {
 			cli.StringFlag{
 				Name:  "namespace,ns",
 				Usage: "rainbond default namespace",
-				Value: "rbd-system",
+				Value: "wt-system",
 			},
 		},
 		Usage: "show region config file",

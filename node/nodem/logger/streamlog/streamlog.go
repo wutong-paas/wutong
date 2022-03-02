@@ -25,10 +25,10 @@ import (
 
 //STREAMLOGNAME driver name
 const name = "streamlog"
-const defaultClusterAddress = "http://rbd-eventlog:6363/docker-instance"
-const defaultAddress = "rbd-eventlog:6362"
+const defaultClusterAddress = "http://wt-eventlog:6363/docker-instance"
+const defaultAddress = "wt-eventlog:6362"
 
-var etcdV3Endpoints = []string{"rbd-etcd:2379"}
+var etcdV3Endpoints = []string{"wt-etcd:2379"}
 var clusterAddress = []string{defaultClusterAddress}
 
 //Dis dis manage

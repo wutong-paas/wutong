@@ -1,9 +1,9 @@
 ARG BASE_IMAGE_VERSION
-FROM goodrainapps/alpine:${BASE_IMAGE_VERSION}
+FROM wutongpaas/alpine:${BASE_IMAGE_VERSION}
 ARG RELEASE_DESC
-COPY rainbond-mq /run/rainbond-mq
+COPY wutong-mq /run/wutong-mq
 ADD entrypoint.sh /run/entrypoint.sh
-RUN chmod 655 /run/rainbond-mq
+RUN chmod 655 /run/wutong-mq
 EXPOSE 6300
 
 ENV RELEASE_DESC=${RELEASE_DESC}

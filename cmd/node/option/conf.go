@@ -148,7 +148,7 @@ type UDPMonitorConfig struct {
 func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the log level")
 	fs.StringVar(&a.LogFile, "log-file", "", "the log file path that log output")
-	fs.StringVar(&a.PrometheusAPI, "prometheus", "http://rbd-monitor:9999", "the prometheus server address")
+	fs.StringVar(&a.PrometheusAPI, "prometheus", "http://wt-monitor:9999", "the prometheus server address")
 	fs.StringVar(&a.NodePath, "nodePath", "/rainbond/nodes", "the path of node in etcd")
 	fs.StringVar(&a.HostID, "nodeid", "", "the unique ID for this node. Just specify, don't modify")
 	fs.StringVar(&a.HostIP, "hostIP", "", "the host ip you can define. default get ip from eth0")
@@ -187,8 +187,8 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&a.ImageGCPeriod, "image-gc-period", 5*time.Minute, "ImageGCPeriod is the period for performing image garbage collection.  Examples: '10s', '5m' or '2h45m'.")
 	fs.Int32Var(&a.ImageGCHighThresholdPercent, "image-gc-high-threshold", 90, "The percent of disk usage after which image garbage collection is always run. Values must be within the range [0, 100], To disable image garbage collection, set to 100. ")
 	fs.Int32Var(&a.ImageGCLowThresholdPercent, "image-gc-low-threshold", 75, "The percent of disk usage before which image garbage collection is never run. Lowest disk usage to garbage collect to. Values must be within the range [0, 100] and should not be larger than that of --image-gc-high-threshold.")
-	fs.StringVar(&a.RbdNamespace, "rbd-ns", "rbd-system", "The namespace of rainbond applications.")
-	fs.StringVar(&a.ImageRepositoryHost, "image-repo-host", "goodrain.me", "The host of image repository")
+	fs.StringVar(&a.RbdNamespace, "wt-ns", "wt-system", "The namespace of rainbond applications.")
+	fs.StringVar(&a.ImageRepositoryHost, "image-repo-host", "wutong.me", "The host of image repository")
 	fs.StringVar(&a.GatewayVIP, "gateway-vip", "", "The vip of gateway")
 	fs.StringVar(&a.HostsFile, "hostsfile", "/newetc/hosts", "/etc/hosts mapped path in the container. eg. /etc/hosts:/tmp/hosts. Do not set hostsfile to /etc/hosts")
 }

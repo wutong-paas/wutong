@@ -63,7 +63,7 @@ func NewImportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	if err := json.Unmarshal(in, &importApp); err != nil {
 		return nil, err
 	}
-	if importApp.ServiceImage.HubURL == "" || importApp.ServiceImage.HubURL == "goodrain.me" {
+	if importApp.ServiceImage.HubURL == "" || importApp.ServiceImage.HubURL == "wutong.me" {
 		importApp.ServiceImage.HubURL = builder.REGISTRYDOMAIN
 		importApp.ServiceImage.HubUser = builder.REGISTRYUSER
 		importApp.ServiceImage.HubPassword = builder.REGISTRYPASS

@@ -282,7 +282,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			i.Logger.Error("Back end service drift. Please check the rbd-chaos log", map[string]string{"step": "callback", "status": "failure"})
+			i.Logger.Error("Back end service drift. Please check the wt-chaos log", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
 	start := time.Now()
@@ -340,7 +340,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			i.Logger.Error("Back end service drift. Please check the rbd-chaos log", map[string]string{"step": "callback", "status": "failure"})
+			i.Logger.Error("Back end service drift. Please check the wt-chaos log", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
 	defer func() {
@@ -396,7 +396,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 			if r := recover(); r != nil {
 				fmt.Println(r)
 				debug.PrintStack()
-				i.Logger.Error("Back end service drift. Please check the rbd-chaos log", map[string]string{"step": "callback", "status": "failure"})
+				i.Logger.Error("Back end service drift. Please check the wt-chaos log", map[string]string{"step": "callback", "status": "failure"})
 			}
 		}()
 		defer func() {

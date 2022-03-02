@@ -30,7 +30,7 @@ import (
 // Metric name parts.
 const (
 	// Namespace for all metrics.
-	namespace = "rbd_api"
+	namespace = "wt_api"
 	// Subsystem(s).
 	exporter = "exporter"
 )
@@ -42,25 +42,25 @@ func NewExporter() *Exporter {
 			Namespace: namespace,
 			Subsystem: exporter,
 			Name:      "api_request",
-			Help:      "rainbond cluster api request metric",
+			Help:      "wutong cluster api request metric",
 		}, []string{"code", "path"}),
 		tenantLimit: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: exporter,
 			Name:      "tenant_memory_limit",
-			Help:      "rainbond tenant memory limit",
+			Help:      "wutong tenant memory limit",
 		}, []string{"tenant_id", "namespace"}),
 		clusterMemoryTotal: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: exporter,
 			Name:      "cluster_memory_total",
-			Help:      "rainbond cluster memory total",
+			Help:      "wutong cluster memory total",
 		}),
 		clusterCPUTotal: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: exporter,
 			Name:      "cluster_cpu_total",
-			Help:      "rainbond cluster cpu total",
+			Help:      "wutong cluster cpu total",
 		}),
 	}
 }

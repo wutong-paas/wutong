@@ -2201,8 +2201,8 @@ func (s *ServiceAction) TransServieToDelete(ctx context.Context, tenantID, servi
 		return fmt.Errorf("delete service-related metadata: %v", err)
 	}
 
-	// let rbd-chaos remove related persistent data
-	logrus.Info("let rbd-chaos remove related persistent data")
+	// let wt-chaos remove related persistent data
+	logrus.Info("let wt-chaos remove related persistent data")
 	topic := gclient.WorkerTopic
 	if err := s.MQClient.SendBuilderTopic(gclient.TaskStruct{
 		Topic:    topic,

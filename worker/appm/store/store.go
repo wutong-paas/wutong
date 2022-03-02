@@ -1488,7 +1488,7 @@ func (a *appRuntimeStore) createOrUpdateImagePullSecret(ns string) error {
 		return nil
 	}
 
-	// get secret in namespace rbd-system
+	// get secret in namespace wt-system
 	rawSecret, err := a.secretByKey(types.NamespacedName{Namespace: a.conf.RBDNamespace, Name: imagePullSecretName})
 	if err != nil {
 		return fmt.Errorf("get secret %s: %v",

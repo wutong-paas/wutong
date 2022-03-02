@@ -39,7 +39,7 @@ type DockerConsole struct {
 }
 
 var defaultDockerConsoleEndpoints = []string{"127.0.0.1:7171"}
-var defaultEventLogEndpoints = []string{"local=>rbd-eventlog:6363"}
+var defaultEventLogEndpoints = []string{"local=>wt-eventlog:6363"}
 
 var dockerConsole *DockerConsole
 

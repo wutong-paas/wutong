@@ -134,7 +134,7 @@ func listModules(prefix, topPref, finalName string) ([]*module, error) {
 	// recursive end condition
 	if pom.isValidModule() {
 		filename := pom.getExecuteFilename(finalName)
-		// full module name. eg: foobar/rbd-worker
+		// full module name. eg: foobar/wt-worker
 		name := strings.Replace(prefix, topPref, "", 1)
 		mo := &module{
 			ID:   util.NewUUID(),

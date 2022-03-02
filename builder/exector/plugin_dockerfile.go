@@ -117,14 +117,14 @@ func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger)
 	logger.Info("start build image", map[string]string{"step": "builder-exector"})
 	_, err := sources.ImageBuild(e.DockerClient, sourceDir, buildOptions, logger, 5)
 	if err != nil {
-		logger.Error(fmt.Sprintf("build image %s failure,find log in rbd-chaos", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+		logger.Error(fmt.Sprintf("build image %s failure,find log in wt-chaos", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("[plugin]build image error: %s", err.Error())
 		return err
 	}
 	logger.Info("build image success, start to push image to local image registry", map[string]string{"step": "builder-exector"})
 	err = sources.ImagePush(e.DockerClient, buildImageName, builder.REGISTRYUSER, builder.REGISTRYPASS, logger, 2)
 	if err != nil {
-		logger.Error("push image failure, find log in rbd-chaos", map[string]string{"step": "builder-exector"})
+		logger.Error("push image failure, find log in wt-chaos", map[string]string{"step": "builder-exector"})
 		logrus.Errorf("push image error: %s", err.Error())
 		return err
 	}

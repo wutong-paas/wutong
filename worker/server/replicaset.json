@@ -218,7 +218,7 @@
                                         }
                                     }
                                 ],
-                                "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                                "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
                                 "imagePullPolicy": "IfNotPresent",
                                 "livenessProbe": {
                                     "failureThreshold": 3,
@@ -400,7 +400,7 @@
                                         "value": "6101"
                                     }
                                 ],
-                                "image": "goodrain.me/rbd-mesh-data-panel",
+                                "image": "wutong.me/wt-mesh-data-panel",
                                 "imagePullPolicy": "Always",
                                 "name": "default-tcpmesh-217522f3bb86cfbded7e",
                                 "resources": {},

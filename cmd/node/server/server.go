@@ -111,7 +111,7 @@ func Run(cfg *option.Conf) error {
 			hostManager.Start()
 		}
 
-		logrus.Debugf("rbd-namespace=%s; rbd-docker-secret=%s", os.Getenv("RBD_NAMESPACE"), os.Getenv("RBD_DOCKER_SECRET"))
+		logrus.Debugf("wt-namespace=%s; wt-docker-secret=%s", os.Getenv("RBD_NAMESPACE"), os.Getenv("RBD_DOCKER_SECRET"))
 		// sync docker inscure registries cert info into all rainbond node
 		if err = docker.SyncDockerCertFromSecret(clientset, os.Getenv("RBD_NAMESPACE"), os.Getenv("RBD_DOCKER_SECRET")); err != nil { // TODO fanyangyang namespace secretname
 			return fmt.Errorf("sync docker cert from secret error: %s", err.Error())

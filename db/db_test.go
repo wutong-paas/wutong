@@ -425,7 +425,7 @@ func TestGetVolumeType(t *testing.T) {
 
 func TestGetVolumeTypeByType(t *testing.T) {
 	initDBManager(t)
-	vt, err := GetManager().VolumeTypeDao().GetVolumeTypeByType("ceph-rbd")
+	vt, err := GetManager().VolumeTypeDao().GetVolumeTypeByType("ceph-wt")
 	if err != nil {
 		t.Fatal("get volumeType by type error: ", err.Error())
 	}

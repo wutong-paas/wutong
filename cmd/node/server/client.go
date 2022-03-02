@@ -107,12 +107,12 @@ func ParseClientCommnad(args []string) {
 						},
 						cli.StringFlag{
 							Name:  "image-prefix,p",
-							Value: "goodrain.me",
+							Value: "wutong.me",
 							Usage: "",
 						},
 						cli.StringSliceFlag{
 							Name:  "services,s",
-							Value: &cli.StringSlice{"rbd-gateway", "rbd-api", "rbd-chaos", "rbd-mq", "rbd-webcli", "rbd-worker", "rbd-eventlog", "rbd-monitor", "rbd-app-ui"},
+							Value: &cli.StringSlice{"wt-gateway", "wt-api", "wt-chaos", "wt-mq", "wt-webcli", "wt-worker", "wt-eventlog", "wt-monitor", "wt-app-ui"},
 							Usage: "Enable supported services",
 						},
 					},

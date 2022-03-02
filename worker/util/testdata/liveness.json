@@ -45,7 +45,7 @@
       "containers": [
         {
           "name": "fa9c83c9198bfee9325804d3b4e7ff06",
-          "image": "goodrain.me/nginx:20190826081937",
+          "image": "wutong.me/nginx:20190826081937",
           "ports": [
             {
               "containerPort": 80,
@@ -253,7 +253,7 @@
           },
           "ready": false,
           "restartCount": 1,
-          "image": "goodrain.me/nginx:20190826081937",
+          "image": "wutong.me/nginx:20190826081937",
           "imageID": ""
         }
       ],

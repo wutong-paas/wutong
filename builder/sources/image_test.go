@@ -84,8 +84,8 @@ func TestImageSave(t *testing.T) {
 func TestMulitImageSave(t *testing.T) {
 	dc, _ := client.NewEnvClient()
 	if err := MultiImageSave(context.Background(), dc, "/tmp/testsaveimage.tar", nil,
-		"registry.cn-hangzhou.aliyuncs.com/goodrain/rbd-node:V5.3.0-cloud",
-		"registry.cn-hangzhou.aliyuncs.com/goodrain/rbd-resource-proxy:V5.3.0-cloud"); err != nil {
+		"swr.cn-east-3.myhuaweicloud.com/wutong/wt-node:V5.3.0-cloud",
+		"swr.cn-east-3.myhuaweicloud.com/wutong/wt-resource-proxy:V5.3.0-cloud"); err != nil {
 		t.Fatal(err)
 	}
 }

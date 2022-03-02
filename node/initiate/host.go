@@ -79,7 +79,7 @@ func (h *hostManager) Start() {
 		lines := []string{
 			util.StartOfSection,
 			h.cfg.GatewayVIP + " " + h.cfg.ImageRepositoryHost,
-			h.cfg.GatewayVIP + " " + "region.goodrain.me",
+			h.cfg.GatewayVIP + " " + "region.wutong.me",
 			util.EndOfSection,
 		}
 		h.hostCallback.hosts.AddLines(lines...)
@@ -88,7 +88,7 @@ func (h *hostManager) Start() {
 		}
 		return
 	}
-	h.discover.AddProject("rbd-gateway", h.hostCallback)
+	h.discover.AddProject("wt-gateway", h.hostCallback)
 }
 
 type hostCallback struct {
@@ -109,7 +109,7 @@ func (h *hostCallback) UpdateEndpoints(endpoints ...*config.Endpoint) {
 		lines := []string{
 			util.StartOfSection,
 			endpoints[0].URL + " " + h.cfg.ImageRepositoryHost,
-			endpoints[0].URL + " " + "region.goodrain.me",
+			endpoints[0].URL + " " + "region.wutong.me",
 			util.EndOfSection,
 		}
 		h.hosts.AddLines(lines...)

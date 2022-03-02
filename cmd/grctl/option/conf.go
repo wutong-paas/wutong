@@ -63,7 +63,7 @@ func LoadConfig(ctx *cli.Context) (Config, error) {
 	configfile := ctx.GlobalString("config")
 	if configfile == "" {
 		home, _ := sources.Home()
-		configfile = path.Join(home, ".rbd", "grctl.yaml")
+		configfile = path.Join(home, ".wt", "grctl.yaml")
 	}
 	_, err := os.Stat(configfile)
 	if err != nil {
@@ -93,6 +93,6 @@ func GetTenantNamePath() (tenantnamepath string, err error) {
 		logrus.Warn("Get Home Dir error.", err.Error())
 		return tenantnamepath, err
 	}
-	tenantnamepath = path.Join(home, ".rbd", "tenant.txt")
+	tenantnamepath = path.Join(home, ".wt", "tenant.txt")
 	return tenantnamepath, err
 }

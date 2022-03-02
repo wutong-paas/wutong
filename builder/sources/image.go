@@ -565,7 +565,7 @@ func CheckIfImageExists(dockerCli *client.Client, image string) (imageName strin
 	return imageFullName, len(imageSummarys) > 0, nil
 }
 
-// ImagesPullAndPush Used to process mirroring of non local components, example: builder, runner, /rbd-mesh-data-panel
+// ImagesPullAndPush Used to process mirroring of non local components, example: builder, runner, /wt-mesh-data-panel
 func ImagesPullAndPush(sourceImage, targetImage, username, password string, logger event.Logger) error {
 	dockerClient, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {

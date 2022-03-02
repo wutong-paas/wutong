@@ -165,7 +165,7 @@ func CreateCertInformation() CertInformation {
 		CommonName:         "rainbond",
 		CrtName:            "",
 		KeyName:            "",
-		Domains:            []string{"goodrain.me"},
+		Domains:            []string{"wutong.me"},
 	}
 	baseinfo.IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
 	return baseinfo

@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var pemDirPath = ".rbd/ssl"
+var pemDirPath = ".wt/ssl"
 var clientPemPath string
 var clientKeyPemPath string
 var clientCAPemPath string
@@ -47,7 +47,7 @@ func NewCmdInstall() cli.Command {
 				Name:   "namespace,ns",
 				Usage:  "rainbond namespace",
 				EnvVar: "RBDNamespace",
-				Value:  "rbd-system",
+				Value:  "wt-system",
 			},
 		},
 		Usage: "grctl install",
@@ -55,7 +55,7 @@ func NewCmdInstall() cli.Command {
 			fmt.Println("Start install, please waiting!")
 			CommonWithoutRegion(c)
 			namespace := c.String("namespace")
-			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get(context.Background(), "rbd-api-client-cert", metav1.GetOptions{})
+			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get(context.Background(), "wt-api-client-cert", metav1.GetOptions{})
 			if err != nil {
 				showError(fmt.Sprintf("get region api tls secret failure %s", err.Error()))
 			}
@@ -116,7 +116,7 @@ func writeConfig(ips []string) error {
 		},
 	}
 	home, _ := sources.Home()
-	configFilePath := path.Join(home, ".rbd", "grctl.yaml")
+	configFilePath := path.Join(home, ".wt", "grctl.yaml")
 	os.MkdirAll(path.Dir(configFilePath), os.ModeDir)
 	os.Remove(configFilePath)
 	configFile, err := os.OpenFile(configFilePath, os.O_CREATE|os.O_RDWR, 0411)

@@ -30,8 +30,8 @@ func TestCreateJob(t *testing.T) {
 		EtcdEndPoints:       []string{"192.168.2.203:2379"},
 		MQAPI:               "192.168.2.203:6300",
 		EventLogServers:     []string{"192.168.2.203:6366"},
-		RbdRepoName:         "rbd-dns",
-		RbdNamespace:        "rbd-system",
+		RbdRepoName:         "wt-dns",
+		RbdNamespace:        "wt-system",
 		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
 	}
 	event.NewManager(event.EventConfig{
@@ -133,13 +133,13 @@ func TestBuildFromOSS(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	os.Setenv("IMAGE_PULL_SECRET", "rbd-hub-credentials")
+	os.Setenv("IMAGE_PULL_SECRET", "wt-hub-credentials")
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		t.Fatal(err)
 	}
 	stop := make(chan struct{})
-	if err := jobc.InitJobController("rbd-system", stop, clientset); err != nil {
+	if err := jobc.InitJobController("wt-system", stop, clientset); err != nil {
 		t.Fatal(err)
 	}
 	logger := event.GetTestLogger()
@@ -157,8 +157,8 @@ func TestBuildFromOSS(t *testing.T) {
 		TenantID:      "7c89455140284fd7b263038b44dc65bc",
 		Lang:          code.OSS,
 		Logger:        logger,
-		GRDataPVCName: "rbd-cpt-grdata",
-		CachePVCName:  "rbd-chaos-cache",
+		GRDataPVCName: "wt-cpt-grdata",
+		CachePVCName:  "wt-chaos-cache",
 	}
 	build, err := GetBuild(code.OSS)
 	if err != nil {

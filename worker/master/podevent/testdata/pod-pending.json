@@ -45,7 +45,7 @@
       "containers": [
         {
           "name": "135c3e10e3be34337bde752449a07e4c",
-          "image": "goodrain.me/135c3e10e3be34337bde752449a07e4c:20190824165943",
+          "image": "wutong.me/135c3e10e3be34337bde752449a07e4c:20190824165943",
           "ports": [
             {
               "containerPort": 5000,

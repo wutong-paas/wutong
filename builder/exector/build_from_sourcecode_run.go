@@ -232,7 +232,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 	}
 	hostAlias, err := i.getHostAlias()
 	if err != nil {
-		i.Logger.Error(util.Translation("get rbd-repo ip failure"), map[string]string{"step": "builder-exector", "status": "failure"})
+		i.Logger.Error(util.Translation("get wt-repo ip failure"), map[string]string{"step": "builder-exector", "status": "failure"})
 		return nil, err
 	}
 	buildReq := &build.Request{
@@ -272,7 +272,7 @@ func (i *SourceCodeBuildItem) getHostAlias() (hostAliasList []build.HostAlias, e
 		logrus.Errorf("do not found ep by name: %s in namespace: %s", i.RbdRepoName, i.Namespace)
 		return nil, err
 	}
-	hostNames := []string{"maven.goodrain.me", "lang.goodrain.me"}
+	hostNames := []string{"maven.wutong.me", "lang.wutong.me"}
 	for _, subset := range endpoints.Subsets {
 		for _, addr := range subset.Addresses {
 			hostAliasList = append(hostAliasList, build.HostAlias{IP: addr.IP, Hostnames: hostNames})

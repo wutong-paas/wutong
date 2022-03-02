@@ -27,7 +27,7 @@ import (
 
 func TestListTenant(t *testing.T) {
 	region, _ := NewRegion(APIConf{
-		Endpoints: []string{"http://kubeapi.goodrain.me:8888"},
+		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
 	tenants, err := region.Tenants("").List()
 	if err != nil {
@@ -38,7 +38,7 @@ func TestListTenant(t *testing.T) {
 
 func TestListServices(t *testing.T) {
 	region, _ := NewRegion(APIConf{
-		Endpoints: []string{"http://kubeapi.goodrain.me:8888"},
+		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
 	services, err := region.Tenants("n93lkp7t").Services("").List()
 	if err != nil {
@@ -51,7 +51,7 @@ func TestListServices(t *testing.T) {
 
 func TestDoRequest(t *testing.T) {
 	region, _ := NewRegion(APIConf{
-		Endpoints: []string{"http://kubeapi.goodrain.me:8888"},
+		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
 	var decode utilhttp.ResponseBody
 	var tenants []*dbmodel.Tenants
@@ -65,7 +65,7 @@ func TestDoRequest(t *testing.T) {
 
 func TestListNodes(t *testing.T) {
 	region, _ := NewRegion(APIConf{
-		Endpoints: []string{"http://kubeapi.goodrain.me:8888"},
+		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
 	services, err := region.Nodes().List()
 	if err != nil {
@@ -78,7 +78,7 @@ func TestListNodes(t *testing.T) {
 
 func TestGetNodes(t *testing.T) {
 	region, _ := NewRegion(APIConf{
-		Endpoints: []string{"http://kubeapi.goodrain.me:8888"},
+		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
 	node, err := region.Nodes().Get("a134eab8-3d42-40f5-84a5-fcf2b7a44b31")
 	if err != nil {

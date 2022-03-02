@@ -52,7 +52,7 @@ func NewCmdRegistry() cli.Command {
 						Name:   "namespace, ns",
 						Usage:  "rainbond namespace",
 						EnvVar: "RBDNamespace",
-						Value:  "rbd-system",
+						Value:  "wt-system",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -98,15 +98,15 @@ func databaseDSN(rainbondcluster *rainbondv1alpha1.RainbondCluster) (string, err
 	if database != nil {
 		return fmt.Sprintf("%s:%s@tcp(%s)/%s", database.Username, database.Password, database.Host, database.Name), nil
 	}
-	// default name of rbd-db pod is rbd-db-0
-	pod, err := clients.K8SClient.CoreV1().Pods(rainbondcluster.Namespace).Get(context.Background(), "rbd-db-0", metav1.GetOptions{})
+	// default name of wt-db pod is wt-db-0
+	pod, err := clients.K8SClient.CoreV1().Pods(rainbondcluster.Namespace).Get(context.Background(), "wt-db-0", metav1.GetOptions{})
 	if err != nil {
-		return "", errors.Wrap(err, "get pod rbd-db-0")
+		return "", errors.Wrap(err, "get pod wt-db-0")
 	}
 	host := pod.Status.PodIP
 	name := "region"
 	for _, ct := range pod.Spec.Containers {
-		if ct.Name != "rbd-db" {
+		if ct.Name != "wt-db" {
 			continue
 		}
 		for _, env := range ct.Env {
@@ -116,9 +116,9 @@ func databaseDSN(rainbondcluster *rainbondv1alpha1.RainbondCluster) (string, err
 		}
 	}
 
-	secret, err := clients.K8SClient.CoreV1().Secrets(rainbondcluster.Namespace).Get(context.Background(), "rbd-db", metav1.GetOptions{})
+	secret, err := clients.K8SClient.CoreV1().Secrets(rainbondcluster.Namespace).Get(context.Background(), "wt-db", metav1.GetOptions{})
 	if err != nil {
-		return "", errors.Wrap(err, "get secret rbd-db")
+		return "", errors.Wrap(err, "get secret wt-db")
 	}
 	username := string(secret.Data["mysql-user"])
 	password := string(secret.Data["mysql-password"])
