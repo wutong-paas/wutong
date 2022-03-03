@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,9 +25,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	internalinterfaces "github.com/goodrain/rainbond/pkg/generated/informers/externalversions/internalinterfaces"
-	rainbond "github.com/goodrain/rainbond/pkg/generated/informers/externalversions/rainbond"
+	versioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	internalinterfaces "github.com/wutong-paas/wutong/pkg/generated/informers/externalversions/internalinterfaces"
+	wutong "github.com/wutong-paas/wutong/pkg/generated/informers/externalversions/wutong"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -174,9 +174,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Rainbond() rainbond.Interface
+	Wutong() wutong.Interface
 }
 
-func (f *sharedInformerFactory) Rainbond() rainbond.Interface {
-	return rainbond.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Wutong() wutong.Interface {
+	return wutong.New(f, f.namespace, f.tweakListOptions)
 }

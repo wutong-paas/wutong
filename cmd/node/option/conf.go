@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,10 +29,10 @@ import (
 	client "github.com/coreos/etcd/clientv3"
 	dockercli "github.com/docker/docker/client"
 	"github.com/fsnotify/fsnotify"
-	"github.com/goodrain/rainbond/util"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/wutong-paas/wutong/util"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
 var (
@@ -75,7 +75,7 @@ type Conf struct {
 	NodeRule                        string //节点属性 compute manage storage
 	Service                         string //服务注册与发现
 	InitStatus                      string
-	NodePath                        string   //Rainbond node model basic information storage path in etcd
+	NodePath                        string   //Wutong node model basic information storage path in etcd
 	EventLogServer                  []string //event server address list
 	ConfigStoragePath               string   //config storage path in etcd
 	LockPath                        string
@@ -122,8 +122,8 @@ type Conf struct {
 	// ImageGCPeriod is the period for performing image garbage collection.
 	ImageGCPeriod time.Duration
 
-	// Namespace for Rainbond application.
-	RbdNamespace        string
+	// Namespace for Wutong application.
+	WtNamespace         string
 	ImageRepositoryHost string
 	GatewayVIP          string
 	HostsFile           string
@@ -149,12 +149,12 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the log level")
 	fs.StringVar(&a.LogFile, "log-file", "", "the log file path that log output")
 	fs.StringVar(&a.PrometheusAPI, "prometheus", "http://wt-monitor:9999", "the prometheus server address")
-	fs.StringVar(&a.NodePath, "nodePath", "/rainbond/nodes", "the path of node in etcd")
+	fs.StringVar(&a.NodePath, "nodePath", "/wutong/nodes", "the path of node in etcd")
 	fs.StringVar(&a.HostID, "nodeid", "", "the unique ID for this node. Just specify, don't modify")
 	fs.StringVar(&a.HostIP, "hostIP", "", "the host ip you can define. default get ip from eth0")
 	fs.StringVar(&a.PodIP, "podIP", "", "The pod ip of node.")
 	fs.StringSliceVar(&a.EventLogServer, "event-log-server", []string{"127.0.0.1:6366"}, "host:port slice of event log server")
-	fs.StringVar(&a.ConfigStoragePath, "config-path", "/rainbond/acp_configs", "the path of config to store(new)")
+	fs.StringVar(&a.ConfigStoragePath, "config-path", "/wutong/acp_configs", "the path of config to store(new)")
 	fs.StringVar(&a.Service, "servicePath", "/traefik/backends", "the path of service info to store")
 	fs.StringSliceVar(&a.EtcdEndpoints, "etcd", []string{"http://127.0.0.1:2379"}, "the path of node in etcd")
 	fs.StringVar(&a.EtcdCaFile, "etcd-ca", "", "verify etcd certificates of TLS-enabled secure servers using this CA bundle")
@@ -174,20 +174,20 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.StatsdConfig.MappingConfig, "statsd.mapping-config", "", "Metric mapping configuration file name.")
 	fs.IntVar(&a.StatsdConfig.ReadBuffer, "statsd.read-buffer", 0, "Size (in bytes) of the operating system's transmit read buffer associated with the UDP connection. Please make sure the kernel parameters net.core.rmem_max is set to a value greater than the value specified.")
 	fs.DurationVar(&a.MinResyncPeriod, "min-resync-period", time.Second*15, "The resync period in reflectors will be random between MinResyncPeriod and 2*MinResyncPeriod")
-	fs.StringVar(&a.ServiceListFile, "service-list-file", "/opt/rainbond/conf/", "Specifies the configuration file, which can be a directory, that configures the service running on the current node")
+	fs.StringVar(&a.ServiceListFile, "service-list-file", "/opt/wutong/conf/", "Specifies the configuration file, which can be a directory, that configures the service running on the current node")
 	fs.BoolVar(&a.EnableInitStart, "enable-init-start", false, "Enable dependency - free initialization starts for services that support initialization starts")
 	fs.BoolVar(&a.AutoRegistNode, "auto-registnode", true, "Whether auto regist node info to cluster where node is not found")
 	fs.BoolVar(&a.AutoScheduler, "auto-scheduler", true, "Whether auto set node unscheduler where current node is unhealth")
 	fs.BoolVar(&a.EnableCollectLog, "enabel-collect-log", true, "Whether to collect container logs")
 	fs.DurationVar(&a.AutoUnschedulerUnHealthDuration, "autounscheduler-unhealthy-dura", 5*time.Minute, "Node unhealthy duration, after the automatic offline,if set 0,disable auto handle unscheduler.default is 5 Minute")
-	fs.StringVar(&a.LicPath, "lic-path", "/opt/rainbond/etc/license/license.yb", "the license path of the enterprise version.")
-	fs.StringVar(&a.LicSoPath, "lic-so-path", "/opt/rainbond/etc/license/license.so", "Dynamic library file path for parsing the license.")
+	fs.StringVar(&a.LicPath, "lic-path", "/opt/wutong/etc/license/license.yb", "the license path of the enterprise version.")
+	fs.StringVar(&a.LicSoPath, "lic-so-path", "/opt/wutong/etc/license/license.so", "Dynamic library file path for parsing the license.")
 	fs.BoolVar(&a.EnableImageGC, "enable-image-gc", true, "The trigger of image garbage collection.")
 	fs.DurationVar(&a.ImageMinimumGCAge, "minimum-image-ttl-duration", 2*time.Hour, "Minimum age for an unused image before it is garbage collected.  Examples: '300ms', '10s' or '2h45m'.")
 	fs.DurationVar(&a.ImageGCPeriod, "image-gc-period", 5*time.Minute, "ImageGCPeriod is the period for performing image garbage collection.  Examples: '10s', '5m' or '2h45m'.")
 	fs.Int32Var(&a.ImageGCHighThresholdPercent, "image-gc-high-threshold", 90, "The percent of disk usage after which image garbage collection is always run. Values must be within the range [0, 100], To disable image garbage collection, set to 100. ")
 	fs.Int32Var(&a.ImageGCLowThresholdPercent, "image-gc-low-threshold", 75, "The percent of disk usage before which image garbage collection is never run. Lowest disk usage to garbage collect to. Values must be within the range [0, 100] and should not be larger than that of --image-gc-high-threshold.")
-	fs.StringVar(&a.RbdNamespace, "wt-ns", "wt-system", "The namespace of rainbond applications.")
+	fs.StringVar(&a.WtNamespace, "wt-ns", "wt-system", "The namespace of wutong applications.")
 	fs.StringVar(&a.ImageRepositoryHost, "image-repo-host", "wutong.me", "The host of image repository")
 	fs.StringVar(&a.GatewayVIP, "gateway-vip", "", "The vip of gateway")
 	fs.StringVar(&a.HostsFile, "hostsfile", "/newetc/hosts", "/etc/hosts mapped path in the container. eg. /etc/hosts:/tmp/hosts. Do not set hostsfile to /etc/hosts")
@@ -241,7 +241,7 @@ func (a *Conf) parse() error {
 	if a.TTL <= 0 {
 		a.TTL = 10
 	}
-	a.LockPath = "/rainbond/lock"
+	a.LockPath = "/wutong/lock"
 	if a.HostIP == "" || !util.CheckIP(a.HostIP) {
 		localIP, err := util.LocalIP()
 		if localIP == nil || err != nil {

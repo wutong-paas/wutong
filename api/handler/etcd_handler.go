@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 )
@@ -51,9 +52,9 @@ func (h *EtcdHandler) cleanEtcdByKey(key string, keyTypes ...EtcdKeyType) {
 		case ServiceCheckEtcdKey:
 			prefix = fmt.Sprintf("/servicecheck/%s", key)
 		case ShareResultEtcdKey:
-			prefix = fmt.Sprintf("/rainbond/shareresult/%s", key)
+			prefix = fmt.Sprintf("/wutong/shareresult/%s", key)
 		case BackupRestoreEtcdKey:
-			prefix = fmt.Sprintf("/rainbond/backup_restore/%s", key)
+			prefix = fmt.Sprintf("/wutong/backup_restore/%s", key)
 		}
 		h.cleanEtcdData(prefix)
 	}

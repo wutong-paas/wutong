@@ -22,7 +22,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: componentdefinitions.rainbond.io
+  name: componentdefinitions.wutong.io
 spec:
   additionalPrinterColumns:
   - JSONPath: .spec.workload.definition.kind
@@ -31,7 +31,7 @@ spec:
   - JSONPath: .metadata.annotations.definition\.oam\.dev/description
     name: DESCRIPTION
     type: string
-  group: rainbond.io
+  group: wutong.io
   names:
     categories:
     - oam
@@ -233,9 +233,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: helmapps.rainbond.io
+  name: helmapps.wutong.io
 spec:
-  group: rainbond.io
+  group: wutong.io
   names:
     kind: HelmApp
     listKind: HelmAppList
@@ -396,9 +396,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.3.0
   creationTimestamp: null
-  name: thirdcomponents.rainbond.io
+  name: thirdcomponents.wutong.io
 spec:
-  group: rainbond.io
+  group: wutong.io
   names:
     kind: ThirdComponent
     listKind: ThirdComponentList

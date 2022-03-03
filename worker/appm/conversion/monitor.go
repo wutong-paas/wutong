@@ -3,8 +3,8 @@ package conversion
 import (
 	"time"
 
-	"github.com/goodrain/rainbond/db"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/db"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/jinzhu/gorm"
 	mv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"

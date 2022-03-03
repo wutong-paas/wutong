@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/db/model"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )

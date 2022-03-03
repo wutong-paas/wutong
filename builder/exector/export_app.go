@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,20 +29,20 @@ import (
 	"time"
 
 	"github.com/docker/docker/client"
-	"github.com/goodrain/rainbond-oam/pkg/export"
-	"github.com/goodrain/rainbond-oam/pkg/ram/v1alpha1"
-	ramv1alpha1 "github.com/goodrain/rainbond-oam/pkg/ram/v1alpha1"
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/event"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"github.com/wutong-paas/wutong-oam/pkg/export"
+	"github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
+	ramv1alpha1 "github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/event"
 )
 
 var re = regexp.MustCompile(`\s`)
 
-//ExportApp Export app to specified format(rainbond-app or dockercompose)
+//ExportApp Export app to specified format(wutong-app or dockercompose)
 type ExportApp struct {
 	EventID      string `json:"event_id"`
 	Format       string `json:"format"`
@@ -87,10 +87,10 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 	}
 	i.handleDefaultRepo(ram)
 	var re *export.Result
-	if i.Format == "rainbond-app" {
-		re, err = i.exportRainbondAPP(*ram)
+	if i.Format == "wutong-app" {
+		re, err = i.exportWutongAPP(*ram)
 		if err != nil {
-			logrus.Errorf("export rainbond app package failure %s", err.Error())
+			logrus.Errorf("export wutong app package failure %s", err.Error())
 			i.updateStatus("failed", "")
 			return err
 		}
@@ -120,7 +120,7 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 	return nil
 }
 
-func (i *ExportApp) handleDefaultRepo(ram *v1alpha1.RainbondApplicationConfig) {
+func (i *ExportApp) handleDefaultRepo(ram *v1alpha1.WutongApplicationConfig) {
 	for i := range ram.Components {
 		com := ram.Components[i]
 		com.AppImage.HubUser, com.AppImage.HubPassword = builder.GetImageUserInfoV2(
@@ -143,14 +143,14 @@ func (i *ExportApp) cacheMd5() {
 	logrus.Infof("create md5 file success")
 }
 
-// exportRainbondAPP export offline rainbond app
-func (i *ExportApp) exportRainbondAPP(ram v1alpha1.RainbondApplicationConfig) (*export.Result, error) {
+// exportWutongAPP export offline wutong app
+func (i *ExportApp) exportWutongAPP(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
 	ramExporter := export.New(export.RAM, i.SourceDir, ram, i.DockerClient, logrus.StandardLogger())
 	return ramExporter.Export()
 }
 
 //  exportDockerCompose export app to docker compose app
-func (i *ExportApp) exportDockerCompose(ram v1alpha1.RainbondApplicationConfig) (*export.Result, error) {
+func (i *ExportApp) exportDockerCompose(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
 	ramExporter := export.New(export.DC, i.SourceDir, ram, i.DockerClient, logrus.StandardLogger())
 	return ramExporter.Export()
 }
@@ -212,14 +212,14 @@ func (i *ExportApp) CleanSourceDir() error {
 
 	return nil
 }
-func (i *ExportApp) parseRAM() (*ramv1alpha1.RainbondApplicationConfig, error) {
+func (i *ExportApp) parseRAM() (*ramv1alpha1.WutongApplicationConfig, error) {
 	data, err := ioutil.ReadFile(fmt.Sprintf("%s/metadata.json", i.SourceDir))
 	if err != nil {
 		i.Logger.Error("导出应用失败，没有找到应用信息", map[string]string{"step": "read-metadata", "status": "failure"})
 		logrus.Error("Failed to read metadata file: ", err)
 		return nil, err
 	}
-	var ram ramv1alpha1.RainbondApplicationConfig
+	var ram ramv1alpha1.WutongApplicationConfig
 	if err := json.Unmarshal(data, &ram); err != nil {
 		return nil, err
 	}

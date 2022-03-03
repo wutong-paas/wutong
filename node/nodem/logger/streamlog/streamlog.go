@@ -19,7 +19,7 @@ import (
 
 	"sync"
 
-	"github.com/goodrain/rainbond/node/nodem/logger"
+	"github.com/wutong-paas/wutong/node/nodem/logger"
 	"github.com/sirupsen/logrus"
 )
 

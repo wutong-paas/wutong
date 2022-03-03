@@ -6,11 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/goodrain/rainbond/api/handler"
-	"github.com/goodrain/rainbond/api/model"
-	ctxutil "github.com/goodrain/rainbond/api/util/ctx"
-	httputil "github.com/goodrain/rainbond/util/http"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/model"
+	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
+	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
 // AppRestoreController is an implementation of AppRestoreInterface

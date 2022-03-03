@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/goodrain/rainbond/gateway/annotations/proxy"
-	"github.com/goodrain/rainbond/gateway/annotations/rewrite"
-	v1 "github.com/goodrain/rainbond/gateway/v1"
+	"github.com/wutong-paas/wutong/gateway/annotations/proxy"
+	"github.com/wutong-paas/wutong/gateway/annotations/rewrite"
+	v1 "github.com/wutong-paas/wutong/gateway/v1"
 )
 
 // Server sets configuration for a virtual server...

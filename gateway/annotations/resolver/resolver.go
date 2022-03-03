@@ -33,7 +33,7 @@ limitations under the License.
 */
 
 import (
-	"github.com/goodrain/rainbond/gateway/defaults"
+	"github.com/wutong-paas/wutong/gateway/defaults"
 )
 
 // Resolver is an interface that knows how to extract information from a controller

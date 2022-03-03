@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/goodrain/rainbond/gateway/controller/openresty/model"
+	"github.com/wutong-paas/wutong/gateway/controller/openresty/model"
 	"github.com/gosuri/uitable"
 )
 

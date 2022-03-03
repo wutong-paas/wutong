@@ -14,8 +14,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/discover/config"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/discover/config"
 )
 
 type k8sDiscover struct {
@@ -76,7 +76,7 @@ func (k *k8sDiscover) discover(name string, callback CallbackUpdate) {
 	sharedInformer := informers.NewSharedInformerFactoryWithOptions(
 		k.clientset,
 		10*time.Second,
-		informers.WithNamespace(k.cfg.RbdNamespace),
+		informers.WithNamespace(k.cfg.WtNamespace),
 		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
 			options.LabelSelector = "name=" + name
 		}),
@@ -141,7 +141,7 @@ func (k *k8sDiscover) rewatchWithErr(name string, callback CallbackUpdate, err e
 }
 
 func (k *k8sDiscover) list(name string) []*config.Endpoint {
-	podList, err := k.clientset.CoreV1().Pods(k.cfg.RbdNamespace).List(context.Background(), metav1.ListOptions{
+	podList, err := k.clientset.CoreV1().Pods(k.cfg.WtNamespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: "name=" + name,
 	})
 	if err != nil {

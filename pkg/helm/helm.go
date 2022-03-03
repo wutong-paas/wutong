@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/goodrain/rainbond/util/commonutil"
+	"github.com/wutong-paas/wutong/util/commonutil"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"

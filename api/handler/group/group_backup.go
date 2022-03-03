@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -31,15 +31,15 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 
-	"github.com/goodrain/rainbond/api/util"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/worker/client"
+	"github.com/wutong-paas/wutong/api/util"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/worker/client"
 
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	mqclient "github.com/goodrain/rainbond/mq/client"
-	core_util "github.com/goodrain/rainbond/util"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
+	core_util "github.com/wutong-paas/wutong/util"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 )
 
 //Backup GroupBackup
@@ -440,7 +440,7 @@ func (h *BackupHandle) RestoreBackup(br BackupRestore) (*RestoreResult, *util.AP
 	body, _ := ffjson.Marshal(rr)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	_, err = h.etcdCli.Put(ctx, "/rainbond/backup_restore/"+restoreID, string(body))
+	_, err = h.etcdCli.Put(ctx, "/wutong/backup_restore/"+restoreID, string(body))
 	if err != nil {
 		logrus.Errorf("save backup restore history error.")
 		return nil, util.CreateAPIHandleError(500, err)
@@ -452,7 +452,7 @@ func (h *BackupHandle) RestoreBackup(br BackupRestore) (*RestoreResult, *util.AP
 func (h *BackupHandle) RestoreBackupResult(restoreID string) (*RestoreResult, *util.APIHandleError) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	res, err := h.etcdCli.Get(ctx, "/rainbond/backup_restore/"+restoreID)
+	res, err := h.etcdCli.Get(ctx, "/wutong/backup_restore/"+restoreID)
 	if err != nil {
 		return nil, util.CreateAPIHandleError(500, err)
 	}

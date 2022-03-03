@@ -29,10 +29,10 @@ func dns2Config(endpoint *corev1.Endpoints, podNamespace string) (podDNSConfig *
 }
 
 // MakePodDNSConfig make pod dns config
-func MakePodDNSConfig(clientset kubernetes.Interface, podNamespace, rbdNamespace, rbdEndpointDNSName string) (podDNSConfig *corev1.PodDNSConfig) {
-	endpoints, err := clientset.CoreV1().Endpoints(rbdNamespace).Get(context.Background(), rbdEndpointDNSName, metav1.GetOptions{})
+func MakePodDNSConfig(clientset kubernetes.Interface, podNamespace, wtNamespace, wtEndpointDNSName string) (podDNSConfig *corev1.PodDNSConfig) {
+	endpoints, err := clientset.CoreV1().Endpoints(wtNamespace).Get(context.Background(), wtEndpointDNSName, metav1.GetOptions{})
 	if err != nil {
-		logrus.Warningf("get wt-dns[namespace: %s, name: %s] endpoints error: %s", rbdNamespace, rbdEndpointDNSName, err.Error())
+		logrus.Warningf("get wt-dns[namespace: %s, name: %s] endpoints error: %s", wtNamespace, wtEndpointDNSName, err.Error())
 		return nil
 	}
 	return dns2Config(endpoints, podNamespace)

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/goodrain/rainbond/util/dockerfile/command"
+	"github.com/wutong-paas/wutong/util/dockerfile/command"
 )
 
 // Node is a structure used to represent a parse tree.

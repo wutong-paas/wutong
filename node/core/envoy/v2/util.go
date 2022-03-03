@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -39,7 +39,7 @@ import (
 	rsrc "github.com/envoyproxy/go-control-plane/pkg/resource/v2"
 	_struct "github.com/golang/protobuf/ptypes/struct"
 
-	v1 "github.com/goodrain/rainbond/node/core/envoy/v1"
+	v1 "github.com/wutong-paas/wutong/node/core/envoy/v1"
 )
 
 // MessageToStruct converts from proto message to proto Struct
@@ -136,8 +136,8 @@ const (
 	KeyHealthCheckInterval string = "HealthCheckInterval"
 )
 
-//RainbondPluginOptions rainbond plugin config struct
-type RainbondPluginOptions struct {
+//WutongPluginOptions wutong plugin config struct
+type WutongPluginOptions struct {
 	Prefix                   string
 	MaxConnections           int
 	MaxRequests              int
@@ -159,14 +159,14 @@ type RainbondPluginOptions struct {
 	HealthCheckInterval      int64
 }
 
-//RainbondInboundPluginOptions rainbond inbound plugin options
-type RainbondInboundPluginOptions struct {
+//WutongInboundPluginOptions wutong inbound plugin options
+type WutongInboundPluginOptions struct {
 	OpenLimit   bool
 	LimitDomain string
 }
 
 //RouteBasicHash get basic hash for weight
-func (r RainbondPluginOptions) RouteBasicHash() string {
+func (r WutongPluginOptions) RouteBasicHash() string {
 	key := sha256.New()
 	var header string
 	sort.Sort(r.Headers)
@@ -179,8 +179,8 @@ func (r RainbondPluginOptions) RouteBasicHash() string {
 
 //GetOptionValues get value from options
 //if not exist,return default value
-func GetOptionValues(sr map[string]interface{}) RainbondPluginOptions {
-	rpo := RainbondPluginOptions{
+func GetOptionValues(sr map[string]interface{}) WutongPluginOptions {
+	rpo := WutongPluginOptions{
 		Prefix:                "/",
 		MaxConnections:        10240,
 		MaxRequests:           10240,
@@ -302,8 +302,8 @@ func GetOptionValues(sr map[string]interface{}) RainbondPluginOptions {
 	return rpo
 }
 
-//GetRainbondInboundPluginOptions get rainbond inbound plugin options
-func GetRainbondInboundPluginOptions(sr map[string]interface{}) (r RainbondInboundPluginOptions) {
+//GetWutongPluginOptions get wutong inbound plugin options
+func GetWutongInboundPluginOptions(sr map[string]interface{}) (r WutongInboundPluginOptions) {
 	for k, v := range sr {
 		switch k {
 		case "OPEN_LIMIT":

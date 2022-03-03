@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,23 +29,23 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/goodrain/rainbond/api/handler"
-	"github.com/goodrain/rainbond/api/model"
-	api_model "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	ctxutil "github.com/goodrain/rainbond/api/util/ctx"
-	"github.com/goodrain/rainbond/cmd"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/errors"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	mqclient "github.com/goodrain/rainbond/mq/client"
-	validation "github.com/goodrain/rainbond/util/endpoint"
-	"github.com/goodrain/rainbond/util/fuzzy"
-	validator "github.com/goodrain/rainbond/util/govalidator"
-	httputil "github.com/goodrain/rainbond/util/http"
-	"github.com/goodrain/rainbond/worker/client"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/model"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
+	"github.com/wutong-paas/wutong/cmd"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/errors"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
+	validation "github.com/wutong-paas/wutong/util/endpoint"
+	"github.com/wutong-paas/wutong/util/fuzzy"
+	validator "github.com/wutong-paas/wutong/util/govalidator"
+	httputil "github.com/wutong-paas/wutong/util/http"
+	"github.com/wutong-paas/wutong/worker/client"
 )
 
 //V2Routes v2Routes

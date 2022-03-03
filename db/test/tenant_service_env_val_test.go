@@ -3,9 +3,9 @@ package db_test
 import (
 	"testing"
 
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/db/test/fixtures"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/db/test/fixtures"
 )
 
 func TestTenantServiceEnvVarDaoImpl_DelByServiceIDAndScope(t *testing.T) {

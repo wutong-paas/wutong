@@ -8,7 +8,7 @@
         "resourceVersion": "357147",
         "creationTimestamp": "2019-08-29T07:32:40Z",
         "labels": {
-            "creater": "Rainbond",
+            "creater": "Wutong",
             "creater_id": "1567063959797319374",
             "name": "gr4c4cc4",
             "pod-template-hash": "2516269873",
@@ -19,7 +19,7 @@
             "version": "20190829144831"
         },
         "annotations": {
-            "rainbond.com/tolerate-unready-endpoints": "true"
+            "wutong-paas.com/tolerate-unready-endpoints": "true"
         },
         "ownerReferences": [
             {

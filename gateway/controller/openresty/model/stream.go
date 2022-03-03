@@ -1,6 +1,6 @@
 package model
 
-import "github.com/goodrain/rainbond/cmd/gateway/option"
+import "github.com/wutong-paas/wutong/cmd/gateway/option"
 
 // Stream -
 type Stream struct {

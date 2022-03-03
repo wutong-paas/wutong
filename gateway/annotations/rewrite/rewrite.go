@@ -21,8 +21,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/goodrain/rainbond/gateway/annotations/parser"
-	"github.com/goodrain/rainbond/gateway/annotations/resolver"
+	"github.com/wutong-paas/wutong/gateway/annotations/parser"
+	"github.com/wutong-paas/wutong/gateway/annotations/resolver"
 	"github.com/sirupsen/logrus"
 )
 

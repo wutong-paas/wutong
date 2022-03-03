@@ -7,12 +7,12 @@ import (
 	"os"
 	"path"
 
-	rainbondv1alpha1 "github.com/goodrain/rainbond-operator/api/v1alpha1"
-	"github.com/goodrain/rainbond/api/region"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/cmd/grctl/option"
-	"github.com/goodrain/rainbond/grctl/clients"
 	"github.com/urfave/cli"
+	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
+	"github.com/wutong-paas/wutong/api/region"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/cmd/grctl/option"
+	"github.com/wutong-paas/wutong/grctl/clients"
 	yaml "gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,7 +45,7 @@ func NewCmdInstall() cli.Command {
 			},
 			cli.StringFlag{
 				Name:   "namespace,ns",
-				Usage:  "rainbond namespace",
+				Usage:  "wutong namespace",
 				EnvVar: "RBDNamespace",
 				Value:  "wt-system",
 			},
@@ -61,11 +61,11 @@ func NewCmdInstall() cli.Command {
 			}
 			regionAPIIP := c.StringSlice("gateway-ip")
 			if len(regionAPIIP) == 0 {
-				var cluster rainbondv1alpha1.RainbondCluster
-				err := clients.RainbondKubeClient.Get(context.Background(),
-					types.NamespacedName{Namespace: namespace, Name: "rainbondcluster"}, &cluster)
+				var cluster wutongv1alpha1.WutongCluster
+				err := clients.WutongKubeClient.Get(context.Background(),
+					types.NamespacedName{Namespace: namespace, Name: "wutongcluster"}, &cluster)
 				if err != nil {
-					showError(fmt.Sprintf("get rainbond cluster config failure %s", err.Error()))
+					showError(fmt.Sprintf("get wutong cluster config failure %s", err.Error()))
 				}
 				gatewayIP := cluster.GatewayIngressIPs()
 				if len(gatewayIP) == 0 {

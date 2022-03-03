@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/webcli/app"
 	"github.com/sirupsen/logrus"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/webcli/app"
 	restclient "k8s.io/client-go/rest"
 )
 
@@ -17,7 +17,7 @@ func main() {
 	if err != nil {
 		logrus.Error(err)
 	}
-	config.UserAgent = "rainbond/webcli"
+	config.UserAgent = "wutong/webcli"
 	app.SetConfigDefaults(config)
 	restClient, err := restclient.RESTClientFor(config)
 	if err != nil {
@@ -30,7 +30,7 @@ func main() {
 	commands := []string{"sh"}
 	req := restClient.Post().
 		Resource("pods").
-		Name("rainbond-operator-0").
+		Name("wutong-operator-0").
 		Namespace(namespace).
 		SubResource("exec").
 		Param("container", "operator").

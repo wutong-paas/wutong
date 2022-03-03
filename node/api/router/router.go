@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,8 +23,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/goodrain/rainbond/node/api/controller"
-	"github.com/goodrain/rainbond/util/log"
+	"github.com/wutong-paas/wutong/node/api/controller"
+	"github.com/wutong-paas/wutong/util/log"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -90,9 +90,9 @@ func Routers(mode string) *chi.Mux {
 				r.Get("/{node_id}/conditions", controller.ListNodeCondition)
 				r.Delete("/{node_id}/conditions/{condition}", controller.DeleteNodeCondition)
 				// about node install
-				r.Post("/{node_id}/install", controller.InstallNode)  //install node
-				r.Post("/", controller.AddNode)                       //add node
-				r.Delete("/{node_id}", controller.DeleteRainbondNode) //delete node
+				r.Post("/{node_id}/install", controller.InstallNode) //install node
+				r.Post("/", controller.AddNode)                      //add node
+				r.Delete("/{node_id}", controller.DeleteWutongNode)  //delete node
 			})
 		}
 	})

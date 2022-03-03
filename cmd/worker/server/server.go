@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -24,23 +24,23 @@ import (
 	"syscall"
 
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/cmd/worker/option"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/config"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/pkg/common"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/worker/appm/componentdefinition"
-	"github.com/goodrain/rainbond/worker/appm/controller"
-	"github.com/goodrain/rainbond/worker/appm/store"
-	"github.com/goodrain/rainbond/worker/discover"
-	"github.com/goodrain/rainbond/worker/gc"
-	"github.com/goodrain/rainbond/worker/master"
-	"github.com/goodrain/rainbond/worker/monitor"
-	"github.com/goodrain/rainbond/worker/server"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/worker/option"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/config"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/pkg/common"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/worker/appm/componentdefinition"
+	"github.com/wutong-paas/wutong/worker/appm/controller"
+	"github.com/wutong-paas/wutong/worker/appm/store"
+	"github.com/wutong-paas/wutong/worker/discover"
+	"github.com/wutong-paas/wutong/worker/gc"
+	"github.com/wutong-paas/wutong/worker/master"
+	"github.com/wutong-paas/wutong/worker/monitor"
+	"github.com/wutong-paas/wutong/worker/server"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/flowcontrol"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -92,13 +92,13 @@ func Run(s *option.Worker) error {
 		logrus.Errorf("create kube runtime client error: %s", err.Error())
 		return err
 	}
-	rainbondClient := versioned.NewForConfigOrDie(restConfig)
+	wutongClient := versioned.NewForConfigOrDie(restConfig)
 	//step 3: create componentdefinition builder factory
 	componentdefinition.NewComponentDefinitionBuilder(s.Config.RBDNamespace)
 
 	//step 4: create component resource store
 	updateCh := channels.NewRingChannel(1024)
-	cachestore := store.NewStore(restConfig, clientset, rainbondClient, db.GetManager(), s.Config)
+	cachestore := store.NewStore(restConfig, clientset, wutongClient, db.GetManager(), s.Config)
 	if err := cachestore.Start(); err != nil {
 		logrus.Error("start kube cache store error", err)
 		return err
@@ -109,7 +109,7 @@ func Run(s *option.Worker) error {
 	defer controllerManager.Stop()
 
 	//step 6 : start runtime master
-	masterCon, err := master.NewMasterController(s.Config, cachestore, clientset, rainbondClient, restConfig)
+	masterCon, err := master.NewMasterController(s.Config, cachestore, clientset, wutongClient, restConfig)
 	if err != nil {
 		return err
 	}

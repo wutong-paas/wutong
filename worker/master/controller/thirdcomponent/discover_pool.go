@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2021-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2021-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -24,10 +24,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	dis "github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/discover"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/prober"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	dis "github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/discover"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/prober"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"

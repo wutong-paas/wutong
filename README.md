@@ -1,31 +1,31 @@
-<img src="https://grstatic.oss-cn-shanghai.aliyuncs.com/images/rainbond%20log_full.png" width="60%">
+<img src="https://grstatic.oss-cn-shanghai.aliyuncs.com/images/wutong%20log_full.png" width="60%">
 
-[![Rainbond](https://jaywcjlove.github.io/sb/lang/chinese.svg)](README-zh.md)
-[![GitHub stars](https://img.shields.io/github/stars/goodrain/rainbond.svg?style=flat-square)](https://github.com/goodrain/rainbond/stargazers)
-![Rainbond version](https://img.shields.io/badge/version-v5.5-brightgreen.svg)
-[![GoDoc](https://godoc.org/github.com/goodrain/rainbond?status.svg)](https://godoc.org/github.com/goodrain/rainbond)
+[![Wutong](https://jaywcjlove.github.io/sb/lang/chinese.svg)](README-zh.md)
+[![GitHub stars](https://img.shields.io/github/stars/wutong-paas/wutong.svg?style=flat-square)](https://github.com/wutong-paas/wutong/stargazers)
+![Wutong version](https://img.shields.io/badge/version-v5.5-brightgreen.svg)
+[![GoDoc](https://godoc.org/github.com/wutong-paas/wutong?status.svg)](https://godoc.org/github.com/wutong-paas/wutong)
 
-[Website](http://www.rainbond.com?channel=github) • [Documentation](https://www.rainbond.com/docs?channel=github)
+[Website](http://www.wutong-paas.com?channel=github) • [Documentation](https://github.com/wutong-paas/wutong-docs?channel=github)
 
 | ![notification](./docs/bell-outline-badge.svg) What is NEW!                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------------- |
-| December 13, 2021 ,Rainbond 5.5.0 version is officially released [View Release](https://www.rainbond.com/docs/community/change/5.4.0-5.5.0?channel=github)        |
+| December 13, 2021 ,Wutong 5.5.0 version is officially released [View Release](https://github.com/wutong-paas/wutong-docs/community/change/5.4.0-5.5.0?channel=github)        |
 
-## Rainbond Introduction
+## Wutong Introduction
 
 <b>Cloud native and easy-to-use application management platform</b>
 
-Rainbond is a cloud native and easy-to-use application management platform, a best practice for cloud native application delivery, and easy to use. Focus on the application-centric concept. Enabling enterprises to build cloud native development cloud, cloud native delivery cloud.
+Wutong is a cloud native and easy-to-use application management platform, a best practice for cloud native application delivery, and easy to use. Focus on the application-centric concept. Enabling enterprises to build cloud native development cloud, cloud native delivery cloud.
 
-<b>For Enterprise：</b> Rainbond is a cloud native platform that can be used directly out of the box，With Rainbond, you can quickly complete the cloud-native transformation of the enterprise R&D and delivery system.
+<b>For Enterprise：</b> Wutong is a cloud native platform that can be used directly out of the box，With Wutong, you can quickly complete the cloud-native transformation of the enterprise R&D and delivery system.
 
-<b>For Developers：</b> Develop, test and operate enterprise business applications based on Rainbond，You can get a full range of cloud native technology capabilities out of the box. Including but not limited to continuous integration, service governance, architecture support, multi-dimensional application observation, and traffic management.
+<b>For Developers：</b> Develop, test and operate enterprise business applications based on Wutong，You can get a full range of cloud native technology capabilities out of the box. Including but not limited to continuous integration, service governance, architecture support, multi-dimensional application observation, and traffic management.
 
-<b>For Delivery engineer：</b> Build a product version management system based on Rainbond and build a standardized customer delivery environment, so that the traditional delivery process can be automated, simplified and manageable.
+<b>For Delivery engineer：</b> Build a product version management system based on Wutong and build a standardized customer delivery environment, so that the traditional delivery process can be automated, simplified and manageable.
 
-[Request Demo](https://cloud.goodrain.com/enterprise-server/trial)
+[Request Demo](https://cloud.wutong-paas.com/enterprise-server/trial)
 
-#### With Rainbond you can:
+#### With Wutong you can:
 
 - Enterprise cloud native DevOps.
 - Set up To B software delivery system.
@@ -36,43 +36,43 @@ Rainbond is a cloud native and easy-to-use application management platform, a be
 - Enterprise Technology Center Construction.
 - Kubernetes multi-cloud management.
 
-[Read Rainbond Detailed introduction](https://www.rainbond.com/docs/quick-start/rainbond_overview?channel=github)
+[Read Wutong Detailed introduction](https://github.com/wutong-paas/wutong-docs/quick-start/wutong_overview?channel=github)
 
-[Rainbond Roadmap](https://github.com/goodrain/rainbond/issues?q=is%3Aissue+is%3Aopen+label%3A%22Feature+Suggestions%22)
+[Wutong Roadmap](https://github.com/wutong-paas/wutong/issues?q=is%3Aissue+is%3Aopen+label%3A%22Feature+Suggestions%22)
 
 ## Quick start
 
-1.  [Install Rainbond Cluster](https://www.rainbond.com/docs/quick-start/rainbond_install?channel=github)
-2.  [Create an Application and Component](https://www.rainbond.com/docs/get-start/create-app-from-source?channel=github)
-3.  [Build ServiceMesh microservice architecture](https://www.rainbond.com/docs/get-start/create-dependency?channel=github)
-4.  [Watch the tutorial video](https://www.rainbond.com/video.html?channel=github)
+1.  [Install Wutong Cluster](https://github.com/wutong-paas/wutong-docs/quick-start/wutong_install?channel=github)
+2.  [Create an Application and Component](https://github.com/wutong-paas/wutong-docs/get-start/create-app-from-source?channel=github)
+3.  [Build ServiceMesh microservice architecture](https://github.com/wutong-paas/wutong-docs/get-start/create-dependency?channel=github)
+4.  [Watch the tutorial video](https://www.wutong-paas.com/video.html?channel=github)
 
 ## Community
 
-[Rainbond Community](https://t.goodrain.com) You are welcome to read or contribute to the use cases of Rainbond in the community.
+[Wutong Community](https://t.wutong-paas.com) You are welcome to read or contribute to the use cases of Wutong in the community.
 
-[Rainbond Website](https://www.rainbond.com?channel=github) Read more about Rainbond.
+[Wutong Website](https://www.wutong-paas.com?channel=github) Read more about Wutong.
 
-Wechat scans the code to join the Rainbond Community Group.
+Wechat scans the code to join the Wutong Community Group.
 
-<img width="300px" src="https://static.goodrain.com/wechat/WechatQRCode.gif"/>
+<img width="300px" src="https://static.wutong-paas.com/wechat/WechatQRCode.gif"/>
 
 
 DingTalk Search Group : 31096419
 
 ## Related repositorys
 
-- [Rainbond-Console](https://github.com/goodrain/rainbond-console)
-- [Rainbond-Console-UI](https://github.com/goodrain/rainbond-ui)
-- [Rainbond-Operator](https://github.com/goodrain/rainbond-operator)
-- [Rainbond-Builder](https://github.com/goodrain/builder)
-- [Rainbond-Docs](https://github.com/goodrain/rainbond-docs)
+- [Wutong-Console](https://github.com/wutong-paas/wutong-console)
+- [Wutong-Console-UI](https://github.com/wutong-paas/wutong-ui)
+- [Wutong-Operator](https://github.com/wutong-paas/wutong-operator)
+- [Wutong-Builder](https://github.com/wutong-paas/builder)
+- [Wutong-Docs](https://github.com/wutong-paas/wutong-docs)
 
 ## Contributing
 
-Check out [CONTRIBUTING](https://github.com/goodrain/rainbond/blob/V5.4/CONTRIBUTING.md) to see how to develop with Rainbond.
+Check out [CONTRIBUTING](https://github.com/wutong-paas/wutong/blob/V5.4/CONTRIBUTING.md) to see how to develop with Wutong.
 
 ## License
 
-Rainbond follow LGPL-3.0 license，Details see[LICENSE](https://github.com/goodrain/rainbond/blob/master/LICENSE) and [Licensing](https://github.com/goodrain/rainbond/blob/master/Licensing.md)
+Wutong follow LGPL-3.0 license，Details see[LICENSE](https://github.com/wutong-paas/wutong/blob/master/LICENSE) and [Licensing](https://github.com/wutong-paas/wutong/blob/master/Licensing.md)
 

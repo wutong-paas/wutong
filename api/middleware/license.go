@@ -3,9 +3,9 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/goodrain/rainbond/cmd/api/option"
-	httputil "github.com/goodrain/rainbond/util/http"
-	licutil "github.com/goodrain/rainbond/util/license"
+	"github.com/wutong-paas/wutong/cmd/api/option"
+	httputil "github.com/wutong-paas/wutong/util/http"
+	licutil "github.com/wutong-paas/wutong/util/license"
 )
 
 // License -

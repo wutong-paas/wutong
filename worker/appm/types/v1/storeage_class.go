@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -19,10 +19,11 @@
 package v1
 
 import (
+	"os"
+
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
 )
 
 // kind: StorageClass
@@ -35,11 +36,11 @@ import (
 var initStorageClass []*storagev1.StorageClass
 var initLocalStorageClass []*storagev1.StorageClass
 
-//RainbondStatefuleShareStorageClass rainbond support statefulset app share volume
-var RainbondStatefuleShareStorageClass = "rainbondsssc"
+//WutongStatefuleShareStorageClass wutong support statefulset app share volume
+var WutongStatefuleShareStorageClass = "wutongsssc"
 
-//RainbondStatefuleLocalStorageClass rainbond support statefulset app local volume
-var RainbondStatefuleLocalStorageClass = "rainbondslsc"
+//WutongStatefuleLocalStorageClass wutong support statefulset app local volume
+var WutongStatefuleLocalStorageClass = "wutongslsc"
 
 func init() {
 	var volumeBindingImmediate = storagev1.VolumeBindingImmediate
@@ -47,23 +48,23 @@ func init() {
 	var Retain = v1.PersistentVolumeReclaimRetain
 	initStorageClass = append(initStorageClass, &storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: RainbondStatefuleShareStorageClass,
+			Name: WutongStatefuleShareStorageClass,
 		},
-		Provisioner:       "rainbond.io/provisioner-sssc",
+		Provisioner:       "wutong.io/provisioner-sssc",
 		VolumeBindingMode: &volumeBindingImmediate,
 		ReclaimPolicy:     &Retain,
 	})
 	initStorageClass = append(initStorageClass, &storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: RainbondStatefuleLocalStorageClass,
+			Name: WutongStatefuleLocalStorageClass,
 		},
-		Provisioner:       "rainbond.io/provisioner-sslc",
+		Provisioner:       "wutong.io/provisioner-sslc",
 		VolumeBindingMode: &columeWaitForFirstConsumer,
 		ReclaimPolicy:     &Retain,
 	})
 	initLocalStorageClass = append(initLocalStorageClass, &storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: RainbondStatefuleShareStorageClass,
+			Name: WutongStatefuleShareStorageClass,
 		},
 		Provisioner:       "rancher.io/local-path",
 		VolumeBindingMode: &columeWaitForFirstConsumer,
@@ -71,7 +72,7 @@ func init() {
 	})
 	initLocalStorageClass = append(initLocalStorageClass, &storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: RainbondStatefuleLocalStorageClass,
+			Name: WutongStatefuleLocalStorageClass,
 		},
 		Provisioner:       "rancher.io/local-path",
 		VolumeBindingMode: &columeWaitForFirstConsumer,

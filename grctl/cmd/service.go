@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -27,16 +27,16 @@ import (
 	"strings"
 	"time"
 
-	eventdb "github.com/goodrain/rainbond/eventlog/db"
-	"github.com/goodrain/rainbond/grctl/clients"
-	coreutil "github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/util/constants"
-	"github.com/goodrain/rainbond/util/termtables"
 	"github.com/gorilla/websocket"
 	"github.com/gosuri/uitable"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli"
+	eventdb "github.com/wutong-paas/wutong/eventlog/db"
+	"github.com/wutong-paas/wutong/grctl/clients"
+	coreutil "github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/constants"
+	"github.com/wutong-paas/wutong/util/termtables"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -57,7 +57,7 @@ func NewCmdService() cli.Command {
 						FilePath: GetTenantNamePath(),
 					},
 				},
-				Usage: "list show application services runtime detail info。For example <grctl service list -t goodrain>",
+				Usage: "list show application services runtime detail info。For example <grctl service list -t wutong>",
 				Action: func(c *cli.Context) error {
 					//logrus.Warn(conf.TenantNamePath)
 					Common(c)
@@ -74,7 +74,7 @@ func NewCmdService() cli.Command {
 						FilePath: GetTenantNamePath(),
 					},
 				},
-				Usage: "Get application service runtime detail info。For example <grctl service get <service_alias> -t goodrain>",
+				Usage: "Get application service runtime detail info。For example <grctl service get <service_alias> -t wutong>",
 				Action: func(c *cli.Context) error {
 					Common(c)
 					return showServiceDeployInfo(c)
@@ -82,7 +82,7 @@ func NewCmdService() cli.Command {
 			},
 			cli.Command{
 				Name:  "start",
-				Usage: "Start an application service, For example <grctl service start goodrain/gra564a1>",
+				Usage: "Start an application service, For example <grctl service start wutong/gra564a1>",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
 						Name:  "f",
@@ -106,7 +106,7 @@ func NewCmdService() cli.Command {
 			},
 			cli.Command{
 				Name:  "stop",
-				Usage: "Stop an application service, For example <grctl service stop goodrain/gra564a1>",
+				Usage: "Stop an application service, For example <grctl service stop wutong/gra564a1>",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
 						Name:  "f",
@@ -265,7 +265,7 @@ func startService(c *cli.Context) error {
 	//GET /v2/tenants/{tenant_name}/services/{service_alias}
 	//POST /v2/tenants/{tenant_name}/services/{service_alias}/stop
 
-	// goodrain/gra564a1
+	// wutong/gra564a1
 	serviceAlias := c.Args().First()
 	tenantName := c.String("tenantAlias")
 	info := strings.Split(serviceAlias, "/")

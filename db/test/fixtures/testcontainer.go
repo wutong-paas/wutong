@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goodrain/rainbond/db"
-	dbconfig "github.com/goodrain/rainbond/db/config"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/wutong-paas/wutong/db"
+	dbconfig "github.com/wutong-paas/wutong/db/config"
 )
 
 // InitDBManager initiates a db manager with a real mysql provided by testcontainers-go.
 func InitDBManager() error {
 	dbname := "region"
-	rootpw := "rainbond"
+	rootpw := "wutong"
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{

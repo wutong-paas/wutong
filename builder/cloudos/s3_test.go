@@ -35,7 +35,7 @@ func TestS3GetObject(t *testing.T) {
 		t.Fatalf("create s3 driver: %v", err)
 	}
 
-	if err := cs.GetObject("goodrain-logo.png", "goodrain-logo2.png"); err != nil {
+	if err := cs.GetObject("wutong-logo.png", "wutong-logo2.png"); err != nil {
 		t.Error(err)
 	}
 }
@@ -53,7 +53,7 @@ func TestS3DeleteObject(t *testing.T) {
 		t.Fatalf("create s3 driver: %v", err)
 	}
 
-	if err := cs.DeleteObject("goodrain-logo.png"); err != nil {
+	if err := cs.DeleteObject("wutong-logo.png"); err != nil {
 		t.Error(err)
 	}
 }

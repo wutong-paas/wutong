@@ -1198,7 +1198,7 @@
                   "x-go-name": "GitURL"
                 },
                 "image_local": {
-                  "description": "插件goodrain地址\nin: body",
+                  "description": "插件wutong地址\nin: body",
                   "type": "string",
                   "x-go-name": "ImageLocal"
                 },
@@ -1304,7 +1304,7 @@
                   "x-go-name": "GitURL"
                 },
                 "image_local": {
-                  "description": "插件goodrain地址\nin: body",
+                  "description": "插件wutong地址\nin: body",
                   "type": "string",
                   "x-go-name": "ImageLocal"
                 },
@@ -5126,7 +5126,7 @@
           "x-go-name": "ShareID"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/api/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/api/model"
     },
     "PluginDefaultENV": {
       "description": "PluginDefaultENV 插件默认环境变量",
@@ -5152,7 +5152,7 @@
           "x-go-name": "PluginID"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/api/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/api/model"
     },
     "SlugShare": {
       "description": "SlugShare Slug 类型",
@@ -5199,7 +5199,7 @@
           "x-go-name": "TenantID"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/api/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/api/model"
     },
     "TenantServiceEnvVar": {
       "description": "TenantServiceEnvVar  应用环境变量",
@@ -5244,7 +5244,7 @@
           "x-go-name": "TenantID"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/db/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/db/model"
     },
     "TenantServiceRelation": {
       "description": "TenantServiceRelation 应用依赖关系",
@@ -5277,7 +5277,7 @@
           "x-go-name": "TenantID"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/db/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/db/model"
     },
     "TenantServiceVolume": {
       "description": "TenantServiceVolume 应用持久化纪录",
@@ -5323,7 +5323,7 @@
           "x-go-name": "VolumeType"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/db/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/db/model"
     },
     "TenantServicesPort": {
       "description": "TenantServicesPort 应用端口信息",
@@ -5368,7 +5368,7 @@
           "x-go-name": "TenantID"
         }
       },
-      "x-go-package": "github.com/goodrain/rainbond/pkg/api/model"
+      "x-go-package": "github.com/wutong-paas/wutong/pkg/api/model"
     },
     "Values": {
       "description": "It is typically used for query parameters and form values.\nUnlike in the http.Header map, the keys in a Values map\nare case-sensitive.",

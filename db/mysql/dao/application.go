@@ -1,8 +1,8 @@
 package dao
 
 import (
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db/model"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

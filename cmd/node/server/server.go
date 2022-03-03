@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,22 +25,22 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/discover.v2"
-	eventLog "github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/node/api"
-	"github.com/goodrain/rainbond/node/api/controller"
-	"github.com/goodrain/rainbond/node/core/store"
-	"github.com/goodrain/rainbond/node/initiate"
-	"github.com/goodrain/rainbond/node/kubecache"
-	"github.com/goodrain/rainbond/node/masterserver"
-	"github.com/goodrain/rainbond/node/nodem"
-	"github.com/goodrain/rainbond/node/nodem/docker"
-	"github.com/goodrain/rainbond/node/nodem/envoy"
-	"github.com/goodrain/rainbond/util/constants"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/discover.v2"
+	eventLog "github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/node/api"
+	"github.com/wutong-paas/wutong/node/api/controller"
+	"github.com/wutong-paas/wutong/node/core/store"
+	"github.com/wutong-paas/wutong/node/initiate"
+	"github.com/wutong-paas/wutong/node/kubecache"
+	"github.com/wutong-paas/wutong/node/masterserver"
+	"github.com/wutong-paas/wutong/node/nodem"
+	"github.com/wutong-paas/wutong/node/nodem/docker"
+	"github.com/wutong-paas/wutong/node/nodem/envoy"
+	"github.com/wutong-paas/wutong/util/constants"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -112,7 +112,7 @@ func Run(cfg *option.Conf) error {
 		}
 
 		logrus.Debugf("wt-namespace=%s; wt-docker-secret=%s", os.Getenv("RBD_NAMESPACE"), os.Getenv("RBD_DOCKER_SECRET"))
-		// sync docker inscure registries cert info into all rainbond node
+		// sync docker inscure registries cert info into all wutong node
 		if err = docker.SyncDockerCertFromSecret(clientset, os.Getenv("RBD_NAMESPACE"), os.Getenv("RBD_DOCKER_SECRET")); err != nil { // TODO fanyangyang namespace secretname
 			return fmt.Errorf("sync docker cert from secret error: %s", err.Error())
 		}

@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -26,19 +26,19 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/node/api/model"
-	"github.com/goodrain/rainbond/node/kubecache"
-	"github.com/goodrain/rainbond/node/masterserver/node"
-	"github.com/goodrain/rainbond/node/nodem/client"
-	"github.com/goodrain/rainbond/node/utils"
-	"github.com/goodrain/rainbond/util"
-	ansibleUtil "github.com/goodrain/rainbond/util/ansible"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	licutil "github.com/goodrain/rainbond/util/license"
 	"github.com/sirupsen/logrus"
 	"github.com/twinj/uuid"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/node/api/model"
+	"github.com/wutong-paas/wutong/node/kubecache"
+	"github.com/wutong-paas/wutong/node/masterserver/node"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	"github.com/wutong-paas/wutong/node/utils"
+	"github.com/wutong-paas/wutong/util"
+	ansibleUtil "github.com/wutong-paas/wutong/util/ansible"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	licutil "github.com/wutong-paas/wutong/util/license"
 )
 
 //NodeService node service
@@ -121,7 +121,7 @@ func (n *NodeService) InstallNode(node *client.HostNode) *utils.APIHandleError {
 // check install scripts exists or not, if more than one master node has install scripts, choose one master node do it
 func (n *NodeService) beforeInstall() (flag bool, err error) {
 	// ansible file must exists
-	// if ok, _ := util.FileExists("/opt/rainbond/rainbond-ansible/scripts/node.sh"); !ok {
+	// if ok, _ := util.FileExists("/opt/wutong/wutong-ansible/scripts/node.sh"); !ok {
 	// 	// TODO 通过etcd创建任务？
 	// 	return false, nil
 	// }
@@ -140,11 +140,11 @@ func (n *NodeService) writeHostsFile() error {
 	// use the value of environment if it is empty use default value
 	hostsFilePath := os.Getenv("HOSTS_FILE_PATH")
 	if hostsFilePath == "" {
-		hostsFilePath = "/opt/rainbond/rainbond-ansible/inventory/hosts"
+		hostsFilePath = "/opt/wutong/wutong-ansible/inventory/hosts"
 	}
 	installConfPath := os.Getenv("INSTALL_CONF_PATH")
 	if installConfPath == "" {
-		installConfPath = "/opt/rainbond/rainbond-ansible/scripts/installer/global.sh"
+		installConfPath = "/opt/wutong/wutong-ansible/scripts/installer/global.sh"
 	}
 	erro := ansibleUtil.WriteHostsFile(hostsFilePath, installConfPath, hosts)
 	if erro != nil {

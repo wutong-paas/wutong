@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/docker/go-metrics"
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/prober/results"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/prober/results"
 	"k8s.io/apimachinery/pkg/util/runtime"
 )
 

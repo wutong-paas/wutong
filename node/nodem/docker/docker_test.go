@@ -15,7 +15,7 @@ func Test_saveORUpdateFile(t *testing.T) {
 }
 
 func TestSync(t *testing.T) {
-	config, err := clientcmd.BuildConfigFromFlags("", "/Users/fanyangyang/Documents/company/goodrain/remote/192.168.2.200/admin.kubeconfig")
+	config, err := clientcmd.BuildConfigFromFlags("", "/Users/fanyangyang/Documents/company/wutong/remote/192.168.2.200/admin.kubeconfig")
 	if err != nil {
 		t.Fatal("build config from flag error: ", err.Error())
 	}

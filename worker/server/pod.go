@@ -7,9 +7,9 @@ import (
 	"sort"
 	"time"
 
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/worker/server/pb"
-	"github.com/goodrain/rainbond/worker/util"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/worker/server/pb"
+	"github.com/wutong-paas/wutong/worker/util"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

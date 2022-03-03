@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -32,7 +32,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/goodrain/rainbond/cmd/node/option"
+	"github.com/wutong-paas/wutong/cmd/node/option"
 )
 
 //RFC3339NanoFixed time format
@@ -318,7 +318,7 @@ func (container *ContainerLog) StartLogging() error {
 	loggers, err := container.startLogger()
 	if err != nil {
 		if err == ErrNeglectedContainer {
-			logrus.Debugf("find a container %s that do not define rainbond logger.", container.Name)
+			logrus.Debugf("find a container %s that do not define wutong logger.", container.Name)
 			return ErrNeglectedContainer
 		}
 		return fmt.Errorf("failed to initialize logging driver: %v", err)
@@ -421,7 +421,7 @@ func (container *ContainerLog) Stop() {
 	container.since = time.Now()
 	var containerLogStop = true
 	container.stoped = &containerLogStop
-	logrus.Debugf("rainbond logger stop for container %s", container.Name)
+	logrus.Debugf("wutong logger stop for container %s", container.Name)
 }
 
 //Close close
@@ -430,5 +430,5 @@ func (container *ContainerLog) Close() {
 		container.LogCopier.Close()
 	}
 	container.cancel()
-	logrus.Debugf("rainbond logger close for container %s", container.Name)
+	logrus.Debugf("wutong logger close for container %s", container.Name)
 }

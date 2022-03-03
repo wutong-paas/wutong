@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,18 +29,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/docker/docker/client"
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/builder/build"
-	"github.com/goodrain/rainbond/builder/parser"
-	"github.com/goodrain/rainbond/builder/parser/code"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/db"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/util"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/builder/build"
+	"github.com/wutong-paas/wutong/builder/parser"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/util"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -61,8 +61,8 @@ type SourceCodeBuildItem struct {
 	TGZDir        string       `json:"tgz_dir"`
 	DockerClient  *client.Client
 	KubeClient    kubernetes.Interface
-	RbdNamespace  string
-	RbdRepoName   string
+	WtNamespace   string
+	WtRepoName    string
 	TenantID      string
 	ServiceID     string
 	DeployVersion string
@@ -198,7 +198,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 	info := fmt.Sprintf("CodeVersion:%s Author:%s Commit:%s ", hash, i.commit.Author, i.commit.Message)
 	i.Logger.Info(info, map[string]string{"step": "code-version"})
 	if _, ok := i.BuildEnvs["REPARSE"]; ok {
-		_, lang, err := parser.ReadRbdConfigAndLang(rbi)
+		_, lang, err := parser.ReadWtConfigAndLang(rbi)
 		if err != nil {
 			logrus.Errorf("reparse code lange error %s", err.Error())
 			i.Logger.Error(fmt.Sprintf("重新解析代码语言错误"), map[string]string{"step": "builder-exector", "status": "failure"})
@@ -236,7 +236,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 		return nil, err
 	}
 	buildReq := &build.Request{
-		RbdNamespace:  i.RbdNamespace,
+		WtNamespace:   i.WtNamespace,
 		SourceDir:     i.RepoInfo.GetCodeBuildAbsPath(),
 		CacheDir:      i.CacheDir,
 		TGZDir:        i.TGZDir,
@@ -267,9 +267,9 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 }
 
 func (i *SourceCodeBuildItem) getHostAlias() (hostAliasList []build.HostAlias, err error) {
-	endpoints, err := i.KubeClient.CoreV1().Endpoints(i.RbdNamespace).Get(context.Background(), i.RbdRepoName, metav1.GetOptions{})
+	endpoints, err := i.KubeClient.CoreV1().Endpoints(i.WtNamespace).Get(context.Background(), i.WtRepoName, metav1.GetOptions{})
 	if err != nil {
-		logrus.Errorf("do not found ep by name: %s in namespace: %s", i.RbdRepoName, i.Namespace)
+		logrus.Errorf("do not found ep by name: %s in namespace: %s", i.WtRepoName, i.Namespace)
 		return nil, err
 	}
 	hostNames := []string{"maven.wutong.me", "lang.wutong.me"}

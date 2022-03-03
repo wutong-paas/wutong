@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,7 +23,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
+	v1alpha1 "github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -54,13 +54,13 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=rainbond.io, Version=v1alpha1
+	// Group=wutong.io, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("componentdefinitions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Rainbond().V1alpha1().ComponentDefinitions().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Wutong().V1alpha1().ComponentDefinitions().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("helmapps"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Rainbond().V1alpha1().HelmApps().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Wutong().V1alpha1().HelmApps().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("thirdcomponents"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Rainbond().V1alpha1().ThirdComponents().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Wutong().V1alpha1().ThirdComponents().Informer()}, nil
 
 	}
 

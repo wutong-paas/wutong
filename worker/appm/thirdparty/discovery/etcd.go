@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,9 +29,9 @@ import (
 	c "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/db/model"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/db/model"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 )
 
 type etcd struct {
@@ -46,7 +46,7 @@ type etcd struct {
 
 	updateCh *channels.RingChannel
 	stopCh   chan struct{}
-	records  map[string]*v1.RbdEndpoint
+	records  map[string]*v1.WtEndpoint
 }
 
 // NewEtcd creates a new Discorvery which implemeted by etcd.
@@ -62,7 +62,7 @@ func NewEtcd(cfg *model.ThirdPartySvcDiscoveryCfg,
 		password:  cfg.Password,
 		updateCh:  updateCh,
 		stopCh:    stopCh,
-		records:   make(map[string]*v1.RbdEndpoint),
+		records:   make(map[string]*v1.WtEndpoint),
 	}
 }
 
@@ -82,7 +82,7 @@ func (e *etcd) Connect() error {
 }
 
 // Fetch fetches data from Etcd.
-func (e *etcd) Fetch() ([]*v1.RbdEndpoint, error) {
+func (e *etcd) Fetch() ([]*v1.WtEndpoint, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -102,13 +102,13 @@ func (e *etcd) Fetch() ([]*v1.RbdEndpoint, error) {
 		IP   string `json:"ip"`
 		Port int    `json:"port"`
 	}
-	var res []*v1.RbdEndpoint
+	var res []*v1.WtEndpoint
 	for _, kv := range resp.Kvs {
 		var ep ep
 		if err := json.Unmarshal(kv.Value, &ep); err != nil {
 			return nil, fmt.Errorf("error getting data from etcd: %v", err)
 		}
-		endpoint := &v1.RbdEndpoint{
+		endpoint := &v1.WtEndpoint{
 			UUID:     strings.Replace(string(kv.Key), e.key+"/", "", -1),
 			IP:       ep.IP,
 			Port:     ep.Port,
@@ -118,8 +118,8 @@ func (e *etcd) Fetch() ([]*v1.RbdEndpoint, error) {
 		ip := net.ParseIP(ep.IP)
 		if ip == nil {
 			// domain endpoint
-			res = []*v1.RbdEndpoint{endpoint}
-			e.records = make(map[string]*v1.RbdEndpoint)
+			res = []*v1.WtEndpoint{endpoint}
+			e.records = make(map[string]*v1.WtEndpoint)
 			e.records[string(kv.Key)] = endpoint
 			break
 		}
@@ -158,7 +158,7 @@ func (e *etcd) Watch() { // todo: separate stop
 			for _, event := range watResp.Events {
 				switch event.Type {
 				case mvccpb.DELETE:
-					obj := &v1.RbdEndpoint{
+					obj := &v1.WtEndpoint{
 						UUID: strings.Replace(string(event.Kv.Key), e.key+"/", "", -1),
 						Sid:  e.sid,
 					}
@@ -182,7 +182,7 @@ func (e *etcd) Watch() { // todo: separate stop
 						logrus.Warningf("error getting endpoints from etcd: %v", err)
 						continue
 					}
-					obj := &v1.RbdEndpoint{
+					obj := &v1.WtEndpoint{
 						UUID:     strings.Replace(string(event.Kv.Key), e.key+"/", "", -1),
 						Sid:      e.sid,
 						IP:       foo.IP,

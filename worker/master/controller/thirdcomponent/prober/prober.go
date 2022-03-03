@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/prober/results"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/prober/results"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/kubernetes/pkg/probe"

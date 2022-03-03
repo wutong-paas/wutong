@@ -29,7 +29,7 @@ jobs:
       - name: Build the Docker image
         env:
           DISABLE_GOPROXY: true
-          DOMESTIC_BASE_NAME: swr.cn-east-3.myhuaweicloud.com
+          DOMESTIC_BASE_NAME: swr.cn-southwest-2.myhuaweicloud.com
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           DOMESTIC_DOCKER_PASSWORD: ${{ secrets.DOMESTIC_DOCKER_PASSWORD }}

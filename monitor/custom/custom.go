@@ -3,7 +3,7 @@ package custom
 import (
 	"time"
 
-	"github.com/goodrain/rainbond/monitor/prometheus"
+	"github.com/wutong-paas/wutong/monitor/prometheus"
 	"github.com/prometheus/common/model"
 )
 

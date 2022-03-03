@@ -1,11 +1,11 @@
-// Copyright (C) 2nilfmt.Errorf("a")4-2nilfmt.Errorf("a")8 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2nilfmt.Errorf("a")4-2nilfmt.Errorf("a")8 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -21,13 +21,14 @@ package gc
 import (
 	"context"
 	"fmt"
-	"github.com/goodrain/rainbond/db"
 	"os"
 	"path"
 
-	eventutil "github.com/goodrain/rainbond/eventlog/util"
-	"github.com/goodrain/rainbond/worker/discover/model"
+	"github.com/wutong-paas/wutong/db"
+
 	"github.com/sirupsen/logrus"
+	eventutil "github.com/wutong-paas/wutong/eventlog/util"
+	"github.com/wutong-paas/wutong/worker/discover/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -150,7 +151,7 @@ func (g *GarbageCollector) DelKubernetesObjects(serviceGCReq model.ServiceGCTask
 
 func (g *GarbageCollector) listOptionsServiceID(serviceID string) metav1.ListOptions {
 	labelSelector := metav1.LabelSelector{MatchLabels: map[string]string{
-		"creator":    "Rainbond",
+		"creator":    "Wutong",
 		"service_id": serviceID,
 	}}
 	return metav1.ListOptions{

@@ -4,12 +4,12 @@
         "kind": "Pod",
         "metadata": {
             "annotations": {
-                "rainbond.com/tolerate-unready-endpoints": "true"
+                "wutong-paas.com/tolerate-unready-endpoints": "true"
             },
             "creationTimestamp": "2019-08-15T08:26:50Z",
             "generateName": "88d8c4c55657217522f3bb86cfbded7e-deployment-7545b75dbd-",
             "labels": {
-                "creater": "Rainbond",
+                "creater": "Wutong",
                 "creater_id": "1565857609392282795",
                 "name": "grbded7e",
                 "pod-template-hash": "3101631868",
@@ -491,12 +491,12 @@
         "kind": "Pod",
         "metadata": {
             "annotations": {
-                "rainbond.com/tolerate-unready-endpoints": "true"
+                "wutong-paas.com/tolerate-unready-endpoints": "true"
             },
             "creationTimestamp": "2019-08-15T08:26:49Z",
             "generateName": "88d8c4c55657217522f3bb86cfbded7e-deployment-7545b75dbd-",
             "labels": {
-                "creater": "Rainbond",
+                "creater": "Wutong",
                 "creater_id": "1565857609392282795",
                 "name": "grbded7e",
                 "pod-template-hash": "3101631868",
@@ -978,12 +978,12 @@
         "kind": "Pod",
         "metadata": {
             "annotations": {
-                "rainbond.com/tolerate-unready-endpoints": "true"
+                "wutong-paas.com/tolerate-unready-endpoints": "true"
             },
             "creationTimestamp": "2019-08-15T08:26:52Z",
             "generateName": "88d8c4c55657217522f3bb86cfbded7e-deployment-7545b75dbd-",
             "labels": {
-                "creater": "Rainbond",
+                "creater": "Wutong",
                 "creater_id": "1565857609392282795",
                 "name": "grbded7e",
                 "pod-template-hash": "3101631868",

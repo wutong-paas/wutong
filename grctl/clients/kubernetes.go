@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -20,14 +20,15 @@ package clients
 
 import (
 	"fmt"
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"os"
 	"path"
 
-	rainbondv1alpha1 "github.com/goodrain/rainbond-operator/api/v1alpha1"
-	"github.com/goodrain/rainbond/builder/sources"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+
 	"github.com/sirupsen/logrus"
+	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
+	"github.com/wutong-paas/wutong/builder/sources"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -42,15 +43,15 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(rainbondv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(wutongv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 }
 
 //K8SClient K8SClient
 var K8SClient kubernetes.Interface
 
-//RainbondKubeClient rainbond custom resource client
-var RainbondKubeClient client.Client
+//WutongKubeClient wutong custom resource client
+var WutongKubeClient client.Client
 
 //InitClient init k8s client
 func InitClient(kubeconfig string) error {
@@ -84,6 +85,6 @@ func InitClient(kubeconfig string) error {
 	if err != nil {
 		return fmt.Errorf("New kube client failure %+v", err)
 	}
-	RainbondKubeClient = runtimeClient
+	WutongKubeClient = runtimeClient
 	return nil
 }

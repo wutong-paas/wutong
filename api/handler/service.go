@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -22,7 +22,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/goodrain/rainbond/util/constants"
 	"io"
 	"net/http"
 	"os"
@@ -30,31 +29,33 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wutong-paas/wutong/util/constants"
+
 	"github.com/coreos/etcd/clientv3"
-	"github.com/goodrain/rainbond/api/client/prometheus"
-	api_model "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/api/util/license"
-	"github.com/goodrain/rainbond/builder/parser"
-	"github.com/goodrain/rainbond/cmd/api/option"
-	"github.com/goodrain/rainbond/db"
-	dberr "github.com/goodrain/rainbond/db/errors"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/event"
-	gclient "github.com/goodrain/rainbond/mq/client"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	core_util "github.com/goodrain/rainbond/util"
-	typesv1 "github.com/goodrain/rainbond/worker/appm/types/v1"
-	"github.com/goodrain/rainbond/worker/client"
-	"github.com/goodrain/rainbond/worker/discover/model"
-	"github.com/goodrain/rainbond/worker/server"
-	"github.com/goodrain/rainbond/worker/server/pb"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/twinj/uuid"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/api/util/license"
+	"github.com/wutong-paas/wutong/builder/parser"
+	"github.com/wutong-paas/wutong/cmd/api/option"
+	"github.com/wutong-paas/wutong/db"
+	dberr "github.com/wutong-paas/wutong/db/errors"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/event"
+	gclient "github.com/wutong-paas/wutong/mq/client"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	core_util "github.com/wutong-paas/wutong/util"
+	typesv1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/worker/client"
+	"github.com/wutong-paas/wutong/worker/discover/model"
+	"github.com/wutong-paas/wutong/worker/server"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,13 +68,13 @@ var ErrServiceNotClosed = errors.New("Service has not been closed")
 
 //ServiceAction service act
 type ServiceAction struct {
-	MQClient       gclient.MQClient
-	EtcdCli        *clientv3.Client
-	statusCli      *client.AppRuntimeSyncClient
-	prometheusCli  prometheus.Interface
-	conf           option.Config
-	rainbondClient versioned.Interface
-	kubeClient     kubernetes.Interface
+	MQClient      gclient.MQClient
+	EtcdCli       *clientv3.Client
+	statusCli     *client.AppRuntimeSyncClient
+	prometheusCli prometheus.Interface
+	conf          option.Config
+	wutongClient  versioned.Interface
+	kubeClient    kubernetes.Interface
 }
 
 type dCfg struct {
@@ -90,16 +91,16 @@ func CreateManager(conf option.Config,
 	etcdCli *clientv3.Client,
 	statusCli *client.AppRuntimeSyncClient,
 	prometheusCli prometheus.Interface,
-	rainbondClient versioned.Interface,
+	wutongClient versioned.Interface,
 	kubeClient kubernetes.Interface) *ServiceAction {
 	return &ServiceAction{
-		MQClient:       mqClient,
-		EtcdCli:        etcdCli,
-		statusCli:      statusCli,
-		conf:           conf,
-		prometheusCli:  prometheusCli,
-		rainbondClient: rainbondClient,
-		kubeClient:     kubeClient,
+		MQClient:      mqClient,
+		EtcdCli:       etcdCli,
+		statusCli:     statusCli,
+		conf:          conf,
+		prometheusCli: prometheusCli,
+		wutongClient:  wutongClient,
+		kubeClient:    kubeClient,
 	}
 }
 
@@ -2013,7 +2014,7 @@ func (s *ServiceAction) CreateTenant(t *dbmodel.Tenants) error {
 		return fmt.Errorf("tenant name %s is exist", t.Name)
 	}
 	labels := map[string]string{
-		constants.ResourceManagedByLabel: constants.Rainbond,
+		constants.ResourceManagedByLabel: constants.Wutong,
 	}
 	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
 		if err := db.GetManager().TenantDaoTransactions(tx).AddModel(t); err != nil {
@@ -2311,7 +2312,7 @@ func (s *ServiceAction) deleteThirdComponent(ctx context.Context, component *dbm
 	newCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	err = s.rainbondClient.RainbondV1alpha1().ThirdComponents(tenant.Namespace).Delete(newCtx, component.ServiceID, metav1.DeleteOptions{})
+	err = s.wutongClient.WutongV1alpha1().ThirdComponents(tenant.Namespace).Delete(newCtx, component.ServiceID, metav1.DeleteOptions{})
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return err
 	}

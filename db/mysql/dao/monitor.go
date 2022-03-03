@@ -1,11 +1,11 @@
 package dao
 
 import (
-	gormbulkups "github.com/atcdot/gorm-bulk-upsert"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/db/model"
 	"github.com/jinzhu/gorm"
 	pkgerr "github.com/pkg/errors"
+	gormbulkups "github.com/wutong-paas/gorm-bulk-upsert"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db/model"
 )
 
 //TenantServiceMonitorDaoImpl -

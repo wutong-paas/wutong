@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"github.com/docker/distribution/reference" //"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/goodrain/rainbond/builder/parser/types"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/util"
+	"github.com/wutong-paas/wutong/builder/parser/types"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/util"
 	"runtime"
 	"strconv"
 	"strings" //"github.com/docker/docker/client"

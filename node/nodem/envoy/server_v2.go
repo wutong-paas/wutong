@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -35,10 +35,10 @@ import (
 	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/v2"
 	"github.com/envoyproxy/go-control-plane/pkg/server/v2"
-	api_model "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/node/nodem/envoy/conver"
 	"github.com/sirupsen/logrus"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/node/nodem/envoy/conver"
 	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -99,7 +99,7 @@ func (n *NodeConfig) GetID() string {
 //if return true, snapshot need update
 func (n *NodeConfig) TryUpdate(obj interface{}) (needUpdate bool) {
 	if service, ok := obj.(*corev1.Service); ok {
-		if v, ok := service.Labels["creator"]; !ok || v != "Rainbond" {
+		if v, ok := service.Labels["creator"]; !ok || v != "Wutong" {
 			return false
 		}
 		if _, ok := n.dependServices.Load(service.Labels["service_id"]); ok {
@@ -107,7 +107,7 @@ func (n *NodeConfig) TryUpdate(obj interface{}) (needUpdate bool) {
 		}
 	}
 	if endpoints, ok := obj.(*corev1.Endpoints); ok {
-		if v, ok := endpoints.Labels["creator"]; !ok || v != "Rainbond" {
+		if v, ok := endpoints.Labels["creator"]; !ok || v != "Wutong" {
 			return false
 		}
 		if _, ok := n.dependServices.Load(endpoints.Labels["service_id"]); ok {
@@ -274,7 +274,7 @@ func CreateDiscoverServerManager(clientset kubernetes.Interface, conf option.Con
 		queue:  NewQueue(1 * time.Second),
 	}
 	sharedInformers := informers.NewFilteredSharedInformerFactory(dsm.kubecli, time.Second*10, corev1.NamespaceAll, func(options *meta_v1.ListOptions) {
-		options.LabelSelector = "creator=Rainbond"
+		options.LabelSelector = "creator=Wutong"
 	})
 	svcInformer := sharedInformers.Core().V1().Services().Informer()
 	dsm.services = dsm.createCacheHandler(svcInformer, "Services")

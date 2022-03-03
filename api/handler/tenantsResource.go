@@ -3,8 +3,8 @@ package handler
 import (
 	"context"
 
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/util"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

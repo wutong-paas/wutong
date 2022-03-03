@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -21,30 +21,31 @@ package store
 import (
 	"context"
 	"fmt"
-	betav1 "k8s.io/api/networking/v1beta1"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/cmd/worker/option"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	rainbondversioned "github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	"github.com/goodrain/rainbond/pkg/generated/informers/externalversions"
-	"github.com/goodrain/rainbond/util/constants"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/worker/appm/componentdefinition"
-	"github.com/goodrain/rainbond/worker/appm/conversion"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
-	"github.com/goodrain/rainbond/worker/server/pb"
-	workerutil "github.com/goodrain/rainbond/worker/util"
+	betav1 "k8s.io/api/networking/v1beta1"
+
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/cmd/worker/option"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	wutongversioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/pkg/generated/informers/externalversions"
+	"github.com/wutong-paas/wutong/util/constants"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/worker/appm/componentdefinition"
+	"github.com/wutong-paas/wutong/worker/appm/conversion"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/worker/server/pb"
+	workerutil "github.com/wutong-paas/wutong/worker/util"
 	appsv1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -129,7 +130,7 @@ type appRuntimeStore struct {
 	kubeconfig             *rest.Config
 	clientset              kubernetes.Interface
 	crdClient              *internalclientset.Clientset
-	rainbondClient         rainbondversioned.Interface
+	wutongClient           wutongversioned.Interface
 	crClients              map[string]interface{}
 	ctx                    context.Context
 	cancel                 context.CancelFunc
@@ -152,14 +153,14 @@ type appRuntimeStore struct {
 func NewStore(
 	kubeconfig *rest.Config,
 	clientset kubernetes.Interface,
-	rainbondClient rainbondversioned.Interface,
+	wutongClient wutongversioned.Interface,
 	dbmanager db.Manager,
 	conf option.Config) Storer {
 	ctx, cancel := context.WithCancel(context.Background())
 	store := &appRuntimeStore{
 		kubeconfig:          kubeconfig,
 		clientset:           clientset,
-		rainbondClient:      rainbondClient,
+		wutongClient:        wutongClient,
 		ctx:                 ctx,
 		cancel:              cancel,
 		informers:           &Informer{CRS: make(map[string]cache.SharedIndexInformer)},
@@ -235,15 +236,15 @@ func NewStore(
 	store.informers.HorizontalPodAutoscaler = infFactory.Autoscaling().V2beta2().HorizontalPodAutoscalers().Informer()
 	store.listers.HorizontalPodAutoscaler = infFactory.Autoscaling().V2beta2().HorizontalPodAutoscalers().Lister()
 
-	// rainbond custom resource
-	rainbondInformer := externalversions.NewSharedInformerFactoryWithOptions(rainbondClient, 10*time.Second,
+	// wutong custom resource
+	wutongInformer := externalversions.NewSharedInformerFactoryWithOptions(wutongClient, 10*time.Second,
 		externalversions.WithNamespace(corev1.NamespaceAll))
-	store.listers.HelmApp = rainbondInformer.Rainbond().V1alpha1().HelmApps().Lister()
-	store.informers.HelmApp = rainbondInformer.Rainbond().V1alpha1().HelmApps().Informer()
-	store.listers.ThirdComponent = rainbondInformer.Rainbond().V1alpha1().ThirdComponents().Lister()
-	store.informers.ThirdComponent = rainbondInformer.Rainbond().V1alpha1().ThirdComponents().Informer()
-	store.listers.ComponentDefinition = rainbondInformer.Rainbond().V1alpha1().ComponentDefinitions().Lister()
-	store.informers.ComponentDefinition = rainbondInformer.Rainbond().V1alpha1().ComponentDefinitions().Informer()
+	store.listers.HelmApp = wutongInformer.Wutong().V1alpha1().HelmApps().Lister()
+	store.informers.HelmApp = wutongInformer.Wutong().V1alpha1().HelmApps().Informer()
+	store.listers.ThirdComponent = wutongInformer.Wutong().V1alpha1().ThirdComponents().Lister()
+	store.informers.ThirdComponent = wutongInformer.Wutong().V1alpha1().ThirdComponents().Informer()
+	store.listers.ComponentDefinition = wutongInformer.Wutong().V1alpha1().ComponentDefinitions().Lister()
+	store.informers.ComponentDefinition = wutongInformer.Wutong().V1alpha1().ComponentDefinitions().Informer()
 	store.informers.ComponentDefinition.AddEventHandlerWithResyncPeriod(componentdefinition.GetComponentDefinitionBuilder(), time.Second*300)
 
 	// Endpoint Event Handler
@@ -356,7 +357,7 @@ func (a *appRuntimeStore) Start() error {
 	for !a.Ready() {
 	}
 	// init core componentdefinition
-	componentdefinition.GetComponentDefinitionBuilder().InitCoreComponentDefinition(a.rainbondClient)
+	componentdefinition.GetComponentDefinitionBuilder().InitCoreComponentDefinition(a.wutongClient)
 	go func() {
 		a.initCustomResourceInformer(stopch)
 	}()
@@ -1360,8 +1361,8 @@ func (a *appRuntimeStore) nsEventHandler() cache.ResourceEventHandlerFuncs {
 		UpdateFunc: func(old, cur interface{}) {
 			ns := cur.(*corev1.Namespace)
 
-			// check if the namespace is created by Rainbond
-			if !filterOutNotRainbondNamespace(ns) {
+			// check if the namespace is created by Wutong
+			if !filterOutNotWutongNamespace(ns) {
 				return
 			}
 
@@ -1571,14 +1572,14 @@ func isImagePullSecretEqual(a, b *corev1.Secret) bool {
 	return true
 }
 
-func filterOutNotRainbondNamespace(ns *corev1.Namespace) bool {
+func filterOutNotWutongNamespace(ns *corev1.Namespace) bool {
 	// compatible with pre-5.2 versions
 	oldVersion := len(ns.Name) == 32
 	curVersion := func() bool {
 		if ns.Labels == nil {
 			return false
 		}
-		return ns.Labels["creator"] == "Rainbond" || ns.Labels[constants.ResourceManagedByLabel] == constants.Rainbond
+		return ns.Labels["creator"] == "Wutong" || ns.Labels[constants.ResourceManagedByLabel] == constants.Wutong
 	}()
 	return curVersion || oldVersion
 }

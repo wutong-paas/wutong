@@ -1,10 +1,11 @@
 package util
 
 import (
-	dbmodel "github.com/goodrain/rainbond/db/model"
+	"testing"
+
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 	storagev1 "k8s.io/api/storage/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func TestTransStorageClass2RBDVolumeType(t *testing.T) {
@@ -40,7 +41,7 @@ func TestTransStorageClass2RBDVolumeType(t *testing.T) {
 			args: args{sc: &storagev1.StorageClass{
 				ObjectMeta: v1.ObjectMeta{
 					Name:        "ali-disk-sc",
-					Annotations: map[string]string{"rbd_volume_name": "new-volume-type"},
+					Annotations: map[string]string{"wt_volume_name": "new-volume-type"},
 				},
 			}},
 		},

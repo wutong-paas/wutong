@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/goodrain/rainbond/worker/server/pb"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 )

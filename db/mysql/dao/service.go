@@ -1,6 +1,6 @@
 package dao
 
-import "github.com/goodrain/rainbond/db/model"
+import "github.com/wutong-paas/wutong/db/model"
 
 func (t *TenantServicesDaoImpl) ListByAppID(appID string) ([]*model.TenantServices, error) {
 	var services []*model.TenantServices

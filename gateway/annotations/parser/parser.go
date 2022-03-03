@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/goodrain/rainbond/util/ingress-nginx/ingress/errors"
+	"github.com/wutong-paas/wutong/util/ingress-nginx/ingress/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

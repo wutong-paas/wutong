@@ -6,7 +6,7 @@ package db
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	dao "github.com/goodrain/rainbond/db/dao"
+	dao "github.com/wutong-paas/wutong/db/dao"
 	gorm "github.com/jinzhu/gorm"
 	reflect "reflect"
 )

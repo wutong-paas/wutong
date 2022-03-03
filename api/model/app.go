@@ -1,6 +1,6 @@
 package model
 
-import "github.com/goodrain/rainbond/worker/server/pb"
+import "github.com/wutong-paas/wutong/worker/server/pb"
 
 // AppPort -
 type AppPort struct {

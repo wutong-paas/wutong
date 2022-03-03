@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -45,13 +45,13 @@ var translationMetadata = map[string]string{
 	"Check for log location code errors":             "建议查看日志定位代码错误",
 	"Check for log location imgae source errors":     "建议查看日志定位镜像源错误",
 	"create share image task error":                  "分享任务失败，请检查服务信息或查看日志",
-	"get wt-repo ip failure":                        "获取依赖仓库IP地址失败，请检查wt-repo组件信息",
+	"get wt-repo ip failure":                         "获取依赖仓库IP地址失败，请检查wt-repo组件信息",
 }
 
 //Translation Translation English to Chinese
 func Translation(english string) string {
 	if chinese, ok := translationMetadata[english]; ok {
-		if os.Getenv("RAINBOND_LANG") == "en" {
+		if os.Getenv("WUTONG_LANG") == "en" {
 			return english
 		}
 		return chinese

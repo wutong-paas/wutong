@@ -13,14 +13,14 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	jobc "github.com/goodrain/rainbond/builder/job"
-	"github.com/goodrain/rainbond/builder/parser/code"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/cmd/builder/option"
-	"github.com/goodrain/rainbond/event"
+	jobc "github.com/wutong-paas/wutong/builder/job"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/cmd/builder/option"
+	"github.com/wutong-paas/wutong/event"
 
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 
 	"k8s.io/client-go/kubernetes"
 )
@@ -30,15 +30,15 @@ func TestCreateJob(t *testing.T) {
 		EtcdEndPoints:       []string{"192.168.2.203:2379"},
 		MQAPI:               "192.168.2.203:6300",
 		EventLogServers:     []string{"192.168.2.203:6366"},
-		RbdRepoName:         "wt-dns",
-		RbdNamespace:        "wt-system",
+		WtRepoName:          "wt-dns",
+		WtNamespace:         "wt-system",
 		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
 	}
 	event.NewManager(event.EventConfig{
 		EventLogServers: conf.EventLogServers,
 		DiscoverArgs:    &etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints},
 	})
-	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/goodrain/remote/192.168.2.206/admin.kubeconfig")
+	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/wutong/remote/192.168.2.206/admin.kubeconfig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func TestCreateJob(t *testing.T) {
 }
 
 func Test1(t *testing.T) {
-	tarFile := "/opt/rainbond/pkg/rainbond-pkg-V5.2-dev.tgz"
+	tarFile := "/opt/wutong/pkg/wutong-pkg-V5.2-dev.tgz"
 	srcFile, err := os.Open(tarFile)
 	if err != nil {
 		t.Fatal(err)

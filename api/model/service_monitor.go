@@ -1,6 +1,6 @@
 package model
 
-import dbmodel "github.com/goodrain/rainbond/db/model"
+import dbmodel "github.com/wutong-paas/wutong/db/model"
 
 //AddServiceMonitorRequestStruct add service monitor request
 type AddServiceMonitorRequestStruct struct {

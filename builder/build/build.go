@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -21,13 +21,14 @@ package build
 import (
 	"context"
 	"fmt"
-	"github.com/goodrain/rainbond/db"
 	"strings"
 
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/builder/parser/code"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/event"
+	"github.com/wutong-paas/wutong/db"
+
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/event"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/docker/docker/client"
@@ -75,7 +76,7 @@ type Response struct {
 
 //Request build input
 type Request struct {
-	RbdNamespace  string
+	WtNamespace   string
 	GRDataPVCName string
 	CachePVCName  string
 	CacheMode     string

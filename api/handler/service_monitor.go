@@ -1,10 +1,10 @@
 package handler
 
 import (
-	api_model "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/db"
-	dbmodel "github.com/goodrain/rainbond/db/model"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/jinzhu/gorm"
 )
 

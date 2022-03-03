@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,16 +23,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goodrain/rainbond/event"
+	"github.com/wutong-paas/wutong/event"
 )
 
 func TestGitClone(t *testing.T) {
 	start := time.Now()
 	csi := CodeSourceInfo{
-		RepositoryURL: "git@gitee.com:zhoujunhaogoodrain/webhook_test.git",
+		RepositoryURL: "git@gitee.com:zhoujunhaowutong/webhook_test.git",
 		Branch:        "master",
 	}
-	res, err := GitClone(csi, "/tmp/rainbonddoc3", event.GetTestLogger(), 1)
+	res, err := GitClone(csi, "/tmp/wutongdoc3", event.GetTestLogger(), 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,10 +43,10 @@ func TestGitClone(t *testing.T) {
 func TestGitCloneByTag(t *testing.T) {
 	start := time.Now()
 	csi := CodeSourceInfo{
-		RepositoryURL: "https://github.com/goodrain/rainbond-ui.git",
+		RepositoryURL: "https://github.com/wutong-paas/wutong-ui.git",
 		Branch:        "master",
 	}
-	res, err := GitClone(csi, "/tmp/rainbonddoc4", event.GetTestLogger(), 1)
+	res, err := GitClone(csi, "/tmp/wutongdoc4", event.GetTestLogger(), 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func TestGitCloneByTag(t *testing.T) {
 
 func TestGitPull(t *testing.T) {
 	csi := CodeSourceInfo{
-		RepositoryURL: "git@gitee.com:zhoujunhaogoodrain/webhook_test.git",
+		RepositoryURL: "git@gitee.com:zhoujunhaowutong/webhook_test.git",
 		Branch:        "master2",
 	}
 	res, err := GitPull(csi, "/tmp/master2", event.GetTestLogger(), 1)
@@ -73,9 +73,9 @@ func TestGitPull(t *testing.T) {
 
 func TestGitPullOrClone(t *testing.T) {
 	csi := CodeSourceInfo{
-		RepositoryURL: "git@gitee.com:zhoujunhaogoodrain/webhook_test.git",
+		RepositoryURL: "git@gitee.com:zhoujunhaowutong/webhook_test.git",
 	}
-	res, err := GitCloneOrPull(csi, "/tmp/goodrainweb2", event.GetTestLogger(), 1)
+	res, err := GitCloneOrPull(csi, "/tmp/wutongweb2", event.GetTestLogger(), 1)
 	if err != nil {
 		t.Fatal(err)
 	}

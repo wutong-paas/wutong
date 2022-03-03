@@ -1,8 +1,8 @@
 package sync
 
 import (
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
 	"github.com/sirupsen/logrus"
 )
 

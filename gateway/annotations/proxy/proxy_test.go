@@ -19,9 +19,9 @@ package proxy
 import (
 	"testing"
 
-	"github.com/goodrain/rainbond/gateway/annotations/parser"
-	"github.com/goodrain/rainbond/gateway/annotations/resolver"
-	"github.com/goodrain/rainbond/gateway/defaults"
+	"github.com/wutong-paas/wutong/gateway/annotations/parser"
+	"github.com/wutong-paas/wutong/gateway/annotations/resolver"
+	"github.com/wutong-paas/wutong/gateway/defaults"
 	networkingv1 "k8s.io/api/networking/v1"
 )
 

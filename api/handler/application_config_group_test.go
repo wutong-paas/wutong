@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
-	"github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/db"
-	daomock "github.com/goodrain/rainbond/db/dao"
-	dbmodel "github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/db"
+	daomock "github.com/wutong-paas/wutong/db/dao"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/pkg/errors"
 )
 

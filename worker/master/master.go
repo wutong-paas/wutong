@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -24,23 +24,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/cmd/worker/option"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/pkg/common"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	"github.com/goodrain/rainbond/util/leader"
-	"github.com/goodrain/rainbond/worker/appm/store"
-	mcontroller "github.com/goodrain/rainbond/worker/master/controller"
-	"github.com/goodrain/rainbond/worker/master/controller/helmapp"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent"
-	"github.com/goodrain/rainbond/worker/master/podevent"
-	"github.com/goodrain/rainbond/worker/master/volumes/provider"
-	"github.com/goodrain/rainbond/worker/master/volumes/provider/lib/controller"
-	"github.com/goodrain/rainbond/worker/master/volumes/statistical"
-	"github.com/goodrain/rainbond/worker/master/volumes/sync"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/worker/option"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/pkg/common"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/util/leader"
+	"github.com/wutong-paas/wutong/worker/appm/store"
+	mcontroller "github.com/wutong-paas/wutong/worker/master/controller"
+	"github.com/wutong-paas/wutong/worker/master/controller/helmapp"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent"
+	"github.com/wutong-paas/wutong/worker/master/podevent"
+	"github.com/wutong-paas/wutong/worker/master/volumes/provider"
+	"github.com/wutong-paas/wutong/worker/master/volumes/provider/lib/controller"
+	"github.com/wutong-paas/wutong/worker/master/volumes/statistical"
+	"github.com/wutong-paas/wutong/worker/master/volumes/sync"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -74,14 +74,14 @@ type Controller struct {
 	podEvent        *podevent.PodEvent
 	volumeTypeEvent *sync.VolumeTypeEvent
 
-	version      *version.Info
-	rainbondsssc controller.Provisioner
-	rainbondsslc controller.Provisioner
-	mgr          ctrl.Manager
+	version    *version.Info
+	wutongsssc controller.Provisioner
+	wutongsslc controller.Provisioner
+	mgr        ctrl.Manager
 }
 
 //NewMasterController new master controller
-func NewMasterController(conf option.Config, store store.Storer, kubeClient kubernetes.Interface, rainbondClient versioned.Interface, restConfig *rest.Config) (*Controller, error) {
+func NewMasterController(conf option.Config, store store.Storer, kubeClient kubernetes.Interface, wutongClient versioned.Interface, restConfig *rest.Config) (*Controller, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// The controller needs to know what the server version is because out-of-tree
@@ -96,18 +96,18 @@ func NewMasterController(conf option.Config, store store.Storer, kubeClient kube
 	// Create the provisioner: it implements the Provisioner interface expected by
 	// the controller
 	//statefulset share controller
-	rainbondssscProvisioner := provider.NewRainbondssscProvisioner()
+	wutongssscProvisioner := provider.NewWutongssscProvisioner()
 	//statefulset local controller
-	rainbondsslcProvisioner := provider.NewRainbondsslcProvisioner(kubeClient, store)
+	wutongsslcProvisioner := provider.NewWutongsslcProvisioner(kubeClient, store)
 	// Start the provision controller which will dynamically provision hostPath
 	// PVs
 	pc := controller.NewProvisionController(kubeClient, &conf, map[string]controller.Provisioner{
-		rainbondssscProvisioner.Name(): rainbondssscProvisioner,
-		rainbondsslcProvisioner.Name(): rainbondsslcProvisioner,
+		wutongssscProvisioner.Name(): wutongssscProvisioner,
+		wutongsslcProvisioner.Name(): wutongsslcProvisioner,
 	}, serverVersion.GitVersion)
 	stopCh := make(chan struct{})
 
-	helmAppController := helmapp.NewController(ctx, stopCh, kubeClient, rainbondClient,
+	helmAppController := helmapp.NewController(ctx, stopCh, kubeClient, wutongClient,
 		store.Informer().HelmApp, store.Lister().HelmApp, conf.Helm.RepoFile, conf.Helm.RepoCache, conf.Helm.RepoCache)
 
 	return &Controller{
@@ -159,8 +159,8 @@ func NewMasterController(conf option.Config, store store.Storer, kubeClient kube
 		podEvent:        podevent.New(conf.KubeClient, stopCh),
 		volumeTypeEvent: sync.New(stopCh),
 		kubeClient:      kubeClient,
-		rainbondsssc:    rainbondssscProvisioner,
-		rainbondsslc:    rainbondsslcProvisioner,
+		wutongsssc:      wutongssscProvisioner,
+		wutongsslc:      wutongsslcProvisioner,
 		version:         serverVersion,
 	}, nil
 }
@@ -175,8 +175,8 @@ func (m *Controller) Start() error {
 	logrus.Debug("master controller starting")
 	start := func(ctx context.Context) {
 		pc := controller.NewProvisionController(m.kubeClient, &m.conf, map[string]controller.Provisioner{
-			m.rainbondsslc.Name(): m.rainbondsslc,
-			m.rainbondsssc.Name(): m.rainbondsssc,
+			m.wutongsslc.Name(): m.wutongsslc,
+			m.wutongsssc.Name(): m.wutongsssc,
 		}, m.version.GitVersion)
 
 		m.isLeader = true
@@ -201,7 +201,7 @@ func (m *Controller) Start() error {
 		mgr, err := ctrl.NewManager(m.restConfig, ctrl.Options{
 			Scheme:           common.Scheme,
 			LeaderElection:   false,
-			LeaderElectionID: "controllers.rainbond.io",
+			LeaderElectionID: "controllers.wutong.io",
 		})
 		if err != nil {
 			logrus.Errorf("create new manager: %v", err)
@@ -236,7 +236,7 @@ func (m *Controller) Start() error {
 		return fmt.Errorf("-leader-election-identity must not be empty")
 	}
 	// Name of config map with leader election lock
-	lockName := "rainbond-appruntime-worker-leader"
+	lockName := "wutong-appruntime-worker-leader"
 
 	// Become leader again on stop leading.
 	leaderCh := make(chan struct{}, 1)

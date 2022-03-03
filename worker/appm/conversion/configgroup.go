@@ -2,8 +2,8 @@ package conversion
 
 import (
 	"fmt"
-	"github.com/goodrain/rainbond/db"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/db"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

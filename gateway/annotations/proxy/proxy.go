@@ -22,9 +22,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/goodrain/rainbond/gateway/annotations/parser"
-	"github.com/goodrain/rainbond/gateway/annotations/resolver"
-	"github.com/goodrain/rainbond/gateway/controller/config"
+	"github.com/wutong-paas/wutong/gateway/annotations/parser"
+	"github.com/wutong-paas/wutong/gateway/annotations/resolver"
+	"github.com/wutong-paas/wutong/gateway/controller/config"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http/httpguts"
 )

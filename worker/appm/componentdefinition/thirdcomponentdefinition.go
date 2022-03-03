@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2021-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2021-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -19,14 +19,14 @@
 package componentdefinition
 
 import (
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
 	"github.com/oam-dev/kubevela/apis/core.oam.dev/common"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var cueTemplate = `
 output: {
-	apiVersion: "rainbond.io/v1alpha1"
+	apiVersion: "wutong.io/v1alpha1"
 	kind:       "ThirdComponent"
 	metadata: {
 		name: context.componentID
@@ -91,12 +91,12 @@ var thirdComponentDefineName = "core-thirdcomponent"
 var thirdComponentDefine = v1alpha1.ComponentDefinition{
 	TypeMeta: v1.TypeMeta{
 		Kind:       "ComponentDefinition",
-		APIVersion: "rainbond.io/v1alpha1",
+		APIVersion: "wutong.io/v1alpha1",
 	},
 	ObjectMeta: v1.ObjectMeta{
 		Name: thirdComponentDefineName,
 		Annotations: map[string]string{
-			"definition.oam.dev/description": "Rainbond built-in component type that defines third-party service components.",
+			"definition.oam.dev/description": "Wutong built-in component type that defines third-party service components.",
 			"version":                        "0.2",
 		},
 	},
@@ -104,7 +104,7 @@ var thirdComponentDefine = v1alpha1.ComponentDefinition{
 		Workload: common.WorkloadTypeDescriptor{
 			Type: "ThirdComponent",
 			Definition: common.WorkloadGVK{
-				APIVersion: "rainbond.io/v1alpha1",
+				APIVersion: "wutong.io/v1alpha1",
 				Kind:       "ThirdComponent",
 			},
 		},

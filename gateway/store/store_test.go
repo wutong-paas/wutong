@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/goodrain/rainbond/gateway/annotations/parser"
+	"github.com/wutong-paas/wutong/gateway/annotations/parser"
 	api "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestRbdStore_checkIngress(t *testing.T) {
+func TestWtStore_checkIngress(t *testing.T) {
 	ing := buildIngress()
 
 	type foo struct {

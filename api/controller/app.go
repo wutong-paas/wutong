@@ -12,13 +12,13 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/goodrain/rainbond/api/controller/upload"
-	"github.com/goodrain/rainbond/api/handler"
-	"github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/db"
-	httputil "github.com/goodrain/rainbond/util/http"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/controller/upload"
+	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/db"
+	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
 //AppStruct -
@@ -241,7 +241,7 @@ func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		var importApp = model.ImportAppStruct{
-			Format: "rainbond-app",
+			Format: "wutong-app",
 		}
 
 		ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &importApp, nil)
