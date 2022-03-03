@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,17 +25,17 @@ import (
 
 	client "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	conf "github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/node/core/store"
-	"github.com/goodrain/rainbond/util"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
+	conf "github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/node/core/store"
+	"github.com/wutong-paas/wutong/util"
 	v1 "k8s.io/api/core/v1"
 )
 
 //LabelOS node label about os
 var LabelOS = "beta.kubernetes.io/os"
-var LabelGPU = "beta.rainbond.com/gpushare"
+var LabelGPU = "beta.wutong-paas.com/gpushare"
 
 //APIHostNode api host node
 type APIHostNode struct {
@@ -61,7 +61,7 @@ func (a APIHostNode) Clone() *HostNode {
 		RootPass:     a.RootPass,
 		KeyPath:      a.Privatekey,
 		Role:         a.Role,
-		Labels:       map[string]string{"rainbond_node_hostname": a.HostName},
+		Labels:       map[string]string{"wutong_node_hostname": a.HostName},
 		CustomLabels: map[string]string{},
 		NodeStatus:   NodeStatus{Status: "not_installed", Conditions: make([]NodeCondition, 0)},
 		Status:       "not_installed",
@@ -72,7 +72,7 @@ func (a APIHostNode) Clone() *HostNode {
 	return hn
 }
 
-//HostNode rainbond node entity
+//HostNode wutong node entity
 type HostNode struct {
 	ID              string            `json:"uuid"`
 	HostName        string            `json:"host_name"`
@@ -144,7 +144,7 @@ type NodeStatus struct {
 	NodeInfo NodeSystemInfo `json:"nodeInfo,omitempty" protobuf:"bytes,7,opt,name=nodeInfo"`
 }
 
-//UpdateK8sNodeStatus update rainbond node status by k8s node
+//UpdateK8sNodeStatus update wutong node status by k8s node
 func (n *HostNode) UpdateK8sNodeStatus(k8sNode v1.Node) {
 	status := k8sNode.Status
 	n.UpdataK8sCondition(status.Conditions)
@@ -260,7 +260,7 @@ func GetNodeFromKV(kv *mvccpb.KeyValue) *HostNode {
 	return &node
 }
 
-//UpdataK8sCondition 更新k8s节点的状态到rainbond节点
+//UpdataK8sCondition 更新k8s节点的状态到wutong节点
 func (n *HostNode) UpdataK8sCondition(conditions []v1.NodeCondition) {
 	for _, con := range conditions {
 		var rbcon NodeCondition
@@ -528,9 +528,9 @@ func (n *HostNode) DelEndpoints() {
 }
 
 func (n *HostNode) listEndpointKeys() ([]string, error) {
-	resp, err := store.DefalutClient.Get(RainbondEndpointPrefix, client.WithPrefix())
+	resp, err := store.DefalutClient.Get(WutongEndpointPrefix, client.WithPrefix())
 	if err != nil {
-		return nil, fmt.Errorf("prefix: %s; error list rainbond endpoint keys by prefix: %v", RainbondEndpointPrefix, err)
+		return nil, fmt.Errorf("prefix: %s; error list wutong endpoint keys by prefix: %v", WutongEndpointPrefix, err)
 	}
 	var res []string
 	for _, kv := range resp.Kvs {

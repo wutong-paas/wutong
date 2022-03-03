@@ -271,7 +271,7 @@ function _M.call()
   then
     html = string.gsub(_M.defaultHTML, "POWER", "", 1)
   else
-    html = string.gsub(_M.defaultHTML, "POWER", [[<p class="text2" id="power">Power By <a href="https://www.rainbond.com" target="_blank" rel="noopener noreferrer">Rainbond</a></p>]],1)
+    html = string.gsub(_M.defaultHTML, "POWER", [[<p class="text2" id="power">Power By <a href="https://www.wutong-paas.com" target="_blank" rel="noopener noreferrer">Wutong</a></p>]],1)
   end
   ngx.print(html)
 end

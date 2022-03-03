@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,17 +23,17 @@ import (
 	"time"
 
 	v3 "github.com/coreos/etcd/clientv3"
-	"github.com/goodrain/rainbond/cmd/monitor/option"
-	discoverv1 "github.com/goodrain/rainbond/discover"
-	discoverv2 "github.com/goodrain/rainbond/discover.v2"
-	"github.com/goodrain/rainbond/discover/config"
-	"github.com/goodrain/rainbond/monitor/callback"
-	"github.com/goodrain/rainbond/monitor/prometheus"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/util/watch"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"github.com/wutong-paas/wutong/cmd/monitor/option"
+	discoverv1 "github.com/wutong-paas/wutong/discover"
+	discoverv2 "github.com/wutong-paas/wutong/discover.v2"
+	"github.com/wutong-paas/wutong/discover/config"
+	"github.com/wutong-paas/wutong/monitor/callback"
+	"github.com/wutong-paas/wutong/monitor/prometheus"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/util/watch"
 )
 
 //Monitor monitor
@@ -86,8 +86,8 @@ func (d *Monitor) Start() {
 	}, d.ctx.Done())
 
 	// kubernetes service discovery
-	rbdapi := callback.RbdAPI{Prometheus: d.manager}
-	rbdapi.UpdateEndpoints(nil)
+	wtapi := callback.WtAPI{Prometheus: d.manager}
+	wtapi.UpdateEndpoints(nil)
 
 	// service monitor
 	d.serviceMonitor.Run(d.stopCh)
@@ -96,7 +96,7 @@ func (d *Monitor) Start() {
 func (d *Monitor) discoverNodes(node *callback.Node, app *callback.App, done <-chan struct{}) {
 	// start listen node modified
 	watcher := watch.New(d.client, "")
-	w, err := watcher.WatchList(d.ctx, "/rainbond/nodes", "")
+	w, err := watcher.WatchList(d.ctx, "/wutong/nodes", "")
 	if err != nil {
 		logrus.Error("failed to watch list for discover all nodes: ", err)
 		return
@@ -115,21 +115,21 @@ func (d *Monitor) discoverNodes(node *callback.Node, app *callback.App, done <-c
 			case watch.Added:
 				node.Add(&event)
 
-				isSlave := gjson.Get(event.GetValueString(), "labels.rainbond_node_rule_compute").String()
+				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
 				if isSlave == "true" {
 					app.Add(&event)
 				}
 			case watch.Modified:
 				node.Modify(&event)
 
-				isSlave := gjson.Get(event.GetValueString(), "labels.rainbond_node_rule_compute").String()
+				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
 				if isSlave == "true" {
 					app.Modify(&event)
 				}
 			case watch.Deleted:
 				node.Delete(&event)
 
-				isSlave := gjson.Get(event.GetPreValueString(), "labels.rainbond_node_rule_compute").String()
+				isSlave := gjson.Get(event.GetPreValueString(), "labels.wutong_node_rule_compute").String()
 				if isSlave == "true" {
 					app.Delete(&event)
 				}
@@ -148,7 +148,7 @@ func (d *Monitor) discoverNodes(node *callback.Node, app *callback.App, done <-c
 func (d *Monitor) discoverCadvisor(c *callback.Cadvisor, done <-chan struct{}) {
 	// start listen node modified
 	watcher := watch.New(d.client, "")
-	w, err := watcher.WatchList(d.ctx, "/rainbond/nodes", "")
+	w, err := watcher.WatchList(d.ctx, "/wutong/nodes", "")
 	if err != nil {
 		logrus.Error("failed to watch list for discover all nodes: ", err)
 		return
@@ -164,17 +164,17 @@ func (d *Monitor) discoverCadvisor(c *callback.Cadvisor, done <-chan struct{}) {
 			}
 			switch event.Type {
 			case watch.Added:
-				isSlave := gjson.Get(event.GetValueString(), "labels.rainbond_node_rule_compute").String()
+				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
 				if isSlave == "true" {
 					c.Add(&event)
 				}
 			case watch.Modified:
-				isSlave := gjson.Get(event.GetValueString(), "labels.rainbond_node_rule_compute").String()
+				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
 				if isSlave == "true" {
 					c.Modify(&event)
 				}
 			case watch.Deleted:
-				isSlave := gjson.Get(event.GetPreValueString(), "labels.rainbond_node_rule_compute").String()
+				isSlave := gjson.Get(event.GetPreValueString(), "labels.wutong_node_rule_compute").String()
 				if isSlave == "true" {
 					c.Delete(&event)
 				}

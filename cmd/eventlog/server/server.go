@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -27,16 +27,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/goodrain/rainbond/discover"
-	"github.com/goodrain/rainbond/eventlog/cluster"
-	"github.com/goodrain/rainbond/eventlog/conf"
-	"github.com/goodrain/rainbond/eventlog/db"
-	"github.com/goodrain/rainbond/eventlog/entry"
-	"github.com/goodrain/rainbond/eventlog/exit/web"
-	"github.com/goodrain/rainbond/eventlog/store"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/wutong-paas/wutong/discover"
+	"github.com/wutong-paas/wutong/eventlog/cluster"
+	"github.com/wutong-paas/wutong/eventlog/conf"
+	"github.com/wutong-paas/wutong/eventlog/db"
+	"github.com/wutong-paas/wutong/eventlog/entry"
+	"github.com/wutong-paas/wutong/eventlog/exit/web"
+	"github.com/wutong-paas/wutong/eventlog/store"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
 // LogServer -
@@ -100,8 +100,8 @@ func (s *LogServer) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.Conf.WebSocket.WriteBufferSize, "websocket.writebuffersize", 4096, "the writebuffersize of websocket for push event message")
 	fs.IntVar(&s.Conf.WebSocket.MaxRestartCount, "websocket.maxrestart", 5, "the max restart count of websocket for push event message")
 	fs.BoolVar(&s.Conf.WebSocket.SSL, "websocket.ssl", false, "whether to enable websocket  SSL")
-	fs.StringVar(&s.Conf.WebSocket.CertFile, "websocket.certfile", "/etc/ssl/goodrain.com/goodrain.com.crt", "websocket ssl cert file")
-	fs.StringVar(&s.Conf.WebSocket.KeyFile, "websocket.keyfile", "/etc/ssl/goodrain.com/goodrain.com.key", "websocket ssl cert file")
+	fs.StringVar(&s.Conf.WebSocket.CertFile, "websocket.certfile", "/etc/ssl/wutong-paas.com/wutong-paas.com.crt", "websocket ssl cert file")
+	fs.StringVar(&s.Conf.WebSocket.KeyFile, "websocket.keyfile", "/etc/ssl/wutong-paas.com/wutong-paas.com.key", "websocket ssl cert file")
 	fs.StringVar(&s.Conf.WebSocket.TimeOut, "websocket.timeout", "1m", "Keep websocket service the longest time when without message ")
 	fs.StringVar(&s.Conf.WebSocket.PrometheusMetricPath, "monitor-path", "/metrics", "promethesu monitor metrics path")
 	fs.StringVar(&s.Conf.EventStore.DB.Type, "db.type", "mysql", "Data persistence type.")

@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,20 +23,20 @@ import (
 	"os"
 	"strings"
 
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/util"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/util"
 
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/event"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/event"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pquerna/ffjson/ffjson"
 
-	"github.com/goodrain/rainbond/builder/model"
+	"github.com/wutong-paas/wutong/builder/model"
 
-	"github.com/goodrain/rainbond/mq/api/grpc/pb"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 )
 
 const (
@@ -117,14 +117,14 @@ func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger)
 	logger.Info("start build image", map[string]string{"step": "builder-exector"})
 	_, err := sources.ImageBuild(e.DockerClient, sourceDir, buildOptions, logger, 5)
 	if err != nil {
-		logger.Error(fmt.Sprintf("build image %s failure,find log in rbd-chaos", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+		logger.Error(fmt.Sprintf("build image %s failure,find log in wt-chaos", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("[plugin]build image error: %s", err.Error())
 		return err
 	}
 	logger.Info("build image success, start to push image to local image registry", map[string]string{"step": "builder-exector"})
 	err = sources.ImagePush(e.DockerClient, buildImageName, builder.REGISTRYUSER, builder.REGISTRYPASS, logger, 2)
 	if err != nil {
-		logger.Error("push image failure, find log in rbd-chaos", map[string]string{"step": "builder-exector"})
+		logger.Error("push image failure, find log in wt-chaos", map[string]string{"step": "builder-exector"})
 		logrus.Errorf("push image error: %s", err.Error())
 		return err
 	}

@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -35,20 +35,20 @@ func TestMaven_ParsePom(t *testing.T) {
 	if pom.Modules == nil || len(pom.Modules) != 3 {
 		t.Error("Modules not found")
 	} else {
-		if pom.Modules[0] != "rbd-api" {
-			t.Errorf("Expected 'rbd-api' for pom.Modules[0], but returned %s", pom.Modules[0])
+		if pom.Modules[0] != "wt-api" {
+			t.Errorf("Expected 'wt-api' for pom.Modules[0], but returned %s", pom.Modules[0])
 		}
-		if pom.Modules[1] != "rbd-worker" {
-			t.Errorf("Expected 'rbd-worker' for pom.Modules[0], but returned %s", pom.Modules[0])
+		if pom.Modules[1] != "wt-worker" {
+			t.Errorf("Expected 'wt-worker' for pom.Modules[0], but returned %s", pom.Modules[0])
 		}
-		if pom.Modules[2] != "rbd-gateway" {
-			t.Errorf("Expected 'rbd-gateway' for pom.Modules[0], but returned %s", pom.Modules[0])
+		if pom.Modules[2] != "wt-gateway" {
+			t.Errorf("Expected 'wt-gateway' for pom.Modules[0], but returned %s", pom.Modules[0])
 		}
 	}
 }
 
 func TestMaven_ListModules(t *testing.T) {
-	path := os.Getenv("GOPATH") + "/src/github.com/goodrain/rainbond/builder/parser/code/multisvc/"
+	path := os.Getenv("GOPATH") + "/src/github.com/wutong-paas/wutong/builder/parser/code/multisvc/"
 	m := maven{}
 	res, err := m.ListModules(path)
 	if err != nil {

@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -31,23 +31,23 @@ import (
 	"strings"
 	"sync"
 
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/cmd/gateway/option"
-	"github.com/goodrain/rainbond/gateway/annotations"
-	"github.com/goodrain/rainbond/gateway/annotations/l4"
-	"github.com/goodrain/rainbond/gateway/annotations/parser"
-	"github.com/goodrain/rainbond/gateway/annotations/rewrite"
-	"github.com/goodrain/rainbond/gateway/cluster"
-	"github.com/goodrain/rainbond/gateway/controller/config"
-	"github.com/goodrain/rainbond/gateway/defaults"
-	"github.com/goodrain/rainbond/gateway/util"
-	v1 "github.com/goodrain/rainbond/gateway/v1"
-	coreutil "github.com/goodrain/rainbond/util"
-	istroe "github.com/goodrain/rainbond/util/ingress-nginx/ingress/controller/store"
-	ik8s "github.com/goodrain/rainbond/util/ingress-nginx/k8s"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/gateway/option"
+	"github.com/wutong-paas/wutong/gateway/annotations"
+	"github.com/wutong-paas/wutong/gateway/annotations/l4"
+	"github.com/wutong-paas/wutong/gateway/annotations/parser"
+	"github.com/wutong-paas/wutong/gateway/annotations/rewrite"
+	"github.com/wutong-paas/wutong/gateway/cluster"
+	"github.com/wutong-paas/wutong/gateway/controller/config"
+	"github.com/wutong-paas/wutong/gateway/defaults"
+	"github.com/wutong-paas/wutong/gateway/util"
+	v1 "github.com/wutong-paas/wutong/gateway/v1"
+	coreutil "github.com/wutong-paas/wutong/util"
+	istroe "github.com/wutong-paas/wutong/util/ingress-nginx/ingress/controller/store"
+	ik8s "github.com/wutong-paas/wutong/util/ingress-nginx/k8s"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	betav1 "k8s.io/api/networking/v1beta1"
@@ -176,7 +176,7 @@ func New(client kubernetes.Interface,
 	// create informers factory, enable and assign required informers
 	store.sharedInformer = informers.NewFilteredSharedInformerFactory(client, conf.ResyncPeriod, corev1.NamespaceAll,
 		func(options *metav1.ListOptions) {
-			options.LabelSelector = "creator=Rainbond"
+			options.LabelSelector = "creator=Wutong"
 		})
 
 	if k8sutil.IsHighVersion() {

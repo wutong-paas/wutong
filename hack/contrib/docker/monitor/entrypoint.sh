@@ -2,7 +2,7 @@
 if [ "$1" = "bash" ];then
     exec /bin/ash
 elif [ "$1" = "version" ];then
-    /run/rainbond-monitor version
+    /run/wutong-monitor version
 else
-    exec /run/rainbond-monitor $@
+    exec /run/wutong-monitor $@
 fi

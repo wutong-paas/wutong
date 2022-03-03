@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	dbmodel "github.com/goodrain/rainbond/db/model"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
 // ComponentBase -

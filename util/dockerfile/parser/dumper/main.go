@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goodrain/rainbond/util/dockerfile/parser"
+	"github.com/wutong-paas/wutong/util/dockerfile/parser"
 )
 
 func main() {

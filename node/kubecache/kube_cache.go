@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -30,8 +30,8 @@ import (
 
 	"github.com/pquerna/ffjson/ffjson"
 
-	conf "github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/node/nodem/client"
+	conf "github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/node/nodem/client"
 
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
@@ -429,33 +429,33 @@ func (k *kubeClient) deleteNodeWithoutPods(name string) error {
 	return nil
 }
 
-//UpK8sNode create k8s node by rainbond node info
-func (k *kubeClient) UpK8sNode(rainbondNode *client.HostNode) (*v1.Node, error) {
+//UpK8sNode create k8s node by wutong node info
+func (k *kubeClient) UpK8sNode(wutongNode *client.HostNode) (*v1.Node, error) {
 	capacity := make(v1.ResourceList)
-	capacity[v1.ResourceCPU] = *resource.NewQuantity(rainbondNode.AvailableCPU, resource.BinarySI)
-	capacity[v1.ResourceMemory] = *resource.NewQuantity(rainbondNode.AvailableMemory, resource.BinarySI)
-	lbs := rainbondNode.MergeLabels()
+	capacity[v1.ResourceCPU] = *resource.NewQuantity(wutongNode.AvailableCPU, resource.BinarySI)
+	capacity[v1.ResourceMemory] = *resource.NewQuantity(wutongNode.AvailableMemory, resource.BinarySI)
+	lbs := wutongNode.MergeLabels()
 	node := &v1.Node{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   strings.ToLower(rainbondNode.ID),
+			Name:   strings.ToLower(wutongNode.ID),
 			Labels: lbs,
 		},
 		Spec: v1.NodeSpec{
-			Unschedulable: rainbondNode.Unschedulable,
-			PodCIDR:       rainbondNode.PodCIDR,
+			Unschedulable: wutongNode.Unschedulable,
+			PodCIDR:       wutongNode.PodCIDR,
 		},
 		Status: v1.NodeStatus{
 			Capacity:    capacity,
 			Allocatable: capacity,
 			Addresses: []v1.NodeAddress{
-				v1.NodeAddress{Type: v1.NodeHostName, Address: rainbondNode.HostName},
-				v1.NodeAddress{Type: v1.NodeInternalIP, Address: rainbondNode.InternalIP},
-				v1.NodeAddress{Type: v1.NodeExternalIP, Address: rainbondNode.ExternalIP},
+				v1.NodeAddress{Type: v1.NodeHostName, Address: wutongNode.HostName},
+				v1.NodeAddress{Type: v1.NodeInternalIP, Address: wutongNode.InternalIP},
+				v1.NodeAddress{Type: v1.NodeExternalIP, Address: wutongNode.ExternalIP},
 			},
 		},
 	}
-	//set rainbond creator lable
-	node.Labels["creator"] = "Rainbond"
+	//set wutong creator lable
+	node.Labels["creator"] = "Wutong"
 	savedNode, err := k.kubeclient.CoreV1().Nodes().Create(context.Background(), node, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err

@@ -13,7 +13,7 @@
                 "creationTimestamp": "2019-08-15T12:15:56Z",
                 "generation": 3,
                 "labels": {
-                    "creater": "Rainbond",
+                    "creater": "Wutong",
                     "creater_id": "1565871356174353579",
                     "name": "grbded7e",
                     "pod-template-hash": "4133404392",
@@ -52,11 +52,11 @@
                 "template": {
                     "metadata": {
                         "annotations": {
-                            "rainbond.com/tolerate-unready-endpoints": "true"
+                            "wutong-paas.com/tolerate-unready-endpoints": "true"
                         },
                         "creationTimestamp": null,
                         "labels": {
-                            "creater": "Rainbond",
+                            "creater": "Wutong",
                             "creater_id": "1565871356174353579",
                             "name": "grbded7e",
                             "pod-template-hash": "4133404392",
@@ -218,7 +218,7 @@
                                         }
                                     }
                                 ],
-                                "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                                "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
                                 "imagePullPolicy": "IfNotPresent",
                                 "livenessProbe": {
                                     "failureThreshold": 3,
@@ -400,7 +400,7 @@
                                         "value": "6101"
                                     }
                                 ],
-                                "image": "goodrain.me/rbd-mesh-data-panel",
+                                "image": "wutong.me/wt-mesh-data-panel",
                                 "imagePullPolicy": "Always",
                                 "name": "default-tcpmesh-217522f3bb86cfbded7e",
                                 "resources": {},

@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,15 +25,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goodrain/rainbond/util"
+	"github.com/wutong-paas/wutong/util"
 	corev1 "k8s.io/api/core/v1"
 	clientset "k8s.io/client-go/kubernetes"
 
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	"github.com/goodrain/rainbond/pkg/generated/informers/externalversions"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/pkg/generated/informers/externalversions"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -42,7 +42,7 @@ import (
 
 var ctx = context.Background()
 var kubeClient clientset.Interface
-var rainbondClient versioned.Interface
+var wutongClient versioned.Interface
 var testEnv *envtest.Environment
 var stopCh = make(chan struct{})
 
@@ -73,12 +73,12 @@ var _ = BeforeSuite(func() {
 	restConfig, err := k8sutil.NewRestConfig(kubeconfig)
 	Expect(err).NotTo(HaveOccurred())
 
-	rainbondClient = versioned.NewForConfigOrDie(restConfig)
+	wutongClient = versioned.NewForConfigOrDie(restConfig)
 	kubeClient = clientset.NewForConfigOrDie(restConfig)
-	rainbondInformer := externalversions.NewSharedInformerFactoryWithOptions(rainbondClient, 10*time.Second,
+	wutongInformer := externalversions.NewSharedInformerFactoryWithOptions(wutongClient, 10*time.Second,
 		externalversions.WithNamespace(corev1.NamespaceAll))
 
-	ctrl := NewController(ctx, stopCh, kubeClient, rainbondClient, rainbondInformer.Rainbond().V1alpha1().HelmApps().Informer(), rainbondInformer.Rainbond().V1alpha1().HelmApps().Lister(), "/tmp/helm/repo/repositories.yaml", "/tmp/helm/cache", "/tmp/helm/chart")
+	ctrl := NewController(ctx, stopCh, kubeClient, wutongClient, wutongInformer.Wutong().V1alpha1().HelmApps().Informer(), wutongInformer.Wutong().V1alpha1().HelmApps().Lister(), "/tmp/helm/repo/repositories.yaml", "/tmp/helm/cache", "/tmp/helm/chart")
 	go ctrl.Start()
 
 	// create namespace

@@ -22,7 +22,7 @@ import (
 
 	"github.com/docker/docker/pkg/term"
 
-	"github.com/goodrain/rainbond/util/interrupt"
+	"github.com/wutong-paas/wutong/util/interrupt"
 )
 
 // SafeFunc is a function to be invoked by TTY.

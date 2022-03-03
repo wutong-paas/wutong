@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-chi/chi"
 
-	"github.com/goodrain/rainbond/api/handler"
+	"github.com/wutong-paas/wutong/api/handler"
 
-	httputil "github.com/goodrain/rainbond/util/http"
+	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
 //GetRunningServices list all running service ids

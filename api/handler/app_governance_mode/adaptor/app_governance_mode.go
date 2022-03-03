@@ -1,8 +1,8 @@
 package adaptor
 
 import (
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db/model"
 	clientset "k8s.io/client-go/kubernetes"
 )
 

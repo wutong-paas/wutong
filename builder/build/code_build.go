@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -31,12 +31,12 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/builder"
-	jobc "github.com/goodrain/rainbond/builder/job"
-	"github.com/goodrain/rainbond/builder/parser/code"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/util"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder"
+	jobc "github.com/wutong-paas/wutong/builder/job"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -335,7 +335,7 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	logrus.Infof("package code for building service %s version %s successful, take time %s", re.ServiceID, re.DeployVersion, time.Now().Sub(start))
 
 	name := fmt.Sprintf("%s-%s", re.ServiceID, re.DeployVersion)
-	namespace := re.RbdNamespace
+	namespace := re.WtNamespace
 	job := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,

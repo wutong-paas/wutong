@@ -5,14 +5,14 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	rainbondlistersv1alpha1 "github.com/goodrain/rainbond/pkg/generated/listers/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/prober"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/prober/results"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	wutonglistersv1alpha1 "github.com/wutong-paas/wutong/pkg/generated/listers/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/prober"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/prober/results"
 )
 
 type staticEndpoint struct {
-	lister    rainbondlistersv1alpha1.ThirdComponentLister
+	lister    wutonglistersv1alpha1.ThirdComponentLister
 	component *v1alpha1.ThirdComponent
 
 	pmlock        sync.Mutex

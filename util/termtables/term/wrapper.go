@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/goodrain/rainbond/util/termtables/term"
+	"github.com/wutong-paas/wutong/util/termtables/term"
 )
 
 func main() {

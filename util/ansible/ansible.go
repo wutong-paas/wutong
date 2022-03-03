@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/node/nodem/client"
-	"github.com/goodrain/rainbond/util"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	"github.com/wutong-paas/wutong/util"
 )
 
 //WriteHostsFile write hosts file

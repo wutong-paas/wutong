@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,20 +25,20 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/goodrain/rainbond/util"
+	"github.com/wutong-paas/wutong/util"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/goodrain/rainbond/event"
+	"github.com/wutong-paas/wutong/event"
 
-	"github.com/goodrain/rainbond/builder/parser"
+	"github.com/wutong-paas/wutong/builder/parser"
 
-	"github.com/goodrain/rainbond/node/nodem/service"
+	"github.com/wutong-paas/wutong/node/nodem/service"
 
-	"github.com/goodrain/rainbond/cmd"
+	"github.com/wutong-paas/wutong/cmd"
 
-	httputil "github.com/goodrain/rainbond/util/http"
 	"github.com/urfave/cli"
+	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
 //ParseClientCommnad parse client command
@@ -97,7 +97,7 @@ func ParseClientCommnad(args []string) {
 					Flags: []cli.Flag{
 						cli.StringFlag{
 							Name:  "config-dir,c",
-							Value: "/opt/rainbond/conf",
+							Value: "/opt/wutong/conf",
 							Usage: "service config file dir",
 						},
 						cli.StringFlag{
@@ -107,12 +107,12 @@ func ParseClientCommnad(args []string) {
 						},
 						cli.StringFlag{
 							Name:  "image-prefix,p",
-							Value: "goodrain.me",
+							Value: "wutong.me",
 							Usage: "",
 						},
 						cli.StringSliceFlag{
 							Name:  "services,s",
-							Value: &cli.StringSlice{"rbd-gateway", "rbd-api", "rbd-chaos", "rbd-mq", "rbd-webcli", "rbd-worker", "rbd-eventlog", "rbd-monitor", "rbd-app-ui"},
+							Value: &cli.StringSlice{"wt-gateway", "wt-api", "wt-chaos", "wt-mq", "wt-webcli", "wt-worker", "wt-eventlog", "wt-monitor", "wt-app-ui"},
 							Usage: "Enable supported services",
 						},
 					},

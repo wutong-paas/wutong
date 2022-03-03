@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/goodrain/rainbond/db/model"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
+	"github.com/wutong-paas/wutong/db/model"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -48,7 +48,7 @@ func TestNewHPA(t *testing.T) {
 
 	hpa := newHPA(namespace, kind, name, nil, rule, metrics)
 
-	clientset, err := k8sutil.NewClientset("/opt/rainbond/etc/kubernetes/kubecfg/admin.kubeconfig")
+	clientset, err := k8sutil.NewClientset("/opt/wutong/etc/kubernetes/kubecfg/admin.kubeconfig")
 	if err != nil {
 		t.Fatalf("error creating k8s clientset: %s", err.Error())
 	}

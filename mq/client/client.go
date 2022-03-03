@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,10 +23,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goodrain/rainbond/mq/api/grpc/pb"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	grpcutil "github.com/goodrain/rainbond/util/grpc"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	grpcutil "github.com/wutong-paas/wutong/util/grpc"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
@@ -64,7 +64,7 @@ func NewMqClient(etcdClientArgs *etcdutil.ClientArgs, defaultserver string) (MQC
 		}
 		r := &grpcutil.GRPCResolver{Client: c}
 		b := grpc.RoundRobin(r)
-		conn, err = grpc.DialContext(ctx, "/rainbond/discover/rainbond_mq", grpc.WithBalancer(b), grpc.WithInsecure())
+		conn, err = grpc.DialContext(ctx, "/wutong/discover/wutong_mq", grpc.WithBalancer(b), grpc.WithInsecure())
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func buildTask(t TaskStruct) (*pb.EnqueueRequest, error) {
 		TaskType:   t.TaskType,
 		CreateTime: time.Now().Format(time.RFC3339),
 		TaskBody:   taskJSON,
-		User:       "rainbond",
+		User:       "wutong",
 	}
 	return &er, nil
 }

@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/goodrain/rainbond/worker/client"
-	"github.com/goodrain/rainbond/worker/server/pb"
+	"github.com/wutong-paas/wutong/worker/client"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 )
 
 // PodHandler defines handler methods about k8s pods.

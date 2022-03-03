@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -22,11 +22,11 @@ import (
 	"context"
 	"path"
 
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	"github.com/goodrain/rainbond/pkg/helm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/pkg/helm"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	corev1 "k8s.io/api/core/v1"
@@ -40,10 +40,10 @@ import (
 
 // App represents a helm app.
 type App struct {
-	ctx            context.Context
-	log            *logrus.Entry
-	rainbondClient versioned.Interface
-	recorder       record.EventRecorder
+	ctx          context.Context
+	log          *logrus.Entry
+	wutongClient versioned.Interface
+	recorder     record.EventRecorder
 
 	helmApp         *v1alpha1.HelmApp
 	originalHelmApp *v1alpha1.HelmApp
@@ -68,7 +68,7 @@ func (a *App) Chart() string {
 }
 
 // NewApp creates a new app.
-func NewApp(ctx context.Context, kubeClient clientset.Interface, rainbondClient versioned.Interface, helmApp *v1alpha1.HelmApp, repoFile, repoCache, chartCache string) (*App, error) {
+func NewApp(ctx context.Context, kubeClient clientset.Interface, wutongClient versioned.Interface, helmApp *v1alpha1.HelmApp, repoFile, repoCache, chartCache string) (*App, error) {
 	helmCmd, err := helm.NewHelm(helmApp.GetNamespace(), repoFile, repoCache)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func NewApp(ctx context.Context, kubeClient clientset.Interface, rainbondClient 
 		ctx:             ctx,
 		log:             log,
 		recorder:        createRecorder(kubeClient, helmApp.Name, helmApp.Namespace),
-		rainbondClient:  rainbondClient,
+		wutongClient:    wutongClient,
 		helmApp:         helmApp.DeepCopy(),
 		originalHelmApp: helmApp,
 		name:            helmApp.GetName(),
@@ -207,7 +207,7 @@ func (a *App) UpdateRunningStatus() {
 	}
 
 	a.helmApp.Status.Status = newStatus
-	status := NewStatus(a.ctx, a.helmApp, a.rainbondClient)
+	status := NewStatus(a.ctx, a.helmApp, a.wutongClient)
 	if err := status.Update(); err != nil {
 		a.log.Warningf("update running status: %v", err)
 	}
@@ -215,7 +215,7 @@ func (a *App) UpdateRunningStatus() {
 
 // UpdateStatus updates the status of the helm app.
 func (a *App) UpdateStatus() error {
-	status := NewStatus(a.ctx, a.helmApp, a.rainbondClient)
+	status := NewStatus(a.ctx, a.helmApp, a.wutongClient)
 	return status.Update()
 }
 
@@ -225,13 +225,13 @@ func (a *App) UpdateSpec() error {
 		ctx, cancel := context.WithTimeout(a.ctx, defaultTimeout)
 		defer cancel()
 
-		helmApp, err := a.rainbondClient.RainbondV1alpha1().HelmApps(a.helmApp.Namespace).Get(ctx, a.helmApp.Name, metav1.GetOptions{})
+		helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(a.helmApp.Namespace).Get(ctx, a.helmApp.Name, metav1.GetOptions{})
 		if err != nil {
 			return errors.Wrap(err, "get helm app before update")
 		}
 
 		a.helmApp.ResourceVersion = helmApp.ResourceVersion
-		if _, err := a.rainbondClient.RainbondV1alpha1().HelmApps(a.helmApp.Namespace).Update(ctx, a.helmApp, metav1.UpdateOptions{}); err != nil {
+		if _, err := a.wutongClient.WutongV1alpha1().HelmApps(a.helmApp.Namespace).Update(ctx, a.helmApp, metav1.UpdateOptions{}); err != nil {
 			return errors.Wrap(err, "update helm app spec")
 		}
 

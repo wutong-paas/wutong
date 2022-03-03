@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,14 +29,14 @@ import (
 	"github.com/docker/docker/client"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/goodrain/rainbond/builder/parser/code"
-	"github.com/goodrain/rainbond/cmd/builder/option"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/mq/api/grpc/pb"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/cmd/builder/option"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 
-	mqclient "github.com/goodrain/rainbond/mq/client"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 )
 
 func Test_exectorManager_buildFromSourceCode(t *testing.T) {
@@ -44,8 +44,8 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 		EtcdEndPoints:       []string{"192.168.2.203:2379"},
 		MQAPI:               "192.168.2.203:6300",
 		EventLogServers:     []string{"192.168.2.203:6366"},
-		RbdRepoName:         "rbd-dns",
-		RbdNamespace:        "rbd-system",
+		WtRepoName:          "wt-dns",
+		WtNamespace:         "wt-system",
 		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
 	}
 	etcdArgs := etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints}
@@ -53,7 +53,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 		EventLogServers: conf.EventLogServers,
 		DiscoverArgs:    &etcdArgs,
 	})
-	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/goodrain/admin.kubeconfig")
+	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/wutong/admin.kubeconfig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +89,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 		cfg:               conf,
 	}
 	taskBodym := make(map[string]interface{})
-	taskBodym["repo_url"] = "https://github.com/goodrain/java-maven-demo.git"
+	taskBodym["repo_url"] = "https://github.com/wutong/java-maven-demo.git"
 	taskBodym["branch"] = "master"
 	taskBodym["tenant_id"] = "5d7bd886e6dc4425bb6c2ac5fc9fa593"
 	taskBodym["service_id"] = "4eaa41ccf145b8e43a6aeb1a5efeab53"

@@ -15,7 +15,7 @@ func Test_saveORUpdateFile(t *testing.T) {
 }
 
 func TestSync(t *testing.T) {
-	config, err := clientcmd.BuildConfigFromFlags("", "/Users/fanyangyang/Documents/company/goodrain/remote/192.168.2.200/admin.kubeconfig")
+	config, err := clientcmd.BuildConfigFromFlags("", "/Users/fanyangyang/Documents/company/wutong/remote/192.168.2.200/admin.kubeconfig")
 	if err != nil {
 		t.Fatal("build config from flag error: ", err.Error())
 	}
@@ -25,8 +25,8 @@ func TestSync(t *testing.T) {
 	if err != nil {
 		t.Fatal("new for config error: ", err.Error())
 	}
-	secretName := "rbd-docker-secret"
-	namespace := "rbd-system"
+	secretName := "wt-docker-secret"
+	namespace := "wt-system"
 	secret := &corev1.Secret{}
 	secret.Name = secretName
 	data := make(map[string][]byte)

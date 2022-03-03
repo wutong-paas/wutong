@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	apimodel "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/errors"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/util"
+	apimodel "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/errors"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/util"
 	"github.com/sirupsen/logrus"
 )
 

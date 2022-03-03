@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -20,24 +20,25 @@ package conversion
 
 import (
 	"fmt"
-	"github.com/goodrain/rainbond/builder/sources"
 	"net"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/node/nodem/client"
-	"github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/util/envutil"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
-	"github.com/goodrain/rainbond/worker/appm/volume"
+	"github.com/wutong-paas/wutong/builder/sources"
+
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/envutil"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/worker/appm/volume"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -515,7 +516,7 @@ func getGPULableKey() corev1.ResourceName {
 	if os.Getenv("GPU_LABLE_KEY") != "" {
 		return corev1.ResourceName(os.Getenv("GPU_LABLE_KEY"))
 	}
-	return "rainbond.com/gpu-mem"
+	return "wutong-paas.com/gpu-mem"
 }
 
 func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, error) {
@@ -652,7 +653,7 @@ func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]stri
 				kv := strings.SplitN(l.LabelValue, "=", 2)
 				selector[kv[0]] = kv[1]
 			} else {
-				selector["rainbond_node_lable_"+l.LabelValue] = "true"
+				selector["wutong_node_lable_"+l.LabelValue] = "true"
 			}
 		}
 	}
@@ -693,7 +694,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 					})
 				} else {
 					nsr = append(nsr, corev1.NodeSelectorRequirement{
-						Key:      "rainbond_node_lable_" + l.LabelValue,
+						Key:      "wutong_node_lable_" + l.LabelValue,
 						Operator: corev1.NodeSelectorOpIn,
 						Values:   []string{"true"},
 					})
@@ -770,7 +771,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 func createPodAnnotations(as *v1.AppService) map[string]string {
 	var annotations = make(map[string]string)
 	if as.Replicas <= 1 {
-		annotations["rainbond.com/tolerate-unready-endpoints"] = "true"
+		annotations["wutong-paas.com/tolerate-unready-endpoints"] = "true"
 	}
 	if as.Replicas == 1 && as.ExtensionSet["pod_ip"] != "" {
 		logrus.Infof("custom set pod ip for calico, service %s, ip: %s", as.ServiceID, as.ExtensionSet["pod_ip"])

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/node/nodem/client"
-	"github.com/goodrain/rainbond/node/nodem/service"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	"github.com/wutong-paas/wutong/node/nodem/service"
 )
 
 //ShellProbe -

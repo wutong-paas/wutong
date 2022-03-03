@@ -3,13 +3,13 @@ package controller
 import (
 	"net/http"
 
-	"github.com/goodrain/rainbond/api/client/prometheus"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
 
 	"github.com/go-chi/chi"
-	"github.com/goodrain/rainbond/api/handler"
-	api_model "github.com/goodrain/rainbond/api/model"
-	ctxutil "github.com/goodrain/rainbond/api/util/ctx"
-	httputil "github.com/goodrain/rainbond/util/http"
+	"github.com/wutong-paas/wutong/api/handler"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
+	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
 //AddServiceMonitors add service monitor

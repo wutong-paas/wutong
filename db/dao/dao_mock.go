@@ -6,7 +6,7 @@ package dao
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	model "github.com/goodrain/rainbond/db/model"
+	model "github.com/wutong-paas/wutong/db/model"
 	reflect "reflect"
 	time "time"
 )

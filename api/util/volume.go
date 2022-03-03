@@ -1,15 +1,17 @@
 package util
 
 import (
-	"github.com/sirupsen/logrus"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+
 	"encoding/json"
-	api_model "github.com/goodrain/rainbond/api/model"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
-	"github.com/goodrain/rainbond/worker/server/pb"
+
 	"github.com/twinj/uuid"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 )
 
 // SetVolumeDefaultValue set volume default value
@@ -48,10 +50,10 @@ func ParseVolumeTypeOption(detail *pb.StorageClassDetail) string {
 }
 
 func transferVolumeTypeOption(name string, opts ...interface{}) *dbmodel.VolumeType {
-	if name == v1.RainbondStatefuleShareStorageClass {
+	if name == v1.WutongStatefuleShareStorageClass {
 		return &dbmodel.ShareFileVolumeType
 	}
-	if name == v1.RainbondStatefuleLocalStorageClass {
+	if name == v1.WutongStatefuleLocalStorageClass {
 		return &dbmodel.LocalVolumeType
 	}
 	vt := dbmodel.MakeNewVolume(name)
@@ -65,7 +67,7 @@ func transferCustomVolumeOptionName2Kind(opts ...interface{}) *dbmodel.VolumeTyp
 		return nil
 	}
 	kind := opts[0].(string)
-	if strings.HasSuffix(kind, "rbd") {
+	if strings.HasSuffix(kind, "wt") {
 		if parameters, ok := opts[1].(map[string]string); ok {
 			if parameters["adminId"] != "" && parameters["monitors"] != "" && parameters["pool"] != "" && parameters["userId"] != "" {
 				return &dbmodel.CephRBDVolumeType

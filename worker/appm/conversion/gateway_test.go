@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -26,11 +26,11 @@ import (
 	"time"
 
 	gomock "github.com/golang/mock/gomock"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/dao"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/gateway/annotations/parser"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/dao"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/gateway/annotations/parser"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -169,7 +169,7 @@ func TestApplyTcpRule(t *testing.T) {
 		Category:        "application",
 		CurStatus:       "undeploy",
 		Status:          0,
-		Namespace:       "goodrain",
+		Namespace:       "wutong",
 		UpdateTime:      updateTime,
 		ServiceOrigin:   "assistant",
 	}
@@ -187,7 +187,7 @@ func TestApplyTcpRule(t *testing.T) {
 
 	appService := &v1.AppService{}
 	appService.ServiceID = serviceID
-	appService.CreaterID = "Rainbond"
+	appService.CreaterID = "Wutong"
 	appService.TenantID = testCase["namespace"]
 
 	replicationType := v1.TypeDeployment
@@ -235,7 +235,7 @@ func TestApplyTcpRule(t *testing.T) {
 	}
 
 	// create k8s resources
-	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/goodrain/rainbond/test/admin.kubeconfig")
+	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/wutong-paas/wutong/test/admin.kubeconfig")
 	if err != nil {
 		t.Fatalf("read kube config file error: %v", err)
 	}
@@ -261,7 +261,7 @@ func TestApplyTcpRule(t *testing.T) {
 func TestAppServiceBuild_ApplyHttpRule(t *testing.T) {
 	testCase := map[string]string{
 		"namespace":   "e8539a9c33f12345611cce26d2bca431",
-		"domain":      "www.goodrain.com",
+		"domain":      "www.wutong-paas.com",
 		"path":        "/dummy-path",
 		"serviceName": "dummy-service-name",
 		"servicePort": "10000",
@@ -294,7 +294,7 @@ func TestAppServiceBuild_ApplyHttpRule(t *testing.T) {
 		Category:        "application",
 		CurStatus:       "undeploy",
 		Status:          0,
-		Namespace:       "goodrain",
+		Namespace:       "wutong",
 		UpdateTime:      updateTime,
 		ServiceOrigin:   "assistant",
 	}
@@ -373,7 +373,7 @@ func TestAppServiceBuild_ApplyHttpRule(t *testing.T) {
 	}
 
 	// create k8s resources
-	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/goodrain/rainbond/test/admin.kubeconfig")
+	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/wutong-paas/wutong/test/admin.kubeconfig")
 	if err != nil {
 		t.Fatalf("read kube config file error: %v", err)
 	}
@@ -400,7 +400,7 @@ func TestAppServiceBuild_ApplyHttpRuleWithCertificate(t *testing.T) {
 	testCase := map[string]string{
 		"namespace":     "foobar",
 		"ruleID":        "abbe1e0038af47048f34809337531d76",
-		"domain":        "www.goodrain.com",
+		"domain":        "www.wutong-paas.com",
 		"path":          "/dummy-path",
 		"serviceName":   "dummy-service-name",
 		"servicePort":   "10000",
@@ -434,7 +434,7 @@ func TestAppServiceBuild_ApplyHttpRuleWithCertificate(t *testing.T) {
 		Category:        "application",
 		CurStatus:       "undeploy",
 		Status:          0,
-		Namespace:       "goodrain",
+		Namespace:       "wutong",
 		UpdateTime:      updateTime,
 		ServiceOrigin:   "assistant",
 	}
@@ -504,7 +504,7 @@ func TestAppServiceBuild_ApplyHttpRuleWithCertificate(t *testing.T) {
 	}
 
 	// create k8s resources
-	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/goodrain/rainbond/test/admin.kubeconfig")
+	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/wutong-paas/wutong/test/admin.kubeconfig")
 	if err != nil {
 		t.Fatalf("read kube config file error: %v", err)
 	}

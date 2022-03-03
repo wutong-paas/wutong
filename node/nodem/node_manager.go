@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -26,19 +26,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/node/nodem/logger"
+	"github.com/wutong-paas/wutong/node/nodem/logger"
 
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/node/api"
-	"github.com/goodrain/rainbond/node/nodem/client"
-	"github.com/goodrain/rainbond/node/nodem/controller"
-	"github.com/goodrain/rainbond/node/nodem/gc"
-	"github.com/goodrain/rainbond/node/nodem/healthy"
-	"github.com/goodrain/rainbond/node/nodem/info"
-	"github.com/goodrain/rainbond/node/nodem/monitor"
-	"github.com/goodrain/rainbond/node/nodem/service"
-	"github.com/goodrain/rainbond/util"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/node/api"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	"github.com/wutong-paas/wutong/node/nodem/controller"
+	"github.com/wutong-paas/wutong/node/nodem/gc"
+	"github.com/wutong-paas/wutong/node/nodem/healthy"
+	"github.com/wutong-paas/wutong/node/nodem/info"
+	"github.com/wutong-paas/wutong/node/nodem/monitor"
+	"github.com/wutong-paas/wutong/node/nodem/service"
+	"github.com/wutong-paas/wutong/util"
 )
 
 var sandboxImage = "k8s.gcr.io/pause-amd64:latest"
@@ -307,7 +307,7 @@ func (n *NodeManager) setNodeLabels(node *client.HostNode) {
 	var newLabels = map[string]string{}
 	//remove node rule labels
 	for k, v := range node.Labels {
-		if !strings.HasPrefix(k, "rainbond_node_rule_") {
+		if !strings.HasPrefix(k, "wutong_node_rule_") {
 			newLabels[k] = v
 		}
 	}
@@ -321,14 +321,14 @@ func (n *NodeManager) setNodeLabels(node *client.HostNode) {
 func (n *NodeManager) getInitLabel(node *client.HostNode) map[string]string {
 	labels := map[string]string{}
 	for _, rule := range node.Role {
-		labels["rainbond_node_rule_"+rule] = "true"
+		labels["wutong_node_rule_"+rule] = "true"
 	}
 	labels[client.LabelOS] = runtime.GOOS
 	hostname, _ := os.Hostname()
 	if node.HostName != hostname && hostname != "" {
 		node.HostName = hostname
 	}
-	labels["rainbond_node_hostname"] = node.HostName
+	labels["wutong_node_hostname"] = node.HostName
 	labels["kubernetes.io/hostname"] = node.InternalIP
 	return labels
 }

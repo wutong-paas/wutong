@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	v1 "github.com/goodrain/rainbond/util/prober/types/v1"
+	v1 "github.com/wutong-paas/wutong/util/prober/types/v1"
 	"github.com/sirupsen/logrus"
 )
 

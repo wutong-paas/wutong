@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -156,7 +156,7 @@ type SelectBalance struct {
 //NewSelectBalance  创建选择性负载均衡
 func NewSelectBalance() *SelectBalance {
 	return &SelectBalance{
-		hostIDMap: map[string]string{"local": "rbd-eventlog:6363"},
+		hostIDMap: map[string]string{"local": "wt-eventlog:6363"},
 	}
 }
 
@@ -166,7 +166,7 @@ func (s *SelectBalance) Select(r *http.Request, endpoints EndpointList) Endpoint
 		return Endpoint(s.hostIDMap["local"])
 	}
 
-	id2ip := map[string]string{"local": "rbd-eventlog:6363"}
+	id2ip := map[string]string{"local": "wt-eventlog:6363"}
 	for _, end := range endpoints {
 		if kv := strings.Split(string(end), "=>"); len(kv) > 1 {
 			id2ip[kv[0]] = kv[1]

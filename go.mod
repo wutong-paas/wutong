@@ -1,4 +1,4 @@
-module github.com/goodrain/rainbond
+module github.com/wutong-paas/wutong
 
 go 1.15
 
@@ -8,7 +8,6 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.5+incompatible
-	github.com/atcdot/gorm-bulk-upsert v1.0.0
 	github.com/aws/aws-sdk-go v1.36.15
 	github.com/barnettZQG/gotty v1.0.1-0.20200904091006-a0a1f7d747dc
 	github.com/beorn7/perks v1.0.1
@@ -45,8 +44,6 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
-	github.com/goodrain/rainbond-oam v0.0.0-20210810094229-f1cd639c451a
-	github.com/goodrain/rainbond-operator v1.3.1-0.20210401055914-f8fe4bf89a21
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.4.2
@@ -91,6 +88,9 @@ require (
 	github.com/tidwall/gjson v1.6.8
 	github.com/twinj/uuid v1.0.0
 	github.com/urfave/cli v1.22.2
+	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
+	github.com/wutong-paas/wutong-oam v1.0.1
+	github.com/wutong-paas/wutong-operator v1.0.0
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
@@ -121,7 +121,6 @@ require (
 
 // Pinned to kubernetes-1.20.0
 replace (
-	github.com/atcdot/gorm-bulk-upsert => github.com/goodrain/gorm-bulk-upsert v1.0.1-0.20210608013724-7e7870d16357
 	github.com/coreos/etcd => github.com/coreos/etcd v3.2.31+incompatible
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible

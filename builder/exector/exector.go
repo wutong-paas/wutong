@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -34,17 +34,17 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 
-	"github.com/goodrain/rainbond/builder/job"
-	"github.com/goodrain/rainbond/cmd/builder/option"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/mq/api/grpc/pb"
-	"github.com/goodrain/rainbond/util"
+	"github.com/wutong-paas/wutong/builder/job"
+	"github.com/wutong-paas/wutong/cmd/builder/option"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
+	"github.com/wutong-paas/wutong/util"
 
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	mqclient "github.com/goodrain/rainbond/mq/client"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	workermodel "github.com/goodrain/rainbond/worker/discover/model"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	workermodel "github.com/wutong-paas/wutong/worker/discover/model"
 )
 
 //MetricTaskNum task number
@@ -105,7 +105,7 @@ func NewManager(conf option.Config, mqc mqclient.MQClient) (Manager, error) {
 		maxConcurrentTask = conf.MaxTasks
 	}
 	stop := make(chan struct{})
-	if err := job.InitJobController(conf.RbdNamespace, stop, kubeClient); err != nil {
+	if err := job.InitJobController(conf.WtNamespace, stop, kubeClient); err != nil {
 		cancel()
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			i.Logger.Error("Back end service drift. Please check the rbd-chaos log", map[string]string{"step": "callback", "status": "failure"})
+			i.Logger.Error("Back end service drift. Please check the wt-chaos log", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
 	start := time.Now()
@@ -326,8 +326,8 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 	i := NewSouceCodeBuildItem(task.TaskBody)
 	i.DockerClient = e.DockerClient
 	i.KubeClient = e.KubeClient
-	i.RbdNamespace = e.cfg.RbdNamespace
-	i.RbdRepoName = e.cfg.RbdRepoName
+	i.WtNamespace = e.cfg.WtNamespace
+	i.WtRepoName = e.cfg.WtRepoName
 	i.Ctx = e.ctx
 	i.CachePVCName = e.cfg.CachePVCName
 	i.GRDataPVCName = e.cfg.GRDataPVCName
@@ -340,7 +340,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			i.Logger.Error("Back end service drift. Please check the rbd-chaos log", map[string]string{"step": "callback", "status": "failure"})
+			i.Logger.Error("Back end service drift. Please check the wt-chaos log", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
 	defer func() {
@@ -396,7 +396,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 			if r := recover(); r != nil {
 				fmt.Println(r)
 				debug.PrintStack()
-				i.Logger.Error("Back end service drift. Please check the rbd-chaos log", map[string]string{"step": "callback", "status": "failure"})
+				i.Logger.Error("Back end service drift. Please check the wt-chaos log", map[string]string{"step": "callback", "status": "failure"})
 			}
 		}()
 		defer func() {

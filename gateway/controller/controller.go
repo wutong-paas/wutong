@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -24,29 +24,29 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goodrain/rainbond/gateway/cluster"
+	"github.com/wutong-paas/wutong/gateway/cluster"
 
 	client "github.com/coreos/etcd/clientv3"
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/cmd/gateway/option"
-	"github.com/goodrain/rainbond/gateway/controller/openresty"
-	"github.com/goodrain/rainbond/gateway/metric"
-	"github.com/goodrain/rainbond/gateway/store"
-	v1 "github.com/goodrain/rainbond/gateway/v1"
-	"github.com/goodrain/rainbond/util/ingress-nginx/task"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/gateway/option"
+	"github.com/wutong-paas/wutong/gateway/controller/openresty"
+	"github.com/wutong-paas/wutong/gateway/metric"
+	"github.com/wutong-paas/wutong/gateway/store"
+	v1 "github.com/wutong-paas/wutong/gateway/v1"
+	"github.com/wutong-paas/wutong/util/ingress-nginx/task"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/flowcontrol"
 )
 
-// rainbond endpoints map
-var rbdemap = make(map[string]struct{})
+// wutong endpoints map
+var wtemap = make(map[string]struct{})
 
 func init() {
-	rbdemap["APISERVER_ENDPOINTS"] = struct{}{}
-	rbdemap["HUB_ENDPOINTS"] = struct{}{}
-	rbdemap["REPO_ENDPOINTS"] = struct{}{}
+	wtemap["APISERVER_ENDPOINTS"] = struct{}{}
+	wtemap["HUB_ENDPOINTS"] = struct{}{}
+	wtemap["REPO_ENDPOINTS"] = struct{}{}
 }
 
 // GWController -
@@ -65,8 +65,8 @@ type GWController struct {
 
 	ocfg *option.Config
 	rcfg *v1.Config // running configuration
-	rrhp []*v1.Pool // running rainbond http pools
-	rrtp []*v1.Pool // running rainbond tcp or udp pools
+	rrhp []*v1.Pool // running wutong http pools
+	rrtp []*v1.Pool // running wutong tcp or udp pools
 
 	stopCh   chan struct{}
 	updateCh *channels.RingChannel

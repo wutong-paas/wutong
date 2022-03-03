@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -21,9 +21,9 @@ package helmapp
 import (
 	"context"
 
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
 	"github.com/pkg/errors"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -31,17 +31,17 @@ import (
 
 // Status represents the status of helm app.
 type Status struct {
-	ctx            context.Context
-	rainbondClient versioned.Interface
-	helmApp        *v1alpha1.HelmApp
+	ctx          context.Context
+	wutongClient versioned.Interface
+	helmApp      *v1alpha1.HelmApp
 }
 
 // NewStatus creates a new helm app status.
-func NewStatus(ctx context.Context, app *v1alpha1.HelmApp, rainbondClient versioned.Interface) *Status {
+func NewStatus(ctx context.Context, app *v1alpha1.HelmApp, wutongClient versioned.Interface) *Status {
 	return &Status{
-		ctx:            ctx,
-		helmApp:        app,
-		rainbondClient: rainbondClient,
+		ctx:          ctx,
+		helmApp:      app,
+		wutongClient: wutongClient,
 	}
 }
 
@@ -51,14 +51,14 @@ func (s *Status) Update() error {
 		ctx, cancel := context.WithTimeout(s.ctx, defaultTimeout)
 		defer cancel()
 
-		helmApp, err := s.rainbondClient.RainbondV1alpha1().HelmApps(s.helmApp.Namespace).Get(ctx, s.helmApp.Name, metav1.GetOptions{})
+		helmApp, err := s.wutongClient.WutongV1alpha1().HelmApps(s.helmApp.Namespace).Get(ctx, s.helmApp.Name, metav1.GetOptions{})
 		if err != nil {
 			return errors.Wrap(err, "get helm app before update")
 		}
 
 		s.helmApp.Status.Phase = s.getPhase()
 		s.helmApp.ResourceVersion = helmApp.ResourceVersion
-		_, err = s.rainbondClient.RainbondV1alpha1().HelmApps(s.helmApp.Namespace).UpdateStatus(ctx, s.helmApp, metav1.UpdateOptions{})
+		_, err = s.wutongClient.WutongV1alpha1().HelmApps(s.helmApp.Namespace).UpdateStatus(ctx, s.helmApp, metav1.UpdateOptions{})
 		return err
 	})
 }

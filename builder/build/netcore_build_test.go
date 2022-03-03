@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -22,8 +22,8 @@ import (
 	"testing"
 
 	"github.com/docker/docker/client"
-	"github.com/goodrain/rainbond/builder/parser/code"
-	"github.com/goodrain/rainbond/event"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/event"
 )
 
 func TestBuildNetCore(t *testing.T) {
@@ -33,8 +33,8 @@ func TestBuildNetCore(t *testing.T) {
 	}
 	dockerCli, _ := client.NewEnvClient()
 	req := &Request{
-		SourceDir:     "/Users/qingguo/goodrain/dotnet-docker/samples/aspnetapp/test",
-		CacheDir:      "/Users/qingguo/goodrain/dotnet-docker/samples/aspnetapp/test/cache",
+		SourceDir:     "/Users/qingguo/wutong/dotnet-docker/samples/aspnetapp/test",
+		CacheDir:      "/Users/qingguo/wutong/dotnet-docker/samples/aspnetapp/test/cache",
 		RepositoryURL: "https://github.com/dotnet/dotnet-docker.git",
 		ServiceAlias:  "gr123456",
 		DeployVersion: "666666",

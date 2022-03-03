@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/goodrain/rainbond/util/termtables/term"
+	"github.com/wutong-paas/wutong/util/termtables/term"
 )
 
 // MaxColumns represents the maximum number of columns that are available for

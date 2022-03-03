@@ -2,10 +2,10 @@
 set -o errexit
 
 # define package name
-WORK_DIR=/go/src/github.com/goodrain/rainbond
-BASE_NAME=rainbond
-IMAGE_BASE_NAME=${BUILD_IMAGE_BASE_NAME:-'rainbond'}
-DOMESTIC_NAMESPACE=${DOMESTIC_NAMESPACE:-'goodrain'}
+WORK_DIR=/go/src/github.com/wutong-paas/wutong
+BASE_NAME=wutong
+IMAGE_BASE_NAME=${BUILD_IMAGE_BASE_NAME:-'wutong'}
+DOMESTIC_NAMESPACE=${DOMESTIC_NAMESPACE:-'wutong'}
 GOARCH=${BUILD_GOARCH:-'amd64'}
 
 GO_VERSION=1.13
@@ -47,7 +47,7 @@ build::binary() {
 	local OUTPATH="./_output/binary/$GOOS/${BASE_NAME}-$1"
 	local DOCKER_PATH="./hack/contrib/docker/$1"
 	local build_image="golang:${GO_VERSION}"
-	local build_args="-w -s -X github.com/goodrain/rainbond/cmd.version=${release_desc}"
+	local build_args="-w -s -X github.com/wutong-paas/wutong/cmd.version=${release_desc}"
 	local build_dir="./cmd/$1"
 	local build_tag=""
 	local DOCKERFILE_BASE=${BUILD_DOCKERFILE_BASE:-'Dockerfile'}
@@ -59,8 +59,8 @@ build::binary() {
 		if [ "$GOARCH" = "arm64" ]; then
 			DOCKERFILE_BASE="Dockerfile.arm"
 		fi
-		docker build -t goodraim.me/event-build:v1 -f "${DOCKER_PATH}/build/${DOCKERFILE_BASE}" "${DOCKER_PATH}/build/"
-		build_image="goodraim.me/event-build:v1"
+		docker build -t wutong.me/event-build:v1 -f "${DOCKER_PATH}/build/${DOCKERFILE_BASE}" "${DOCKER_PATH}/build/"
+		build_image="wutong.me/event-build:v1"
 	elif [ "$1" = "chaos" ]; then
 		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
@@ -104,25 +104,25 @@ build::image() {
 			BASE_IMAGE_VERSION="1.19.3.2"
 		fi
 	fi
-	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg GOARCH="${GOARCH}" -t "${IMAGE_BASE_NAME}/rbd-$1:${VERSION}" -f "${DOCKERFILE_BASE}" .
-	docker run --rm "${IMAGE_BASE_NAME}/rbd-$1:${VERSION}" version
+	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg GOARCH="${GOARCH}" -t "${IMAGE_BASE_NAME}/wt-$1:${VERSION}" -f "${DOCKERFILE_BASE}" .
+	docker run --rm "${IMAGE_BASE_NAME}/wt-$1:${VERSION}" version
 	if [ $? -ne 0 ]; then
 		echo "image version is different ${release_desc}"
 		exit 1
 	fi
 	if [ -f "${source_dir}/test.sh" ]; then
-		"${source_dir}/test.sh" "${IMAGE_BASE_NAME}/rbd-$1:${VERSION}"
+		"${source_dir}/test.sh" "${IMAGE_BASE_NAME}/wt-$1:${VERSION}"
 	fi
 	if [ "$2" = "push" ]; then
 		if [ $DOCKER_USERNAME ]; then
 			docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-			docker push "${IMAGE_BASE_NAME}/rbd-$1:${VERSION}"
+			docker push "${IMAGE_BASE_NAME}/wt-$1:${VERSION}"
 		fi
 		
 		if [ "${DOMESTIC_BASE_NAME}" ]; then
-			docker tag "${IMAGE_BASE_NAME}/rbd-$1:${VERSION}" "${DOMESTIC_BASE_NAME}/${DOMESTIC_NAMESPACE}/rbd-$1:${VERSION}"
+			docker tag "${IMAGE_BASE_NAME}/wt-$1:${VERSION}" "${DOMESTIC_BASE_NAME}/${DOMESTIC_NAMESPACE}/wt-$1:${VERSION}"
 			docker login -u "$DOMESTIC_DOCKER_USERNAME" -p "$DOMESTIC_DOCKER_PASSWORD" "${DOMESTIC_BASE_NAME}"
-			docker push "${DOMESTIC_BASE_NAME}/${DOMESTIC_NAMESPACE}/rbd-$1:${VERSION}"
+			docker push "${DOMESTIC_BASE_NAME}/${DOMESTIC_NAMESPACE}/wt-$1:${VERSION}"
 		fi
 	fi
 	popd

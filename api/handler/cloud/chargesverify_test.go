@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -22,13 +22,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/db/model"
 )
 
 func TestChargeSverify(t *testing.T) {
 	tenant := &model.Tenants{EID: "daa5ed8b1e9747518f1c531bf3c12aca", UUID: "ddddd_DDD"}
 	os.Setenv("REGION_NAME", "ali-hz")
-	os.Setenv("CLOUD_API", "http://apitest.goodrain.com")
+	os.Setenv("CLOUD_API", "http://apitest.wutong-paas.com")
 	err := PubChargeSverify(tenant, 522, "sss")
 	if err != nil {
 		t.Fatal(err.Code, err.String())

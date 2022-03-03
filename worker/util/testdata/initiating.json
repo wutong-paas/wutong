@@ -28,7 +28,7 @@
         ],
         "containerStatuses": [
             {
-                "image": "goodrain.me/nginx:20190823212118",
+                "image": "wutong.me/nginx:20190823212118",
                 "imageID": "",
                 "lastState": {},
                 "name": "921c102de870c562a912c4bd7e335853",
@@ -41,7 +41,7 @@
                 }
             },
             {
-                "image": "goodrain.me/rbd-mesh-data-panel",
+                "image": "wutong.me/wt-mesh-data-panel",
                 "imageID": "",
                 "lastState": {},
                 "name": "default-tcpmesh-c562a912c4bd7e335853",
@@ -57,8 +57,8 @@
         "initContainerStatuses": [
             {
                 "containerID": "docker://aa61eb6a60ea01ffebdef1a0377b55988cce04e38f833d41dc04f48307c70357",
-                "image": "goodrain.me/rbd-init-probe:latest",
-                "imageID": "docker-pullable://goodrain.me/rbd-init-probe@sha256:797658b83de62c22578670d50c7e4cd8758ee0826d23eb9b6cec334eaf7fd48e",
+                "image": "wutong.me/wt-init-probe:latest",
+                "imageID": "docker-pullable://wutong.me/wt-init-probe@sha256:797658b83de62c22578670d50c7e4cd8758ee0826d23eb9b6cec334eaf7fd48e",
                 "lastState": {},
                 "name": "probe-mesh-c562a912c4bd7e335853",
                 "ready": false,

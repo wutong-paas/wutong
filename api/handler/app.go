@@ -7,15 +7,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/goodrain/rainbond/mq/client"
+	"github.com/wutong-paas/wutong/mq/client"
 
 	"regexp"
 
-	"github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
+	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util"
 )
 
 var re = regexp.MustCompile(`\s`)
@@ -52,7 +52,7 @@ func (a *AppAction) Complete(tr *model.ExportAppStruct) error {
 		return err
 	}
 
-	if tr.Body.Format != "rainbond-app" && tr.Body.Format != "docker-compose" {
+	if tr.Body.Format != "wutong-app" && tr.Body.Format != "docker-compose" {
 		err := errors.New("Unsupported the format: " + tr.Body.Format)
 		logrus.Error(err)
 		return err

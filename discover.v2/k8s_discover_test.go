@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/discover/config"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/discover/config"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 )
 
 func TestK8sDiscover_AddProject(t *testing.T) {
@@ -30,13 +30,13 @@ func TestK8sDiscover_AddProject(t *testing.T) {
 		tc := tests[idx]
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			cfg := &option.Conf{RbdNamespace: ""}
+			cfg := &option.Conf{WtNamespace: ""}
 
 			pod := &corev1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "rbd-gateway-abcde",
+					Name: "wt-gateway-abcde",
 					Labels: map[string]string{
-						"name": "rbd-gateway",
+						"name": "wt-gateway",
 					},
 				},
 				Status: corev1.PodStatus{
@@ -52,7 +52,7 @@ func TestK8sDiscover_AddProject(t *testing.T) {
 				epCh:  make(chan []*config.Endpoint),
 				errCh: make(chan error),
 			}
-			discover.AddProject("rbd-gateway", callback)
+			discover.AddProject("wt-gateway", callback)
 
 			go func() {
 				for {
@@ -122,14 +122,14 @@ func TestK8sDiscover_AddProject2(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cfg := &option.Conf{RbdNamespace: "rbd-system"}
+	cfg := &option.Conf{WtNamespace: "wt-system"}
 	discover := NewK8sDiscover(ctx, clientset, cfg)
 	defer discover.Stop()
 	callback := &testCallback{
 		epCh:  make(chan []*config.Endpoint),
 		errCh: make(chan error),
 	}
-	discover.AddProject("rbd-gateway", callback)
+	discover.AddProject("wt-gateway", callback)
 
 	for {
 		select {

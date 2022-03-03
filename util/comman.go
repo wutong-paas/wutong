@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -37,8 +37,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goodrain/rainbond/util/zip"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/util/zip"
 )
 
 //CheckAndCreateDir check and create dir
@@ -197,9 +197,9 @@ func CmdRunWithTimeout(cmd *exec.Cmd, timeout time.Duration) (bool, error) {
 func ReadHostID(filePath string) (string, error) {
 	if filePath == "" {
 		if runtime.GOOS == "windows" {
-			filePath = "c:\\rainbond\\node_host_uuid.conf"
+			filePath = "c:\\wutong\\node_host_uuid.conf"
 		} else {
-			filePath = "/opt/rainbond/etc/node/node_host_uuid.conf"
+			filePath = "/opt/wutong/etc/node/node_host_uuid.conf"
 		}
 	}
 	_, err := os.Stat(filePath)

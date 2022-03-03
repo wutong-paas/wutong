@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"strings"
 
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	storagev1 "k8s.io/api/storage/v1"
 )
 
@@ -40,12 +40,12 @@ func init() {
 	defaultcapacityValidation["max"] = 999999999
 }
 
-// TransStorageClass2RBDVolumeType transfer k8s storageclass 2 rbd volumeType
+// TransStorageClass2RBDVolumeType transfer k8s storageclass 2 wt volumeType
 func TransStorageClass2RBDVolumeType(sc *storagev1.StorageClass) *dbmodel.TenantServiceVolumeType {
-	if sc.GetName() == v1.RainbondStatefuleShareStorageClass {
+	if sc.GetName() == v1.WutongStatefuleShareStorageClass {
 		return &dbmodel.TenantServiceVolumeType{VolumeType: dbmodel.ShareFileVolumeType.String()}
 	}
-	if sc.GetName() == v1.RainbondStatefuleLocalStorageClass {
+	if sc.GetName() == v1.WutongStatefuleLocalStorageClass {
 		return &dbmodel.TenantServiceVolumeType{VolumeType: dbmodel.LocalVolumeType.String()}
 	}
 	scbs, _ := json.Marshal(sc)
@@ -68,7 +68,7 @@ func TransStorageClass2RBDVolumeType(sc *storagev1.StorageClass) *dbmodel.Tenant
 		volumeType.ReclaimPolicy = fmt.Sprintf("%v", *sc.ReclaimPolicy)
 	}
 	if sc.Annotations != nil {
-		if name, ok := sc.Annotations["rbd_volume_name"]; ok {
+		if name, ok := sc.Annotations["wt_volume_name"]; ok {
 			volumeType.NameShow = name
 		}
 	}

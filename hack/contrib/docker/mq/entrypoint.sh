@@ -2,7 +2,7 @@
 if [ "$1" = "bash" ];then
     exec /bin/bash
 elif [ "$1" = "version" ];then
-    /run/rainbond-mq version
+    /run/wutong-mq version
 else
-    exec /run/rainbond-mq $@
+    exec /run/wutong-mq $@
 fi

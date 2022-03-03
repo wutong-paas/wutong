@@ -5,6 +5,6 @@
 
 ### install shell
 ```bash
-docker run -it --rm -v /:/rootfs goodrain.me/rbd-grctl:V5.2-dev copy
+docker run -it --rm -v /:/rootfs wutong.me/wt-grctl:V1.0.0-dev copy
 grctl install
 ```

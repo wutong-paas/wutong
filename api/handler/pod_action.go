@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"github.com/goodrain/rainbond/worker/server/pb"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 	"strings"
 
-	"github.com/goodrain/rainbond/worker/client"
-	"github.com/goodrain/rainbond/worker/server"
+	"github.com/wutong-paas/wutong/worker/client"
+	"github.com/wutong-paas/wutong/worker/server"
 )
 
 // PodAction is an implementation of PodHandler

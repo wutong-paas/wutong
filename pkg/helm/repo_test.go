@@ -1,15 +1,16 @@
 package helm
 
 import (
-	"github.com/goodrain/rainbond/util"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/wutong-paas/wutong/util"
 )
 
 func TestRepoAdd(t *testing.T) {
 	repo := NewRepo(
 		"/tmp/helm/repoName/repositories.yaml",
 		"/tmp/helm/cache")
-	err := repo.Add(util.NewUUID(), "https://openchart.goodrain.com/goodrain/rainbond", "", "")
+	err := repo.Add(util.NewUUID(), "https://openchart.wutong-paas.com/wutong-paas/wutong", "", "")
 	assert.Nil(t, err)
 }

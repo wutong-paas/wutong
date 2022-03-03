@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/goodrain/rainbond/api/handler/app_governance_mode/adaptor"
 	"io/ioutil"
 	"os"
 	"sort"
@@ -11,21 +10,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/api/client/prometheus"
-	"github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/db"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	util "github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/util/commonutil"
-	"github.com/goodrain/rainbond/util/constants"
-	"github.com/goodrain/rainbond/worker/client"
-	"github.com/goodrain/rainbond/worker/server/pb"
+	"github.com/wutong-paas/wutong/api/handler/app_governance_mode/adaptor"
+
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
+	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	util "github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/commonutil"
+	"github.com/wutong-paas/wutong/util/constants"
+	"github.com/wutong-paas/wutong/worker/client"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,10 +35,10 @@ import (
 
 // ApplicationAction -
 type ApplicationAction struct {
-	statusCli      *client.AppRuntimeSyncClient
-	promClient     prometheus.Interface
-	rainbondClient versioned.Interface
-	kubeClient     clientset.Interface
+	statusCli    *client.AppRuntimeSyncClient
+	promClient   prometheus.Interface
+	wutongClient versioned.Interface
+	kubeClient   clientset.Interface
 }
 
 // ApplicationHandler defines handler methods to TenantApplication.
@@ -70,12 +71,12 @@ type ApplicationHandler interface {
 }
 
 // NewApplicationHandler creates a new Tenant Application Handler.
-func NewApplicationHandler(statusCli *client.AppRuntimeSyncClient, promClient prometheus.Interface, rainbondClient versioned.Interface, kubeClient clientset.Interface) ApplicationHandler {
+func NewApplicationHandler(statusCli *client.AppRuntimeSyncClient, promClient prometheus.Interface, wutongClient versioned.Interface, kubeClient clientset.Interface) ApplicationHandler {
 	return &ApplicationAction{
-		statusCli:      statusCli,
-		promClient:     promClient,
-		rainbondClient: rainbondClient,
-		kubeClient:     kubeClient,
+		statusCli:    statusCli,
+		promClient:   promClient,
+		wutongClient: wutongClient,
+		kubeClient:   kubeClient,
 	}
 }
 
@@ -113,7 +114,7 @@ func (a *ApplicationAction) CreateApp(ctx context.Context, req *model.Applicatio
 		}
 
 		if appReq.AppType == model.AppTypeHelm {
-			// create helmapp.rainbond.io
+			// create helmapp.wutong.io
 			return a.createHelmApp(ctx, appReq)
 		}
 		return nil
@@ -124,7 +125,7 @@ func (a *ApplicationAction) CreateApp(ctx context.Context, req *model.Applicatio
 
 func (a *ApplicationAction) createHelmApp(ctx context.Context, app *dbmodel.Application) error {
 	labels := map[string]string{
-		constants.ResourceManagedByLabel: constants.Rainbond,
+		constants.ResourceManagedByLabel: constants.Wutong,
 	}
 	tenant, err := GetTenantManager().GetTenantsByUUID(app.TenantID)
 	if err != nil {
@@ -159,7 +160,7 @@ func (a *ApplicationAction) createHelmApp(ctx context.Context, app *dbmodel.Appl
 
 	ctx2, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	_, err = a.rainbondClient.RainbondV1alpha1().HelmApps(helmApp.Namespace).Create(ctx2, helmApp, metav1.CreateOptions{})
+	_, err = a.wutongClient.WutongV1alpha1().HelmApps(helmApp.Namespace).Create(ctx2, helmApp, metav1.CreateOptions{})
 	if err != nil {
 		if k8sErrors.IsAlreadyExists(err) {
 			return errors.Wrap(bcode.ErrApplicationExist, "create helm app")
@@ -229,7 +230,7 @@ func (a *ApplicationAction) updateHelmApp(ctx context.Context, app *dbmodel.Appl
 	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	helmApp, err := a.rainbondClient.RainbondV1alpha1().HelmApps(tenant.Namespace).Get(ctx, app.AppName, metav1.GetOptions{})
+	helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Get(ctx, app.AppName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return errors.Wrap(bcode.ErrApplicationNotFound, "update app")
@@ -243,7 +244,7 @@ func (a *ApplicationAction) updateHelmApp(ctx context.Context, app *dbmodel.Appl
 	if req.Revision != 0 {
 		helmApp.Spec.Revision = req.Revision
 	}
-	_, err = a.rainbondClient.RainbondV1alpha1().HelmApps(tenant.Namespace).Update(ctx, helmApp, metav1.UpdateOptions{})
+	_, err = a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Update(ctx, helmApp, metav1.UpdateOptions{})
 	return err
 }
 
@@ -281,11 +282,11 @@ func (a *ApplicationAction) DeleteApp(ctx context.Context, app *dbmodel.Applicat
 		return a.deleteHelmApp(ctx, app)
 	}
 
-	return a.deleteRainbondApp(app)
+	return a.deleteWutongApp(app)
 }
 
-func (a *ApplicationAction) deleteRainbondApp(app *dbmodel.Application) error {
-	// can't delete rainbond app with components
+func (a *ApplicationAction) deleteWutongApp(app *dbmodel.Application) error {
+	// can't delete wutong app with components
 	if err := a.isContainComponents(app.AppID); err != nil {
 		return err
 	}
@@ -319,7 +320,7 @@ func (a *ApplicationAction) deleteHelmApp(ctx context.Context, app *dbmodel.Appl
 			return err
 		}
 
-		if err := a.rainbondClient.RainbondV1alpha1().HelmApps(tenant.Namespace).Delete(ctx, app.AppName, metav1.DeleteOptions{}); err != nil {
+		if err := a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Delete(ctx, app.AppName, metav1.DeleteOptions{}); err != nil {
 			if !k8sErrors.IsNotFound(err) {
 				return err
 			}
@@ -480,7 +481,7 @@ func (a *ApplicationAction) Install(ctx context.Context, app *dbmodel.Applicatio
 	if err != nil {
 		return errors.Wrap(err, "install app")
 	}
-	helmApp, err := a.rainbondClient.RainbondV1alpha1().HelmApps(tenant.Namespace).Get(ctx1, app.AppName, metav1.GetOptions{})
+	helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Get(ctx1, app.AppName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return errors.Wrap(bcode.ErrApplicationNotFound, "install app")
@@ -492,7 +493,7 @@ func (a *ApplicationAction) Install(ctx context.Context, app *dbmodel.Applicatio
 	defer cancel()
 	helmApp.Spec.Overrides = overrides
 	helmApp.Spec.PreStatus = v1alpha1.HelmAppPreStatusConfigured
-	_, err = a.rainbondClient.RainbondV1alpha1().HelmApps(tenant.Namespace).Update(ctx3, helmApp, metav1.UpdateOptions{})
+	_, err = a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Update(ctx3, helmApp, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}

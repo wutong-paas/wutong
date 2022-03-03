@@ -4,7 +4,7 @@ import (
 	"os/user"
 	"runtime"
 
-	"github.com/goodrain/rainbond/cmd/gateway/option"
+	"github.com/wutong-paas/wutong/cmd/gateway/option"
 )
 
 //Nginx nginx config model

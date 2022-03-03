@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/goodrain/rainbond/cmd/monitor/option"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/monitor/option"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -42,12 +42,12 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 		region = "default"
 	}
 	commonLables := map[string]string{
-		"Alert":  "Rainbond",
+		"Alert":  "Wutong",
 		"Region": region,
 	}
 	getseverityLables := func(severity string) map[string]string {
 		return map[string]string{
-			"Alert":    "Rainbond",
+			"Alert":    "Wutong",
 			"severity": severity,
 			"Region":   region,
 		}
@@ -113,8 +113,8 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 							For:    "1m",
 							Labels: commonLables,
 							Annotations: map[string]string{
-								"description": "builder(rbd-chaos) node {{ $labels.instance }} maybe down",
-								"summary":     "builder(rbd-chaos) is down",
+								"description": "builder(wt-chaos) node {{ $labels.instance }} maybe down",
+								"summary":     "builder(wt-chaos) is down",
 							},
 						},
 						&RulesConfig{
@@ -255,12 +255,12 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 					Rules: []*RulesConfig{
 						&RulesConfig{
 							Alert:  "NodeDown",
-							Expr:   "absent(up{component=\"rbd_node\"}) or up{component=\"rbd_node\"} == 0",
+							Expr:   "absent(up{component=\"wt_node\"}) or up{component=\"wt_node\"} == 0",
 							For:    "30s",
 							Labels: commonLables,
 							Annotations: map[string]string{
 								"description": "node {{ $labels.instance }} may be down",
-								"summary":     "rbd_node is down",
+								"summary":     "wt_node is down",
 							},
 						},
 						&RulesConfig{
@@ -312,7 +312,7 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 					Rules: []*RulesConfig{
 						&RulesConfig{
 							Alert:  "InsufficientClusteMemoryResources",
-							Expr:   "max(rbd_api_exporter_cluster_memory_total) - max(sum(namespace_resource_memory_request) by (instance)) < 2048",
+							Expr:   "max(wt_api_exporter_cluster_memory_total) - max(sum(namespace_resource_memory_request) by (instance)) < 2048",
 							For:    "2m",
 							Labels: commonLables,
 							Annotations: map[string]string{
@@ -322,7 +322,7 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 						},
 						&RulesConfig{
 							Alert:  "InsufficientClusteCPUResources",
-							Expr:   "max(rbd_api_exporter_cluster_cpu_total) - max(sum(namespace_resource_cpu_request) by (instance)) < 500",
+							Expr:   "max(wt_api_exporter_cluster_cpu_total) - max(sum(namespace_resource_cpu_request) by (instance)) < 500",
 							For:    "2m",
 							Labels: commonLables,
 							Annotations: map[string]string{
@@ -332,7 +332,7 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 						},
 						&RulesConfig{
 							Alert:  "InsufficientTenantResources",
-							Expr:   "sum(rbd_api_exporter_tenant_memory_limit) by(namespace) - sum(namespace_resource_memory_request)by (namespace) < sum(rbd_api_exporter_tenant_memory_limit) by(namespace) *0.2 and sum(rbd_api_exporter_tenant_memory_limit) by(namespace) > 0",
+							Expr:   "sum(wt_api_exporter_tenant_memory_limit) by(namespace) - sum(namespace_resource_memory_request)by (namespace) < sum(wt_api_exporter_tenant_memory_limit) by(namespace) *0.2 and sum(wt_api_exporter_tenant_memory_limit) by(namespace) > 0",
 							For:    "2m",
 							Labels: commonLables,
 							Annotations: map[string]string{
@@ -453,12 +453,12 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 					Rules: []*RulesConfig{
 						&RulesConfig{
 							Alert:  "APIDown",
-							Expr:   "absent(up{job=\"rbdapi\"}) or up{job=\"rbdapi\"}==0",
+							Expr:   "absent(up{job=\"wtapi\"}) or up{job=\"wtapi\"}==0",
 							For:    "1m",
 							Labels: commonLables,
 							Annotations: map[string]string{
-								"description": "rbd api node {{ $labels.instance }} maybe down",
-								"summary":     "rbd api node is down",
+								"description": "wt api node {{ $labels.instance }} maybe down",
+								"summary":     "wt api node is down",
 							},
 						},
 					},

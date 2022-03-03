@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/goodrain/rainbond/api/client/prometheus"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"testing"
 )
 

@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -21,10 +21,10 @@ package handler
 import (
 	"context"
 
-	"github.com/goodrain/rainbond/api/model"
-	api_model "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util"
-	dbmodel "github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/api/model"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
 //TenantHandler tenant handler

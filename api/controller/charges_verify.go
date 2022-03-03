@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,13 +23,13 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/goodrain/rainbond/api/handler/cloud"
+	"github.com/wutong-paas/wutong/api/handler/cloud"
 
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
 
-	ctxutil "github.com/goodrain/rainbond/api/util/ctx"
-	httputil "github.com/goodrain/rainbond/util/http"
+	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
+	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
 //ChargesVerifyController service charges verify

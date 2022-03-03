@@ -1,16 +1,16 @@
 package controller
 
 import (
-	dbmodel "github.com/goodrain/rainbond/db/model"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
-	"github.com/goodrain/rainbond/api/handler"
-	"github.com/goodrain/rainbond/api/model"
-	ctxutil "github.com/goodrain/rainbond/api/util/ctx"
-	"github.com/goodrain/rainbond/db"
-	httputil "github.com/goodrain/rainbond/util/http"
+	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/model"
+	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
+	"github.com/wutong-paas/wutong/db"
+	httputil "github.com/wutong-paas/wutong/util/http"
 	"github.com/sirupsen/logrus"
 )
 

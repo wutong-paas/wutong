@@ -28,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/goodrain/rainbond/cmd/worker/option"
+	"github.com/wutong-paas/wutong/cmd/worker/option"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
@@ -50,9 +50,9 @@ import (
 	ref "k8s.io/client-go/tools/reference"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/goodrain/rainbond/db/dao"
-	"github.com/goodrain/rainbond/worker/master/volumes/provider/lib/controller/metrics"
-	"github.com/goodrain/rainbond/worker/master/volumes/provider/lib/util"
+	"github.com/wutong-paas/wutong/db/dao"
+	"github.com/wutong-paas/wutong/worker/master/volumes/provider/lib/controller/metrics"
+	"github.com/wutong-paas/wutong/worker/master/volumes/provider/lib/util"
 )
 
 // annClass annotation represents the storage class associated with a resource:
@@ -423,7 +423,7 @@ func NewProvisionController(
 	}
 	// add a uniquifier so that two processes on the same host don't accidentally both become active
 	id = id + "_" + string(uuid.NewUUID())
-	component := "rainbond.io/provisioner" + "_" + id
+	component := "wutong.io/provisioner" + "_" + id
 
 	v1.AddToScheme(scheme.Scheme)
 	broadcaster := record.NewBroadcaster()
@@ -515,14 +515,14 @@ func NewProvisionController(
 				return
 			}
 
-			// rainbondsssc
+			// wutongsssc
 			switch pv.Spec.StorageClassName {
-			case "rainbondsssc":
+			case "wutongsssc":
 				if err := os.RemoveAll(path); err != nil {
 					logrus.Errorf("path: %s; name: %s; remove pv hostpath: %v", path, pv.Name, err)
 				}
-				logrus.Infof("storage class: rainbondsssc; path: %s; successfully delete pv hsot path", path)
-			case "rainbondslsc":
+				logrus.Infof("storage class: wutongsssc; path: %s; successfully delete pv hsot path", path)
+			case "wutongslsc":
 				nodeIP := func() string {
 					for _, me := range pv.Spec.NodeAffinity.Required.NodeSelectorTerms[0].MatchExpressions {
 						if me.Key != "kubernetes.io/hostname" {
@@ -534,7 +534,7 @@ func NewProvisionController(
 				}()
 
 				if nodeIP == "" {
-					logrus.Errorf("storage class: rainbondslsc; name: %s; node ip not found", pv.Name)
+					logrus.Errorf("storage class: wutongslsc; name: %s; node ip not found", pv.Name)
 					return
 				}
 
@@ -543,7 +543,7 @@ func NewProvisionController(
 					return
 				}
 
-				logrus.Infof("storage class: rainbondslsc; path: %s; successfully delete pv hsot path", path)
+				logrus.Infof("storage class: wutongslsc; path: %s; successfully delete pv hsot path", path)
 			default:
 				logrus.Debugf("unsupported storage class: %s", pv.Spec.StorageClassName)
 			}

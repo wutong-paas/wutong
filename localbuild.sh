@@ -23,16 +23,16 @@ function localbuild() {
 		for item in "${build_items[@]}"
 		do
     		echo "build local ${item}"
-    		go build -ldflags "-X github.com/goodrain/rainbond/cmd.version=${release_desc}"  -o _output/${GOOS}/${VERSION}/rainbond-$item ./cmd/$item
+    		go build -ldflags "-X github.com/wutong-paas/wutong/cmd.version=${release_desc}"  -o _output/${GOOS}/${VERSION}/wutong-$item ./cmd/$item
 		done	
 	else
 		echo "build local $1 ${VERSION}"
 
-		outputname="_output/${GOOS}/${VERSION}/rainbond-$1"
+		outputname="_output/${GOOS}/${VERSION}/wutong-$1"
 		if [ "$GOOS" = "windows" ];then
-			outputname="_output/${GOOS}/${VERSION}/rainbond-$1.exe"
+			outputname="_output/${GOOS}/${VERSION}/wutong-$1.exe"
 		fi
-		ldflags="-X github.com/goodrain/rainbond/cmd.version=${release_desc}"
+		ldflags="-X github.com/wutong-paas/wutong/cmd.version=${release_desc}"
 		if [ "$STATIC" = "true" ];then
 		    ldflags="${ldflags} -extldflags '-static'"
 		fi

@@ -4,12 +4,12 @@
         "kind": "Pod",
         "metadata": {
             "annotations": {
-                "rainbond.com/tolerate-unready-endpoints": "true"
+                "wutong-paas.com/tolerate-unready-endpoints": "true"
             },
             "creationTimestamp": "2019-08-15T12:15:57Z",
             "generateName": "88d8c4c55657217522f3bb86cfbded7e-deployment-85778487f6-",
             "labels": {
-                "creater": "Rainbond",
+                "creater": "Wutong",
                 "creater_id": "1565871356174353579",
                 "name": "grbded7e",
                 "pod-template-hash": "4133404392",
@@ -185,7 +185,7 @@
                             }
                         }
                     ],
-                    "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                    "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
                     "imagePullPolicy": "IfNotPresent",
                     "livenessProbe": {
                         "failureThreshold": 3,
@@ -374,7 +374,7 @@
                             "value": "6101"
                         }
                     ],
-                    "image": "goodrain.me/rbd-mesh-data-panel",
+                    "image": "wutong.me/wt-mesh-data-panel",
                     "imagePullPolicy": "Always",
                     "name": "default-tcpmesh-217522f3bb86cfbded7e",
                     "resources": {},
@@ -452,8 +452,8 @@
             "containerStatuses": [
                 {
                     "containerID": "docker://efc6c0f462563301dfb60dfd7382bfce24dfed1c1cfe1b0de26026ea1bab910f",
-                    "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
-                    "imageID": "docker-pullable://goodrain.me/88d8c4c55657217522f3bb86cfbded7e@sha256:8dfcd91a84b1f4e8bdc2ad6b0de444ec4793ea6f0a01113eb10ea69a18c55295",
+                    "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                    "imageID": "docker-pullable://wutong.me/88d8c4c55657217522f3bb86cfbded7e@sha256:8dfcd91a84b1f4e8bdc2ad6b0de444ec4793ea6f0a01113eb10ea69a18c55295",
                     "lastState": {},
                     "name": "88d8c4c55657217522f3bb86cfbded7e",
                     "ready": true,
@@ -466,8 +466,8 @@
                 },
                 {
                     "containerID": "docker://3f7b443efc3f71b2dd2c880926ec44470172807fe39bbe5d85619964de089457",
-                    "image": "goodrain.me/rbd-mesh-data-panel:latest",
-                    "imageID": "docker-pullable://goodrain.me/rbd-mesh-data-panel@sha256:a71b56396676dbde4d10f6d75bc99a51cc09ed08f89f2f09b1de533f80530434",
+                    "image": "wutong.me/wt-mesh-data-panel:latest",
+                    "imageID": "docker-pullable://wutong.me/wt-mesh-data-panel@sha256:a71b56396676dbde4d10f6d75bc99a51cc09ed08f89f2f09b1de533f80530434",
                     "lastState": {},
                     "name": "default-tcpmesh-217522f3bb86cfbded7e",
                     "ready": true,
@@ -491,12 +491,12 @@
         "kind": "Pod",
         "metadata": {
             "annotations": {
-                "rainbond.com/tolerate-unready-endpoints": "true"
+                "wutong-paas.com/tolerate-unready-endpoints": "true"
             },
             "creationTimestamp": "2019-08-15T12:16:00Z",
             "generateName": "88d8c4c55657217522f3bb86cfbded7e-deployment-85778487f6-",
             "labels": {
-                "creater": "Rainbond",
+                "creater": "Wutong",
                 "creater_id": "1565871356174353579",
                 "name": "grbded7e",
                 "pod-template-hash": "4133404392",
@@ -672,7 +672,7 @@
                             }
                         }
                     ],
-                    "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                    "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
                     "imagePullPolicy": "IfNotPresent",
                     "livenessProbe": {
                         "failureThreshold": 3,
@@ -861,7 +861,7 @@
                             "value": "6101"
                         }
                     ],
-                    "image": "goodrain.me/rbd-mesh-data-panel",
+                    "image": "wutong.me/wt-mesh-data-panel",
                     "imagePullPolicy": "Always",
                     "name": "default-tcpmesh-217522f3bb86cfbded7e",
                     "resources": {},
@@ -939,8 +939,8 @@
             "containerStatuses": [
                 {
                     "containerID": "docker://ff52d5d49f50e7865f1e8990220337241d6f41eeb337108a700486aea5aa6994",
-                    "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
-                    "imageID": "docker-pullable://goodrain.me/88d8c4c55657217522f3bb86cfbded7e@sha256:8dfcd91a84b1f4e8bdc2ad6b0de444ec4793ea6f0a01113eb10ea69a18c55295",
+                    "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                    "imageID": "docker-pullable://wutong.me/88d8c4c55657217522f3bb86cfbded7e@sha256:8dfcd91a84b1f4e8bdc2ad6b0de444ec4793ea6f0a01113eb10ea69a18c55295",
                     "lastState": {},
                     "name": "88d8c4c55657217522f3bb86cfbded7e",
                     "ready": true,
@@ -953,8 +953,8 @@
                 },
                 {
                     "containerID": "docker://5f4e16ca504da0b7732fa88b1963075f2451e5f90a360491ccb47b8e04db904b",
-                    "image": "goodrain.me/rbd-mesh-data-panel:latest",
-                    "imageID": "docker-pullable://goodrain.me/rbd-mesh-data-panel@sha256:a71b56396676dbde4d10f6d75bc99a51cc09ed08f89f2f09b1de533f80530434",
+                    "image": "wutong.me/wt-mesh-data-panel:latest",
+                    "imageID": "docker-pullable://wutong.me/wt-mesh-data-panel@sha256:a71b56396676dbde4d10f6d75bc99a51cc09ed08f89f2f09b1de533f80530434",
                     "lastState": {},
                     "name": "default-tcpmesh-217522f3bb86cfbded7e",
                     "ready": true,
@@ -978,12 +978,12 @@
         "kind": "Pod",
         "metadata": {
             "annotations": {
-                "rainbond.com/tolerate-unready-endpoints": "true"
+                "wutong-paas.com/tolerate-unready-endpoints": "true"
             },
             "creationTimestamp": "2019-08-15T12:15:56Z",
             "generateName": "88d8c4c55657217522f3bb86cfbded7e-deployment-85778487f6-",
             "labels": {
-                "creater": "Rainbond",
+                "creater": "Wutong",
                 "creater_id": "1565871356174353579",
                 "name": "grbded7e",
                 "pod-template-hash": "4133404392",
@@ -1159,7 +1159,7 @@
                             }
                         }
                     ],
-                    "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                    "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
                     "imagePullPolicy": "IfNotPresent",
                     "livenessProbe": {
                         "failureThreshold": 3,
@@ -1348,7 +1348,7 @@
                             "value": "6101"
                         }
                     ],
-                    "image": "goodrain.me/rbd-mesh-data-panel",
+                    "image": "wutong.me/wt-mesh-data-panel",
                     "imagePullPolicy": "Always",
                     "name": "default-tcpmesh-217522f3bb86cfbded7e",
                     "resources": {},
@@ -1426,8 +1426,8 @@
             "containerStatuses": [
                 {
                     "containerID": "docker://59ff93e6f4e4caab9e628dc573df00242547f2f9071d8e0bd4291073a0dfe21c",
-                    "image": "goodrain.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
-                    "imageID": "docker-pullable://goodrain.me/88d8c4c55657217522f3bb86cfbded7e@sha256:8dfcd91a84b1f4e8bdc2ad6b0de444ec4793ea6f0a01113eb10ea69a18c55295",
+                    "image": "wutong.me/88d8c4c55657217522f3bb86cfbded7e:20190815145229",
+                    "imageID": "docker-pullable://wutong.me/88d8c4c55657217522f3bb86cfbded7e@sha256:8dfcd91a84b1f4e8bdc2ad6b0de444ec4793ea6f0a01113eb10ea69a18c55295",
                     "lastState": {},
                     "name": "88d8c4c55657217522f3bb86cfbded7e",
                     "ready": true,
@@ -1440,8 +1440,8 @@
                 },
                 {
                     "containerID": "docker://2540561f078cb158f393693162ecd8a256ccf1987bfb4aefd306a3c04d6b8b62",
-                    "image": "goodrain.me/rbd-mesh-data-panel:latest",
-                    "imageID": "docker-pullable://goodrain.me/rbd-mesh-data-panel@sha256:a71b56396676dbde4d10f6d75bc99a51cc09ed08f89f2f09b1de533f80530434",
+                    "image": "wutong.me/wt-mesh-data-panel:latest",
+                    "imageID": "docker-pullable://wutong.me/wt-mesh-data-panel@sha256:a71b56396676dbde4d10f6d75bc99a51cc09ed08f89f2f09b1de533f80530434",
                     "lastState": {},
                     "name": "default-tcpmesh-217522f3bb86cfbded7e",
                     "ready": true,

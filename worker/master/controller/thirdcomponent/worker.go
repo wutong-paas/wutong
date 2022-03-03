@@ -3,10 +3,10 @@ package thirdcomponent
 import (
 	"context"
 
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	dis "github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/discover"
-	"github.com/goodrain/rainbond/worker/master/controller/thirdcomponent/prober"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	dis "github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/discover"
+	"github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/prober"
 )
 
 // Worker -

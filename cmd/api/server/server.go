@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,22 +23,21 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	
-	
-	rainbondscheme "github.com/goodrain/rainbond/pkg/generated/clientset/versioned/scheme"
-	"github.com/goodrain/rainbond/api/controller"
-	"github.com/goodrain/rainbond/api/db"
-	"github.com/goodrain/rainbond/api/discover"
-	"github.com/goodrain/rainbond/api/handler"
-	"github.com/goodrain/rainbond/api/server"
-	"github.com/goodrain/rainbond/cmd/api/option"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/worker/client"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/controller"
+	"github.com/wutong-paas/wutong/api/db"
+	"github.com/wutong-paas/wutong/api/discover"
+	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/server"
+	"github.com/wutong-paas/wutong/cmd/api/option"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	wutongscheme "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/worker/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -79,12 +78,12 @@ func Run(s *option.APIServer) error {
 	if err != nil {
 		return err
 	}
-	rainbondClient := versioned.NewForConfigOrDie(config)
+	wutongClient := versioned.NewForConfigOrDie(config)
 
 	// k8s runtime client
 	scheme := runtime.NewScheme()
 	clientgoscheme.AddToScheme(scheme)
-	rainbondscheme.AddToScheme(scheme)
+	wutongscheme.AddToScheme(scheme)
 	k8sClient, err := k8sclient.New(config, k8sclient.Options{
 		Scheme: scheme,
 	})
@@ -121,7 +120,7 @@ func Run(s *option.APIServer) error {
 	//初始化 middleware
 	handler.InitProxy(s.Config)
 	//创建handle
-	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, clientset, rainbondClient, k8sClient); err != nil {
+	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, clientset, wutongClient, k8sClient); err != nil {
 		logrus.Errorf("init all handle error, %v", err)
 		return err
 	}

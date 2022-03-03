@@ -1,16 +1,16 @@
 package constants
 
 const (
-	// Rainbond -
-	Rainbond = "rainbond"
+	// Wutong -
+	Wutong = "wutong"
 	// DefImageRepository default private image repository
-	DefImageRepository = "goodrain.me"
+	DefImageRepository = "wutong.me"
 	// GrdataLogPath -
 	GrdataLogPath = "/grdata/logs"
 	// ImagePullSecretKey the key of environment IMAGE_PULL_SECRET
 	ImagePullSecretKey = "IMAGE_PULL_SECRET"
 	// DefOnlineImageRepository default private image repository
-	DefOnlineImageRepository = "registry.cn-hangzhou.aliyuncs.com/goodrain"
+	DefOnlineImageRepository = "swr.cn-southwest-2.myhuaweicloud.com/wutong"
 )
 
 // Kubernetes recommended Labels

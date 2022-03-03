@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -42,7 +42,7 @@ import (
 
 	_type "github.com/envoyproxy/go-control-plane/envoy/type"
 
-	v1 "github.com/goodrain/rainbond/node/core/envoy/v1"
+	v1 "github.com/wutong-paas/wutong/node/core/envoy/v1"
 )
 
 //DefaultLocalhostListenerAddress -
@@ -261,7 +261,7 @@ func CreateSocketAddress(protocol, address string, port uint32) *core.Address {
 }
 
 //CreateCircuitBreaker create down cluster circuitbreaker
-func CreateCircuitBreaker(options RainbondPluginOptions) *cluster.CircuitBreakers {
+func CreateCircuitBreaker(options WutongPluginOptions) *cluster.CircuitBreakers {
 	circuitBreakers := &cluster.CircuitBreakers{
 		Thresholds: []*cluster.CircuitBreakers_Thresholds{
 			{
@@ -281,7 +281,7 @@ func CreateCircuitBreaker(options RainbondPluginOptions) *cluster.CircuitBreaker
 }
 
 //CreatOutlierDetection create up cluster OutlierDetection
-func CreatOutlierDetection(options RainbondPluginOptions) *cluster.OutlierDetection {
+func CreatOutlierDetection(options WutongPluginOptions) *cluster.OutlierDetection {
 	outlierDetection := &cluster.OutlierDetection{
 		Interval:           ConverTimeDuration(options.Interval),
 		BaseEjectionTime:   ConverTimeDuration(options.BaseEjectionTimeMS / 1000),
@@ -414,7 +414,7 @@ func CreateEDSClusterConfig(serviceName string) *apiv2.Cluster_EdsClusterConfig 
 						{
 							TargetSpecifier: &core.GrpcService_EnvoyGrpc_{
 								EnvoyGrpc: &core.GrpcService_EnvoyGrpc{
-									ClusterName: "rainbond_xds_cluster",
+									ClusterName: "wutong_xds_cluster",
 								},
 							},
 						},

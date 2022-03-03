@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2020-2020 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2020-2020 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -46,7 +46,7 @@ type prometheus struct {
 //NewPrometheus new prometheus monitor
 func NewPrometheus(options *Options) (Interface, error) {
 	if options.Endpoint == "" {
-		options.Endpoint = "http://rbd-monitor:9999"
+		options.Endpoint = "http://wt-monitor:9999"
 	} else if !strings.HasPrefix(options.Endpoint, "http") {
 		options.Endpoint = fmt.Sprintf("http://%s", options.Endpoint)
 	}
@@ -153,7 +153,7 @@ func (p prometheus) GetAppMetadata(namespace, appID string) []Metadata {
 }
 
 func (p prometheus) GetComponentMetadata(namespace, componentID string) []Metadata {
-	ctx, cancel := context.WithTimeout(context.Background(), 15 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	var meta []Metadata
@@ -178,7 +178,6 @@ func (p prometheus) GetComponentMetadata(namespace, componentID string) []Metada
 			})
 		}
 	}
-
 
 	commonItems, err := p.client.TargetsMetadata(ctx, "{job=~\"gateway|cadvisor\"}", "", "")
 	if err != nil {

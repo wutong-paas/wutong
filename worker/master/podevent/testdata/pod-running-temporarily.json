@@ -8,7 +8,7 @@
       "resourceVersion": "1340515",
       "creationTimestamp": "2019-08-24T09:51:48Z",
       "labels": {
-        "creater": "Rainbond",
+        "creater": "Wutong",
         "creater_id": "1566640308184453616",
         "name": "gra07e4c",
         "pod-template-hash": "3468213781",
@@ -19,7 +19,7 @@
         "version": "20190824165943"
       },
       "annotations": {
-        "rainbond.com/tolerate-unready-endpoints": "true"
+        "wutong-paas.com/tolerate-unready-endpoints": "true"
       },
       "ownerReferences": [
         {
@@ -45,7 +45,7 @@
       "containers": [
         {
           "name": "135c3e10e3be34337bde752449a07e4c",
-          "image": "goodrain.me/135c3e10e3be34337bde752449a07e4c:20190824165943",
+          "image": "wutong.me/135c3e10e3be34337bde752449a07e4c:20190824165943",
           "ports": [
             {
               "containerPort": 5000,
@@ -232,8 +232,8 @@
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "goodrain.me/135c3e10e3be34337bde752449a07e4c:20190824165943",
-          "imageID": "docker-pullable://goodrain.me/135c3e10e3be34337bde752449a07e4c@sha256:034e4838411bc72656e30ad3719fddbf86129bc63e7f488547d36b9a1f5c4084",
+          "image": "wutong.me/135c3e10e3be34337bde752449a07e4c:20190824165943",
+          "imageID": "docker-pullable://wutong.me/135c3e10e3be34337bde752449a07e4c@sha256:034e4838411bc72656e30ad3719fddbf86129bc63e7f488547d36b9a1f5c4084",
           "containerID": "docker://7a7efa359db9449a9271d61c18edee3ed773b5b57fed29a937bd5f247cc52ec0"
         }
       ],

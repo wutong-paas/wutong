@@ -9,23 +9,23 @@ dynamic_resources:
       api_type: GRPC
       grpc_services:
         envoy_grpc:
-          cluster_name: rainbond_xds_cluster
+          cluster_name: wutongds_cluster
   cds_config:
     api_config_source:
       api_type: GRPC
       grpc_services:
         envoy_grpc:
-          cluster_name: rainbond_xds_cluster
+          cluster_name: wutongds_cluster
 
 static_resources:
   clusters:
-  - name: rainbond_xds_cluster
+  - name: wutongds_cluster
     connect_timeout: 0.25s
     type: STATIC
     lb_policy: ROUND_ROBIN
     http2_protocol_options: {}
     load_assignment:
-      cluster_name: rainbond_xds_cluster
+      cluster_name: wutongds_cluster
       endpoints:
       - lb_endpoints:
         - endpoint:

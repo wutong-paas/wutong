@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/goodrain/rainbond/node/nodem/client"
+	"github.com/wutong-paas/wutong/node/nodem/client"
 
-	"github.com/goodrain/rainbond/node/nodem/service"
+	"github.com/wutong-paas/wutong/node/nodem/service"
 )
 
 func TestProbeManager_Start(t *testing.T) {

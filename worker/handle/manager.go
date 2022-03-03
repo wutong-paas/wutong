@@ -1,11 +1,11 @@
-// Copyright (C) 2nilfmt.Errorf("a")4-2nilfmt.Errorf("a")8 Goodrain Co., Ltd.
-// RAINBOND, component Management Platform
+// Copyright (C) 2nilfmt.Errorf("a")4-2nilfmt.Errorf("a")8 Wutong Co., Ltd.
+// WUTONG, component Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,18 +25,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/cmd/worker/option"
-	"github.com/goodrain/rainbond/db"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/worker/appm/controller"
-	"github.com/goodrain/rainbond/worker/appm/conversion"
-	"github.com/goodrain/rainbond/worker/appm/store"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
-	"github.com/goodrain/rainbond/worker/discover/model"
-	"github.com/goodrain/rainbond/worker/gc"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/worker/option"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/worker/appm/controller"
+	"github.com/wutong-paas/wutong/worker/appm/conversion"
+	"github.com/wutong-paas/wutong/worker/appm/store"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/worker/discover/model"
+	"github.com/wutong-paas/wutong/worker/gc"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -29,8 +29,8 @@ import (
 	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
-	api_model "github.com/goodrain/rainbond/api/model"
-	envoyv2 "github.com/goodrain/rainbond/node/core/envoy/v2"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	envoyv2 "github.com/wutong-paas/wutong/node/core/envoy/v2"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -127,7 +127,7 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 		listennerName := fmt.Sprintf("%s_%s_%s_%s_%d", namespace, serviceAlias, GetServiceAliasByService(service), strings.ToLower(string(protocol)), ListenPort)
 		destService := ListennerConfig[listennerName]
 		statPrefix := fmt.Sprintf("%s_%s", serviceAlias, GetServiceAliasByService(service))
-		var options envoyv2.RainbondPluginOptions
+		var options envoyv2.WutongPluginOptions
 		if destService != nil {
 			options = envoyv2.GetOptionValues(destService.Options)
 		} else {
@@ -268,7 +268,7 @@ func downstreamListener(serviceAlias, namespace string, ports []*api_model.BaseP
 		listenerName := clusterName
 		statsPrefix := fmt.Sprintf("%s_%d", serviceAlias, port)
 		if _, ok := portMap[port]; !ok {
-			inboundConfig := envoyv2.GetRainbondInboundPluginOptions(p.Options)
+			inboundConfig := envoyv2.GetWutongInboundPluginOptions(p.Options)
 			options := envoyv2.GetOptionValues(p.Options)
 			if p.Protocol == "http" || p.Protocol == "https" || p.Protocol == "grpc" {
 				var limit []*route.RateLimit

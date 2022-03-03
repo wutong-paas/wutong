@@ -6,8 +6,8 @@ package store
 
 import (
 	gomock "github.com/golang/mock/gomock"
-	model "github.com/goodrain/rainbond/db/model"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
+	model "github.com/wutong-paas/wutong/db/model"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	v10 "k8s.io/api/core/v1"
 	v11 "k8s.io/client-go/listers/core/v1"
 	reflect "reflect"

@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -28,15 +28,15 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	apimodel "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/mq/client"
-	"github.com/goodrain/rainbond/util"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	apimodel "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/mq/client"
+	"github.com/wutong-paas/wutong/util"
 )
 
 // GatewayAction -
@@ -576,7 +576,7 @@ func (g *GatewayAction) GetAvailablePort(ip string, lock bool) (int, error) {
 	for _, p := range roles {
 		ports = append(ports, p.Port)
 	}
-	resp, err := clientv3.KV(g.etcdCli).Get(context.TODO(), "/rainbond/gateway/lockports", clientv3.WithPrefix())
+	resp, err := clientv3.KV(g.etcdCli).Get(context.TODO(), "/wutong/gateway/lockports", clientv3.WithPrefix())
 	if err != nil {
 		logrus.Info("get lock ports failed")
 	}
@@ -596,7 +596,7 @@ func (g *GatewayAction) GetAvailablePort(ip string, lock bool) (int, error) {
 				logrus.Info("set lease failed")
 				return port, nil
 			}
-			lockPortKey := fmt.Sprintf("/rainbond/gateway/lockports/%d", port)
+			lockPortKey := fmt.Sprintf("/wutong/gateway/lockports/%d", port)
 			_, err = g.etcdCli.Put(context.Background(), lockPortKey, fmt.Sprintf("%d", port), clientv3.WithLease(leaseResp.ID))
 			if err != nil {
 				logrus.Infof("set lock port key %s failed", lockPortKey)
@@ -865,7 +865,7 @@ func (g *GatewayAction) GetGatewayIPs() []IPAndAvailablePort {
 	}}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	res, err := clientv3.NewKV(g.etcdCli).Get(ctx, "/rainbond/gateway/ips", clientv3.WithPrefix())
+	res, err := clientv3.NewKV(g.etcdCli).Get(ctx, "/wutong/gateway/ips", clientv3.WithPrefix())
 	if err != nil {
 		return defaultIps
 	}

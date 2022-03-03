@@ -4,12 +4,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	httputil "github.com/goodrain/rainbond/util/http"
+	httputil "github.com/wutong-paas/wutong/util/http"
 
 	"encoding/json"
 
 	"github.com/go-chi/chi"
-	"github.com/goodrain/rainbond/monitor/prometheus"
+	"github.com/wutong-paas/wutong/monitor/prometheus"
 	"github.com/sirupsen/logrus"
 )
 

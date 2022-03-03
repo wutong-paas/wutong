@@ -2,9 +2,9 @@
 if [ "$1" = "bash" ];then
     exec /bin/bash
 elif [ "$1" = "version" ];then
-    /run/rainbond-grctl version
+    /run/wutong-grctl version
 elif [ "$1" = "copy" ];then
-    cp -a /run/rainbond-grctl /rootfs/usr/local/bin/
+    cp -a /run/wutong-grctl /rootfs/usr/local/bin/
 else
-    exec /run/rainbond-grctl "$@"
+    exec /run/wutong-grctl "$@"
 fi

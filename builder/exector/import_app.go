@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -31,20 +31,20 @@ import (
 	"time"
 
 	"github.com/docker/docker/client"
-	"github.com/goodrain/rainbond-oam/pkg/localimport"
-	"github.com/goodrain/rainbond-oam/pkg/ram/v1alpha1"
-	"github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/event"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong-oam/pkg/localimport"
+	"github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
+	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/event"
 )
 
 func init() {
 	RegisterWorker("import_app", NewImportApp)
 }
 
-//ImportApp Export app to specified format(rainbond-app or dockercompose)
+//ImportApp Export app to specified format(wutong-app or dockercompose)
 type ImportApp struct {
 	EventID       string             `json:"event_id"`
 	Format        string             `json:"format"`
@@ -63,7 +63,7 @@ func NewImportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	if err := json.Unmarshal(in, &importApp); err != nil {
 		return nil, err
 	}
-	if importApp.ServiceImage.HubURL == "" || importApp.ServiceImage.HubURL == "goodrain.me" {
+	if importApp.ServiceImage.HubURL == "" || importApp.ServiceImage.HubURL == "wutong.me" {
 		importApp.ServiceImage.HubURL = builder.REGISTRYDOMAIN
 		importApp.ServiceImage.HubUser = builder.REGISTRYUSER
 		importApp.ServiceImage.HubPassword = builder.REGISTRYPASS
@@ -98,10 +98,10 @@ func (i *ImportApp) ErrorCallBack(err error) {
 
 //Run Run
 func (i *ImportApp) Run(timeout time.Duration) error {
-	if i.Format == "rainbond-app" {
+	if i.Format == "wutong-app" {
 		err := i.importApp()
 		if err != nil {
-			logrus.Errorf("load rainbond app failure %s", err.Error())
+			logrus.Errorf("load wutong app failure %s", err.Error())
 			return err
 		}
 		return nil
@@ -113,7 +113,7 @@ func (i *ImportApp) Run(timeout time.Duration) error {
 // support batch import
 func (i *ImportApp) importApp() error {
 	oldSourceDir := i.SourceDir
-	var datas []v1alpha1.RainbondApplicationConfig
+	var datas []v1alpha1.WutongApplicationConfig
 	var wait sync.WaitGroup
 	for _, app := range i.Apps {
 		wait.Add(1)

@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,21 +25,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/api/client/prometheus"
-	"github.com/goodrain/rainbond/api/model"
-	api_model "github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util"
-	"github.com/goodrain/rainbond/api/util/bcode"
-	"github.com/goodrain/rainbond/cmd/api/option"
-	"github.com/goodrain/rainbond/db"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	mqclient "github.com/goodrain/rainbond/mq/client"
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	rutil "github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/worker/client"
-	"github.com/goodrain/rainbond/worker/server/pb"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
+	"github.com/wutong-paas/wutong/api/model"
+	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/cmd/api/option"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	rutil "github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/worker/client"
+	"github.com/wutong-paas/wutong/worker/server/pb"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -563,7 +563,7 @@ func (t *TenantAction) TransPlugins(tenantID, tenantName, fromTenant string, plu
 	if err != nil {
 		return util.CreateAPIHandleErrorFromDBError("get tenant infos", err)
 	}
-	goodrainID := tenantInfo.UUID
+	tenantUUID := tenantInfo.UUID
 	tx := db.GetManager().Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -572,7 +572,7 @@ func (t *TenantAction) TransPlugins(tenantID, tenantName, fromTenant string, plu
 		}
 	}()
 	for _, p := range pluginList {
-		pluginInfo, err := db.GetManager().TenantPluginDao().GetPluginByID(p, goodrainID)
+		pluginInfo, err := db.GetManager().TenantPluginDao().GetPluginByID(p, tenantUUID)
 		if err != nil {
 			tx.Rollback()
 			return util.CreateAPIHandleErrorFromDBError("get plugin infos", err)

@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -28,17 +28,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/builder/parser/code"
-	multi "github.com/goodrain/rainbond/builder/parser/code/multisvc"
-	"github.com/goodrain/rainbond/builder/parser/types"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/event"
-	"github.com/goodrain/rainbond/util"
 	"github.com/melbahja/got"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/builder/parser/code"
+	multi "github.com/wutong-paas/wutong/builder/parser/code/multisvc"
+	"github.com/wutong-paas/wutong/builder/parser/types"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/util"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport" //"github.com/docker/docker/client"
 )
@@ -268,19 +268,19 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		}
 	}
 
-	//read rainbondfile
-	rbdfileConfig, err := code.ReadRainbondFile(buildInfo.GetCodeBuildAbsPath())
+	//read wutongfile
+	wtfileConfig, err := code.ReadWutongFile(buildInfo.GetCodeBuildAbsPath())
 	if err != nil {
-		if err != code.ErrRainbondFileNotFound {
-			d.errappend(ErrorAndSolve(NegligibleError, "rainbondfile定义格式有误", "可以参考文档说明配置此文件定义应用属性"))
+		if err != code.ErrWutongFileNotFound {
+			d.errappend(ErrorAndSolve(NegligibleError, "wutongfile定义格式有误", "可以参考文档说明配置此文件定义应用属性"))
 		}
 	}
 	//判断对象目录
 	var buildPath = buildInfo.GetCodeBuildAbsPath()
 	//解析代码类型
 	var lang code.Lang
-	if rbdfileConfig != nil && rbdfileConfig.Language != "" {
-		lang = code.Lang(rbdfileConfig.Language)
+	if wtfileConfig != nil && wtfileConfig.Language != "" {
+		lang = code.Lang(wtfileConfig.Language)
 	} else {
 		lang, err = code.GetLangType(buildPath)
 		if err != nil {
@@ -356,38 +356,38 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 			d.services = services
 		}
 
-		if rbdfileConfig != nil && rbdfileConfig.Services != nil && len(rbdfileConfig.Services) > 0 {
+		if wtfileConfig != nil && wtfileConfig.Services != nil && len(wtfileConfig.Services) > 0 {
 			mm := make(map[string]*types.Service)
 			for i := range services {
 				mm[services[i].Name] = services[i]
 			}
-			for _, svc := range rbdfileConfig.Services {
+			for _, svc := range wtfileConfig.Services {
 				if item := mm[svc.Name]; item != nil {
 					for k, v := range svc.Envs {
 						if item.Envs == nil {
-							item.Envs = make(map[string]*types.Env, len(rbdfileConfig.Envs))
+							item.Envs = make(map[string]*types.Env, len(wtfileConfig.Envs))
 						}
 						item.Envs[k] = &types.Env{Name: k, Value: v}
 					}
 					for i := range svc.Ports {
 						if item.Ports == nil {
-							item.Ports = make(map[int]*types.Port, len(rbdfileConfig.Ports))
+							item.Ports = make(map[int]*types.Port, len(wtfileConfig.Ports))
 						}
 						item.Ports[i] = &types.Port{
 							ContainerPort: svc.Ports[i].Port, Protocol: svc.Ports[i].Protocol,
 						}
 					}
-					for k, v := range rbdfileConfig.Envs {
+					for k, v := range wtfileConfig.Envs {
 						if item.Envs == nil {
-							item.Envs = make(map[string]*types.Env, len(rbdfileConfig.Envs))
+							item.Envs = make(map[string]*types.Env, len(wtfileConfig.Envs))
 						}
 						if item.Envs[k] == nil {
 							item.Envs[k] = &types.Env{Name: k, Value: fmt.Sprintf("%v", v)}
 						}
 					}
-					for _, port := range rbdfileConfig.Ports {
+					for _, port := range wtfileConfig.Ports {
 						if item.Ports == nil {
-							item.Ports = make(map[int]*types.Port, len(rbdfileConfig.Ports))
+							item.Ports = make(map[int]*types.Port, len(wtfileConfig.Ports))
 						}
 						if item.Ports[port.Port] == nil {
 							item.Ports[port.Port] = &types.Port{
@@ -400,19 +400,19 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 			}
 		}
 
-		if rbdfileConfig != nil && d.isMulti {
-			rbdfileConfig.Envs = nil
-			rbdfileConfig.Ports = nil
+		if wtfileConfig != nil && d.isMulti {
+			wtfileConfig.Envs = nil
+			wtfileConfig.Ports = nil
 		}
 	}
 
-	if rbdfileConfig != nil {
+	if wtfileConfig != nil {
 		//handle profile env
-		for k, v := range rbdfileConfig.Envs {
+		for k, v := range wtfileConfig.Envs {
 			d.envs[k] = &types.Env{Name: k, Value: fmt.Sprintf("%v", v)}
 		}
 		//handle profile port
-		for _, port := range rbdfileConfig.Ports {
+		for _, port := range wtfileConfig.Ports {
 			if port.Port == 0 {
 				continue
 			}
@@ -421,29 +421,29 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 			}
 			d.ports[port.Port] = &types.Port{ContainerPort: port.Port, Protocol: port.Protocol}
 		}
-		if rbdfileConfig.Cmd != "" {
-			d.args = strings.Split(rbdfileConfig.Cmd, " ")
+		if wtfileConfig.Cmd != "" {
+			d.args = strings.Split(wtfileConfig.Cmd, " ")
 		}
 	}
 	return d.errors
 }
 
-//ReadRbdConfigAndLang read rainbondfile  and lang
-func ReadRbdConfigAndLang(buildInfo *sources.RepostoryBuildInfo) (*code.RainbondFileConfig, code.Lang, error) {
-	rbdfileConfig, err := code.ReadRainbondFile(buildInfo.GetCodeBuildAbsPath())
+//ReadWtConfigAndLang read wutongfile  and lang
+func ReadWtConfigAndLang(buildInfo *sources.RepostoryBuildInfo) (*code.WutongFileConfig, code.Lang, error) {
+	wtfileConfig, err := code.ReadWutongFile(buildInfo.GetCodeBuildAbsPath())
 	if err != nil {
 		return nil, code.NO, err
 	}
 	var lang code.Lang
-	if rbdfileConfig != nil && rbdfileConfig.Language != "" {
-		lang = code.Lang(rbdfileConfig.Language)
+	if wtfileConfig != nil && wtfileConfig.Language != "" {
+		lang = code.Lang(wtfileConfig.Language)
 	} else {
 		lang, err = code.GetLangType(buildInfo.GetCodeBuildAbsPath())
 		if err != nil {
-			return rbdfileConfig, code.NO, err
+			return wtfileConfig, code.NO, err
 		}
 	}
-	return rbdfileConfig, lang, nil
+	return wtfileConfig, lang, nil
 }
 
 func getRecommendedMemory(lang code.Lang) int {

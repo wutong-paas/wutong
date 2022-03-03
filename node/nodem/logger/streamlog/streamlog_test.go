@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/goodrain/rainbond/node/nodem/logger"
+	"github.com/wutong-paas/wutong/node/nodem/logger"
 
 	"github.com/pborman/uuid"
 )

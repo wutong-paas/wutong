@@ -1,7 +1,7 @@
 package handler
 
 import (
-	apimodel "github.com/goodrain/rainbond/api/model"
+	apimodel "github.com/wutong-paas/wutong/api/model"
 )
 
 // AppRestoreHandler defines handler methods to restore app.

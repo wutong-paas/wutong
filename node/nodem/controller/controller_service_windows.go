@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -16,7 +16,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-//+build windows
+//go:build windows
+// +build windows
 
 package controller
 
@@ -26,12 +27,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/goodrain/rainbond/cmd/node/option"
-	"github.com/goodrain/rainbond/node/nodem/service"
-	"github.com/goodrain/rainbond/util/windows"
+	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/node/nodem/service"
+	"github.com/wutong-paas/wutong/util/windows"
 )
 
-//NewController At the stage you want to load the configurations of all rainbond components
+//NewController At the stage you want to load the configurations of all wutong components
 func NewController(conf *option.Conf, manager *ManagerService) Controller {
 	logrus.Infof("Create windows service controller")
 	return &windowsServiceController{
@@ -110,11 +111,11 @@ func (w *windowsServiceController) writeConfig(s *service.Service, parseAndCover
 	}
 	cmds := strings.Split(cmdstr, " ")
 	logrus.Debugf("write service %s config args %s", s.Name, cmds)
-	if err := windows.RegisterService(s.Name, cmds[0], "Rainbond "+s.Name, s.Requires, cmds); err != nil {
+	if err := windows.RegisterService(s.Name, cmds[0], "Wutong "+s.Name, s.Requires, cmds); err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			if parseAndCoverOld {
 				w.RemoveConfig(s.Name)
-				err = windows.RegisterService(s.Name, cmds[0], "Rainbond "+s.Name, s.Requires, cmds)
+				err = windows.RegisterService(s.Name, cmds[0], "Wutong "+s.Name, s.Requires, cmds)
 			} else {
 				logrus.Infof("windows service controller register service %s success(exist)", s.Name)
 				return nil

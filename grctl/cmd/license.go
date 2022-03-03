@@ -3,16 +3,16 @@ package cmd
 import (
 	"fmt"
 
-	licutil "github.com/goodrain/rainbond/util/license"
 	"github.com/gosuri/uitable"
 	"github.com/urfave/cli"
+	licutil "github.com/wutong-paas/wutong/util/license"
 )
 
 //NewCmdLicense -
 func NewCmdLicense() cli.Command {
 	c := cli.Command{
 		Name:  "license",
-		Usage: "rainbond license manage cmd",
+		Usage: "wutong license manage cmd",
 		Subcommands: []cli.Command{
 			{
 				Name:  "show",
@@ -21,12 +21,12 @@ func NewCmdLicense() cli.Command {
 					cli.StringFlag{
 						Name:  "lic-path, lp",
 						Usage: "license file path",
-						Value: "/opt/rainbond/etc/license/license.yb",
+						Value: "/opt/wutong/etc/license/license.yb",
 					},
 					cli.StringFlag{
 						Name:  "lic-so-path, lsp",
 						Usage: "license.so file path",
-						Value: "/opt/rainbond/etc/license/license.so",
+						Value: "/opt/wutong/etc/license/license.so",
 					},
 				},
 				Action: func(c *cli.Context) error {
@@ -61,7 +61,7 @@ func NewCmdLicense() cli.Command {
 					cli.StringFlag{
 						Name:  "lic-so-path, lsp",
 						Usage: "license.so file path",
-						Value: "/opt/rainbond/etc/license/license.so",
+						Value: "/opt/wutong/etc/license/license.so",
 					},
 				},
 				Action: func(c *cli.Context) error {

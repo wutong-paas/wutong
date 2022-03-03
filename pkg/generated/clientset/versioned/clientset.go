@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,7 +23,7 @@ package versioned
 import (
 	"fmt"
 
-	rainbondv1alpha1 "github.com/goodrain/rainbond/pkg/generated/clientset/versioned/typed/rainbond/v1alpha1"
+	wutongv1alpha1 "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/typed/wutong/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -31,19 +31,19 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	RainbondV1alpha1() rainbondv1alpha1.RainbondV1alpha1Interface
+	WutongV1alpha1() wutongv1alpha1.WutongV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	rainbondV1alpha1 *rainbondv1alpha1.RainbondV1alpha1Client
+	wutongV1alpha1 *wutongv1alpha1.WutongV1alpha1Client
 }
 
-// RainbondV1alpha1 retrieves the RainbondV1alpha1Client
-func (c *Clientset) RainbondV1alpha1() rainbondv1alpha1.RainbondV1alpha1Interface {
-	return c.rainbondV1alpha1
+// WutongV1alpha1 retrieves the WutongV1alpha1Client
+func (c *Clientset) WutongV1alpha1() wutongv1alpha1.WutongV1alpha1Interface {
+	return c.wutongV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -67,7 +67,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.rainbondV1alpha1, err = rainbondv1alpha1.NewForConfig(&configShallowCopy)
+	cs.wutongV1alpha1, err = wutongv1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.rainbondV1alpha1 = rainbondv1alpha1.NewForConfigOrDie(c)
+	cs.wutongV1alpha1 = wutongv1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -92,7 +92,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.rainbondV1alpha1 = rainbondv1alpha1.New(c)
+	cs.wutongV1alpha1 = wutongv1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

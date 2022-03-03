@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2021-2021 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2021-2021 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -24,12 +24,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/goodrain/rainbond/db"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	rainbondversioned "github.com/goodrain/rainbond/pkg/generated/clientset/versioned"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	wutongversioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -201,17 +201,17 @@ func (c *Builder) BuildWorkloadResource(as *v1.AppService, dbm db.Manager) error
 
 //InitCoreComponentDefinition init the built-in component type definition.
 //Should be called after the store is initialized.
-func (c *Builder) InitCoreComponentDefinition(rainbondClient rainbondversioned.Interface) {
+func (c *Builder) InitCoreComponentDefinition(wutongClient wutongversioned.Interface) {
 	coreComponentDefinition := []*v1alpha1.ComponentDefinition{&thirdComponentDefine}
 	for _, ccd := range coreComponentDefinition {
 		oldCoreComponentDefinition := c.GetComponentDefinition(ccd.Name)
 		if oldCoreComponentDefinition == nil {
 			logrus.Infof("create core componentdefinition %s", ccd.Name)
-			if _, err := rainbondClient.RainbondV1alpha1().ComponentDefinitions(c.namespace).Create(context.Background(), ccd, metav1.CreateOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
+			if _, err := wutongClient.WutongV1alpha1().ComponentDefinitions(c.namespace).Create(context.Background(), ccd, metav1.CreateOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
 				logrus.Errorf("create core componentdefinition %s failire %s", ccd.Name, err.Error())
 			}
 		} else {
-			err := c.updateComponentDefinition(rainbondClient, oldCoreComponentDefinition, ccd)
+			err := c.updateComponentDefinition(wutongClient, oldCoreComponentDefinition, ccd)
 			if err != nil {
 				logrus.Errorf("update core componentdefinition(%s): %v", ccd.Name, err)
 			}
@@ -220,7 +220,7 @@ func (c *Builder) InitCoreComponentDefinition(rainbondClient rainbondversioned.I
 	logrus.Infof("success check core componentdefinition from cluster")
 }
 
-func (c *Builder) updateComponentDefinition(rainbondClient rainbondversioned.Interface, oldComponentDefinition, newComponentDefinition *v1alpha1.ComponentDefinition) error {
+func (c *Builder) updateComponentDefinition(wutongClient wutongversioned.Interface, oldComponentDefinition, newComponentDefinition *v1alpha1.ComponentDefinition) error {
 	newVersion := getComponentDefinitionVersion(newComponentDefinition)
 	oldVersion := getComponentDefinitionVersion(oldComponentDefinition)
 	if newVersion == "" || !(oldVersion == "" || newVersion > oldVersion) {
@@ -229,9 +229,9 @@ func (c *Builder) updateComponentDefinition(rainbondClient rainbondversioned.Int
 
 	logrus.Infof("update core componentdefinition %s", newComponentDefinition.Name)
 	newComponentDefinition.ResourceVersion = oldComponentDefinition.ResourceVersion
-	if _, err := rainbondClient.RainbondV1alpha1().ComponentDefinitions(c.namespace).Update(context.Background(), newComponentDefinition, metav1.UpdateOptions{}); err != nil {
+	if _, err := wutongClient.WutongV1alpha1().ComponentDefinitions(c.namespace).Update(context.Background(), newComponentDefinition, metav1.UpdateOptions{}); err != nil {
 		if k8sErrors.IsNotFound(err) {
-			_, err := rainbondClient.RainbondV1alpha1().ComponentDefinitions(c.namespace).Create(context.Background(), newComponentDefinition, metav1.CreateOptions{})
+			_, err := wutongClient.WutongV1alpha1().ComponentDefinitions(c.namespace).Create(context.Background(), newComponentDefinition, metav1.CreateOptions{})
 			if err != nil {
 				return err
 			}

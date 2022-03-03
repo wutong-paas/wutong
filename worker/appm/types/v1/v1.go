@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -20,17 +20,18 @@ package v1
 
 import (
 	"fmt"
-	"github.com/goodrain/rainbond/util/k8s"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/goodrain/rainbond/builder"
-	"github.com/goodrain/rainbond/db/model"
-	dbmodel "github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/event"
+	"github.com/wutong-paas/wutong/util/k8s"
+
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/db/model"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/event"
 	v1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -147,7 +148,7 @@ func (a *AppServiceBase) GetK8sWorkloadName() string {
 	return fmt.Sprintf("%s-%s", a.K8sApp, a.K8sComponentName)
 }
 
-//AppService a service of rainbond app state in kubernetes
+//AppService a service of wutong app state in kubernetes
 type AppService struct {
 	AppServiceBase
 	tenant           *corev1.Namespace
@@ -993,7 +994,7 @@ func GetTCPMeshImageName() string {
 	if d := os.Getenv("TCPMESH_DEFAULT_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.REGISTRYDOMAIN + "/rbd-mesh-data-panel"
+	return builder.REGISTRYDOMAIN + "/wt-mesh-data-panel"
 }
 
 //GetOnlineTCPMeshImageName get online tcp mesh image name
@@ -1001,7 +1002,7 @@ func GetOnlineTCPMeshImageName() string {
 	if d := os.Getenv("TCPMESH_DEFAULT_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.ONLINEREGISTRYDOMAIN + "/rbd-mesh-data-panel:" + builder.CIVERSION
+	return builder.ONLINEREGISTRYDOMAIN + "/wt-mesh-data-panel:" + builder.CIVERSION
 }
 
 //GetProbeMeshImageName get probe init mesh image name
@@ -1009,7 +1010,7 @@ func GetProbeMeshImageName() string {
 	if d := os.Getenv("PROBE_MESH_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.REGISTRYDOMAIN + "/rbd-init-probe"
+	return builder.REGISTRYDOMAIN + "/wt-init-probe"
 }
 
 //GetOnlineProbeMeshImageName get online probe init mesh image name
@@ -1017,7 +1018,7 @@ func GetOnlineProbeMeshImageName() string {
 	if d := os.Getenv("PROBE_MESH_IMAGE_NAME"); d != "" {
 		return d
 	}
-	return builder.ONLINEREGISTRYDOMAIN + "/rbd-init-probe:" + builder.CIVERSION
+	return builder.ONLINEREGISTRYDOMAIN + "/wt-init-probe:" + builder.CIVERSION
 }
 
 //CalculatePodResource calculate pod resource

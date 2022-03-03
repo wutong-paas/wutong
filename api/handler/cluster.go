@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/goodrain/rainbond/api/model"
-	"github.com/goodrain/rainbond/api/util"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/api/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,9 +30,9 @@ type ClusterHandler interface {
 }
 
 // NewClusterHandler -
-func NewClusterHandler(clientset *kubernetes.Clientset, RbdNamespace string) ClusterHandler {
+func NewClusterHandler(clientset *kubernetes.Clientset, WtNamespace string) ClusterHandler {
 	return &clusterAction{
-		namespace: RbdNamespace,
+		namespace: WtNamespace,
 		clientset: clientset,
 	}
 }
@@ -80,7 +80,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		}
 	}
 
-	var healthcpuR, healthmemR, unhealthCPUR, unhealthMemR, rbdMemR, rbdCPUR int64
+	var healthcpuR, healthmemR, unhealthCPUR, unhealthMemR, wtMemR, wtCPUR int64
 	nodeAllocatableResourceList := make(map[string]*model.NodeResource, len(usedNodeList))
 	var maxAllocatableMemory *model.NodeResource
 	for i := range usedNodeList {
@@ -105,9 +105,9 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 					unhealthCPUR += c.Resources.Requests.Cpu().MilliValue()
 					unhealthMemR += c.Resources.Requests.Memory().Value()
 				}
-				if pod.Labels["creator"] == "Rainbond" {
-					rbdMemR += c.Resources.Requests.Memory().Value()
-					rbdCPUR += c.Resources.Requests.Cpu().MilliValue()
+				if pod.Labels["creator"] == "Wutong" {
+					wtMemR += c.Resources.Requests.Memory().Value()
+					wtCPUR += c.Resources.Requests.Cpu().MilliValue()
 				}
 			}
 		}
@@ -144,8 +144,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		UnhealthCapMem:                   int(unhealthCapMem) / 1024 / 1024,
 		ReqCPU:                           float32(healthcpuR+unhealthCPUR) / 1000,
 		ReqMem:                           int(healthmemR+unhealthMemR) / 1024 / 1024,
-		RainbondReqCPU:                   float32(rbdCPUR) / 1000,
-		RainbondReqMem:                   int(rbdMemR) / 1024 / 1024,
+		WutongReqCPU:                     float32(wtCPUR) / 1000,
+		WutongReqMem:                     int(wtMemR) / 1024 / 1024,
 		HealthReqCPU:                     float32(healthcpuR) / 1000,
 		HealthReqMem:                     int(healthmemR) / 1024 / 1024,
 		UnhealthReqCPU:                   float32(unhealthCPUR) / 1000,
@@ -256,7 +256,7 @@ func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *
 	config.Name = ms.Name
 	config.Namespace = c.namespace
 	config.Labels = map[string]string{
-		"creator":    "Rainbond",
+		"creator":    "Wutong",
 		"configtype": "mavensetting",
 	}
 	config.Annotations = map[string]string{

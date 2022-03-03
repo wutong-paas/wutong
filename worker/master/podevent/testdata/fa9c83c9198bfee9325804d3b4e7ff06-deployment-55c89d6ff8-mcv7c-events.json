@@ -84,7 +84,7 @@
           "fieldPath": "spec.containers{fa9c83c9198bfee9325804d3b4e7ff06}"
         },
         "reason": "Pulled",
-        "message": "Container image \"goodrain.me/nginx:20190826081937\" already present on machine",
+        "message": "Container image \"wutong.me/nginx:20190826081937\" already present on machine",
         "source": {
           "component": "kubelet",
           "host": "959eba4b-6bbe-4ad5-ba0f-ecfad17d378d"

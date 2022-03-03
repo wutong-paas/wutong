@@ -31,8 +31,8 @@ func TestFileUpload(t *testing.T) {
 			bucketName:   "hrhtest",
 			expErr:       false,
 			statusCode:   200,
-			objkey:       "goodrain-logo.png",
-			filepath:     "goodrain-logo.png",
+			objkey:       "wutong-logo.png",
+			filepath:     "wutong-logo.png",
 		},
 	}
 
@@ -80,8 +80,8 @@ func TestGetObject(t *testing.T) {
 			bucketName:   "hrhtest",
 			expErr:       false,
 			statusCode:   200,
-			objkey:       "goodrain-logo.png",
-			filepath:     "/tmp/goodrain-logo.png",
+			objkey:       "wutong-logo.png",
+			filepath:     "/tmp/wutong-logo.png",
 		},
 		{
 			name:         "object not found",

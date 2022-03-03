@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -26,22 +26,22 @@ import (
 	"time"
 
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/cmd/worker/option"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	discover "github.com/goodrain/rainbond/discover.v2"
-	"github.com/goodrain/rainbond/pkg/apis/rainbond/v1alpha1"
-	"github.com/goodrain/rainbond/pkg/helm"
-	"github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/util/constants"
-	etcdutil "github.com/goodrain/rainbond/util/etcd"
-	k8sutil "github.com/goodrain/rainbond/util/k8s"
-	"github.com/goodrain/rainbond/worker/appm/store"
-	"github.com/goodrain/rainbond/worker/appm/thirdparty/discovery"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
-	"github.com/goodrain/rainbond/worker/server/pb"
-	wutil "github.com/goodrain/rainbond/worker/util"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/cmd/worker/option"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	discover "github.com/wutong-paas/wutong/discover.v2"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/pkg/helm"
+	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/constants"
+	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	"github.com/wutong-paas/wutong/worker/appm/store"
+	"github.com/wutong-paas/wutong/worker/appm/thirdparty/discovery"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"github.com/wutong-paas/wutong/worker/server/pb"
+	wutil "github.com/wutong-paas/wutong/worker/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	appv1 "k8s.io/api/apps/v1"
@@ -133,10 +133,10 @@ func (r *RuntimeServer) GetAppStatus(ctx context.Context, in *pb.AppStatusReq) (
 		return r.getHelmAppStatus(app)
 	}
 
-	return r.getRainbondAppStatus(app)
+	return r.getWutongAppStatus(app)
 }
 
-func (r *RuntimeServer) getRainbondAppStatus(app *model.Application) (*pb.AppStatus, error) {
+func (r *RuntimeServer) getWutongAppStatus(app *model.Application) (*pb.AppStatus, error) {
 	status, err := r.store.GetAppStatus(app.AppID)
 	if err != nil {
 		return nil, err
@@ -542,7 +542,7 @@ func (r *RuntimeServer) listThirdEndpoints(as *v1.AppService) []*v1alpha1.ThirdC
 
 	component, ok := workload.(*v1alpha1.ThirdComponent)
 	if !ok {
-		logger.Warningf("expect thirdcomponents.rainbond.io, but got %s", workload.GetObjectKind())
+		logger.Warningf("expect thirdcomponents.wutong.io, but got %s", workload.GetObjectKind())
 		return nil
 	}
 
@@ -555,7 +555,7 @@ func (r *RuntimeServer) AddThirdPartyEndpoint(ctx context.Context, re *pb.AddThi
 	if as == nil {
 		return new(pb.Empty), nil
 	}
-	rbdep := &v1.RbdEndpoint{
+	wtep := &v1.WtEndpoint{
 		UUID: re.Uuid,
 		Sid:  re.Sid,
 		IP:   re.Ip,
@@ -563,7 +563,7 @@ func (r *RuntimeServer) AddThirdPartyEndpoint(ctx context.Context, re *pb.AddThi
 	}
 	r.updateCh.In() <- discovery.Event{
 		Type: discovery.CreateEvent,
-		Obj:  rbdep,
+		Obj:  wtep,
 	}
 	return new(pb.Empty), nil
 }
@@ -574,7 +574,7 @@ func (r *RuntimeServer) UpdThirdPartyEndpoint(ctx context.Context, re *pb.UpdThi
 	if as == nil {
 		return new(pb.Empty), nil
 	}
-	rbdep := &v1.RbdEndpoint{
+	wtep := &v1.WtEndpoint{
 		UUID:     re.Uuid,
 		Sid:      re.Sid,
 		IP:       re.Ip,
@@ -584,12 +584,12 @@ func (r *RuntimeServer) UpdThirdPartyEndpoint(ctx context.Context, re *pb.UpdThi
 	if !re.IsOnline {
 		r.updateCh.In() <- discovery.Event{
 			Type: discovery.DeleteEvent,
-			Obj:  rbdep,
+			Obj:  wtep,
 		}
 	} else {
 		r.updateCh.In() <- discovery.Event{
 			Type: discovery.UpdateEvent,
-			Obj:  rbdep,
+			Obj:  wtep,
 		}
 	}
 	return new(pb.Empty), nil
@@ -603,7 +603,7 @@ func (r *RuntimeServer) DelThirdPartyEndpoint(ctx context.Context, re *pb.DelThi
 	}
 	r.updateCh.In() <- discovery.Event{
 		Type: discovery.DeleteEvent,
-		Obj: &v1.RbdEndpoint{
+		Obj: &v1.WtEndpoint{
 			UUID: re.Uuid,
 			Sid:  re.Sid,
 			IP:   re.Ip,
@@ -866,9 +866,9 @@ func (r *RuntimeServer) ListAppStatuses(ctx context.Context, in *pb.AppStatusesR
 			appStatuses = append(appStatuses, helmAppStatus)
 			continue
 		}
-		appStatus, err := r.getRainbondAppStatus(app)
+		appStatus, err := r.getWutongAppStatus(app)
 		if err != nil {
-			logrus.Errorf("get rainbond app (%s)[%s] failed", app.AppName, app.AppID)
+			logrus.Errorf("get wutong app (%s)[%s] failed", app.AppName, app.AppID)
 			continue
 		}
 		appStatuses = append(appStatuses, appStatus)

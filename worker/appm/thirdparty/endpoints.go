@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -20,17 +20,17 @@ package thirdparty
 
 import (
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/db/model"
-	"github.com/goodrain/rainbond/worker/appm/thirdparty/discovery"
-	v1 "github.com/goodrain/rainbond/worker/appm/types/v1"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/worker/appm/thirdparty/discovery"
+	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 )
 
 // Interacter is the interface that wraps the required methods to interact
 // with DB or service registry that holds the endpoints information.
 type Interacter interface {
-	List() ([]*v1.RbdEndpoint, error)
+	List() ([]*v1.WtEndpoint, error)
 	// if endpoints type is static, do nothing.
 	// if endpoints type is dynamic, watch the changes in endpoints.
 	Watch()
@@ -67,19 +67,19 @@ type static struct {
 	sid string
 }
 
-func (s *static) List() ([]*v1.RbdEndpoint, error) {
+func (s *static) List() ([]*v1.WtEndpoint, error) {
 	eps, err := db.GetManager().EndpointsDao().List(s.sid)
 	if err != nil {
 		return nil, err
 	}
-	var res []*v1.RbdEndpoint
+	var res []*v1.WtEndpoint
 	for _, ep := range eps {
-		res = append(res, &v1.RbdEndpoint{
-			UUID:     ep.UUID,
-			Sid:      ep.ServiceID,
-			IP:       ep.IP,
-			Port:     ep.Port,
-			IsOnline: *ep.IsOnline,
+		res = append(res, &v1.WtEndpoint{
+			UUID: ep.UUID,
+			Sid:  ep.ServiceID,
+			IP:   ep.IP,
+			Port: ep.Port,
+			// IsOnline: *ep.IsOnline,
 		})
 	}
 	return res, nil
@@ -116,7 +116,7 @@ type dynamic struct {
 	stopCh   chan struct{}
 }
 
-func (d *dynamic) List() ([]*v1.RbdEndpoint, error) {
+func (d *dynamic) List() ([]*v1.WtEndpoint, error) {
 	discoverier, err := discovery.NewDiscoverier(d.cfg, d.updateCh, d.stopCh)
 	if err != nil {
 		return nil, err

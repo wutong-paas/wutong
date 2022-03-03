@@ -8,7 +8,7 @@
       "resourceVersion": "1447029",
       "creationTimestamp": "2019-08-26T00:20:24Z",
       "labels": {
-        "creater": "Rainbond",
+        "creater": "Wutong",
         "creater_id": "1566778824158858304",
         "name": "gre7ff06",
         "pod-template-hash": "1174582994",
@@ -19,7 +19,7 @@
         "version": "20190826081937"
       },
       "annotations": {
-        "rainbond.com/tolerate-unready-endpoints": "true"
+        "wutong-paas.com/tolerate-unready-endpoints": "true"
       },
       "ownerReferences": [
         {
@@ -45,7 +45,7 @@
       "containers": [
         {
           "name": "fa9c83c9198bfee9325804d3b4e7ff06",
-          "image": "goodrain.me/nginx:20190826081937",
+          "image": "wutong.me/nginx:20190826081937",
           "ports": [
             {
               "containerPort": 80,
@@ -253,7 +253,7 @@
           },
           "ready": false,
           "restartCount": 1,
-          "image": "goodrain.me/nginx:20190826081937",
+          "image": "wutong.me/nginx:20190826081937",
           "imageID": ""
         }
       ],

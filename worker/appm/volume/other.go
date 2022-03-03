@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -21,10 +21,10 @@ package volume
 import (
 	"fmt"
 
-	"github.com/goodrain/rainbond/db"
-	"github.com/goodrain/rainbond/node/nodem/client"
-	workerutil "github.com/goodrain/rainbond/worker/util"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/db"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	workerutil "github.com/wutong-paas/wutong/worker/util"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -33,7 +33,7 @@ type OtherVolume struct {
 	Base
 }
 
-// CreateVolume ceph rbd volume create volume
+// CreateVolume ceph wt volume create volume
 func (v *OtherVolume) CreateVolume(define *Define) error {
 	volumeType, err := db.GetManager().VolumeTypeDao().GetVolumeTypeByType(v.svm.VolumeType)
 	if err != nil {

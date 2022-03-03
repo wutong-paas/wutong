@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -23,11 +23,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/goodrain/rainbond/api/client/prometheus"
-	api_model "github.com/goodrain/rainbond/api/model"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/twinj/uuid"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
+	api_model "github.com/wutong-paas/wutong/api/model"
 )
 
 func TestABCService(t *testing.T) {
@@ -58,7 +58,7 @@ func TestABCService(t *testing.T) {
 		"service_version":"81701",
 		"event_id":"e5bd1926254b447ea97817566b2d71bf",
 		"container_cpu":80,
-		"namespace":"goodrain",
+		"namespace":"wutong",
 		"extend_info":{
 			"envs":[
 	
@@ -71,7 +71,7 @@ func TestABCService(t *testing.T) {
 		"status":0,
 		"node_label":"",
 		"replicas":1,
-		"image_name":"goodrain.me/runner",
+		"image_name":"wutong.me/runner",
 		"service_alias":"gr45068c",
 		"service_id":"55c60b74a506261608f5c36f0f45068c",
 		"code_from":"gitlab_manual",

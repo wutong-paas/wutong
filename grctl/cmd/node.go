@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -27,18 +27,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/goodrain/rainbond/util/ansible"
+	"github.com/wutong-paas/wutong/util/ansible"
 
 	"github.com/fatih/color"
 
-	"github.com/goodrain/rainbond/api/util"
-	"github.com/goodrain/rainbond/grctl/clients"
-	"github.com/goodrain/rainbond/node/nodem/client"
-	coreutil "github.com/goodrain/rainbond/util"
-	"github.com/goodrain/rainbond/util/termtables"
 	"github.com/gosuri/uitable"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+	"github.com/wutong-paas/wutong/api/util"
+	"github.com/wutong-paas/wutong/grctl/clients"
+	"github.com/wutong-paas/wutong/node/nodem/client"
+	coreutil "github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/termtables"
 )
 
 func handleErr(err *util.APIHandleError) {
@@ -184,7 +184,7 @@ func handleMessage(status string, message string) string {
 func NewCmdNode() cli.Command {
 	c := cli.Command{
 		Name:  "node",
-		Usage: "rainbond node manage cmd",
+		Usage: "wutong node manage cmd",
 		Subcommands: []cli.Command{
 			{
 				Name:  "get",
@@ -536,12 +536,12 @@ func NewCmdNode() cli.Command {
 			// 		cli.StringFlag{
 			// 			Name:  "hosts-file-path",
 			// 			Usage: "hosts file path",
-			// 			Value: "/opt/rainbond/rainbond-ansible/inventory/hosts",
+			// 			Value: "/opt/wutong/wutong-ansible/inventory/hosts",
 			// 		},
 			// 		cli.StringFlag{
 			// 			Name:  "config-file-path",
 			// 			Usage: "ansible global config file path",
-			// 			Value: "/opt/rainbond/rainbond-ansible/scripts/installer/global.sh",
+			// 			Value: "/opt/wutong/wutong-ansible/scripts/installer/global.sh",
 			// 		},
 			// 		cli.StringFlag{
 			// 			Name:  "internal-ip,iip",
@@ -586,12 +586,12 @@ func NewCmdNode() cli.Command {
 			// 		cli.StringFlag{
 			// 			Name:  "hosts-file-path",
 			// 			Usage: "hosts file path",
-			// 			Value: "/opt/rainbond/rainbond-ansible/inventory/hosts",
+			// 			Value: "/opt/wutong/wutong-ansible/inventory/hosts",
 			// 		},
 			// 		cli.StringFlag{
 			// 			Name:  "config-file-path",
 			// 			Usage: "ansible global config file path",
-			// 			Value: "/opt/rainbond/rainbond-ansible/scripts/installer/global.sh",
+			// 			Value: "/opt/wutong/wutong-ansible/scripts/installer/global.sh",
 			// 		},
 			// 	},
 			// 	Action: installNodeCommand,

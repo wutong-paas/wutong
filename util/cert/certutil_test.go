@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -25,10 +25,10 @@ import (
 )
 
 func Test_crt(t *testing.T) {
-	baseinfo := CertInformation{Country: []string{"CN"}, Organization: []string{"Goodrain"}, IsCA: true,
-		OrganizationalUnit: []string{"work-stacks"}, EmailAddress: []string{"zengqg@goodrain.com"},
+	baseinfo := CertInformation{Country: []string{"CN"}, Organization: []string{"Wutong"}, IsCA: true,
+		OrganizationalUnit: []string{"work-stacks"}, EmailAddress: []string{"zengqg@wutong-paas.com"},
 		Locality: []string{"BeiJing"}, Province: []string{"BeiJing"}, CommonName: "Work-Stacks",
-		Domains: []string{"goodrain.me"}, CrtName: "../../test/ssl/ca.pem", KeyName: "../../test/ssl/ca.key"}
+		Domains: []string{"wutong.me"}, CrtName: "../../test/ssl/ca.pem", KeyName: "../../test/ssl/ca.key"}
 
 	err := CreateCRT(nil, nil, baseinfo)
 	if err != nil {

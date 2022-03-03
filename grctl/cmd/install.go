@@ -7,19 +7,19 @@ import (
 	"os"
 	"path"
 
-	rainbondv1alpha1 "github.com/goodrain/rainbond-operator/api/v1alpha1"
-	"github.com/goodrain/rainbond/api/region"
-	"github.com/goodrain/rainbond/builder/sources"
-	"github.com/goodrain/rainbond/cmd/grctl/option"
-	"github.com/goodrain/rainbond/grctl/clients"
 	"github.com/urfave/cli"
+	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
+	"github.com/wutong-paas/wutong/api/region"
+	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/cmd/grctl/option"
+	"github.com/wutong-paas/wutong/grctl/clients"
 	yaml "gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-var pemDirPath = ".rbd/ssl"
+var pemDirPath = ".wt/ssl"
 var clientPemPath string
 var clientKeyPemPath string
 var clientCAPemPath string
@@ -45,9 +45,9 @@ func NewCmdInstall() cli.Command {
 			},
 			cli.StringFlag{
 				Name:   "namespace,ns",
-				Usage:  "rainbond namespace",
+				Usage:  "wutong namespace",
 				EnvVar: "RBDNamespace",
-				Value:  "rbd-system",
+				Value:  "wt-system",
 			},
 		},
 		Usage: "grctl install",
@@ -55,17 +55,17 @@ func NewCmdInstall() cli.Command {
 			fmt.Println("Start install, please waiting!")
 			CommonWithoutRegion(c)
 			namespace := c.String("namespace")
-			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get(context.Background(), "rbd-api-client-cert", metav1.GetOptions{})
+			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get(context.Background(), "wt-api-client-cert", metav1.GetOptions{})
 			if err != nil {
 				showError(fmt.Sprintf("get region api tls secret failure %s", err.Error()))
 			}
 			regionAPIIP := c.StringSlice("gateway-ip")
 			if len(regionAPIIP) == 0 {
-				var cluster rainbondv1alpha1.RainbondCluster
-				err := clients.RainbondKubeClient.Get(context.Background(),
-					types.NamespacedName{Namespace: namespace, Name: "rainbondcluster"}, &cluster)
+				var cluster wutongv1alpha1.WutongCluster
+				err := clients.WutongKubeClient.Get(context.Background(),
+					types.NamespacedName{Namespace: namespace, Name: "wutongcluster"}, &cluster)
 				if err != nil {
-					showError(fmt.Sprintf("get rainbond cluster config failure %s", err.Error()))
+					showError(fmt.Sprintf("get wutong cluster config failure %s", err.Error()))
 				}
 				gatewayIP := cluster.GatewayIngressIPs()
 				if len(gatewayIP) == 0 {
@@ -116,7 +116,7 @@ func writeConfig(ips []string) error {
 		},
 	}
 	home, _ := sources.Home()
-	configFilePath := path.Join(home, ".rbd", "grctl.yaml")
+	configFilePath := path.Join(home, ".wt", "grctl.yaml")
 	os.MkdirAll(path.Dir(configFilePath), os.ModeDir)
 	os.Remove(configFilePath)
 	configFile, err := os.OpenFile(configFilePath, os.O_CREATE|os.O_RDWR, 0411)

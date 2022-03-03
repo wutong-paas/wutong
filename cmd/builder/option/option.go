@@ -1,11 +1,11 @@
-// Copyright (C) 2014-2018 Goodrain Co., Ltd.
-// RAINBOND, Application Management Platform
+// Copyright (C) 2014-2018 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -22,9 +22,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/goodrain/rainbond/mq/client"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/wutong-paas/wutong/mq/client"
 )
 
 //Config config server
@@ -49,8 +49,8 @@ type Config struct {
 	CleanUp              bool
 	Topic                string
 	LogPath              string
-	RbdNamespace         string
-	RbdRepoName          string
+	WtNamespace          string
+	WtRepoName           string
 	GRDataPVCName        string
 	CachePVCName         string
 	CacheMode            string
@@ -92,8 +92,8 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&a.CleanUp, "clean-up", true, "Turn on build version cleanup")
 	fs.StringVar(&a.Topic, "topic", "builder", "Topic in mq,you coule choose `builder` or `windows_builder`")
 	fs.StringVar(&a.LogPath, "log-path", "/grdata/logs", "Where Docker log files and event log files are stored.")
-	fs.StringVar(&a.RbdNamespace, "rbd-namespace", "rbd-system", "rbd component namespace")
-	fs.StringVar(&a.RbdRepoName, "rbd-repo", "rbd-repo", "rbd component repo's name")
+	fs.StringVar(&a.WtNamespace, "wt-namespace", "wt-system", "wt component namespace")
+	fs.StringVar(&a.WtRepoName, "wt-repo", "wt-repo", "wt component repo's name")
 	fs.StringVar(&a.GRDataPVCName, "pvc-grdata-name", "grdata", "pvc name of grdata")
 	fs.StringVar(&a.CachePVCName, "pvc-cache-name", "cache", "pvc name of cache")
 	fs.StringVar(&a.CacheMode, "cache-mode", "sharefile", "volume cache mount type, can be hostpath and sharefile, default is sharefile, which mount using pvc")

@@ -1,11 +1,11 @@
-// RAINBOND, Application Management Platform
-// Copyright (C) 2014-2017 Goodrain Co., Ltd.
+// WUTONG, Application Management Platform
+// Copyright (C) 2014-2017 Wutong Co., Ltd.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version. For any non-GPL usage of Rainbond,
-// one or multiple Commercial Licenses authorized by Goodrain Co., Ltd.
+// (at your option) any later version. For any non-GPL usage of Wutong,
+// one or multiple Commercial Licenses authorized by Wutong Co., Ltd.
 // must be obtained first.
 
 // This program is distributed in the hope that it will be useful,
@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"github.com/eapache/channels"
-	"github.com/goodrain/rainbond/builder/parser/code"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder/parser/code"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,12 +59,12 @@ type controller struct {
 var jobController *controller
 
 //InitJobController init job controller
-func InitJobController(rbdNamespace string, stop chan struct{}, kubeClient kubernetes.Interface) error {
+func InitJobController(wtNamespace string, stop chan struct{}, kubeClient kubernetes.Interface) error {
 	jobController = &controller{
 		KubeClient: kubeClient,
-		namespace:  rbdNamespace,
+		namespace:  wtNamespace,
 	}
-	logrus.Infof("watch namespace[%s] job ", rbdNamespace)
+	logrus.Infof("watch namespace[%s] job ", wtNamespace)
 	eventHandler := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			job, _ := obj.(*corev1.Pod)
