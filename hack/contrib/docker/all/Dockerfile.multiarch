@@ -27,8 +27,8 @@ COPY worker/ worker/
 
 COPY build-wtall.sh build-wtall.sh
 
-COPY vendor/ vendor/
-# RUN go mod vendor
+# COPY vendor/ vendor/
+RUN go mod vendor
 
 ENV GO111MODULE=on TARGETOS=${TARGETOS} TARGETARCH=${TARGETARCH}
 RUN mkdir /output/bin -p && ./build-wtall.sh
