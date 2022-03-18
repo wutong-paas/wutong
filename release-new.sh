@@ -27,10 +27,10 @@ build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh
 
 build::all() {
 	echo "---> build image: wt-all:${VERSION}"
-	# docker buildx create --use --name wt-all-builder || docker buildx rm wt-all-builder
-	docker buildx use wt-all-builder
+	docker buildx create --use --name wt-all-builder
+	# docker buildx use wt-all-builder
 	docker buildx build --push --platform linux/amd64,linux/arm64 -t ${IMAGE_REPO}/wt-all:${VERSION} -f "./hack/contrib/docker/all/Dockerfile.multiarch" .
-	# docker buildx rm wt-all-builder
+	docker buildx rm wt-all-builder
 }
 
 build::image() {
