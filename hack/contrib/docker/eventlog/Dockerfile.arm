@@ -1,10 +1,16 @@
-FROM debian:buster
+ARG BASE_IMAGE_VERSION
+ARG VERSION
+FROM --platform=${TARGETPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-all:${VERSION} AS wt-all
+
+FROM --platform=${BUILDPLATFORM} debian:buster
+ARG RELEASE_DESC
+ARG TARGETOS TARGETARCH TARGETPLATFORM
       
 RUN apt update && apt install -y ca-certificates openssl libssl-dev libsodium-dev libpgm-dev libnorm-dev libgssapi-krb5-2 wget
     
 RUN wget https://wutong-paas-public.obs.cn-east-3.myhuaweicloud.com/arm/1.0/libzmq.so.5 -O /usr/lib/libzmq.so.5
     
-COPY wutong-eventlog /run/wutong-eventlog
+COPY --from=wt-all /output/bin/wutong-eventlog /run/wutong-eventlog
 ADD entrypoint.sh /run/entrypoint.sh
     
 EXPOSE 6366

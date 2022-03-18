@@ -1,0 +1,24 @@
+ARG VERSION
+ARG IMAGE_REPO
+FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
+
+# FROM  envoyproxy/envoy:v1.13.1
+FROM --platform=${BUILDPLATFORM} envoyproxy/envoy:v1.16.5
+LABEL "author"="dingpeng24001"
+ARG RELEASE_DESC
+ARG TARGETOS TARGETARCH TARGETPLATFORM
+
+RUN apt-get update && apt-get install -y bash curl net-tools wget vim && \
+    if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+        wget https://wutong-paas-public.obs.cn-east-3.myhuaweicloud.com/amd/1.0/env2file -O /usr/bin/env2file; \
+    else \
+        wget https://wutong-paas-public.obs.cn-east-3.myhuaweicloud.com/arm/1.0/env2file -O /usr/bin/env2file; \
+    fi
+      
+ADD . /root/
+COPY --from=wt-all /output/bin/wutong-mesh-data-panel /root/wutong-mesh-data-panel
+RUN chmod 755 /root/start.sh && chmod 755 /usr/bin/env2file
+ENV ENVOY_BINARY="/usr/local/bin/envoy"
+ENV RELEASE_DESC=${RELEASE_DESC}
+WORKDIR /root
+ENTRYPOINT ["./start.sh"]

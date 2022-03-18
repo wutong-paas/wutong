@@ -1,0 +1,34 @@
+ARG BASE_IMAGE_VERSION
+ARG VERSION
+FROM --platform=${TARGETPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-all:${VERSION} AS wt-all
+
+FROM --platform=${TARGETPLATFORM} wutongpaas/alpine:${BASE_IMAGE_VERSION}
+ARG RELEASE_DESC
+ARG TARGETOS TARGETARCH TARGETPLATFORM
+
+COPY build/libzmq/lib/libzmq.so.3 /usr/lib
+
+# RUN apk --no-cache add libstdc++ ca-certificates openssl openssl-dev wget
+# RUN apt update && apt install -y ca-certificates openssl libssl-dev libsodium-dev libpgm-dev libnorm-dev libgssapi-krb5-2 wget  
+# RUN wget https://wutong-paas-public.obs.cn-east-3.myhuaweicloud.com/arm/1.0/libzmq.so.5 -O /usr/lib/libzmq.so.5
+
+# apk --no-cache add ca-certificates openssl openssl-dev libsodium-dev libpgm-dev libnorm-dev libgssapi-krb5-2 wget; \
+RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+        rm /usr/lib/libzmq.so.3; \
+        apk --no-cache add ca-certificates openssl openssl-dev libsodium-dev wget; \
+        wget https://wutong-paas-public.obs.cn-east-3.myhuaweicloud.com/arm/1.0/libzmq.so.5 -O /usr/lib/libzmq.so.5; \
+    else \
+        apk --no-cache add libstdc++ ca-certificates openssl openssl-dev wget; \
+    fi
+
+COPY --from=wt-all /output/bin/wutong-eventlog /run/wutong-eventlog
+ADD entrypoint.sh /run/entrypoint.sh
+
+EXPOSE 6366
+EXPOSE 6365
+EXPOSE 6364
+EXPOSE 6363
+EXPOSE 6362
+VOLUME [ "/etc/wutongpaas" ]
+ENV RELEASE_DESC=${RELEASE_DESC}
+ENTRYPOINT  ["/run/entrypoint.sh"]

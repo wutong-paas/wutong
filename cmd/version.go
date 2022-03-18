@@ -28,9 +28,9 @@ var version string
 //ShowVersion 显示版本
 func ShowVersion(module string) {
 	if version != "" {
-		fmt.Printf("Wutong%s\n", module, version)
+		fmt.Printf("wutong-%s %s\n", module, version)
 	} else {
-		fmt.Printf("Wutong%s\n", module, os.Getenv("RELEASE_DESC"))
+		fmt.Printf("wutong-%s %s\n", module, os.Getenv("RELEASE_DESC"))
 	}
 	os.Exit(0)
 }

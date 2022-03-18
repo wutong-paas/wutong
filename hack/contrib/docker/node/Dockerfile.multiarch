@@ -1,0 +1,14 @@
+ARG BASE_IMAGE_VERSION
+ARG VERSION
+ARG IMAGE_REPO
+FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
+
+FROM --platform=${BUILDPLATFORM} wutongpaas/alpine:${BASE_IMAGE_VERSION}
+ARG RELEASE_DESC
+ARG TARGETOS TARGETARCH TARGETPLATFORM
+
+ADD . /run
+COPY --from=wt-all /output/bin/wutong-node /run/wutong-node
+ENV RELEASE_DESC=${RELEASE_DESC}
+EXPOSE 6100 6101 9125
+ENTRYPOINT ["/run/entrypoint.sh"]

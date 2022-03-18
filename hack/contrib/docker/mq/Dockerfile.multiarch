@@ -1,0 +1,17 @@
+ARG BASE_IMAGE_VERSION
+ARG VERSION
+ARG IMAGE_REPO
+FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
+
+FROM --platform=${BUILDPLATFORM} wutongpaas/alpine:${BASE_IMAGE_VERSION}
+ARG RELEASE_DESC
+ARG TARGETOS TARGETARCH TARGETPLATFORM
+
+COPY --from=wt-all /output/bin/wutong-mq /run/wutong-mq
+ADD entrypoint.sh /run/entrypoint.sh
+RUN chmod 655 /run/wutong-mq
+EXPOSE 6300
+
+ENV RELEASE_DESC=${RELEASE_DESC}
+
+ENTRYPOINT ["/run/entrypoint.sh"]
