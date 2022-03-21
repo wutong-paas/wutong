@@ -4,11 +4,10 @@ set -o errexit
 # define package name
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
-IMAGE_BASE_NAME=${BUILD_IMAGE_BASE_NAME:-'wutong'}
-DOMESTIC_NAMESPACE=${DOMESTIC_NAMESPACE:-'wutong'}
-GOARCH=${BUILD_GOARCH:-'amd64'}
+IMAGE_REPO=${IMAGE_REPO:-'wutongpaas'}
+GOARCH=${BUILDARCH:-'amd64'}
 
-GO_VERSION=1.13
+GO_VERSION=1.15
 
 GOPROXY=${GOPROXY:-'https://goproxy.io'}
 
@@ -49,8 +48,7 @@ build::binary() {
 	local build_image="golang:${GO_VERSION}"
 	local build_args="-w -s -X github.com/wutong-paas/wutong/cmd.version=${release_desc}"
 	local build_dir="./cmd/$1"
-	local build_tag=""
-	local DOCKERFILE_BASE=${BUILD_DOCKERFILE_BASE:-'Dockerfile'}
+	local DOCKERFILE_BASE="Dockerfile"
 	if [ -f "${DOCKER_PATH}/ignorebuild" ]; then
 		return
 	fi
@@ -64,11 +62,11 @@ build::binary() {
 	elif [ "$1" = "chaos" ]; then
 		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
-		build_image="golang:1.13-alpine"
+		build_image="golang:1.15-alpine"
 	elif [ "$1" = "monitor" ]; then
 		CGO_ENABLED=0
 	fi
-	docker run --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS="${GOOS}" -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -tags "${build_tag}" -o "${OUTPATH}" ${build_dir}
+	docker run --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS="${GOOS}" -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${OUTPATH}" ${build_dir}
 	if [ "$GOOS" = "windows" ]; then
 		mv "$OUTPATH" "${OUTPATH}.exe"
 	fi
@@ -78,8 +76,8 @@ build::image() {
 	local OUTPATH="./_output/binary/$GOOS/${BASE_NAME}-$1"
 	local build_image_dir="./_output/image/$1/"
 	local source_dir="./hack/contrib/docker/$1"
-	local BASE_IMAGE_VERSION=${BUILD_BASE_IMAGE_VERSION:-'3.4'}
-	local DOCKERFILE_BASE=${BUILD_DOCKERFILE_BASE:-'Dockerfile'}
+	local BASE_IMAGE_VERSION="3.15"
+	local DOCKERFILE_BASE="Dockerfile"
 	mkdir -p "${build_image_dir}"
 	chmod 777 "${build_image_dir}"
 	if [ ! -f "${source_dir}/ignorebuild" ]; then
@@ -104,26 +102,21 @@ build::image() {
 			BASE_IMAGE_VERSION="1.19.3.2"
 		fi
 	fi
-	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg GOARCH="${GOARCH}" -t "${IMAGE_BASE_NAME}/wt-$1:${VERSION}" -f "${DOCKERFILE_BASE}" .
-	docker run --rm "${IMAGE_BASE_NAME}/wt-$1:${VERSION}" version
+	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg GOARCH="${GOARCH}" -t wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
+	docker run --rm wt-$1:${VERSION} version
 	if [ $? -ne 0 ]; then
 		echo "image version is different ${release_desc}"
 		exit 1
 	fi
 	if [ -f "${source_dir}/test.sh" ]; then
-		"${source_dir}/test.sh" "${IMAGE_BASE_NAME}/wt-$1:${VERSION}"
+		"${source_dir}/test.sh" wt-$1:${VERSION}
 	fi
 	if [ "$2" = "push" ]; then
-		if [ $DOCKER_USERNAME ]; then
-			docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
-			docker push "${IMAGE_BASE_NAME}/wt-$1:${VERSION}"
-		fi
+		docker tag wt-$1:${VERSION} wutongpaas/wt-$1:${VERSION}
+		docker push wutongpaas/wt-$1:${VERSION}
 		
-		if [ "${DOMESTIC_BASE_NAME}" ]; then
-			docker tag "${IMAGE_BASE_NAME}/wt-$1:${VERSION}" "${DOMESTIC_BASE_NAME}/${DOMESTIC_NAMESPACE}/wt-$1:${VERSION}"
-			docker login -u "$DOMESTIC_DOCKER_USERNAME" -p "$DOMESTIC_DOCKER_PASSWORD" "${DOMESTIC_BASE_NAME}"
-			docker push "${DOMESTIC_BASE_NAME}/${DOMESTIC_NAMESPACE}/wt-$1:${VERSION}"
-		fi
+		docker tag wt-$1:${VERSION} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
+		docker push swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 	fi
 	popd
 	rm -rf "${build_image_dir}"

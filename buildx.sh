@@ -27,10 +27,10 @@ build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh
 
 build::all() {
 	echo "---> build image: wt-all:${VERSION}"
-	docker buildx create --use --name wt-all-builder
-	# docker buildx use wt-all-builder
-	docker buildx build --push --platform linux/amd64,linux/arm64 -t ${IMAGE_REPO}/wt-all:${VERSION} -f "./hack/contrib/docker/all/Dockerfile.multiarch" .
-	docker buildx rm wt-all-builder
+	# docker buildx create --use --name wt-all-builder
+	docker buildx use wt-all-builder
+	docker buildx build --push --platform linux/amd64 -t ${IMAGE_REPO}/wt-all:${VERSION} -f "./hack/contrib/docker/all/Dockerfile.multiarch" .
+	# docker buildx rm wt-all-builder
 }
 
 build::image() {
@@ -45,18 +45,18 @@ build::image() {
 	pushd "${build_image_dir}"
 	echo "---> build image: $1"
 
-	docker buildx create --use --name $1-builder
-	# docker buildx use $1-builder
+	# docker buildx create --use --name $1-builder
+	docker buildx use $1-builder
 	# if [ "$1" = "eventlog" ]; then
 	# 	docker buildx build --push --platform linux/amd64 --build-arg IMAGE_REPO="${IMAGE_REPO}" --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg VERSION="${VERSION}" -t "${IMAGE_REPO}/wt-$1:${VERSION}" .
 	# 	docker buildx build --push --platform linux/arm64 --build-arg IMAGE_REPO="${IMAGE_REPO}" --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg VERSION="${VERSION}" -t "${IMAGE_REPO}/wt-$1:${VERSION}-arm64" -f Dockerfile.arm .
 	# else
 	# 	docker buildx build --push --platform linux/amd64,linux/arm64 --build-arg IMAGE_REPO="${IMAGE_REPO}" --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg VERSION="${VERSION}" -t "${IMAGE_REPO}/wt-$1:${VERSION}" -f "${DOCKERFILE_BASE}" .
 	# fi
-	docker buildx build --push --platform linux/amd64,linux/arm64 --build-arg IMAGE_REPO="${IMAGE_REPO}" --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg VERSION="${VERSION}" -t "${IMAGE_REPO}/wt-$1:${VERSION}" -f "${DOCKERFILE_BASE}" .
+	docker buildx build --push --platform linux/amd64 --build-arg IMAGE_REPO="${IMAGE_REPO}" --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg VERSION="${VERSION}" -t "${IMAGE_REPO}/wt-$1:${VERSION}" -f "${DOCKERFILE_BASE}" .
 	
-	docker buildx rm $1-builder
-	docker pull --platform linux/arm64 "${IMAGE_REPO}/wt-$1:${VERSION}"
+	# docker buildx rm $1-builder
+	docker pull --platform linux/amd64 "${IMAGE_REPO}/wt-$1:${VERSION}"
 	docker run --platform linux/amd64 --rm "${IMAGE_REPO}/wt-$1:${VERSION}" version
 	if [ $? -ne 0 ]; then
 		echo "image version is different ${release_desc}"
@@ -81,4 +81,3 @@ if [ "$1" = "all" ]; then
 else
 	build::image "$1"
 fi
-
