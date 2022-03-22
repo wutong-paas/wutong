@@ -10,9 +10,9 @@
       "labels": {
         "creater": "Wutong",
         "creater_id": "1566778762689123048",
-        "name": "grd3ee94",
+        "name": "wtd3ee94",
         "pod-template-hash": "2694570412",
-        "service_alias": "grd3ee94",
+        "service_alias": "wtd3ee94",
         "service_id": "0c3a85977aab7adcc8b3451472d3ee94",
         "tenant_id": "f614a5eddea546c2bbaeb67d381599ee",
         "tenant_name": "acx9dtbf",
@@ -103,7 +103,7 @@
             },
             {
               "name": "SERVICE_NAME",
-              "value": "grd3ee94"
+              "value": "wtd3ee94"
             },
             {
               "name": "SERVICE_EXTEND_METHOD",

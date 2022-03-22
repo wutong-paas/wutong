@@ -786,7 +786,7 @@ func (a *ApplicationAction) ChangeVolumes(app *dbmodel.Application) error {
 	}
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
 
 	var componentIDs []string

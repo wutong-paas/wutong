@@ -5,8 +5,8 @@ const (
 	Wutong = "wutong"
 	// DefImageRepository default private image repository
 	DefImageRepository = "wutong.me"
-	// GrdataLogPath -
-	GrdataLogPath = "/grdata/logs"
+	// WTDataLogPath -
+	WTDataLogPath = "/wtdata/logs"
 	// ImagePullSecretKey the key of environment IMAGE_PULL_SECRET
 	ImagePullSecretKey = "IMAGE_PULL_SECRET"
 	// DefOnlineImageRepository default private image repository

@@ -77,7 +77,7 @@ type Response struct {
 //Request build input
 type Request struct {
 	WtNamespace   string
-	GRDataPVCName string
+	WTDataPVCName string
 	CachePVCName  string
 	CacheMode     string
 	CachePath     string

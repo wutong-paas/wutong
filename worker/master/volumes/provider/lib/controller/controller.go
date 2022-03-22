@@ -1013,17 +1013,17 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 		}
 	}
 
-	// Find pv for grdata
-	grdatapv, err := ctrl.persistentVolumeForGrdata(ctx)
+	// Find pv for wtdata
+	wtdatapv, err := ctrl.persistentVolumeForWTData(ctx)
 	if err != nil {
-		return fmt.Errorf("pv for grdata: %v", err)
+		return fmt.Errorf("pv for wtdata: %v", err)
 	}
 
 	options := VolumeOptions{
 		PersistentVolumeReclaimPolicy: reclaimPolicy,
 		PVName:                        pvName,
 		PVC:                           claim,
-		PersistentVolumeSource:        grdatapv.Spec.PersistentVolumeSource,
+		PersistentVolumeSource:        wtdatapv.Spec.PersistentVolumeSource,
 		MountOptions:                  mountOptions,
 		Parameters:                    parameters,
 		SelectedNode:                  selectedNode,
@@ -1114,14 +1114,14 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 	return nil
 }
 
-func (ctrl *ProvisionController) persistentVolumeForGrdata(ctx context.Context) (*v1.PersistentVolume, error) {
-	pvc, err := ctrl.client.CoreV1().PersistentVolumeClaims(ctrl.cfg.RBDNamespace).Get(ctx, ctrl.cfg.GrdataPVCName, metav1.GetOptions{})
+func (ctrl *ProvisionController) persistentVolumeForWTData(ctx context.Context) (*v1.PersistentVolume, error) {
+	pvc, err := ctrl.client.CoreV1().PersistentVolumeClaims(ctrl.cfg.RBDNamespace).Get(ctx, ctrl.cfg.WTDataPVCName, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("find pvc for grdata: %v", err)
+		return nil, fmt.Errorf("find pvc for wtdata: %v", err)
 	}
 	pv, err := ctrl.client.CoreV1().PersistentVolumes().Get(ctx, pvc.Spec.VolumeName, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("find pv for grdata: %v", err)
+		return nil, fmt.Errorf("find pv for wtdata: %v", err)
 	}
 	if pv.Spec.PersistentVolumeSource.Glusterfs != nil && pv.Spec.PersistentVolumeSource.Glusterfs.EndpointsNamespace == nil {
 		pv.Spec.PersistentVolumeSource.Glusterfs.EndpointsNamespace = &pv.Spec.ClaimRef.Namespace

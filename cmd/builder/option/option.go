@@ -51,7 +51,7 @@ type Config struct {
 	LogPath              string
 	WtNamespace          string
 	WtRepoName           string
-	GRDataPVCName        string
+	WTDataPVCName        string
 	CachePVCName         string
 	CacheMode            string
 	CachePath            string
@@ -91,10 +91,10 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.HostIP, "hostIP", "", "Current node Intranet IP")
 	fs.BoolVar(&a.CleanUp, "clean-up", true, "Turn on build version cleanup")
 	fs.StringVar(&a.Topic, "topic", "builder", "Topic in mq,you coule choose `builder` or `windows_builder`")
-	fs.StringVar(&a.LogPath, "log-path", "/grdata/logs", "Where Docker log files and event log files are stored.")
+	fs.StringVar(&a.LogPath, "log-path", "/wtdata/logs", "Where Docker log files and event log files are stored.")
 	fs.StringVar(&a.WtNamespace, "wt-namespace", "wt-system", "wt component namespace")
 	fs.StringVar(&a.WtRepoName, "wt-repo", "wt-repo", "wt component repo's name")
-	fs.StringVar(&a.GRDataPVCName, "pvc-grdata-name", "grdata", "pvc name of grdata")
+	fs.StringVar(&a.WTDataPVCName, "pvc-wtdata-name", "wtdata", "pvc name of wtdata")
 	fs.StringVar(&a.CachePVCName, "pvc-cache-name", "cache", "pvc name of cache")
 	fs.StringVar(&a.CacheMode, "cache-mode", "sharefile", "volume cache mount type, can be hostpath and sharefile, default is sharefile, which mount using pvc")
 	fs.StringVar(&a.CachePath, "cache-path", "/cache", "volume cache mount path, when cache-mode using hostpath, default path is /cache")

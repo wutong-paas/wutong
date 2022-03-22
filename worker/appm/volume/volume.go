@@ -333,12 +333,12 @@ func RewriteHostPathInWindows(hostPath string) string {
 	localPath := os.Getenv("LOCAL_DATA_PATH")
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if localPath == "" {
-		localPath = "/grlocaldata"
+		localPath = "/wtlocaldata"
 	}
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
-	hostPath = strings.Replace(hostPath, "/grdata", `z:`, 1)
+	hostPath = strings.Replace(hostPath, "/wtdata", `z:`, 1)
 	hostPath = strings.Replace(hostPath, "/", `\`, -1)
 	return hostPath
 }

@@ -28,7 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong-operator/api/v1alpha1"
-	"github.com/wutong-paas/wutong/grctl/clients"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/yaml"

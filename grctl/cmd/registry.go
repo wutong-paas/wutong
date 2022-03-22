@@ -27,8 +27,8 @@ import (
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/config"
-	"github.com/wutong-paas/wutong/grctl/clients"
-	"github.com/wutong-paas/wutong/grctl/registry"
+	"github.com/wutong-paas/wutong/wtctl/clients"
+	"github.com/wutong-paas/wutong/wtctl/registry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -37,12 +37,12 @@ import (
 func NewCmdRegistry() cli.Command {
 	c := cli.Command{
 		Name:  "registry",
-		Usage: "grctl registry [command]",
+		Usage: "wtctl registry [command]",
 		Subcommands: []cli.Command{
 			{
 				Name: "cleanup",
 				Usage: `Clean up free images in the registry.
-	The command 'grctl registry cleanup' will delete the index of free images in registry.
+	The command 'wtctl registry cleanup' will delete the index of free images in registry.
 	Then you have to exec the command below to remove blobs from the filesystem:
 		bin/registry garbage-collect [--dry-run] /path/to/config.yml
 	More Detail: https://docs.docker.com/registry/garbage-collection/#run-garbage-collection.

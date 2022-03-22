@@ -48,7 +48,7 @@ func CreateLogManager(cli *clientv3.Client) *LogAction {
 	return &LogAction{
 		EtcdCli: cli,
 		eventdb: &eventdb.EventFilePlugin{
-			HomePath: "/grdata/logs/",
+			HomePath: "/wtdata/logs/",
 		},
 	}
 }
@@ -63,7 +63,7 @@ func (l *LogAction) GetEvents(target, targetID string, page, size int) ([]*dbmod
 
 //GetLogList get log list
 func (l *LogAction) GetLogList(serviceAlias string) ([]*model.HistoryLogFile, error) {
-	logDIR := path.Join(constants.GrdataLogPath, serviceAlias)
+	logDIR := path.Join(constants.WTDataLogPath, serviceAlias)
 	_, err := os.Stat(logDIR)
 	if os.IsNotExist(err) {
 		return nil, err
@@ -86,7 +86,7 @@ func (l *LogAction) GetLogList(serviceAlias string) ([]*model.HistoryLogFile, er
 
 //GetLogFile GetLogFile
 func (l *LogAction) GetLogFile(serviceAlias, fileName string) (string, string, error) {
-	logPath := path.Join(constants.GrdataLogPath, serviceAlias)
+	logPath := path.Join(constants.WTDataLogPath, serviceAlias)
 	fullPath := path.Join(logPath, fileName)
 	_, err := os.Stat(fullPath)
 	if os.IsNotExist(err) {

@@ -424,10 +424,10 @@ func GetVolumeDir() (string, string) {
 	localPath := os.Getenv("LOCAL_DATA_PATH")
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if localPath == "" {
-		localPath = "/grlocaldata"
+		localPath = "/wtlocaldata"
 	}
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
 	return localPath, sharePath
 }

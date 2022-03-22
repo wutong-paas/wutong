@@ -21,8 +21,8 @@ buildTime=$(date +%F-%H)
 git_commit=$(git log -n 1 --pretty --format=%h)
 
 release_desc=${VERSION}-${git_commit}-${buildTime}
-build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel grctl node resource-proxy)
-# build_items=(api chaos gateway mq webcli worker init-probe mesh-data-panel grctl node resource-proxy)
+build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel wtctl node resource-proxy)
+# build_items=(api chaos gateway mq webcli worker init-probe mesh-data-panel wtctl node resource-proxy)
 # build_items=(eventlog)
 
 build::all() {

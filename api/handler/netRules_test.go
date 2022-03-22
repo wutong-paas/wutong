@@ -49,10 +49,10 @@ func TestStoreETCD(t *testing.T) {
 
 	srs := &api_model.SetNetDownStreamRuleStruct{
 		TenantName:   "123",
-		ServiceAlias: "grtest12",
+		ServiceAlias: "wttest12",
 	}
 	srs.Body.DestService = "redis"
-	srs.Body.DestServiceAlias = "grtest34"
+	srs.Body.DestServiceAlias = "wttest34"
 	srs.Body.Port = 6379
 	srs.Body.Protocol = "tcp"
 	srs.Body.Rules = rules

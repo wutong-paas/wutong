@@ -217,7 +217,7 @@ func (s *slugBuild) stopPreBuildJob(re *Request) error {
 }
 
 func (s *slugBuild) createVolumeAndMount(re *Request, sourceTarFileName string) (volumes []corev1.Volume, volumeMounts []corev1.VolumeMount) {
-	slugSubPath := strings.TrimPrefix(re.TGZDir, "/grdata/")
+	slugSubPath := strings.TrimPrefix(re.TGZDir, "/wtdata/")
 	lazyloading := sourceTarFileName == ""
 	sourceTarPath := strings.TrimPrefix(sourceTarFileName, "/cache/")
 	cacheSubPath := strings.TrimPrefix(re.CacheDir, "/cache/")
@@ -247,7 +247,7 @@ func (s *slugBuild) createVolumeAndMount(re *Request, sourceTarFileName string) 
 				Name: "slug",
 				VolumeSource: corev1.VolumeSource{
 					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: s.re.GRDataPVCName,
+						ClaimName: s.re.WTDataPVCName,
 					},
 				},
 			},
@@ -279,7 +279,7 @@ func (s *slugBuild) createVolumeAndMount(re *Request, sourceTarFileName string) 
 				Name: "slug",
 				VolumeSource: corev1.VolumeSource{
 					PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-						ClaimName: s.re.GRDataPVCName,
+						ClaimName: s.re.WTDataPVCName,
 					},
 				},
 			},

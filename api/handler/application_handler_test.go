@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"testing"
+
+	"github.com/wutong-paas/wutong/api/client/prometheus"
 )
 
 func TestGetDiskUsage(t *testing.T) {
 	prometheusCli, err := prometheus.NewPrometheus(&prometheus.Options{
-		Endpoint: "9999.gr5d40c8.2c9v614j.a24839.grapps.cn",
+		Endpoint: "9999.wt5d40c8.2c9v614j.a24839.wtapps.cn",
 	})
 	if err != nil {
 		t.Fatal(err)

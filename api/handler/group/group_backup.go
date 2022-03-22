@@ -101,7 +101,7 @@ func (h *BackupHandle) NewBackup(b Backup) (*dbmodel.AppBackup, *util.APIHandleE
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("some services do not exist in need backup services"))
 	}
 	//make source dir
-	sourceDir := fmt.Sprintf("/grdata/groupbackup/%s_%s", b.Body.GroupID, b.Body.Version)
+	sourceDir := fmt.Sprintf("/wtdata/groupbackup/%s_%s", b.Body.GroupID, b.Body.Version)
 	if err := os.MkdirAll(sourceDir, 0755); err != nil {
 		return nil, util.CreateAPIHandleError(500, fmt.Errorf("create backup dir error,%s", err))
 	}

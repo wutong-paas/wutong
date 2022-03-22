@@ -112,7 +112,7 @@ func TestTenantServiceDao(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	service, err := GetManager().TenantServiceDao().GetServiceByTenantIDAndServiceAlias("27bbdd119b24444696dc51aa2f41eef8", "grb58f90")
+	service, err := GetManager().TenantServiceDao().GetServiceByTenantIDAndServiceAlias("27bbdd119b24444696dc51aa2f41eef8", "wtb58f90")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,7 +233,7 @@ func TestCockroachDBCreateService(t *testing.T) {
 	err := GetManager().TenantServiceDao().AddModel(&model.TenantServices{
 		TenantID:     "asdasd",
 		ServiceID:    "asdasdasdasd",
-		ServiceAlias: "grasdasdasdads",
+		ServiceAlias: "wtasdasdasdads",
 	})
 	if err != nil {
 		t.Fatal(err)

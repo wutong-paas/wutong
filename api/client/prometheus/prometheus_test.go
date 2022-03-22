@@ -27,7 +27,7 @@ var cli Interface
 
 func init() {
 	cli, _ = NewPrometheus(&Options{
-		Endpoint: "9999.grc42f14.8wsfp0ji.a24839.grapps.cn",
+		Endpoint: "9999.wtc42f14.8wsfp0ji.a24839.wtapps.cn",
 	})
 }
 func TestGetMetric(t *testing.T) {

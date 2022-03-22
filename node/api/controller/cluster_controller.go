@@ -386,7 +386,7 @@ func ClusterInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	var diskstauts *disk.UsageStat
 	if runtime.GOOS != "windows" {
-		diskstauts, _ = disk.Usage("/grdata")
+		diskstauts, _ = disk.Usage("/wtdata")
 	} else {
 		diskstauts, _ = disk.Usage(`z:\\`)
 	}

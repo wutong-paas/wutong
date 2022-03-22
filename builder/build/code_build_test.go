@@ -68,7 +68,7 @@ func TestCreateJob(t *testing.T) {
 		"RUNTIME":  "1.8",
 	}
 	req.CacheDir = fmt.Sprintf("/cache/build/%s/cache/%s", req.TenantID, req.ServiceID)
-	req.TGZDir = fmt.Sprintf("/grdata/build/tenant/%s/slug/%s", req.TenantID, req.ServiceID)
+	req.TGZDir = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s", req.TenantID, req.ServiceID)
 	req.SourceDir = fmt.Sprintf("/cache/source/build/%s/%s", req.TenantID, req.ServiceID)
 	sb := slugBuild{tgzDir: "string"}
 	if err := sb.runBuildJob(&req); err != nil {
@@ -145,10 +145,10 @@ func TestBuildFromOSS(t *testing.T) {
 	logger := event.GetTestLogger()
 	req := &Request{
 		ServerType:    "oss",
-		RepositoryURL: "http://8081.gr021644.64q1jlfb.17f4cc.grapps.cn/artifactory/dev/java-war-demo-master.zip",
+		RepositoryURL: "http://8081.wt021644.64q1jlfb.17f4cc.wtapps.cn/artifactory/dev/java-war-demo-master.zip",
 		CodeSouceInfo: sources.CodeSourceInfo{
 			User:     "demo",
-			Password: "gr123465!",
+			Password: "wt123465!",
 		},
 		KubeClient:    clientset,
 		Ctx:           context.Background(),
@@ -157,7 +157,7 @@ func TestBuildFromOSS(t *testing.T) {
 		TenantID:      "7c89455140284fd7b263038b44dc65bc",
 		Lang:          code.OSS,
 		Logger:        logger,
-		GRDataPVCName: "wt-cpt-grdata",
+		WTDataPVCName: "wt-cpt-wtdata",
 		CachePVCName:  "wt-chaos-cache",
 	}
 	build, err := GetBuild(code.OSS)

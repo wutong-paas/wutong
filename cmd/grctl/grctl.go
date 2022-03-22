@@ -23,12 +23,12 @@ import (
 	"os"
 
 	"github.com/wutong-paas/wutong/cmd"
-	"github.com/wutong-paas/wutong/cmd/grctl/server"
+	"github.com/wutong-paas/wutong/cmd/wtctl/server"
 )
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "version" {
-		cmd.ShowVersion("grctl")
+		cmd.ShowVersion("wtctl")
 	}
 	if err := server.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)

@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	apimodel "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/errors"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/util"
-	"github.com/sirupsen/logrus"
 )
 
 // AppRestoreAction is an implementation of AppRestoreHandler
@@ -118,7 +118,7 @@ func (a *AppRestoreAction) RestoreVolumes(tenantID, serviceID string, req *apimo
 
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
 	for k := range req.Volumes {
 		item := req.Volumes[k]

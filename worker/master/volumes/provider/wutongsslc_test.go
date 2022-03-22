@@ -45,10 +45,10 @@ func TestSelectNode(t *testing.T) {
 }
 
 func TestGetVolumeIDByPVCName(t *testing.T) {
-	t.Log(getVolumeIDByPVCName("manual17-gra02c40-0"))
+	t.Log(getVolumeIDByPVCName("manual17-wta02c40-0"))
 	t.Log(getVolumeIDByPVCName("manual17"))
 }
 
 func TestGetPodNameByPVCName(t *testing.T) {
-	t.Log(getPodNameByPVCName("manual17-gra02c40-0"))
+	t.Log(getPodNameByPVCName("manual17-wta02c40-0"))
 }

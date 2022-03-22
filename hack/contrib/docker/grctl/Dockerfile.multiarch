@@ -8,9 +8,9 @@ ARG RELEASE_DESC
 ARG TARGETOS TARGETARCH TARGETPLATFORM
 
 COPY . /run
-COPY --from=wt-all /output/bin/wutong-grctl /run/wutong-grctl
+COPY --from=wt-all /output/bin/wutong-wtctl /run/wutong-wtctl
 
-RUN chmod +x /run/wutong-grctl /run/entrypoint.sh
+RUN chmod +x /run/wutong-wtctl /run/entrypoint.sh
 VOLUME [ "/rootfs/root","/rootfs/path","/ssl" ]
 ENV RELEASE_DESC=${RELEASE_DESC}
 ENTRYPOINT ["/run/entrypoint.sh"]

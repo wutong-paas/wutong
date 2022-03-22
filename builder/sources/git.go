@@ -73,7 +73,7 @@ func (c CodeSourceInfo) GetCodeSourceDir() string {
 func GetCodeSourceDir(RepositoryURL, branch, tenantID string, ServiceID string) string {
 	sourceDir := os.Getenv("SOURCE_DIR")
 	if sourceDir == "" {
-		sourceDir = "/grdata/source"
+		sourceDir = "/wtdata/source"
 	}
 	h := sha1.New()
 	h.Write([]byte(RepositoryURL + branch + ServiceID))

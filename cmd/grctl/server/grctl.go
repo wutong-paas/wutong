@@ -24,10 +24,10 @@ import (
 
 	"github.com/urfave/cli"
 	version "github.com/wutong-paas/wutong/cmd"
-	"github.com/wutong-paas/wutong/grctl/cmd"
+	"github.com/wutong-paas/wutong/wtctl/cmd"
 )
 
-//App grctl command app
+//App wtctl command app
 var App *cli.App
 
 //Run Run
@@ -38,7 +38,7 @@ func Run() error {
 		cli.StringFlag{
 			Name:  "config, c",
 			Value: "",
-			Usage: "default <USER_HOME>/.wt/grctl.yaml",
+			Usage: "default <USER_HOME>/.wt/wtctl.yaml",
 		},
 		cli.StringFlag{
 			Name:  "kubeconfig, kube",

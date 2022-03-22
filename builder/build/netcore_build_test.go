@@ -36,7 +36,7 @@ func TestBuildNetCore(t *testing.T) {
 		SourceDir:     "/Users/qingguo/wutong/dotnet-docker/samples/aspnetapp/test",
 		CacheDir:      "/Users/qingguo/wutong/dotnet-docker/samples/aspnetapp/test/cache",
 		RepositoryURL: "https://github.com/dotnet/dotnet-docker.git",
-		ServiceAlias:  "gr123456",
+		ServiceAlias:  "wt123456",
 		DeployVersion: "666666",
 		Commit:        Commit{User: "barnett"},
 		Lang:          code.NetCore,

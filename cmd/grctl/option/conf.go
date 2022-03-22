@@ -63,7 +63,7 @@ func LoadConfig(ctx *cli.Context) (Config, error) {
 	configfile := ctx.GlobalString("config")
 	if configfile == "" {
 		home, _ := sources.Home()
-		configfile = path.Join(home, ".wt", "grctl.yaml")
+		configfile = path.Join(home, ".wt", "wtctl.yaml")
 	}
 	_, err := os.Stat(configfile)
 	if err != nil {

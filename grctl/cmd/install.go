@@ -11,8 +11,8 @@ import (
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	"github.com/wutong-paas/wutong/api/region"
 	"github.com/wutong-paas/wutong/builder/sources"
-	"github.com/wutong-paas/wutong/cmd/grctl/option"
-	"github.com/wutong-paas/wutong/grctl/clients"
+	"github.com/wutong-paas/wutong/cmd/wtctl/option"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 	yaml "gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,7 +50,7 @@ func NewCmdInstall() cli.Command {
 				Value:  "wt-system",
 			},
 		},
-		Usage: "grctl install",
+		Usage: "wtctl install",
 		Action: func(c *cli.Context) error {
 			fmt.Println("Start install, please waiting!")
 			CommonWithoutRegion(c)
@@ -77,7 +77,7 @@ func NewCmdInstall() cli.Command {
 				showError(fmt.Sprintf("write region api cert file failure %s", err.Error()))
 			}
 			if err := writeConfig(regionAPIIP); err != nil {
-				showError(fmt.Sprintf("write grctl config file failure %s", err.Error()))
+				showError(fmt.Sprintf("write wtctl config file failure %s", err.Error()))
 			}
 			fmt.Println("Install success!")
 			return nil
@@ -116,7 +116,7 @@ func writeConfig(ips []string) error {
 		},
 	}
 	home, _ := sources.Home()
-	configFilePath := path.Join(home, ".wt", "grctl.yaml")
+	configFilePath := path.Join(home, ".wt", "wtctl.yaml")
 	os.MkdirAll(path.Dir(configFilePath), os.ModeDir)
 	os.Remove(configFilePath)
 	configFile, err := os.OpenFile(configFilePath, os.O_CREATE|os.O_RDWR, 0411)

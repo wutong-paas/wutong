@@ -25,20 +25,20 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	"github.com/wutong-paas/wutong/grctl/clients"
 	"github.com/wutong-paas/wutong/util/termtables"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 
 	//"github.com/wutong-paas/wutong/eventlog/conf"
 	"errors"
 
-	config "github.com/wutong-paas/wutong/cmd/grctl/option"
+	config "github.com/wutong-paas/wutong/cmd/wtctl/option"
 )
 
 //NewCmdTenant tenant cmd
 func NewCmdTenant() cli.Command {
 	c := cli.Command{
 		Name:  "tenant",
-		Usage: "grctl tenant -h",
+		Usage: "wtctl tenant -h",
 		Subcommands: []cli.Command{
 			cli.Command{
 				Name:  "list",
@@ -98,7 +98,7 @@ func NewCmdTenant() cli.Command {
 	return c
 }
 
-// grctrl tenant TENANT_NAME
+// wtctrl tenant TENANT_NAME
 func getTenantInfo(c *cli.Context) error {
 	tenantID := c.Args().First()
 	if tenantID == "" {

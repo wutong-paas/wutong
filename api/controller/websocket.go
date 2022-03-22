@@ -140,7 +140,7 @@ var logFile *LogFile
 func GetLogFile() *LogFile {
 	root := os.Getenv("SERVICE_LOG_ROOT")
 	if root == "" {
-		root = constants.GrdataLogPath
+		root = constants.WTDataLogPath
 	}
 	logrus.Infof("service logs file root path is :%s", root)
 	if logFile == nil {

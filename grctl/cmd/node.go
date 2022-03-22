@@ -35,10 +35,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"github.com/wutong-paas/wutong/api/util"
-	"github.com/wutong-paas/wutong/grctl/clients"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	coreutil "github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/termtables"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 )
 
 func handleErr(err *util.APIHandleError) {
@@ -649,7 +649,7 @@ func installNode(node *client.HostNode) {
 	fmt.Println("------------------------------------")
 	fmt.Printf("Install node %s successful \n", node.ID)
 	if node.Role.HasRule("compute") {
-		fmt.Printf("You can do 'grctl node up %s' to get this compute node to join the cluster workload \n", node.ID)
+		fmt.Printf("You can do 'wtctl node up %s' to get this compute node to join the cluster workload \n", node.ID)
 	}
 }
 
@@ -696,7 +696,7 @@ func addNodeCommand(c *cli.Context) error {
 		WriteHostsFile(c.String("hosts-file-path"), c.String("config-file-path"), nodes)
 		installNode(renode)
 	} else {
-		fmt.Printf("success add %s node %s \n you install it by running: grctl node install %s \n", renode.Role, renode.ID, renode.ID)
+		fmt.Printf("success add %s node %s \n you install it by running: wtctl node install %s \n", renode.Role, renode.ID, renode.ID)
 	}
 	return nil
 }

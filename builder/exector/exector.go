@@ -330,7 +330,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 	i.WtRepoName = e.cfg.WtRepoName
 	i.Ctx = e.ctx
 	i.CachePVCName = e.cfg.CachePVCName
-	i.GRDataPVCName = e.cfg.GRDataPVCName
+	i.WTDataPVCName = e.cfg.WTDataPVCName
 	i.CacheMode = e.cfg.CacheMode
 	i.CachePath = e.cfg.CachePath
 	i.Logger.Info("Build app version from source code start", map[string]string{"step": "builder-exector", "status": "starting"})

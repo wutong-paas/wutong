@@ -43,7 +43,7 @@ type wutongssscProvisioner struct {
 func NewWutongssscProvisioner() controller.Provisioner {
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
 	if os.Getenv("ALLINONE_MODE") == "true" {
 		return &wutongssscProvisioner{
@@ -154,7 +154,7 @@ func getVolumeIDByPVCName(pvcName string) int {
 
 func updatePathForPersistentVolumeSource(persistentVolumeSource *v1.PersistentVolumeSource, hostpath string) (*v1.PersistentVolumeSource, error) {
 	newPath := func(new string) string {
-		p := strings.Replace(hostpath, "/grdata", "", 1)
+		p := strings.Replace(hostpath, "/wtdata", "", 1)
 		return path.Join(new, p)
 	}
 	source := &v1.PersistentVolumeSource{}

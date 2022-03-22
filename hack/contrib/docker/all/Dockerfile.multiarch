@@ -16,7 +16,7 @@ COPY discover.v2/ discover.v2/
 COPY event/ event/
 COPY eventlog/ eventlog/
 COPY gateway/ gateway/
-COPY grctl/ grctl/
+COPY wtctl/ wtctl/
 COPY monitor/ monitor/
 COPY mq/ mq/
 COPY node/ node/

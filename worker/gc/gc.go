@@ -51,7 +51,7 @@ func NewGarbageCollector(clientset kubernetes.Interface) *GarbageCollector {
 func (g *GarbageCollector) DelLogFile(serviceGCReq model.ServiceGCTaskBody) {
 	logrus.Infof("service id: %s; delete log file.", serviceGCReq.ServiceID)
 	// log generated during service running
-	logPath := "/grdata/logs"
+	logPath := "/wtdata/logs"
 	dockerLogPath := eventutil.DockerLogFilePath(logPath, serviceGCReq.ServiceID)
 	if err := os.RemoveAll(dockerLogPath); err != nil {
 		logrus.Warningf("remove docker log files: %v", err)
@@ -76,7 +76,7 @@ func (g *GarbageCollector) DelVolumeData(serviceGCReq model.ServiceGCTaskBody) {
 			logrus.Warningf("dir: %s; remove volume data: %v", dir, err)
 		}
 	}
-	f("/grdata")
+	f("/wtdata")
 }
 
 // DelPvPvcByServiceID -

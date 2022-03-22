@@ -29,10 +29,10 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/urfave/cli"
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
-	"github.com/wutong-paas/wutong/grctl/clients"
-	"github.com/wutong-paas/wutong/grctl/cluster"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	"github.com/wutong-paas/wutong/util/termtables"
+	"github.com/wutong-paas/wutong/wtctl/clients"
+	"github.com/wutong-paas/wutong/wtctl/cluster"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/types"
 )

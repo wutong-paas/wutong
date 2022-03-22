@@ -65,7 +65,7 @@ func NewMarketSlugItem(in []byte) (*MarketSlugItem, error) {
 		return nil, err
 	}
 	msi.Logger = event.GetManager().GetLogger(msi.EventID)
-	msi.TGZPath = fmt.Sprintf("/grdata/build/tenant/%s/slug/%s/%s.tgz", msi.TenantID, msi.ServiceID, msi.DeployVersion)
+	msi.TGZPath = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s/%s.tgz", msi.TenantID, msi.ServiceID, msi.DeployVersion)
 	return &msi, nil
 }
 

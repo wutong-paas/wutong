@@ -114,7 +114,7 @@ func (b *BackupAPPRestore) Run(timeout time.Duration) error {
 		return fmt.Errorf("backup can not be restore")
 	}
 
-	cacheDir := fmt.Sprintf("/grdata/cache/tmp/%s/%s", b.BackupID, util.NewUUID())
+	cacheDir := fmt.Sprintf("/wtdata/cache/tmp/%s/%s", b.BackupID, util.NewUUID())
 	if err := util.CheckAndCreateDir(cacheDir); err != nil {
 		return fmt.Errorf("create cache dir error %s", err.Error())
 	}
@@ -226,7 +226,7 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 		//if all data backup file exist, restore all data directly
 		allDataFilePath := fmt.Sprintf("%s/data_%s/%s.zip", b.cacheDir, b.getOldServiceID(app.ServiceID), "__all_data")
 		allDataRestore := false
-		allTmpDir := fmt.Sprintf("/grdata/tmp/%s", app.ServiceID)
+		allTmpDir := fmt.Sprintf("/wtdata/tmp/%s", app.ServiceID)
 		if exist, _ := util.FileExists(allDataFilePath); exist {
 			logrus.Infof("unzip all data from %s to %s", allDataFilePath, allTmpDir)
 			if err := util.Unzip(allDataFilePath, allTmpDir); err != nil {
@@ -242,7 +242,7 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 			var tmpDir string
 			if !allDataRestore {
 				dstDir := fmt.Sprintf("%s/data_%s/%s.zip", b.cacheDir, b.getOldServiceID(app.ServiceID), strings.Replace(volume.VolumeName, "/", "", -1))
-				tmpDir = fmt.Sprintf("/grdata/tmp/%s_%d", volume.ServiceID, volume.ID)
+				tmpDir = fmt.Sprintf("/wtdata/tmp/%s_%d", volume.ServiceID, volume.ID)
 				logrus.Infof("unzip %s to %s", dstDir, tmpDir)
 				if err := util.Unzip(dstDir, tmpDir); err != nil {
 					if !strings.Contains(err.Error(), "no such file") {
@@ -270,11 +270,11 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 				for _, path := range list {
 					logrus.Infof("handle path %s", path)
 					newNameTmp := strings.Split(filepath.Base(path), "-")
-					// after version 5.0.4, path name is pod name. eg gr123456-0
+					// after version 5.0.4, path name is pod name. eg wt123456-0
 					if len(newNameTmp) == 2 {
 						newNameTmp[0] = b.serviceChange[b.getOldServiceID(app.ServiceID)].ServiceAlias
 					}
-					// before version 5.0.4, path name is pvc name, eg manual16-grcaa708-0
+					// before version 5.0.4, path name is pvc name, eg manual16-wtcaa708-0
 					if len(newNameTmp) == 3 {
 						newNameTmp[1] = b.serviceChange[b.getOldServiceID(app.ServiceID)].ServiceAlias
 						oldVolumeID, _ := strconv.Atoi(newNameTmp[0][6:])
@@ -319,10 +319,10 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 		}
 
 		if allDataRestore {
-			dst := fmt.Sprintf("/grdata/tenant/%s/service/%s", app.Service.TenantID, app.Service.ServiceID)
+			dst := fmt.Sprintf("/wtdata/tenant/%s/service/%s", app.Service.TenantID, app.Service.ServiceID)
 			err := util.Rename(path.Join(allTmpDir, b.getOldServiceID(app.ServiceID)), dst)
 			if err != nil {
-				logrus.Errorf("rename %s to %s failure %s", path.Join(allTmpDir, b.getOldServiceID(app.ServiceID)), fmt.Sprintf("/grdata/tenant/%s/service/%s", app.Service.TenantID, app.Service.ServiceID), err.Error())
+				logrus.Errorf("rename %s to %s failure %s", path.Join(allTmpDir, b.getOldServiceID(app.ServiceID)), fmt.Sprintf("/wtdata/tenant/%s/service/%s", app.Service.TenantID, app.Service.ServiceID), err.Error())
 			}
 		}
 		b.Logger.Info(fmt.Sprintf("完成恢复应用(%s)持久化数据", app.Service.ServiceAlias), map[string]string{"step": "restore_builder", "status": "running"})
@@ -459,7 +459,7 @@ func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
 
 		//change service_id and service_alias
 		newServiceID := util.NewUUID()
-		newServiceAlias := "gr" + newServiceID[26:]
+		newServiceAlias := "wt" + newServiceID[26:]
 		app.ServiceID = newServiceID
 		app.Service.ServiceID = newServiceID
 		app.Service.ServiceAlias = newServiceAlias

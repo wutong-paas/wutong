@@ -617,10 +617,10 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 		localPath := os.Getenv("LOCAL_DATA_PATH")
 		sharePath := os.Getenv("SHARE_DATA_PATH")
 		if localPath == "" {
-			localPath = "/grlocaldata"
+			localPath = "/wtlocaldata"
 		}
 		if sharePath == "" {
-			sharePath = "/grdata"
+			sharePath = "/wtdata"
 		}
 
 		for _, volumn := range volumns {
@@ -1635,10 +1635,10 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantServiceVolume, tenantID, fi
 	localPath := os.Getenv("LOCAL_DATA_PATH")
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if localPath == "" {
-		localPath = "/grlocaldata"
+		localPath = "/wtlocaldata"
 	}
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
 
 	switch action {

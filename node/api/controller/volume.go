@@ -49,7 +49,7 @@ func CreateLocalVolume(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		if localPath == "" {
-			localPath = "/grlocaldata"
+			localPath = "/wtlocaldata"
 		}
 	}
 	volumeHostPath = path.Join(localPath, "tenant", tenantID, "service", serviceID, pvcName)

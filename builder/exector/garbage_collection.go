@@ -70,7 +70,7 @@ func (g *GarbageCollectionItem) delLogFile() {
 
 func (g *GarbageCollectionItem) delVolumeData() {
 	logrus.Infof("service id: %s; delete volume data.", g.ServiceID)
-	dir := fmt.Sprintf("/gradata/tenant/%s/service/%s", g.TenantID, g.ServiceID)
+	dir := fmt.Sprintf("/wtdata/tenant/%s/service/%s", g.TenantID, g.ServiceID)
 	if err := os.RemoveAll(dir); err != nil {
 		logrus.Warningf("dir: %s; remove volume data: %v", dir, err)
 	}

@@ -11,9 +11,9 @@
             "labels": {
                 "creater": "Wutong",
                 "creater_id": "1565857609392282795",
-                "name": "grbded7e",
+                "name": "wtbded7e",
                 "pod-template-hash": "3101631868",
-                "service_alias": "grbded7e",
+                "service_alias": "wtbded7e",
                 "service_id": "88d8c4c55657217522f3bb86cfbded7e",
                 "tenant_id": "c1a29fe4d7b0413993dc859430cf743d",
                 "tenant_name": "bjlaezp3",
@@ -64,7 +64,7 @@
                         },
                         {
                             "name": "DEPEND_SERVICE",
-                            "value": "gr5d2696:fe7352415c9df03278e97ff55e5d2696"
+                            "value": "wt5d2696:fe7352415c9df03278e97ff55e5d2696"
                         },
                         {
                             "name": "DEPEND_SERVICE_COUNT",
@@ -72,7 +72,7 @@
                         },
                         {
                             "name": "REVERSE_DEPEND_SERVICE",
-                            "value": "grb0db9c:256712c5597750319e41b5e536b0db9c"
+                            "value": "wtb0db9c:256712c5597750319e41b5e536b0db9c"
                         },
                         {
                             "name": "PORT",
@@ -84,7 +84,7 @@
                         },
                         {
                             "name": "DOMAIN_4999",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL_4999",
@@ -92,7 +92,7 @@
                         },
                         {
                             "name": "DOMAIN",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL",
@@ -116,7 +116,7 @@
                         },
                         {
                             "name": "GRAFANA_DOMAIN",
-                            "value": "http://8080.gr4fd940.bjlaezp3.local.grapps.cn"
+                            "value": "http://8080.wt4fd940.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "GRAFANA_TOKEN",
@@ -156,7 +156,7 @@
                         },
                         {
                             "name": "SERVICE_NAME",
-                            "value": "grbded7e"
+                            "value": "wtbded7e"
                         },
                         {
                             "name": "SERVICE_EXTEND_METHOD",
@@ -232,7 +232,7 @@
                         },
                         {
                             "name": "DEPEND_SERVICE",
-                            "value": "gr5d2696:fe7352415c9df03278e97ff55e5d2696"
+                            "value": "wt5d2696:fe7352415c9df03278e97ff55e5d2696"
                         },
                         {
                             "name": "DEPEND_SERVICE_COUNT",
@@ -240,7 +240,7 @@
                         },
                         {
                             "name": "REVERSE_DEPEND_SERVICE",
-                            "value": "grb0db9c:256712c5597750319e41b5e536b0db9c"
+                            "value": "wtb0db9c:256712c5597750319e41b5e536b0db9c"
                         },
                         {
                             "name": "PORT",
@@ -252,7 +252,7 @@
                         },
                         {
                             "name": "DOMAIN_4999",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL_4999",
@@ -260,7 +260,7 @@
                         },
                         {
                             "name": "DOMAIN",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL",
@@ -284,7 +284,7 @@
                         },
                         {
                             "name": "GRAFANA_DOMAIN",
-                            "value": "http://8080.gr4fd940.bjlaezp3.local.grapps.cn"
+                            "value": "http://8080.wt4fd940.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "GRAFANA_TOKEN",
@@ -324,7 +324,7 @@
                         },
                         {
                             "name": "SERVICE_NAME",
-                            "value": "grbded7e"
+                            "value": "wtbded7e"
                         },
                         {
                             "name": "SERVICE_EXTEND_METHOD",
@@ -414,7 +414,7 @@
             "volumes": [
                 {
                     "hostPath": {
-                        "path": "/grdata/kubernetes",
+                        "path": "/wtdata/kubernetes",
                         "type": "DirectoryOrCreate"
                     },
                     "name": "kube-config"
@@ -498,9 +498,9 @@
             "labels": {
                 "creater": "Wutong",
                 "creater_id": "1565857609392282795",
-                "name": "grbded7e",
+                "name": "wtbded7e",
                 "pod-template-hash": "3101631868",
-                "service_alias": "grbded7e",
+                "service_alias": "wtbded7e",
                 "service_id": "88d8c4c55657217522f3bb86cfbded7e",
                 "tenant_id": "c1a29fe4d7b0413993dc859430cf743d",
                 "tenant_name": "bjlaezp3",
@@ -551,7 +551,7 @@
                         },
                         {
                             "name": "DEPEND_SERVICE",
-                            "value": "gr5d2696:fe7352415c9df03278e97ff55e5d2696"
+                            "value": "wt5d2696:fe7352415c9df03278e97ff55e5d2696"
                         },
                         {
                             "name": "DEPEND_SERVICE_COUNT",
@@ -559,7 +559,7 @@
                         },
                         {
                             "name": "REVERSE_DEPEND_SERVICE",
-                            "value": "grb0db9c:256712c5597750319e41b5e536b0db9c"
+                            "value": "wtb0db9c:256712c5597750319e41b5e536b0db9c"
                         },
                         {
                             "name": "PORT",
@@ -571,7 +571,7 @@
                         },
                         {
                             "name": "DOMAIN_4999",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL_4999",
@@ -579,7 +579,7 @@
                         },
                         {
                             "name": "DOMAIN",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL",
@@ -603,7 +603,7 @@
                         },
                         {
                             "name": "GRAFANA_DOMAIN",
-                            "value": "http://8080.gr4fd940.bjlaezp3.local.grapps.cn"
+                            "value": "http://8080.wt4fd940.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "GRAFANA_TOKEN",
@@ -643,7 +643,7 @@
                         },
                         {
                             "name": "SERVICE_NAME",
-                            "value": "grbded7e"
+                            "value": "wtbded7e"
                         },
                         {
                             "name": "SERVICE_EXTEND_METHOD",
@@ -719,7 +719,7 @@
                         },
                         {
                             "name": "DEPEND_SERVICE",
-                            "value": "gr5d2696:fe7352415c9df03278e97ff55e5d2696"
+                            "value": "wt5d2696:fe7352415c9df03278e97ff55e5d2696"
                         },
                         {
                             "name": "DEPEND_SERVICE_COUNT",
@@ -727,7 +727,7 @@
                         },
                         {
                             "name": "REVERSE_DEPEND_SERVICE",
-                            "value": "grb0db9c:256712c5597750319e41b5e536b0db9c"
+                            "value": "wtb0db9c:256712c5597750319e41b5e536b0db9c"
                         },
                         {
                             "name": "PORT",
@@ -739,7 +739,7 @@
                         },
                         {
                             "name": "DOMAIN_4999",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL_4999",
@@ -747,7 +747,7 @@
                         },
                         {
                             "name": "DOMAIN",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL",
@@ -771,7 +771,7 @@
                         },
                         {
                             "name": "GRAFANA_DOMAIN",
-                            "value": "http://8080.gr4fd940.bjlaezp3.local.grapps.cn"
+                            "value": "http://8080.wt4fd940.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "GRAFANA_TOKEN",
@@ -811,7 +811,7 @@
                         },
                         {
                             "name": "SERVICE_NAME",
-                            "value": "grbded7e"
+                            "value": "wtbded7e"
                         },
                         {
                             "name": "SERVICE_EXTEND_METHOD",
@@ -901,7 +901,7 @@
             "volumes": [
                 {
                     "hostPath": {
-                        "path": "/grdata/kubernetes",
+                        "path": "/wtdata/kubernetes",
                         "type": "DirectoryOrCreate"
                     },
                     "name": "kube-config"
@@ -985,9 +985,9 @@
             "labels": {
                 "creater": "Wutong",
                 "creater_id": "1565857609392282795",
-                "name": "grbded7e",
+                "name": "wtbded7e",
                 "pod-template-hash": "3101631868",
-                "service_alias": "grbded7e",
+                "service_alias": "wtbded7e",
                 "service_id": "88d8c4c55657217522f3bb86cfbded7e",
                 "tenant_id": "c1a29fe4d7b0413993dc859430cf743d",
                 "tenant_name": "bjlaezp3",
@@ -1038,7 +1038,7 @@
                         },
                         {
                             "name": "DEPEND_SERVICE",
-                            "value": "gr5d2696:fe7352415c9df03278e97ff55e5d2696"
+                            "value": "wt5d2696:fe7352415c9df03278e97ff55e5d2696"
                         },
                         {
                             "name": "DEPEND_SERVICE_COUNT",
@@ -1046,7 +1046,7 @@
                         },
                         {
                             "name": "REVERSE_DEPEND_SERVICE",
-                            "value": "grb0db9c:256712c5597750319e41b5e536b0db9c"
+                            "value": "wtb0db9c:256712c5597750319e41b5e536b0db9c"
                         },
                         {
                             "name": "PORT",
@@ -1058,7 +1058,7 @@
                         },
                         {
                             "name": "DOMAIN_4999",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL_4999",
@@ -1066,7 +1066,7 @@
                         },
                         {
                             "name": "DOMAIN",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL",
@@ -1090,7 +1090,7 @@
                         },
                         {
                             "name": "GRAFANA_DOMAIN",
-                            "value": "http://8080.gr4fd940.bjlaezp3.local.grapps.cn"
+                            "value": "http://8080.wt4fd940.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "GRAFANA_TOKEN",
@@ -1130,7 +1130,7 @@
                         },
                         {
                             "name": "SERVICE_NAME",
-                            "value": "grbded7e"
+                            "value": "wtbded7e"
                         },
                         {
                             "name": "SERVICE_EXTEND_METHOD",
@@ -1206,7 +1206,7 @@
                         },
                         {
                             "name": "DEPEND_SERVICE",
-                            "value": "gr5d2696:fe7352415c9df03278e97ff55e5d2696"
+                            "value": "wt5d2696:fe7352415c9df03278e97ff55e5d2696"
                         },
                         {
                             "name": "DEPEND_SERVICE_COUNT",
@@ -1214,7 +1214,7 @@
                         },
                         {
                             "name": "REVERSE_DEPEND_SERVICE",
-                            "value": "grb0db9c:256712c5597750319e41b5e536b0db9c"
+                            "value": "wtb0db9c:256712c5597750319e41b5e536b0db9c"
                         },
                         {
                             "name": "PORT",
@@ -1226,7 +1226,7 @@
                         },
                         {
                             "name": "DOMAIN_4999",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL_4999",
@@ -1234,7 +1234,7 @@
                         },
                         {
                             "name": "DOMAIN",
-                            "value": "4999.grbded7e.bjlaezp3.local.grapps.cn"
+                            "value": "4999.wtbded7e.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "DOMAIN_PROTOCOL",
@@ -1258,7 +1258,7 @@
                         },
                         {
                             "name": "GRAFANA_DOMAIN",
-                            "value": "http://8080.gr4fd940.bjlaezp3.local.grapps.cn"
+                            "value": "http://8080.wt4fd940.bjlaezp3.local.wtapps.cn"
                         },
                         {
                             "name": "GRAFANA_TOKEN",
@@ -1298,7 +1298,7 @@
                         },
                         {
                             "name": "SERVICE_NAME",
-                            "value": "grbded7e"
+                            "value": "wtbded7e"
                         },
                         {
                             "name": "SERVICE_EXTEND_METHOD",
@@ -1388,7 +1388,7 @@
             "volumes": [
                 {
                     "hostPath": {
-                        "path": "/grdata/kubernetes",
+                        "path": "/wtdata/kubernetes",
                         "type": "DirectoryOrCreate"
                     },
                     "name": "kube-config"

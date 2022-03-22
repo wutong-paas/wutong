@@ -48,7 +48,7 @@ import (
 type SourceCodeBuildItem struct {
 	Namespace     string       `json:"namespace"`
 	TenantName    string       `json:"tenant_name"`
-	GRDataPVCName string       `json:"gr_data_pvc_name"`
+	WTDataPVCName string       `json:"gr_data_pvc_name"`
 	CachePVCName  string       `json:"cache_pvc_name"`
 	CacheMode     string       `json:"cache_mode"`
 	CachePath     string       `json:"cache_path"`
@@ -119,7 +119,7 @@ func NewSouceCodeBuildItem(in []byte) *SourceCodeBuildItem {
 	}
 	scb.CacheDir = fmt.Sprintf("/cache/build/%s/cache/%s", scb.TenantID, scb.ServiceID)
 	//scb.SourceDir = scb.CodeSouceInfo.GetCodeSourceDir()
-	scb.TGZDir = fmt.Sprintf("/grdata/build/tenant/%s/slug/%s", scb.TenantID, scb.ServiceID)
+	scb.TGZDir = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s", scb.TenantID, scb.ServiceID)
 	return scb
 }
 
@@ -257,7 +257,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 		KubeClient:    i.KubeClient,
 		HostAlias:     hostAlias,
 		Ctx:           i.Ctx,
-		GRDataPVCName: i.GRDataPVCName,
+		WTDataPVCName: i.WTDataPVCName,
 		CachePVCName:  i.CachePVCName,
 		CacheMode:     i.CacheMode,
 		CachePath:     i.CachePath,

@@ -33,10 +33,10 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli"
 	eventdb "github.com/wutong-paas/wutong/eventlog/db"
-	"github.com/wutong-paas/wutong/grctl/clients"
 	coreutil "github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/constants"
 	"github.com/wutong-paas/wutong/util/termtables"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -45,7 +45,7 @@ import (
 func NewCmdService() cli.Command {
 	c := cli.Command{
 		Name:  "service",
-		Usage: "about  application service operation，grctl service -h",
+		Usage: "about  application service operation，wtctl service -h",
 		Subcommands: []cli.Command{
 			cli.Command{
 				Name: "list",
@@ -57,7 +57,7 @@ func NewCmdService() cli.Command {
 						FilePath: GetTenantNamePath(),
 					},
 				},
-				Usage: "list show application services runtime detail info。For example <grctl service list -t wutong>",
+				Usage: "list show application services runtime detail info。For example <wtctl service list -t wutong>",
 				Action: func(c *cli.Context) error {
 					//logrus.Warn(conf.TenantNamePath)
 					Common(c)
@@ -74,7 +74,7 @@ func NewCmdService() cli.Command {
 						FilePath: GetTenantNamePath(),
 					},
 				},
-				Usage: "Get application service runtime detail info。For example <grctl service get <service_alias> -t wutong>",
+				Usage: "Get application service runtime detail info。For example <wtctl service get <service_alias> -t wutong>",
 				Action: func(c *cli.Context) error {
 					Common(c)
 					return showServiceDeployInfo(c)
@@ -82,7 +82,7 @@ func NewCmdService() cli.Command {
 			},
 			cli.Command{
 				Name:  "start",
-				Usage: "Start an application service, For example <grctl service start wutong/gra564a1>",
+				Usage: "Start an application service, For example <wtctl service start wutong/wta564a1>",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
 						Name:  "f",
@@ -106,7 +106,7 @@ func NewCmdService() cli.Command {
 			},
 			cli.Command{
 				Name:  "stop",
-				Usage: "Stop an application service, For example <grctl service stop wutong/gra564a1>",
+				Usage: "Stop an application service, For example <wtctl service stop wutong/wta564a1>",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
 						Name:  "f",
@@ -146,7 +146,7 @@ func NewCmdService() cli.Command {
 						Usage: "event log server address",
 					},
 				},
-				Usage: "Blocks the output operation log, For example <grctl service event eventID 123/gr2a2e1b>",
+				Usage: "Blocks the output operation log, For example <wtctl service event eventID 123/wt2a2e1b>",
 				Action: func(c *cli.Context) error {
 					Common(c)
 					return getEventLog(c)
@@ -217,7 +217,7 @@ func getEventLog(c *cli.Context) error {
 		}
 	} else {
 		logdb := &eventdb.EventFilePlugin{
-			HomePath: constants.GrdataLogPath,
+			HomePath: constants.WTDataLogPath,
 		}
 		list, err := logdb.GetMessages(eventID, "debug", 0)
 		if err != nil {
@@ -265,7 +265,7 @@ func startService(c *cli.Context) error {
 	//GET /v2/tenants/{tenant_name}/services/{service_alias}
 	//POST /v2/tenants/{tenant_name}/services/{service_alias}/stop
 
-	// wutong/gra564a1
+	// wutong/wta564a1
 	serviceAlias := c.Args().First()
 	tenantName := c.String("tenantAlias")
 	info := strings.Split(serviceAlias, "/")

@@ -25,8 +25,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
-	conf "github.com/wutong-paas/wutong/cmd/grctl/option"
-	"github.com/wutong-paas/wutong/grctl/clients"
+	conf "github.com/wutong-paas/wutong/cmd/wtctl/option"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 )
 
 //GetCmds GetCmds

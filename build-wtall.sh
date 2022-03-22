@@ -1,7 +1,7 @@
 #!/bin/bash
 set -o errexit
 
-build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel grctl node)
+build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel wtctl node)
 # build_items=(eventlog)
 
 buildallbinaries() {

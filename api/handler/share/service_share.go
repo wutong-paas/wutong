@@ -70,7 +70,7 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 		shareSlugInfo := ss.Body.SlugInfo
 		slugPath = service.CreateShareSlug(ss.Body.ServiceKey, shareSlugInfo.Namespace, ss.Body.AppVersion)
 		if ss.Body.SlugInfo.FTPHost == "" {
-			slugPath = fmt.Sprintf("/grdata/build/tenant/%s", slugPath)
+			slugPath = fmt.Sprintf("/wtdata/build/tenant/%s", slugPath)
 		}
 		info := map[string]interface{}{
 			"service_alias": ss.ServiceAlias,
@@ -83,7 +83,7 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 		if version != nil && version.DeliveredPath != "" {
 			info["local_slug_path"] = version.DeliveredPath
 		} else {
-			info["local_slug_path"] = fmt.Sprintf("/grdata/build/tenant/%s/slug/%s/%s.tgz", service.TenantID, service.ServiceID, service.DeployVersion)
+			info["local_slug_path"] = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s/%s.tgz", service.TenantID, service.ServiceID, service.DeployVersion)
 		}
 		task.TaskType = "share-slug"
 		task.TaskBody = info

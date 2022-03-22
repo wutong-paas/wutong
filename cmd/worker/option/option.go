@@ -54,7 +54,7 @@ type Config struct {
 	LeaderElectionNamespace string
 	LeaderElectionIdentity  string
 	RBDNamespace            string
-	GrdataPVCName           string
+	WTDataPVCName           string
 	Helm                    Helm
 }
 
@@ -104,11 +104,11 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LeaderElectionNamespace, "leader-election-namespace", "wutong", "Namespace where this attacher runs.")
 	fs.StringVar(&a.LeaderElectionIdentity, "leader-election-identity", "", "Unique idenity of this attcher. Typically name of the pod where the attacher runs.")
 	fs.StringVar(&a.RBDNamespace, "wt-system-namespace", "wt-system", "wt components kubernetes namespace")
-	fs.StringVar(&a.GrdataPVCName, "grdata-pvc-name", "wt-cpt-grdata", "The name of grdata persistent volume claim")
+	fs.StringVar(&a.WTDataPVCName, "wtdata-pvc-name", "wt-cpt-wtdata", "The name of wtdata persistent volume claim")
 	fs.StringVar(&a.Helm.DataDir, "helm-data-dir", "helm-data-dir", "The data directory of Helm.")
 
 	if a.Helm.DataDir == "" {
-		a.Helm.DataDir = "/grdata/helm"
+		a.Helm.DataDir = "/wtdata/helm"
 	}
 	a.Helm.RepoFile = path.Join(a.Helm.DataDir, "repo/repositories.yaml")
 	a.Helm.RepoCache = path.Join(a.Helm.DataDir, "cache")
@@ -127,7 +127,7 @@ func (a *Worker) SetLog() {
 
 //CheckEnv 检测环境变量
 func (a *Worker) CheckEnv() error {
-	if err := os.Setenv("GRDATA_PVC_NAME", a.Config.GrdataPVCName); err != nil {
+	if err := os.Setenv("GRDATA_PVC_NAME", a.Config.WTDataPVCName); err != nil {
 		return fmt.Errorf("set env 'GRDATA_PVC_NAME': %v", err)
 	}
 	if os.Getenv("EX_DOMAIN") == "" {

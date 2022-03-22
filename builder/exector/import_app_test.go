@@ -24,5 +24,5 @@ import (
 )
 
 func TestPath(t *testing.T) {
-	t.Log(path.Ext("/grdata/app/import/69f31ed1b03d4f84bd8be2fc92c6eb01/物联网-1.0.zip"))
+	t.Log(path.Ext("/wtdata/app/import/69f31ed1b03d4f84bd8be2fc92c6eb01/物联网-1.0.zip"))
 }

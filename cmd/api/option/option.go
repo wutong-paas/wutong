@@ -109,7 +109,7 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&a.EnableFeature, "enable-feature", []string{}, "List of special features supported, such as `windows`")
 	fs.StringVar(&a.LicensePath, "license-path", "/opt/wutong/etc/license/license.yb", "the license path of the enterprise version.")
 	fs.StringVar(&a.LicSoPath, "license-so-path", "/opt/wutong/etc/license/license.so", "Dynamic library file path for parsing the license.")
-	fs.StringVar(&a.LogPath, "log-path", "/grdata/logs", "Where Docker log files and event log files are stored.")
+	fs.StringVar(&a.LogPath, "log-path", "/wtdata/logs", "Where Docker log files and event log files are stored.")
 	fs.StringVar(&a.KubeConfigPath, "kube-config", "", "kube config file path, No setup is required to run in a cluster.")
 	fs.StringVar(&a.KuberentesDashboardAPI, "k8s-dashboard-api", "kubernetes-dashboard.wt-system:443", "The service DNS name of Kubernetes dashboard. Default to kubernetes-dashboard.kubernetes-dashboard")
 	fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")

@@ -1,6 +1,6 @@
+ARG BASE_IMAGE_VERSION
 FROM wutongpaas/alpine:${BASE_IMAGE_VERSION}
 ARG RELEASE_DESC
-ARG TARGETOS TARGETARCH TARGETPLATFORM
 RUN apk --no-cache add libstdc++ ca-certificates openssl openssl-dev
 
 COPY build/libzmq/lib/libzmq.so.3 /usr/lib

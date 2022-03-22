@@ -125,7 +125,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	var diskstauts *disk.UsageStat
 	if runtime.GOOS != "windows" {
-		diskstauts, _ = disk.Usage("/grdata")
+		diskstauts, _ = disk.Usage("/wtdata")
 	} else {
 		diskstauts, _ = disk.Usage(`z:\\`)
 	}

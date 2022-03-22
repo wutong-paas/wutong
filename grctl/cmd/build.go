@@ -30,9 +30,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/urfave/cli"
 	"github.com/wutong-paas/wutong/builder/parser/code"
-	"github.com/wutong-paas/wutong/grctl/clients"
 	"github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/termtables"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -286,19 +286,19 @@ func getLang(dir string) (string, error) {
 }
 
 func getSourceCodeTarFile(dir string) (*os.File, error) {
-	util.CheckAndCreateDir("/tmp/.grctl/")
+	util.CheckAndCreateDir("/tmp/.wtctl/")
 	var cmd []string
-	cmd = append(cmd, "tar", "-cf", "/tmp/.grctl/sourcebuild.tar", "--exclude=.svn", "--exclude=.git", "./")
+	cmd = append(cmd, "tar", "-cf", "/tmp/.wtctl/sourcebuild.tar", "--exclude=.svn", "--exclude=.git", "./")
 	source := exec.Command(cmd[0], cmd[1:]...)
 	source.Dir = dir
 	if err := source.Run(); err != nil {
 		return nil, err
 	}
-	return os.OpenFile("/tmp/.grctl/sourcebuild.tar", os.O_RDONLY, 0755)
+	return os.OpenFile("/tmp/.wtctl/sourcebuild.tar", os.O_RDONLY, 0755)
 }
 
 func clear() {
-	os.RemoveAll("/tmp/.grctl/sourcebuild.tar")
+	os.RemoveAll("/tmp/.wtctl/sourcebuild.tar")
 }
 
 func createDockerCli() *client.Client {

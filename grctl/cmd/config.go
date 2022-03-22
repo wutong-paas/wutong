@@ -24,7 +24,7 @@ import (
 	"os"
 
 	"github.com/urfave/cli"
-	"github.com/wutong-paas/wutong/grctl/clients"
+	"github.com/wutong-paas/wutong/wtctl/clients"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

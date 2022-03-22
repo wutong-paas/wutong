@@ -33,7 +33,7 @@ func (a *AppAction) GetStaticDir() string {
 
 //CreateAppManager create app manager
 func CreateAppManager(mqClient client.MQClient) *AppAction {
-	staticDir := "/grdata/app"
+	staticDir := "/wtdata/app"
 	if os.Getenv("LOCAL_APP_CACHE_DIR") != "" {
 		staticDir = os.Getenv("LOCAL_APP_CACHE_DIR")
 	}

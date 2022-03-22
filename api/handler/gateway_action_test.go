@@ -58,7 +58,7 @@ func TestSelectAvailablePort(t *testing.T) {
 
 func TestAddHTTPRule(t *testing.T) {
 	for i := 200; i < 500; i++ {
-		domain := fmt.Sprintf("5000-%d.gr5d6478.aq0g1f8i.4f3597.grapps.cn", i)
+		domain := fmt.Sprintf("5000-%d.wt5d6478.aq0g1f8i.4f3597.wtapps.cn", i)
 		err := gm.AddHTTPRule(&apimodel.AddHTTPRuleStruct{
 			HTTPRuleID:    util.NewUUID(),
 			ServiceID:     "68f1b4f28d49baeb68a06e1c5f5d6478",
@@ -74,7 +74,7 @@ func TestAddHTTPRule(t *testing.T) {
 	}
 }
 func TestWaitReady(t *testing.T) {
-	waitReady("5000-1.gr5d6478.aq0g1f8i.4f3597.grapps.cn")
+	waitReady("5000-1.wt5d6478.aq0g1f8i.4f3597.wtapps.cn")
 }
 func waitReady(domain string) bool {
 	start := time.Now()

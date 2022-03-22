@@ -27,7 +27,7 @@ import (
 	"github.com/wutong-paas/wutong/node/api/model"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 
-	//"github.com/wutong-paas/wutong/grctl/cmd"
+	//"github.com/wutong-paas/wutong/wtctl/cmd"
 
 	"github.com/wutong-paas/wutong/api/util"
 	utilhttp "github.com/wutong-paas/wutong/util/http"

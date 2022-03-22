@@ -12,9 +12,9 @@
         "labels": {
             "creater": "Wutong",
             "creater_id": "1566638206772576378",
-            "name": "gra07e4c",
+            "name": "wta07e4c",
             "pod-template-hash": "3666641871",
-            "service_alias": "gra07e4c",
+            "service_alias": "wta07e4c",
             "service_id": "135c3e10e3be34337bde752449a07e4c",
             "tenant_id": "6e22adb70c114b1d9a46d17d8146ba37",
             "tenant_name": "03l9piwh",
@@ -69,7 +69,7 @@
                     },
                     {
                         "name": "DOMAIN_5000",
-                        "value": "5000.gra07e4c.03l9piwh.164de4.grapps.cn"
+                        "value": "5000.wta07e4c.03l9piwh.164de4.wtapps.cn"
                     },
                     {
                         "name": "DOMAIN_PROTOCOL_5000",
@@ -77,7 +77,7 @@
                     },
                     {
                         "name": "DOMAIN",
-                        "value": "5000.gra07e4c.03l9piwh.164de4.grapps.cn"
+                        "value": "5000.wta07e4c.03l9piwh.164de4.wtapps.cn"
                     },
                     {
                         "name": "DOMAIN_PROTOCOL",
@@ -105,7 +105,7 @@
                     },
                     {
                         "name": "SERVICE_NAME",
-                        "value": "gra07e4c"
+                        "value": "wta07e4c"
                     },
                     {
                         "name": "SERVICE_EXTEND_METHOD",

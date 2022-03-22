@@ -92,7 +92,7 @@ func (d *DiskCache) setcache() {
 	}
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if sharePath == "" {
-		sharePath = "/grdata"
+		sharePath = "/wtdata"
 	}
 	var cache = make(map[string]*model.TenantServices)
 	for _, service := range services {
