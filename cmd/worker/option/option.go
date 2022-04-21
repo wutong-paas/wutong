@@ -127,8 +127,8 @@ func (a *Worker) SetLog() {
 
 //CheckEnv 检测环境变量
 func (a *Worker) CheckEnv() error {
-	if err := os.Setenv("GRDATA_PVC_NAME", a.Config.WTDataPVCName); err != nil {
-		return fmt.Errorf("set env 'GRDATA_PVC_NAME': %v", err)
+	if err := os.Setenv("WTDATA_PVC_NAME", a.Config.WTDataPVCName); err != nil {
+		return fmt.Errorf("set env 'WTDATA_PVC_NAME': %v", err)
 	}
 	if os.Getenv("EX_DOMAIN") == "" {
 		return fmt.Errorf("please set env `EX_DOMAIN`")

@@ -38,7 +38,7 @@ func TestABCService(t *testing.T) {
 		"deploy_version":"",
 		"ports_info":[
 			{
-				"port_alias":"GR45068C5000",
+				"port_alias":"WT45068C5000",
 				"protocol":"http",
 				"mapping_port":0,
 				"container_port":5000,

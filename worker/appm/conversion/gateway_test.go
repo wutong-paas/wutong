@@ -112,7 +112,7 @@ func TestApplyTcpRule(t *testing.T) {
 		ServiceID:      serviceID,
 		ContainerPort:  containerPort,
 		Protocol:       "http",
-		PortAlias:      "GRD835895000",
+		PortAlias:      "WTD835895000",
 		IsInnerService: func() *bool { b := false; return &b }(),
 		IsOuterService: func() *bool { b := true; return &b }(),
 	}
