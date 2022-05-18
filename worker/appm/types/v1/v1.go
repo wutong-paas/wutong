@@ -29,7 +29,6 @@ import (
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/builder"
-	"github.com/wutong-paas/wutong/db/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
 	v1 "k8s.io/api/apps/v1"
@@ -92,7 +91,7 @@ type AppServiceBase struct {
 	ServiceID        string
 	ServiceAlias     string
 	ServiceType      AppServiceType
-	ServiceKind      model.ServiceKind
+	ServiceKind      dbmodel.ServiceKind
 	discoveryCfg     *dbmodel.ThirdPartySvcDiscoveryCfg
 	DeployVersion    string
 	ContainerCPU     int
@@ -116,7 +115,7 @@ func (a AppServiceBase) GetComponentDefinitionName() string {
 	if strings.HasPrefix(a.ServiceKind.String(), dbmodel.ServiceKindCustom.String()) {
 		return strings.Replace(a.ServiceKind.String(), dbmodel.ServiceKindCustom.String(), "", 1)
 	}
-	if a.ServiceKind == model.ServiceKindThirdParty {
+	if a.ServiceKind == dbmodel.ServiceKindThirdParty {
 		return "core-thirdcomponent"
 	}
 	return ""
@@ -127,7 +126,7 @@ func (a AppServiceBase) IsCustomComponent() bool {
 	if strings.HasPrefix(a.ServiceKind.String(), dbmodel.ServiceKindCustom.String()) {
 		return true
 	}
-	if a.ServiceKind == model.ServiceKindThirdParty {
+	if a.ServiceKind == dbmodel.ServiceKindThirdParty {
 		return true
 	}
 	return false
