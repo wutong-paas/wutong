@@ -217,3 +217,8 @@ type AppRestoreInterface interface {
 type PodInterface interface {
 	PodDetail(w http.ResponseWriter, r *http.Request)
 }
+
+type HelmAppsInterface interface {
+	ListHelmAppResources(w http.ResponseWriter, r *http.Request)
+	ListHelmApps(w http.ResponseWriter, r *http.Request)
+}

@@ -1,18 +1,25 @@
 package helm
 
 import (
+	"bufio"
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 	"unsafe"
 
-	"github.com/wutong-paas/wutong/util/commonutil"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/util/commonutil"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -27,6 +34,12 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"helm.sh/helm/v3/pkg/strvals"
 	helmtime "helm.sh/helm/v3/pkg/time"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	yamlDecoder "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -476,4 +489,257 @@ func formatAppVersion(c *chart.Chart) string {
 		return "MISSING"
 	}
 	return c.AppVersion()
+}
+
+type Release struct {
+	Name        string               `json:"name"`
+	Namespace   string               `json:"namespace"`
+	Revision    int                  `json:"revision"`
+	Updated     time.Time            `json:"updated"`
+	Status      string               `json:"status"`
+	Chart       string               `json:"chart"`
+	AppVersion  string               `json:"appVersion"`
+	Description string               `json:"description"`
+	Histories   []ReleaseHistoryInfo `json:"histories"`
+}
+
+type ReleaseHistoryInfo struct {
+	Revision   int       `json:"revision"`
+	Updated    time.Time `json:"updated"`
+	Status     string    `json:"status"`
+	AppVersion string    `json:"appVersion"`
+}
+
+type DeployInfo struct {
+	Info        Resource                  `json:"info"`
+	ApiResource unstructured.Unstructured `json:"apiResource"`
+}
+
+type Resource struct {
+	APIVersion   string `json:"apiVersion"`
+	gk           schema.GroupKind
+	Kind         string            `json:"kind"`
+	Name         string            `json:"name"`
+	Namespace    string            `json:"namespace"`
+	CreationTime time.Time         `json:"creationTime"`
+	Labels       map[string]string `json:"labels"`
+	Annotations  map[string]string `json:"annotations"`
+}
+
+func Resources(name, namespace string) ([]Resource, error) {
+	actionConfig, err := getActionConfig(namespace)
+	if err != nil {
+		return nil, err
+	}
+	getAction := action.NewGet(actionConfig)
+	release, err := getAction.Run(name)
+	if err != nil {
+		return nil, err
+	}
+	return resourcesFromManifest(namespace, release.Manifest)
+}
+
+func ToObjects(in io.Reader) ([]runtime.Object, error) {
+	var result []runtime.Object
+	reader := yamlDecoder.NewYAMLReader(bufio.NewReaderSize(in, 4096))
+	for {
+		raw, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		obj, err := toObjects(raw)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, obj...)
+	}
+
+	return result, nil
+}
+
+func toObjects(bytes []byte) ([]runtime.Object, error) {
+	bytes, err := yamlDecoder.ToJSON(bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	check := map[string]interface{}{}
+	if err := json.Unmarshal(bytes, &check); err != nil || len(check) == 0 {
+		return nil, err
+	}
+
+	obj, _, err := unstructured.UnstructuredJSONScheme.Decode(bytes, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if l, ok := obj.(*unstructured.UnstructuredList); ok {
+		var result []runtime.Object
+		for _, obj := range l.Items {
+			copy := obj
+			result = append(result, &copy)
+		}
+		return result, nil
+	}
+
+	return []runtime.Object{obj}, nil
+}
+
+func resourcesFromManifest(namespace string, manifest string) (result []Resource, err error) {
+	objs, err := ToObjects(bytes.NewReader([]byte(manifest)))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, obj := range objs {
+		o, err := meta.Accessor(obj)
+
+		if err != nil {
+			return nil, err
+		}
+		ns := o.GetNamespace()
+		if len(ns) == 0 {
+			ns = namespace
+		}
+		r := Resource{
+			Name:         o.GetName(),
+			Namespace:    ns,
+			Labels:       o.GetLabels(),
+			CreationTime: o.GetCreationTimestamp().Time,
+		}
+
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		r.APIVersion, r.Kind = gvk.ToAPIVersionAndKind()
+		r.gk = gvk.GroupKind()
+		result = append(result, r)
+	}
+
+	return result, nil
+}
+
+func clientGetter(namespace string) *genericclioptions.ConfigFlags {
+	kc := KubeConfig()
+	cf := genericclioptions.NewConfigFlags(false)
+	cf.APIServer = &kc.Host
+	cf.BearerToken = &kc.BearerToken
+	cf.CAFile = &kc.CAFile
+	cf.Namespace = &namespace
+	return cf
+}
+
+func getActionConfig(namespace string) (*action.Configuration, error) {
+	actionConfig := new(action.Configuration)
+	if err := actionConfig.Init(clientGetter(namespace), namespace, os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+		return nil, err
+	}
+	return actionConfig, nil
+}
+
+func AllResources(name, namespace string) ([]DeployInfo, error) {
+	res := make([]DeployInfo, 0)
+	resources, err := Resources(name, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range resources {
+		gvr, ok := KubeGVRFromGK(resources[i].gk)
+		if !ok {
+			continue
+		}
+
+		list, listErr := KubeDynamicClient().Resource(gvr).Namespace(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+		if listErr != nil {
+			return nil, listErr
+		}
+		for _, item := range list.Items {
+			if item.GetName() == resources[i].Name && item.GetAnnotations()["meta.helm.sh/release-name"] == name && item.GetAnnotations()["meta.helm.sh/release-namespace"] == namespace {
+				res = append(res, DeployInfo{
+					Info: Resource{
+						APIVersion:   item.GetAPIVersion(),
+						Kind:         item.GetKind(),
+						Namespace:    item.GetNamespace(),
+						Name:         item.GetName(),
+						Labels:       item.GetLabels(),
+						Annotations:  item.GetAnnotations(),
+						CreationTime: item.GetCreationTimestamp().Time,
+					},
+					ApiResource: item,
+				})
+			}
+
+		}
+	}
+	return res, nil
+}
+
+func AllReleases(namespace string) ([]Release, error) {
+	res := make([]Release, 0)
+	actionConfig, err := getActionConfig(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	listAction := action.NewList(actionConfig)
+	releases, err := listAction.Run()
+	if err != nil {
+		return nil, err
+	}
+	historyAction := action.NewHistory(actionConfig)
+	for _, release := range releases {
+		r := resourceFrom(release)
+
+		histories, _ := historyAction.Run(release.Name)
+		if len(histories) > 0 {
+			for _, h := range histories {
+				rh := resourceHistoryFrom(h)
+				if rh.Revision == r.Revision {
+					continue
+				}
+				r.Histories = append(r.Histories, rh)
+			}
+			sort.Slice(r.Histories, func(i, j int) bool {
+				return r.Histories[i].Revision > (r.Histories[j].Revision)
+			})
+		}
+
+		res = append(res, r)
+	}
+	return res, nil
+}
+
+func resourceFrom(release *release.Release) Release {
+	r := Release{
+		Revision:   release.Version,
+		Name:       release.Name,
+		Namespace:  release.Namespace,
+		Updated:    release.Info.LastDeployed.Time,
+		Status:     release.Info.Status.String(),
+		Chart:      formatChartName(release.Chart),
+		AppVersion: formatAppVersion(release.Chart),
+	}
+
+	if !release.Info.LastDeployed.IsZero() {
+		r.Updated = release.Info.LastDeployed.Time
+	}
+	return r
+}
+
+func resourceHistoryFrom(release *release.Release) ReleaseHistoryInfo {
+	rh := ReleaseHistoryInfo{
+		Revision:   release.Version,
+		Updated:    release.Info.LastDeployed.Time,
+		Status:     release.Info.Status.String(),
+		AppVersion: formatAppVersion(release.Chart),
+	}
+
+	if !release.Info.LastDeployed.IsZero() {
+		rh.Updated = release.Info.LastDeployed.Time
+	}
+	return rh
 }

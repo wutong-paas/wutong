@@ -19,6 +19,8 @@
 package v1
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -46,22 +48,28 @@ func TestGetStatefulsetModifiedConfiguration(t *testing.T) {
 					NodeSelector: map[string]string{
 						"test": "1111",
 					},
+					InitContainers: []corev1.Container{
+						{
+							Name:  "busybox",
+							Image: "busybox",
+						},
+					},
 					Containers: []corev1.Container{
-						corev1.Container{
+						{
 							Image: "nginx",
 							Name:  "nginx1",
 							Env: []corev1.EnvVar{
-								corev1.EnvVar{
+								{
 									Name:  "version",
 									Value: "V1",
 								},
-								corev1.EnvVar{
+								{
 									Name:  "delete",
 									Value: "true",
 								},
 							},
 						},
-						corev1.Container{
+						{
 							Image: "nginx",
 							Name:  "nginx2",
 						},
@@ -85,17 +93,17 @@ func TestGetStatefulsetModifiedConfiguration(t *testing.T) {
 						"test": "1111",
 					},
 					Containers: []corev1.Container{
-						corev1.Container{
+						{
 							Image: "nginx",
 							Name:  "nginx1",
 							Env: []corev1.EnvVar{
-								corev1.EnvVar{
+								{
 									Name:  "version",
 									Value: "V2",
 								},
 							},
 						},
-						corev1.Container{
+						{
 							Image: "nginx",
 							Name:  "nginx3",
 						},
@@ -107,5 +115,88 @@ func TestGetStatefulsetModifiedConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(string(bytes))
+	fmt.Println("here")
+	fmt.Println(string(bytes))
+	// t.Log("here")
+	// t.Log(string(bytes))
+}
+
+type A struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Spec  Spec   `json:"spec"`
+	Spec2 Spec   `json:"spec2"`
+}
+type Spec struct {
+	Replicas int    `json:"replicas"`
+	InitC    []Cont `json:"initC,omitempty"`
+	C        []Cont `json:"c"`
+}
+
+type Cont struct {
+	Name  string `json:"name"`
+	Image string `json:"image"`
+}
+
+type AliasA A
+
+func TestGetchange(t *testing.T) {
+	bytes, err := getchange(&A{
+		ID:   "1",
+		Name: "test",
+		Spec: Spec{
+			Replicas: 1,
+			InitC: []Cont{
+				{
+					Name:  "nginx0",
+					Image: "nginx0",
+				},
+			},
+			C: []Cont{
+				{
+					Name:  "nginx",
+					Image: "nginx1",
+				}, {
+					Name:  "nginx2",
+					Image: "nginx2",
+				},
+			},
+		},
+		Spec2: Spec{
+			Replicas: 1,
+		},
+	}, &A{
+		ID:   "1",
+		Name: "test2",
+		Spec: Spec{
+			C: []Cont{
+				{
+					// Name:  "nginx",
+					Image: "nginx10",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(string(bytes))
+}
+
+func TestJson(t *testing.T) {
+	bytes, _ := json.Marshal(&A{
+		ID:   "1",
+		Name: "test",
+		Spec: Spec{
+			Replicas: 1,
+			InitC:    []Cont{},
+			C: []Cont{
+				{
+					Name:  "nginx",
+					Image: "nginx1",
+				},
+			},
+		},
+	})
+	fmt.Println(string(bytes))
 }

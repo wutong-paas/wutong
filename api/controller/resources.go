@@ -60,6 +60,7 @@ type V2Routes struct {
 	AppRestoreController
 	PodController
 	ApplicationController
+	HelmAppsController
 }
 
 //Show test
