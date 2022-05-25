@@ -66,6 +66,7 @@ func (v2 *V2) Routes() chi.Router {
 	// helm resources
 	r.Get("/helm/{helm_namespace}/apps", controller.GetManager().ListHelmApps)
 	r.Get("/helm/{helm_namespace}/apps/{helm_name}/resources", controller.GetManager().ListHelmAppResources)
+
 	return r
 }
 

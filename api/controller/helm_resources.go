@@ -29,7 +29,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-// HelmResourcesController is an implementation of PodInterface
+// HelmAppsController is an implementation of HelmAppsInterface
 type HelmAppsController struct{}
 
 //ListHelmApps - get helm apps

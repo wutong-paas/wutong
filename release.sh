@@ -112,11 +112,11 @@ build::image() {
 		"${source_dir}/test.sh" wt-$1:${VERSION}
 	fi
 	if [ "$2" = "push" ]; then
-		docker tag wt-$1:${VERSION} wutongpaas/wt-$1:${VERSION}
-		docker push wutongpaas/wt-$1:${VERSION}
-
 		docker tag wt-$1:${VERSION} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 		docker push swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
+
+		docker tag wt-$1:${VERSION} wutongpaas/wt-$1:${VERSION}
+		docker push wutongpaas/wt-$1:${VERSION}
 	fi
 	popd
 	rm -rf "${build_image_dir}"

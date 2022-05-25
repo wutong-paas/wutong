@@ -218,6 +218,7 @@ type PodInterface interface {
 	PodDetail(w http.ResponseWriter, r *http.Request)
 }
 
+// HelmAppsInterface defines api methods about helm apps
 type HelmAppsInterface interface {
 	ListHelmAppResources(w http.ResponseWriter, r *http.Request)
 	ListHelmApps(w http.ResponseWriter, r *http.Request)

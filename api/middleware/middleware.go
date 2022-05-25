@@ -194,6 +194,16 @@ func Proxy(next http.Handler) http.Handler {
 			handler.GetMonitorProxy().Proxy(w, r)
 			return
 		}
+		if strings.HasPrefix(r.RequestURI, "/console/filebrowser") {
+			paths := strings.Split(r.URL.Path, "/")
+			if len(paths) > 3 {
+				service_id := paths[3]
+				proxy := handler.GetFileBrowserProxy(service_id)
+				r.URL.Path = strings.Replace(r.URL.Path, "/console/filebrowser/"+service_id, "", 1)
+				proxy.Proxy(w, r)
+				return
+			}
+		}
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)

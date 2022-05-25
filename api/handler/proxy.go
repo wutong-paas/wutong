@@ -19,15 +19,20 @@
 package handler
 
 import (
+	"fmt"
+
 	"github.com/wutong-paas/wutong/api/discover"
 	"github.com/wutong-paas/wutong/api/proxy"
 	"github.com/wutong-paas/wutong/cmd/api/option"
+	"github.com/wutong-paas/wutong/db"
 )
 
 var nodeProxy proxy.Proxy
 var builderProxy proxy.Proxy
 var prometheusProxy proxy.Proxy
 var monitorProxy proxy.Proxy
+
+var filebrowserProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
 
 //InitProxy 初始化
 func InitProxy(conf option.Config) {
@@ -45,6 +50,7 @@ func InitProxy(conf option.Config) {
 		monitorProxy = proxy.CreateProxy("monitor", "http", []string{"127.0.0.1:3329"})
 		discover.GetEndpointDiscover().AddProject("monitor", monitorProxy)
 	}
+
 }
 
 //GetNodeProxy GetNodeProxy
@@ -65,4 +71,24 @@ func GetPrometheusProxy() proxy.Proxy {
 //GetMonitorProxy GetMonitorProxy
 func GetMonitorProxy() proxy.Proxy {
 	return monitorProxy
+}
+
+// GetFileBrowserProxy GetFileBrowserProxy
+func GetFileBrowserProxy(serviceID string) proxy.Proxy {
+	fbProxy, ok := filebrowserProxies[serviceID]
+	if !ok {
+		// get serviceID and fb plugin
+		service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+		if err != nil {
+			return proxy.CreateProxy("fb", "http", nil)
+		}
+		tenant, err := db.GetManager().TenantDao().GetTenantByUUID(service.TenantID)
+		if err != nil {
+			return proxy.CreateProxy("fb", "http", nil)
+		}
+		k8sSvc := fmt.Sprintf("%s-6173.%s:6173", service.ServiceAlias, tenant.Namespace)
+		fbProxy = proxy.CreateProxy("fb", "http", []string{k8sSvc})
+		filebrowserProxies[serviceID] = fbProxy
+	}
+	return fbProxy
 }
