@@ -2921,6 +2921,7 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 	request := s.kubeClient.CoreV1().Pods(tenant.Namespace).GetLogs(podName, &corev1.PodLogOptions{
 		Container: containerName,
 		Follow:    follow,
+		TailLines: core_util.Int64(500),
 	})
 
 	out, err := request.Stream(context.TODO())
