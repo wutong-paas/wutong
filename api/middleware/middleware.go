@@ -197,9 +197,19 @@ func Proxy(next http.Handler) http.Handler {
 		if strings.HasPrefix(r.RequestURI, "/console/filebrowser") {
 			paths := strings.Split(r.URL.Path, "/")
 			if len(paths) > 3 {
-				service_id := paths[3]
-				proxy := handler.GetFileBrowserProxy(service_id)
-				r.URL.Path = strings.Replace(r.URL.Path, "/console/filebrowser/"+service_id, "", 1)
+				serviceID := paths[3]
+				proxy := handler.GetFileBrowserProxy(serviceID)
+				r.URL.Path = strings.Replace(r.URL.Path, "/console/filebrowser/"+serviceID, "", 1)
+				proxy.Proxy(w, r)
+				return
+			}
+		}
+		if strings.HasPrefix(r.RequestURI, "/console/dbgate") {
+			paths := strings.Split(r.URL.Path, "/")
+			if len(paths) > 3 {
+				serviceID := paths[3]
+				proxy := handler.GetDbgateProxy(serviceID)
+				r.URL.Path = strings.Replace(r.URL.Path, "/console/dbgate/"+serviceID, "", 1)
 				proxy.Proxy(w, r)
 				return
 			}

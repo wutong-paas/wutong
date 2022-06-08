@@ -259,7 +259,8 @@ type TenantServicePluginRelationDao interface {
 	GetALLRelationByServiceID(serviceID string) ([]*model.TenantServicePluginRelation, error)
 	GetRelateionByServiceIDAndPluginID(serviceID, pluginID string) (*model.TenantServicePluginRelation, error)
 	CheckSomeModelPluginByServiceID(serviceID, pluginModel string) (bool, error)
-	CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error)
+	// CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error)
+	CheckPluginBeforeInstall(serviceID, pluginModel string) (bool, error)
 	DeleteByComponentIDs(componentIDs []string) error
 	CreateOrUpdatePluginRelsInBatch(relations []*model.TenantServicePluginRelation) error
 }

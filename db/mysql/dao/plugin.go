@@ -20,6 +20,7 @@ package dao
 
 import (
 	"fmt"
+	"strings"
 
 	pkgerr "github.com/pkg/errors"
 	gormbulkups "github.com/wutong-paas/gorm-bulk-upsert"
@@ -582,16 +583,44 @@ func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelPluginByServiceID(ser
 }
 
 //CheckSomeModelLikePluginByServiceID 检查是否绑定了某大类插件
-func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error) {
-	var relations []*model.TenantServicePluginRelation
-	catePlugin := "%" + pluginModel + "%"
-	if err := t.DB.Where("service_id=? and plugin_model LIKE ?", serviceID, catePlugin).Find(&relations).Error; err != nil {
-		return false, err
+// func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error) {
+// 	var relations []*model.TenantServicePluginRelation
+// 	// catePlugin := "%" + pluginModel + "%"
+// 	// if err := t.DB.Where("service_id=? and plugin_model LIKE ?", serviceID, catePlugin).Find(&relations).Error; err != nil {
+// 	// return false, err
+// 	// }
+// 	if err := t.DB.Where("service_id=? and plugin_model LIKE 'net-plugin:%'", serviceID).Find(&relations).Error; err != nil {
+// 		return false, err
+// 	}
+// 	if len(relations) == 1 {
+// 		return true, nil
+// 	}
+// 	return false, nil
+// }
+
+// CheckPluginBeforeInstall 插件安装前的检查
+// 1. 如果组件之前已经安装过网络类插件，不能继续安装同类插件
+// 2. 如果组件之前已经安装过数据中间件管理插件，不能继续安装同类插件
+func (t *TenantServicePluginRelationDaoImpl) CheckPluginBeforeInstall(serviceID, pluginModel string) (bool, error) {
+	if strings.HasPrefix(pluginModel, "net-plugin:") {
+		var relations []*model.TenantServicePluginRelation
+		if err := t.DB.Where("service_id=? and plugin_model LIKE 'net-plugin:%'", serviceID).Find(&relations).Error; err != nil {
+			return false, err
+		}
+		if len(relations) > 0 {
+			return false, nil
+		}
 	}
-	if len(relations) == 1 {
-		return true, nil
+	if pluginModel == model.DbgatePlugin {
+		var relations []*model.TenantServicePluginRelation
+		if err := t.DB.Where("service_id=? and plugin_model=?", serviceID, model.DbgatePlugin).Find(&relations).Error; err != nil {
+			return false, err
+		}
+		if len(relations) > 0 {
+			return false, nil
+		}
 	}
-	return false, nil
+	return true, nil
 }
 
 //DeleteALLRelationByServiceID 删除serviceID所有插件依赖 一般用于删除应用时使用

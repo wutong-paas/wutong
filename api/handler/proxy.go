@@ -33,6 +33,7 @@ var prometheusProxy proxy.Proxy
 var monitorProxy proxy.Proxy
 
 var filebrowserProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
+var dbgateProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
 
 //InitProxy 初始化
 func InitProxy(conf option.Config) {
@@ -80,15 +81,35 @@ func GetFileBrowserProxy(serviceID string) proxy.Proxy {
 		// get serviceID and fb plugin
 		service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
 		if err != nil {
-			return proxy.CreateProxy("fb", "http", nil)
+			return proxy.CreateProxy("filebrowser", "http", nil)
 		}
 		tenant, err := db.GetManager().TenantDao().GetTenantByUUID(service.TenantID)
 		if err != nil {
-			return proxy.CreateProxy("fb", "http", nil)
+			return proxy.CreateProxy("filebrowser", "http", nil)
 		}
 		k8sSvc := fmt.Sprintf("%s-6173.%s:6173", service.ServiceAlias, tenant.Namespace)
-		fbProxy = proxy.CreateProxy("fb", "http", []string{k8sSvc})
+		fbProxy = proxy.CreateProxy("filebrowser", "http", []string{k8sSvc})
 		filebrowserProxies[serviceID] = fbProxy
 	}
 	return fbProxy
+}
+
+// GetDbgateProxy GetDbgateProxy
+func GetDbgateProxy(serviceID string) proxy.Proxy {
+	dbgateProxy, ok := dbgateProxies[serviceID]
+	if !ok {
+		// get serviceID and fb plugin
+		service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+		if err != nil {
+			return proxy.CreateProxy("dbgate", "http", nil)
+		}
+		tenant, err := db.GetManager().TenantDao().GetTenantByUUID(service.TenantID)
+		if err != nil {
+			return proxy.CreateProxy("dbgate", "http", nil)
+		}
+		k8sSvc := fmt.Sprintf("%s-3000.%s:3000", service.ServiceAlias, tenant.Namespace)
+		dbgateProxy = proxy.CreateProxy("dbgate", "http", []string{k8sSvc})
+		dbgateProxies[serviceID] = dbgateProxy
+	}
+	return dbgateProxy
 }

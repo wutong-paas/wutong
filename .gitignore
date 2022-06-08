@@ -61,4 +61,4 @@ Library
 .cache
 headerfile.py
 localcheck.sh
-debug.sh
+.debug/

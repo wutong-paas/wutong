@@ -2274,18 +2274,31 @@ func (mr *MockTenantServicePluginRelationDaoMockRecorder) CheckSomeModelPluginBy
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSomeModelPluginByServiceID", reflect.TypeOf((*MockTenantServicePluginRelationDao)(nil).CheckSomeModelPluginByServiceID), serviceID, pluginModel)
 }
 
-// CheckSomeModelLikePluginByServiceID mocks base method
-func (m *MockTenantServicePluginRelationDao) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error) {
-	ret := m.ctrl.Call(m, "CheckSomeModelLikePluginByServiceID", serviceID, pluginModel)
+// // CheckSomeModelLikePluginByServiceID mocks base method
+// func (m *MockTenantServicePluginRelationDao) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error) {
+// 	ret := m.ctrl.Call(m, "CheckSomeModelLikePluginByServiceID", serviceID, pluginModel)
+// 	ret0, _ := ret[0].(bool)
+// 	ret1, _ := ret[1].(error)
+// 	return ret0, ret1
+// }
+
+// // CheckSomeModelLikePluginByServiceID indicates an expected call of CheckSomeModelLikePluginByServiceID
+// func (mr *MockTenantServicePluginRelationDaoMockRecorder) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel interface{}) *gomock.Call {
+// 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSomeModelLikePluginByServiceID", reflect.TypeOf((*MockTenantServicePluginRelationDao)(nil).CheckSomeModelLikePluginByServiceID), serviceID, pluginModel)
+// }
+
+// CheckPluginBeforeInstall mocks base method
+func (m *MockTenantServicePluginRelationDao) CheckPluginBeforeInstall(serviceID, pluginModel string) (bool, error){
+	ret := m.ctrl.Call(m, "CheckPluginBeforeInstall", serviceID, pluginModel)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CheckSomeModelLikePluginByServiceID indicates an expected call of CheckSomeModelLikePluginByServiceID
-func (mr *MockTenantServicePluginRelationDaoMockRecorder) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSomeModelLikePluginByServiceID", reflect.TypeOf((*MockTenantServicePluginRelationDao)(nil).CheckSomeModelLikePluginByServiceID), serviceID, pluginModel)
-}
+// CheckPluginBeforeInstall indicates an expected call of CheckPluginBeforeInstall
+func (mr *MockTenantServicePluginRelationDaoMockRecorder) CheckPluginBeforeInstall(serviceID,pluginModel interface{}) *gomock.Call{
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckPluginBeforeInstall", reflect.TypeOf((*MockTenantServicePluginRelationDao)(nil).CheckPluginBeforeInstall), serviceID, pluginModel)
+} 
 
 // MockTenantServiceRelationDao is a mock of TenantServiceRelationDao interface
 type MockTenantServiceRelationDao struct {

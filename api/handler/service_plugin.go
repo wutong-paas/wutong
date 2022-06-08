@@ -91,14 +91,25 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get plugin by plugin id", err)
 	}
-	crt, err := db.GetManager().TenantServicePluginRelationDao().CheckSomeModelLikePluginByServiceID(
+	// crt, err := db.GetManager().TenantServicePluginRelationDao().CheckSomeModelLikePluginByServiceID(
+	// 	serviceID,
+	// 	plugin.PluginModel,
+	// )
+	// if err != nil {
+	// 	return nil, util.CreateAPIHandleErrorFromDBError("check plugin model", err)
+	// }
+	// if crt {
+	// 	return nil, util.CreateAPIHandleError(400, fmt.Errorf("can not add this kind plugin, a same kind plugin has been linked"))
+	// }
+
+	crt, err := db.GetManager().TenantServicePluginRelationDao().CheckPluginBeforeInstall(
 		serviceID,
 		plugin.PluginModel,
 	)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("check plugin model", err)
 	}
-	if crt {
+	if !crt {
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("can not add this kind plugin, a same kind plugin has been linked"))
 	}
 	pluginversion, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByVersionID(plugin.PluginID, pss.Body.VersionID)

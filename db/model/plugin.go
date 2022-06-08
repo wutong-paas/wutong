@@ -201,3 +201,6 @@ var InBoundAndOutBoundNetPlugin = "net-plugin:in-and-out"
 
 //GeneralPlugin 一般插件,默认分类,优先级最低
 var GeneralPlugin = "general-plugin"
+
+// DbgatePlugin 数据中间件管理插件
+var DbgatePlugin = "dbgate-plugin"
