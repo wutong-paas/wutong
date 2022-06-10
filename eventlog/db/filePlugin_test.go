@@ -40,7 +40,7 @@ func TestFileSaveMessage(t *testing.T) {
 }
 
 func TestMvLogFile(t *testing.T) {
-	MvLogFile("/Users/qingguo/7b3d5546bd54152d/stdout.log.gz", "/Users/qingguo/7b3d5546bd54152d/stdout.log")
+	MvLogFile("/Users/qingguo/7b3d5546bd54152d/stdout.log.gz", []string{"/Users/qingguo/7b3d5546bd54152d/stdout.log"})
 }
 
 func TestGetMessages(t *testing.T) {

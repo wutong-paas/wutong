@@ -80,6 +80,7 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 		return err
 	}
 	stdoutLogPath := path.Join(filePathDir, "stdout.log")
+	stdoutLegacyLogPath := path.Join(filePathDir, "stdout-legacy.log")
 	logFile, err := os.Stat(stdoutLogPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -93,18 +94,24 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 		}
 	} else {
 		if logFile.ModTime().Day() != time.Now().Day() {
-			err := MvLogFile(fmt.Sprintf("%s/%d-%d-%d.log.gz", filePathDir, logFile.ModTime().Year(), logFile.ModTime().Month(), logFile.ModTime().Day()), stdoutLogPath)
+			logFiles := []string{stdoutLogPath}
+			// Assert if stdout-legacy.log is existed , if exists, append to archive
+			stdoutLegacyLogFileStat, err := os.Stat(stdoutLegacyLogPath)
+			if err == nil && stdoutLegacyLogFileStat.Size() > 0 {
+				logFiles = append(logFiles, stdoutLegacyLogPath)
+			}
+			err = MvLogFile(fmt.Sprintf("%s/%d-%d-%d.log.gz", filePathDir, logFile.ModTime().Year(), logFile.ModTime().Month(), logFile.ModTime().Day()), logFiles)
 			if err != nil {
 				return err
 			}
 		}
 	}
 	if logfile == nil {
-		logfile, err = os.OpenFile(stdoutLogPath, os.O_WRONLY|os.O_APPEND, 0666)
+		logfile, err = os.OpenFile(stdoutLogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			return err
 		}
-		if logFile != nil {
+		if logfile != nil {
 			defer logfile.Close()
 		}
 	} else {
@@ -190,43 +197,43 @@ func GetServiceAliasID(ServiceID string) string {
 }
 
 //MvLogFile 更改文件名称，压缩
-func MvLogFile(newName string, filePath string) error {
-	info, err := os.Stat(filePath)
-	if err != nil {
-		return err
-	}
-	reader, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
-	if err != nil {
-		return err
-	}
+func MvLogFile(newName string, filePaths []string) error {
 	// 将压缩文档内容写入文件
 	f, err := os.OpenFile(newName, os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
 	zw := zip.NewWriter(f)
 	defer zw.Close()
-	header, err := zip.FileInfoHeader(info)
-	if err != nil {
-		return err
+
+	for _, filePath := range filePaths {
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return err
+		}
+		reader, err := os.OpenFile(filePath, os.O_RDONLY, 0666)
+		if err != nil {
+			return err
+		}
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+		writer, err := zw.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(writer, reader)
+		if err != nil {
+			return err
+		}
+		err = os.Remove(filePath)
+		if err != nil {
+			return err
+		}
 	}
-	writer, err := zw.CreateHeader(header)
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(writer, reader)
-	if err != nil {
-		return err
-	}
-	err = os.Remove(filePath)
-	if err != nil {
-		return err
-	}
-	new, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer new.Close()
+
 	return nil
 }
