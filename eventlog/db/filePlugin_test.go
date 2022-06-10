@@ -58,3 +58,11 @@ func TestGetMessages(t *testing.T) {
 	}
 	t.Log(logs)
 }
+
+func TestGetServiceAliasID(t *testing.T) {
+	should := "53e94ac00f234eb4"
+	got := GetServiceAliasID("3b63e4ac9de370bb423f62f5e2358c63")
+	if should != got {
+		t.Fatalf("should get %v, but get %v\n", should, got)
+	}
+}
