@@ -129,7 +129,7 @@ func Run(s *option.GWServer) error {
 	}
 	defer keepalive.Stop()
 
-	logrus.Info("RBD app gateway start success!")
+	logrus.Info("WT app gateway start success!")
 
 	term := make(chan os.Signal)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT)

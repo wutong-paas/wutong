@@ -23,7 +23,7 @@ func main() {
 	if err != nil {
 		logrus.Error(err)
 	}
-	namespace := os.Getenv("RBD_NAMESPACE")
+	namespace := os.Getenv("WT_NAMESPACE")
 	if namespace == "" {
 		namespace = "wt-system"
 	}

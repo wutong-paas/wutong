@@ -46,7 +46,7 @@ func NewCmdInstall() cli.Command {
 			cli.StringFlag{
 				Name:   "namespace,ns",
 				Usage:  "wutong namespace",
-				EnvVar: "RBDNamespace",
+				EnvVar: "WTNamespace",
 				Value:  "wt-system",
 			},
 		},

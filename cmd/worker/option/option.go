@@ -53,7 +53,7 @@ type Config struct {
 	KubeClient              kubernetes.Interface
 	LeaderElectionNamespace string
 	LeaderElectionIdentity  string
-	RBDNamespace            string
+	WTNamespace             string
 	WTDataPVCName           string
 	Helm                    Helm
 }
@@ -103,7 +103,7 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&a.ServerPort, "server-port", 6535, "the listen port that app runtime server")
 	fs.StringVar(&a.LeaderElectionNamespace, "leader-election-namespace", "wutong", "Namespace where this attacher runs.")
 	fs.StringVar(&a.LeaderElectionIdentity, "leader-election-identity", "", "Unique idenity of this attcher. Typically name of the pod where the attacher runs.")
-	fs.StringVar(&a.RBDNamespace, "wt-system-namespace", "wt-system", "wt components kubernetes namespace")
+	fs.StringVar(&a.WTNamespace, "wt-system-namespace", "wt-system", "wt components kubernetes namespace")
 	fs.StringVar(&a.WTDataPVCName, "wtdata-pvc-name", "wt-cpt-wtdata", "The name of wtdata persistent volume claim")
 	fs.StringVar(&a.Helm.DataDir, "helm-data-dir", "helm-data-dir", "The data directory of Helm.")
 

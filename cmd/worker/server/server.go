@@ -94,7 +94,7 @@ func Run(s *option.Worker) error {
 	}
 	wutongClient := versioned.NewForConfigOrDie(restConfig)
 	//step 3: create componentdefinition builder factory
-	componentdefinition.NewComponentDefinitionBuilder(s.Config.RBDNamespace)
+	componentdefinition.NewComponentDefinitionBuilder(s.Config.WTNamespace)
 
 	//step 4: create component resource store
 	updateCh := channels.NewRingChannel(1024)

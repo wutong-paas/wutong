@@ -1115,7 +1115,7 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 }
 
 func (ctrl *ProvisionController) persistentVolumeForWTData(ctx context.Context) (*v1.PersistentVolume, error) {
-	pvc, err := ctrl.client.CoreV1().PersistentVolumeClaims(ctrl.cfg.RBDNamespace).Get(ctx, ctrl.cfg.WTDataPVCName, metav1.GetOptions{})
+	pvc, err := ctrl.client.CoreV1().PersistentVolumeClaims(ctrl.cfg.WTNamespace).Get(ctx, ctrl.cfg.WTDataPVCName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("find pvc for wtdata: %v", err)
 	}

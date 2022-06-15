@@ -19,12 +19,12 @@ func dns2Config(endpoint *corev1.Endpoints, podNamespace string) (podDNSConfig *
 			servers = append(servers, addr.IP)
 		}
 	}
-	searchRBDDNS := fmt.Sprintf("%s.svc.cluster.local", podNamespace)
+	searchWTDNS := fmt.Sprintf("%s.svc.cluster.local", podNamespace)
 	ndotsValue := "5"
 	return &corev1.PodDNSConfig{
 		Nameservers: servers,
 		Options:     []corev1.PodDNSConfigOption{{Name: "ndots", Value: &ndotsValue}},
-		Searches:    []string{searchRBDDNS, "svc.cluster.local", "cluster.local"},
+		Searches:    []string{searchWTDNS, "svc.cluster.local", "cluster.local"},
 	}
 }
 

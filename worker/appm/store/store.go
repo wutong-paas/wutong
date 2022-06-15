@@ -1490,10 +1490,10 @@ func (a *appRuntimeStore) createOrUpdateImagePullSecret(ns string) error {
 	}
 
 	// get secret in namespace wt-system
-	rawSecret, err := a.secretByKey(types.NamespacedName{Namespace: a.conf.RBDNamespace, Name: imagePullSecretName})
+	rawSecret, err := a.secretByKey(types.NamespacedName{Namespace: a.conf.WTNamespace, Name: imagePullSecretName})
 	if err != nil {
 		return fmt.Errorf("get secret %s: %v",
-			types.NamespacedName{Namespace: a.conf.RBDNamespace, Name: imagePullSecretName}.String(), err)
+			types.NamespacedName{Namespace: a.conf.WTNamespace, Name: imagePullSecretName}.String(), err)
 	}
 	// get secret in current namespace
 	curSecret, err := a.secretByKey(types.NamespacedName{Namespace: ns, Name: imagePullSecretName})
