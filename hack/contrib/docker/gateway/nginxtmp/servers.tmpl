@@ -61,10 +61,6 @@ server {
         set $pass_port $server_port;
         
         # custom proxy_set_header
-        # default transfer client ip
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         {{ range $k, $v := $loc.Proxy.SetHeaders }}
         proxy_set_header    {{$k}}    {{$v}};
         {{ end }}
