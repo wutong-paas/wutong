@@ -63,7 +63,8 @@ func (t *PluginDaoImpl) UpdateModel(mo model.Interface) error {
 //GetPluginByID GetPluginByID
 func (t *PluginDaoImpl) GetPluginByID(id, tenantID string) (*model.TenantPlugin, error) {
 	var plugin model.TenantPlugin
-	if err := t.DB.Where("plugin_id = ? and tenant_id = ?", id, tenantID).Find(&plugin).Error; err != nil {
+	// if err := t.DB.Where("plugin_id = ? and tenant_id = ?", id, tenantID).Find(&plugin).Error; err != nil {
+	if err := t.DB.Where("plugin_id = ?", id).Find(&plugin).Error; err != nil {
 		return nil, err
 	}
 	return &plugin, nil
