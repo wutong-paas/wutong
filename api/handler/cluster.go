@@ -47,10 +47,10 @@ type clusterAction struct {
 func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResource, error) {
 	timeout, _ := strconv.Atoi(os.Getenv("CLUSTER_INFO_CACHE_TIME"))
 	if timeout == 0 {
-		// default is 30 seconds
-		timeout = 30
+		// default is 10 minutes
+		timeout = 10
 	}
-	if c.clusterInfoCache != nil && c.cacheTime.Add(time.Second*time.Duration(timeout)).After(time.Now()) {
+	if c.clusterInfoCache != nil && c.cacheTime.Add(time.Minute*time.Duration(timeout)).After(time.Now()) {
 		return c.clusterInfoCache, nil
 	}
 	if c.clusterInfoCache != nil {
@@ -83,6 +83,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	var healthcpuR, healthmemR, unhealthCPUR, unhealthMemR, wtMemR, wtCPUR int64
 	nodeAllocatableResourceList := make(map[string]*model.NodeResource, len(usedNodeList))
 	var maxAllocatableMemory *model.NodeResource
+	var nodeResources []*model.NodeResource
+	var totalCapacityPods, totalUsedPods int64
 	for i := range usedNodeList {
 		node := usedNodeList[i]
 
@@ -92,12 +94,19 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		}
 
 		nodeAllocatableResource := model.NewResource(node.Status.Allocatable)
+		nodeResource := model.NewNodeResource(node.Name, node.Status)
+		totalCapacityPods += nodeResource.CapacityPods
 		for _, pod := range pods {
+			nodeResource.UsedPods++
 			nodeAllocatableResource.AllowedPodNumber--
 			for _, c := range pod.Spec.Containers {
 				nodeAllocatableResource.Memory -= c.Resources.Requests.Memory().Value()
 				nodeAllocatableResource.MilliCPU -= c.Resources.Requests.Cpu().MilliValue()
 				nodeAllocatableResource.EphemeralStorage -= c.Resources.Requests.StorageEphemeral().Value()
+
+				nodeResource.RawUsedCPU += c.Resources.Requests.Cpu().MilliValue()
+				nodeResource.RawUsedMem += c.Resources.Requests.Memory().Value()
+				nodeResource.RawUsedStorage += c.Resources.Requests.StorageEphemeral().Value()
 				if isNodeReady(node) {
 					healthcpuR += c.Resources.Requests.Cpu().MilliValue()
 					healthmemR += c.Resources.Requests.Memory().Value()
@@ -112,6 +121,12 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 			}
 		}
 		nodeAllocatableResourceList[node.Name] = nodeAllocatableResource
+
+		nodeResource.UsedCPU = nodeResource.RawUsedCPU / 1000
+		nodeResource.UsedMem = nodeResource.RawUsedMem / 1024 / 1024
+		nodeResource.UsedStorage = nodeResource.RawUsedStorage / 1024 / 1024
+		nodeResources = append(nodeResources, nodeResource)
+		totalUsedPods += nodeResource.UsedPods
 
 		// Gets the node resource with the maximum remaining scheduling memory
 		if maxAllocatableMemory == nil {
@@ -154,6 +169,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		CapDisk:                          diskCap,
 		ReqDisk:                          reqDisk,
 		MaxAllocatableMemoryNodeResource: maxAllocatableMemory,
+		NodeResources:                    nodeResources,
 	}
 
 	result.AllNode = len(nodes)
