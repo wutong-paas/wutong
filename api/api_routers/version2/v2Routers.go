@@ -79,6 +79,7 @@ func (v2 *V2) monitorRouter() chi.Router {
 func (v2 *V2) enterpriseRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/running-services", controller.GetRunningServices)
+	r.Get("/services/status", controller.GetServicesStatus)
 	return r
 }
 

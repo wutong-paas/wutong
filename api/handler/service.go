@@ -2007,6 +2007,53 @@ func (s *ServiceAction) GetEnterpriseRunningServices(enterpriseID string) ([]str
 	return retServices, nil
 }
 
+type ServicesStatus struct {
+	RunningServices   []string `json:"running_services"`
+	UnRunningServices []string `json:"unrunning_services"`
+	AbnormalServices  []string `json:"abnormal_services"`
+}
+
+func (s *ServiceAction) GetEntrepriseServicesStatus(enterpriseID string) (*ServicesStatus, *util.APIHandleError) {
+	var tenantIDs []string
+	tenants, err := db.GetManager().EnterpriseDao().GetEnterpriseTenants(enterpriseID)
+	if err != nil {
+		logrus.Errorf("list tenant failed: %s", err.Error())
+		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("enterprise[%s] get tenant failed", enterpriseID), err)
+	}
+	if len(tenants) == 0 {
+		return nil, util.CreateAPIHandleErrorf(400, "enterprise[%s] has not tenants", enterpriseID)
+	}
+	for _, tenant := range tenants {
+		tenantIDs = append(tenantIDs, tenant.UUID)
+	}
+	services, err := db.GetManager().TenantServiceDao().GetServicesByTenantIDs(tenantIDs)
+	if err != nil {
+		logrus.Errorf("list tenants service failed: %s", err.Error())
+		return nil, util.CreateAPIHandleErrorf(500, "get enterprise[%s] service failed: %s", enterpriseID, err.Error())
+	}
+	var serviceIDs []string
+	for _, svc := range services {
+		serviceIDs = append(serviceIDs, svc.ServiceID)
+	}
+	statusList := s.statusCli.GetStatuss(strings.Join(serviceIDs, ","))
+	servicesStatus := &ServicesStatus{
+		RunningServices:   []string{},
+		UnRunningServices: []string{},
+		AbnormalServices:  []string{},
+	}
+	for service, status := range statusList {
+		switch status {
+		case typesv1.RUNNING:
+			servicesStatus.RunningServices = append(servicesStatus.RunningServices, service)
+		case typesv1.STOPPING, typesv1.CLOSED, typesv1.BUILDING, typesv1.STARTING, typesv1.UNDEPLOY, typesv1.UPGRADE:
+			servicesStatus.UnRunningServices = append(servicesStatus.UnRunningServices, service)
+		case typesv1.ABNORMAL, typesv1.BUILDEFAILURE, typesv1.SOMEABNORMAL, typesv1.UNKNOW:
+			servicesStatus.AbnormalServices = append(servicesStatus.AbnormalServices, service)
+		}
+	}
+	return servicesStatus, nil
+}
+
 //CreateTenant create tenant
 func (s *ServiceAction) CreateTenant(t *dbmodel.Tenants) error {
 	tenant, _ := db.GetManager().TenantDao().GetTenantIDByName(t.Name)
