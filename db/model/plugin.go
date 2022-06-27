@@ -44,7 +44,8 @@ type TenantPlugin struct {
 	//tenant_name Used to calculate CPU and Memory.
 	Domain string `gorm:"column:domain" json:"domain"`
 	//gitlab; github The deprecated
-	CodeFrom string `gorm:"column:code_from" json:"code_from"`
+	CodeFrom   string `gorm:"column:code_from" json:"code_from"`
+	PluginType string `gorm:"column:plugin_type" json:"plugin_type"`
 }
 
 //TableName table name

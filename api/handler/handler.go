@@ -80,7 +80,7 @@ func InitHandle(conf option.Config,
 	batchOperationHandler = CreateBatchOperationHandler(mqClient, statusCli, operationHandler)
 	defaultAppRestoreHandler = NewAppRestoreHandler()
 	defPodHandler = NewPodHandler(statusCli)
-	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace)
+	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace, conf.PrometheusEndpoint)
 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)
 	defaultEtcdHandler = NewEtcdHandler(etcdcli)
 	defaultmonitorHandler = NewMonitorHandler(prometheusCli)

@@ -24,6 +24,10 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
+const (
+	PluginTypeSys string = "sys"
+)
+
 // Plugin -
 type Plugin struct {
 	PluginID    string `json:"plugin_id" validate:"plugin_id|required"`
@@ -34,11 +38,12 @@ type Plugin struct {
 	BuildModel  string `json:"build_model" validate:"build_model"`
 	PluginModel string `json:"plugin_model" validate:"plugin_model"`
 	TenantID    string `json:"tenant_id" validate:"tenant_id"`
+	PluginType  string `json:"origin" validate:"origin"`
 }
 
 // DbModel return database model
 func (p *Plugin) DbModel(tenantID string) *dbmodel.TenantPlugin {
-	return &dbmodel.TenantPlugin{
+	tp := &dbmodel.TenantPlugin{
 		PluginID:    p.PluginID,
 		PluginName:  p.PluginName,
 		PluginInfo:  p.PluginInfo,
@@ -47,7 +52,13 @@ func (p *Plugin) DbModel(tenantID string) *dbmodel.TenantPlugin {
 		BuildModel:  p.BuildModel,
 		PluginModel: p.PluginModel,
 		TenantID:    tenantID,
+		PluginType:  p.PluginType,
 	}
+	if p.PluginType == PluginTypeSys {
+		tp.TenantID = ""
+		tp.Domain = ""
+	}
+	return tp
 }
 
 // BatchCreatePlugins -
@@ -94,6 +105,9 @@ type CreatePluginStruct struct {
 		//in: body
 		//required: false
 		TenantID string `json:"tenant_id" validate:"tenant_id"`
+
+		//插件类型
+		PluginType string `json:"origin" validate:"origin"`
 	}
 }
 
@@ -133,7 +147,7 @@ type UpdatePluginStruct struct {
 		//插件模式
 		//in: body
 		//required: false
-		PluginModel string `json:"plugin_model" validate:"plugin_model"`
+		PluginModel string `json:"origin" validate:"origin"`
 	}
 }
 

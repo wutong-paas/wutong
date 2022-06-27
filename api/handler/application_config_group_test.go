@@ -5,11 +5,11 @@ import (
 
 	"github.com/go-playground/assert/v2"
 	"github.com/golang/mock/gomock"
+	"github.com/pkg/errors"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
 	daomock "github.com/wutong-paas/wutong/db/dao"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
-	"github.com/pkg/errors"
 )
 
 func TestAddAppConfigGroup(t *testing.T) {

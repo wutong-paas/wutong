@@ -89,6 +89,11 @@ func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.
 		GitURL:      cps.Body.GitURL,
 		BuildModel:  cps.Body.BuildModel,
 		Domain:      cps.TenantName,
+		PluginType:  cps.Body.PluginType,
+	}
+	if cps.Body.PluginType == "sys" {
+		tp.TenantID = ""
+		tp.Domain = ""
 	}
 	if err := db.GetManager().TenantPluginDao().AddModel(tp); err != nil {
 		return util.CreateAPIHandleErrorFromDBError("create plugin", err)

@@ -1305,3 +1305,31 @@ func (mr *MockManagerMockRecorder) TenantServiceMonitorDaoTransactions(db interf
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMonitorDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceMonitorDaoTransactions), db)
 }
+
+// TenantServiceMonitorDao mocks base method
+func (m *MockManager) HTTPRuleRewriteDao() dao.HTTPRuleRewriteDao {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HTTPRuleRewriteDao")
+	ret0, _ := ret[0].(dao.HTTPRuleRewriteDao)
+	return ret0
+}
+
+// HTTPRuleRewriteDao indicates an expected call of HTTPRuleRewriteDao
+func  (mr *MockManagerMockRecorder) HTTPRuleRewriteDao() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMonitorDao", reflect.TypeOf((*MockManager)(nil).TenantServiceMonitorDao))
+}
+
+// HTTPRuleRewriteDaoTransactions mocks base method
+func (m *MockManager) HTTPRuleRewriteDaoTransactions(db *gorm.DB) dao.HTTPRuleRewriteDao {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HTTPRuleRewriteDaoTransactions", db)
+	ret0, _ := ret[0].(dao.HTTPRuleRewriteDao)
+	return ret0
+}
+
+// HTTPRuleRewriteDaoTransactions indicates an expected call of HTTPRuleRewriteDaoTransactions
+func (mr *MockManagerMockRecorder) HTTPRuleRewriteDaoTransactions(db interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPRuleRewriteDaoTransactions", reflect.TypeOf((*MockManager)(nil).HTTPRuleRewriteDaoTransactions), db)
+}

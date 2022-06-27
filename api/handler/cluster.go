@@ -2,13 +2,15 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
-	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/shirou/gopsutil/disk"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
@@ -30,18 +32,20 @@ type ClusterHandler interface {
 }
 
 // NewClusterHandler -
-func NewClusterHandler(clientset *kubernetes.Clientset, WtNamespace string) ClusterHandler {
+func NewClusterHandler(clientset *kubernetes.Clientset, WtNamespace, prometheusEndpoint string) ClusterHandler {
 	return &clusterAction{
-		namespace: WtNamespace,
-		clientset: clientset,
+		namespace:          WtNamespace,
+		clientset:          clientset,
+		prometheusEndpoint: prometheusEndpoint,
 	}
 }
 
 type clusterAction struct {
-	namespace        string
-	clientset        *kubernetes.Clientset
-	clusterInfoCache *model.ClusterResource
-	cacheTime        time.Time
+	namespace          string
+	clientset          *kubernetes.Clientset
+	clusterInfoCache   *model.ClusterResource
+	cacheTime          time.Time
+	prometheusEndpoint string
 }
 
 func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResource, error) {
@@ -62,6 +66,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		return nil, fmt.Errorf("[GetClusterInfo] list nodes: %v", err)
 	}
 
+	nodeCapaticyMetrics, nodeFreeStorageMetrics := c.GetNodeStorageMetrics(NodeCapacityStorageMetric), c.GetNodeStorageMetrics(NodFreeStorageMetric)
+
 	var healthCapCPU, healthCapMem, unhealthCapCPU, unhealthCapMem int64
 	usedNodeList := make([]*corev1.Node, len(nodes))
 	for i := range nodes {
@@ -75,38 +81,43 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 		healthCapCPU += node.Status.Allocatable.Cpu().Value()
 		healthCapMem += node.Status.Allocatable.Memory().Value()
-		if node.Spec.Unschedulable == false {
+		if !node.Spec.Unschedulable {
 			usedNodeList[i] = node
 		}
 	}
 
 	var healthcpuR, healthmemR, unhealthCPUR, unhealthMemR, wtMemR, wtCPUR int64
-	nodeAllocatableResourceList := make(map[string]*model.NodeResource, len(usedNodeList))
-	var maxAllocatableMemory *model.NodeResource
 	var nodeResources []*model.NodeResource
-	var totalCapacityPods, totalUsedPods int64
+	var totalCapacityPods, totalUsedPods, totalCapacityStorage, totalUsedStorage int64
+	tenantPods := make(map[string]int)
+
 	for i := range usedNodeList {
 		node := usedNodeList[i]
-
 		pods, err := c.listPods(ctx, node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("list pods: %v", err)
 		}
 
-		nodeAllocatableResource := model.NewResource(node.Status.Allocatable)
 		nodeResource := model.NewNodeResource(node.Name, node.Status)
+		if ip, ok := internalIPFromNode(node); ok {
+			rawCapacity, rawFree := nodeCapaticyMetrics[ip], nodeFreeStorageMetrics[ip]
+			if rawCapacity != 0 {
+				capacity := rawCapacity / 1024 / 1024 / 1024
+				totalCapacityStorage += capacity
+				nodeResource.CapacityStorage = capacity
+				if rawFree != 0 {
+					usedStorage := (rawCapacity - rawFree) / 1024 / 1024 / 1024
+					nodeResource.UsedStorage = usedStorage
+					totalUsedStorage += usedStorage
+				}
+			}
+		}
 		totalCapacityPods += nodeResource.CapacityPods
 		for _, pod := range pods {
 			nodeResource.UsedPods++
-			nodeAllocatableResource.AllowedPodNumber--
 			for _, c := range pod.Spec.Containers {
-				nodeAllocatableResource.Memory -= c.Resources.Requests.Memory().Value()
-				nodeAllocatableResource.MilliCPU -= c.Resources.Requests.Cpu().MilliValue()
-				nodeAllocatableResource.EphemeralStorage -= c.Resources.Requests.StorageEphemeral().Value()
-
 				nodeResource.RawUsedCPU += c.Resources.Requests.Cpu().MilliValue()
 				nodeResource.RawUsedMem += c.Resources.Requests.Memory().Value()
-				nodeResource.RawUsedStorage += c.Resources.Requests.StorageEphemeral().Value()
 				if isNodeReady(node) {
 					healthcpuR += c.Resources.Requests.Cpu().MilliValue()
 					healthmemR += c.Resources.Requests.Memory().Value()
@@ -118,58 +129,40 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 					wtMemR += c.Resources.Requests.Memory().Value()
 					wtCPUR += c.Resources.Requests.Cpu().MilliValue()
 				}
+				if pod.Labels["tenant_id"] != "" {
+					tenantPods[pod.Labels["tenant_id"]]++
+				}
 			}
 		}
-		nodeAllocatableResourceList[node.Name] = nodeAllocatableResource
 
 		nodeResource.UsedCPU = nodeResource.RawUsedCPU / 1000
 		nodeResource.UsedMem = nodeResource.RawUsedMem / 1024 / 1024
-		nodeResource.UsedStorage = nodeResource.RawUsedStorage / 1024 / 1024
 		nodeResources = append(nodeResources, nodeResource)
 		totalUsedPods += nodeResource.UsedPods
-
-		// Gets the node resource with the maximum remaining scheduling memory
-		if maxAllocatableMemory == nil {
-			maxAllocatableMemory = nodeAllocatableResource
-		} else {
-			if nodeAllocatableResource.Memory > maxAllocatableMemory.Memory {
-				maxAllocatableMemory = nodeAllocatableResource
-			}
-		}
-	}
-
-	var diskstauts *disk.UsageStat
-	if runtime.GOOS != "windows" {
-		diskstauts, _ = disk.Usage("/wtdata")
-	} else {
-		diskstauts, _ = disk.Usage(`z:\\`)
-	}
-	var diskCap, reqDisk uint64
-	if diskstauts != nil {
-		diskCap = diskstauts.Total
-		reqDisk = diskstauts.Used
 	}
 
 	result := &model.ClusterResource{
-		CapCPU:                           int(healthCapCPU + unhealthCapCPU),
-		CapMem:                           int(healthCapMem+unhealthCapMem) / 1024 / 1024,
-		HealthCapCPU:                     int(healthCapCPU),
-		HealthCapMem:                     int(healthCapMem) / 1024 / 1024,
-		UnhealthCapCPU:                   int(unhealthCapCPU),
-		UnhealthCapMem:                   int(unhealthCapMem) / 1024 / 1024,
-		ReqCPU:                           float32(healthcpuR+unhealthCPUR) / 1000,
-		ReqMem:                           int(healthmemR+unhealthMemR) / 1024 / 1024,
-		WutongReqCPU:                     float32(wtCPUR) / 1000,
-		WutongReqMem:                     int(wtMemR) / 1024 / 1024,
-		HealthReqCPU:                     float32(healthcpuR) / 1000,
-		HealthReqMem:                     int(healthmemR) / 1024 / 1024,
-		UnhealthReqCPU:                   float32(unhealthCPUR) / 1000,
-		UnhealthReqMem:                   int(unhealthMemR) / 1024 / 1024,
-		ComputeNode:                      len(nodes),
-		CapDisk:                          diskCap,
-		ReqDisk:                          reqDisk,
-		MaxAllocatableMemoryNodeResource: maxAllocatableMemory,
-		NodeResources:                    nodeResources,
+		CapCPU:               int(healthCapCPU + unhealthCapCPU),
+		CapMem:               int(healthCapMem+unhealthCapMem) / 1024 / 1024,
+		HealthCapCPU:         int(healthCapCPU),
+		HealthCapMem:         int(healthCapMem) / 1024 / 1024,
+		UnhealthCapCPU:       int(unhealthCapCPU),
+		UnhealthCapMem:       int(unhealthCapMem) / 1024 / 1024,
+		ReqCPU:               float32(healthcpuR+unhealthCPUR) / 1000,
+		ReqMem:               int(healthmemR+unhealthMemR) / 1024 / 1024,
+		WutongReqCPU:         float32(wtCPUR) / 1000,
+		WutongReqMem:         int(wtMemR) / 1024 / 1024,
+		HealthReqCPU:         float32(healthcpuR) / 1000,
+		HealthReqMem:         int(healthmemR) / 1024 / 1024,
+		UnhealthReqCPU:       float32(unhealthCPUR) / 1000,
+		UnhealthReqMem:       int(unhealthMemR) / 1024 / 1024,
+		ComputeNode:          len(nodes),
+		TotalCapacityPods:    totalCapacityPods,
+		TotalUsedPods:        totalUsedPods,
+		TotalCapacityStorage: totalCapacityStorage,
+		TotalUsedStorage:     totalUsedStorage,
+		NodeResources:        nodeResources,
+		TenantPods:           tenantPods,
 	}
 
 	result.AllNode = len(nodes)
@@ -181,6 +174,17 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	c.clusterInfoCache = result
 	c.cacheTime = time.Now()
 	return result, nil
+}
+
+func internalIPFromNode(node *corev1.Node) (string, bool) {
+	if len(node.Status.Addresses) > 0 {
+		for _, address := range node.Status.Addresses {
+			if address.Type == corev1.NodeInternalIP {
+				return address.Address, true
+			}
+		}
+	}
+	return "", false
 }
 
 func (c *clusterAction) listNodes(ctx context.Context) ([]*corev1.Node, error) {
@@ -347,4 +351,80 @@ func (c *clusterAction) MavenSettingDetail(ctx context.Context, name string) (*M
 		UpdateTime: sm.Annotations["updateTime"],
 		Content:    sm.Data["mavensetting"],
 	}, nil
+}
+
+type NodeStorageMetric struct {
+	NodeName        string
+	CapacityStorage int64
+	UsedStorage     int64
+}
+
+type NodeStorageMetricsResponse struct {
+	Status string                         `json:"status"`
+	Data   NodeStorageMetricsResponseData `json:"data"`
+}
+
+type NodeStorageMetricsResponseData struct {
+	Result []NodeStorageMetricsResponseDataResult `json:"result"`
+}
+
+type NodeStorageMetricsResponseDataResult struct {
+	Metric NodeStorageMetricsResponseDataResultMetric `json:"metric"`
+	Value  []interface{}                              `json:"value"`
+}
+
+type NodeStorageMetricsResponseDataResultMetric struct {
+	Instance   string `json:"instance"`
+	Mountpoint string `json:"mountpoint"`
+}
+
+const (
+	NodeCapacityStorageMetric = "node_filesystem_size_bytes"
+	NodFreeStorageMetric      = "node_filesystem_free_bytes"
+)
+
+func (c *clusterAction) GetNodeStorageMetrics(metricName string) map[string]int64 {
+	url := fmt.Sprintf("http://%s/api/v1/query?query=%s&time=%d", c.prometheusEndpoint, metricName, time.Now().Unix())
+	method := "GET"
+
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	var metricsResp NodeStorageMetricsResponse
+	err = json.Unmarshal(body, &metricsResp)
+	if err != nil {
+		return nil
+	}
+
+	storageMetrics := make(map[string]int64)
+
+	for _, result := range metricsResp.Data.Result {
+		if result.Metric.Mountpoint == "/" && len(result.Value) == 2 {
+			storage, err := strconv.ParseInt(result.Value[1].(string), 10, 64)
+			if err != nil {
+				continue
+			}
+			if ip := strings.Split(result.Metric.Instance, ":"); len(ip) == 2 {
+				storageMetrics[ip[0]] = storage
+			}
+		}
+	}
+
+	return storageMetrics
 }
