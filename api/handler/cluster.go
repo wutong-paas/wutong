@@ -68,19 +68,19 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	nodeCapaticyMetrics, nodeFreeStorageMetrics := c.GetNodeStorageMetrics(NodeCapacityStorageMetric), c.GetNodeStorageMetrics(NodFreeStorageMetric)
 
-	var healthCapCPU, healthCapMem, unhealthCapCPU, unhealthCapMem int64
+	var healthCapCPU, healthCapMem, unhealthCapCPU, unhealthCapMem float32
 	usedNodeList := make([]*corev1.Node, len(nodes))
 	for i := range nodes {
 		node := nodes[i]
 		if !isNodeReady(node) {
 			logrus.Debugf("[GetClusterInfo] node(%s) not ready", node.GetName())
-			unhealthCapCPU += node.Status.Allocatable.Cpu().Value()
-			unhealthCapMem += node.Status.Allocatable.Memory().Value()
+			unhealthCapCPU += float32(node.Status.Allocatable.Cpu().Value())
+			unhealthCapMem += float32(node.Status.Allocatable.Memory().Value())
 			continue
 		}
 
-		healthCapCPU += node.Status.Allocatable.Cpu().Value()
-		healthCapMem += node.Status.Allocatable.Memory().Value()
+		healthCapCPU += float32(node.Status.Allocatable.Cpu().Value())
+		healthCapMem += float32(node.Status.Allocatable.Memory().Value())
 		if !node.Spec.Unschedulable {
 			usedNodeList[i] = node
 		}
@@ -88,7 +88,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	var healthcpuR, healthmemR, unhealthCPUR, unhealthMemR, wtMemR, wtCPUR int64
 	var nodeResources []*model.NodeResource
-	var totalCapacityPods, totalUsedPods, totalCapacityStorage, totalUsedStorage int64
+	var totalCapacityPods, totalUsedPods int64
+	var totalCapacityStorage, totalUsedStorage float32
 	tenantPods := make(map[string]int)
 
 	for i := range usedNodeList {
@@ -104,63 +105,65 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 			if rawCapacity != 0 {
 				capacity := rawCapacity / 1024 / 1024 / 1024
 				totalCapacityStorage += capacity
-				nodeResource.CapacityStorage = capacity
+				nodeResource.CapacityStorage = util.DecimalFromFloat32(capacity)
 				if rawFree != 0 {
 					usedStorage := (rawCapacity - rawFree) / 1024 / 1024 / 1024
-					nodeResource.UsedStorage = usedStorage
+					nodeResource.UsedStorage = util.DecimalFromFloat32(usedStorage)
 					totalUsedStorage += usedStorage
 				}
 			}
 		}
 		totalCapacityPods += nodeResource.CapacityPods
 		for _, pod := range pods {
-			nodeResource.UsedPods++
-			for _, c := range pod.Spec.Containers {
-				nodeResource.RawUsedCPU += c.Resources.Requests.Cpu().MilliValue()
-				nodeResource.RawUsedMem += c.Resources.Requests.Memory().Value()
-				if isNodeReady(node) {
-					healthcpuR += c.Resources.Requests.Cpu().MilliValue()
-					healthmemR += c.Resources.Requests.Memory().Value()
-				} else {
-					unhealthCPUR += c.Resources.Requests.Cpu().MilliValue()
-					unhealthMemR += c.Resources.Requests.Memory().Value()
-				}
-				if pod.Labels["creator"] == "Wutong" {
-					wtMemR += c.Resources.Requests.Memory().Value()
-					wtCPUR += c.Resources.Requests.Cpu().MilliValue()
-				}
-				if pod.Labels["tenant_id"] != "" {
-					tenantPods[pod.Labels["tenant_id"]]++
+			if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
+				nodeResource.UsedPods++
+				for _, c := range pod.Spec.Containers {
+					nodeResource.RawUsedCPU += float32(c.Resources.Requests.Cpu().MilliValue())
+					nodeResource.RawUsedMem += float32(c.Resources.Requests.Memory().Value())
+					if isNodeReady(node) {
+						healthcpuR += c.Resources.Requests.Cpu().MilliValue()
+						healthmemR += c.Resources.Requests.Memory().Value()
+					} else {
+						unhealthCPUR += c.Resources.Requests.Cpu().MilliValue()
+						unhealthMemR += c.Resources.Requests.Memory().Value()
+					}
+					if pod.Labels["creator"] == "Wutong" {
+						wtMemR += c.Resources.Requests.Memory().Value()
+						wtCPUR += c.Resources.Requests.Cpu().MilliValue()
+					}
+					if pod.Labels["tenant_id"] != "" {
+						tenantPods[pod.Labels["tenant_id"]]++
+					}
 				}
 			}
 		}
 
-		nodeResource.UsedCPU = nodeResource.RawUsedCPU / 1000
-		nodeResource.UsedMem = nodeResource.RawUsedMem / 1024 / 1024
+		nodeResource.UsedCPU = util.DecimalFromFloat32(nodeResource.RawUsedCPU / 1000)
+		nodeResource.UsedMem = util.DecimalFromFloat32(nodeResource.RawUsedMem / 1024 / 1024 / 1024)
 		nodeResources = append(nodeResources, nodeResource)
 		totalUsedPods += nodeResource.UsedPods
 	}
 
 	result := &model.ClusterResource{
-		CapCPU:               int(healthCapCPU + unhealthCapCPU),
-		CapMem:               int(healthCapMem+unhealthCapMem) / 1024 / 1024,
-		HealthCapCPU:         int(healthCapCPU),
-		HealthCapMem:         int(healthCapMem) / 1024 / 1024,
-		UnhealthCapCPU:       int(unhealthCapCPU),
-		UnhealthCapMem:       int(unhealthCapMem) / 1024 / 1024,
-		ReqCPU:               float32(healthcpuR+unhealthCPUR) / 1000,
-		ReqMem:               int(healthmemR+unhealthMemR) / 1024 / 1024,
-		WutongReqCPU:         float32(wtCPUR) / 1000,
-		WutongReqMem:         int(wtMemR) / 1024 / 1024,
-		HealthReqCPU:         float32(healthcpuR) / 1000,
-		HealthReqMem:         int(healthmemR) / 1024 / 1024,
-		UnhealthReqCPU:       float32(unhealthCPUR) / 1000,
-		UnhealthReqMem:       int(unhealthMemR) / 1024 / 1024,
+		CapCPU:               util.DecimalFromFloat32(healthCapCPU + unhealthCapCPU),
+		CapMem:               util.DecimalFromFloat32((healthCapMem + unhealthCapMem) / 1024 / 1024 / 1024),
+		HealthCapCPU:         util.DecimalFromFloat32(healthCapCPU),
+		HealthCapMem:         util.DecimalFromFloat32(healthCapMem / 1024 / 1024 / 1024),
+		UnhealthCapCPU:       util.DecimalFromFloat32(unhealthCapCPU),
+		UnhealthCapMem:       util.DecimalFromFloat32(unhealthCapMem / 1024 / 1024 / 1024),
+		ReqCPU:               util.DecimalFromFloat32(float32((healthcpuR + unhealthCPUR) / 1000)),
+		ReqMem:               util.DecimalFromFloat32(float32((healthmemR + unhealthMemR) / 1024 / 1024 / 1024)),
+		WutongReqCPU:         util.DecimalFromFloat32(float32(wtCPUR / 1000)),
+		WutongReqMem:         util.DecimalFromFloat32(float32(wtMemR / 1024 / 1024 / 1024)),
+		HealthReqCPU:         util.DecimalFromFloat32(float32(healthcpuR / 1000)),
+		HealthReqMem:         util.DecimalFromFloat32(float32(healthmemR / 1024 / 1024 / 1024)),
+		UnhealthReqCPU:       util.DecimalFromFloat32(float32(unhealthCPUR / 1000)),
+		UnhealthReqMem:       util.DecimalFromFloat32(float32(unhealthMemR / 1024 / 1024 / 1024)),
 		ComputeNode:          len(nodes),
 		TotalCapacityPods:    totalCapacityPods,
 		TotalUsedPods:        totalUsedPods,
-		TotalCapacityStorage: totalCapacityStorage,
-		TotalUsedStorage:     totalUsedStorage,
+		TotalCapacityStorage: util.DecimalFromFloat32(totalCapacityStorage),
+		TotalUsedStorage:     util.DecimalFromFloat32(totalUsedStorage),
 		NodeResources:        nodeResources,
 		TenantPods:           tenantPods,
 	}
@@ -383,7 +386,7 @@ const (
 	NodFreeStorageMetric      = "node_filesystem_free_bytes"
 )
 
-func (c *clusterAction) GetNodeStorageMetrics(metricName string) map[string]int64 {
+func (c *clusterAction) GetNodeStorageMetrics(metricName string) map[string]float32 {
 	url := fmt.Sprintf("http://%s/api/v1/query?query=%s&time=%d", c.prometheusEndpoint, metricName, time.Now().Unix())
 	method := "GET"
 
@@ -412,16 +415,16 @@ func (c *clusterAction) GetNodeStorageMetrics(metricName string) map[string]int6
 		return nil
 	}
 
-	storageMetrics := make(map[string]int64)
+	storageMetrics := make(map[string]float32)
 
 	for _, result := range metricsResp.Data.Result {
 		if result.Metric.Mountpoint == "/" && len(result.Value) == 2 {
-			storage, err := strconv.ParseInt(result.Value[1].(string), 10, 64)
+			storage, err := strconv.ParseFloat(result.Value[1].(string), 32)
 			if err != nil {
 				continue
 			}
 			if ip := strings.Split(result.Metric.Instance, ":"); len(ip) == 2 {
-				storageMetrics[ip[0]] = storage
+				storageMetrics[ip[0]] = float32(storage)
 			}
 		}
 	}

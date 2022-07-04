@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/wutong-paas/wutong/builder/build"
 	"github.com/wutong-paas/wutong/event"
 	"golang.org/x/net/context"
 
@@ -45,10 +46,11 @@ func TestImageName(t *testing.T) {
 func TestBuildImage(t *testing.T) {
 	dc, _ := client.NewEnvClient()
 	buildOptions := types.ImageBuildOptions{
-		Tags:   []string{"java:test"},
-		Remove: true,
+		Tags:        []string{"java:test"},
+		Remove:      true,
+		NetworkMode: build.ImageBuildHostNetworkMode,
 	}
-	if _, err := ImageBuild(dc, "/Users/barnett/coding/java/Demo-RestAPI-Servlet2", buildOptions, nil, 20); err != nil {
+	if err := ImageBuild(dc, "/Users/barnett/coding/java/Demo-RestAPI-Servlet2", buildOptions, nil, 20); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -68,6 +68,9 @@ var ImageMediumType MediumType = "image"
 //SlugMediumType slug type
 var SlugMediumType MediumType = "slug"
 
+// ImageBuildHostNetworkMode
+var ImageBuildHostNetworkMode = "host"
+
 //Response build result
 type Response struct {
 	MediumPath string
