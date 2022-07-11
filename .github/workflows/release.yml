@@ -27,4 +27,6 @@ jobs:
       - name: Build the Docker image
         env:
           VERSION: v1.0.0-stable
-        run: ./release.sh all push
+        run: |
+          go mod vendor
+          ./release.sh all push
