@@ -93,6 +93,8 @@ func InitJobController(wtNamespace string, stop chan struct{}, kubeClient kubern
 				}
 				if terminated != nil && terminated.ExitCode > 0 {
 					if val, exist := jobController.subJobStatus.Load(job.Name); exist {
+						logrus.Errorln("xxxxxxxxxx:")
+						logrus.Errorln(buildContainer.State.Waiting.Message)
 						logrus.Infof("job[%s] container exit %d and failed", job.Name, terminated.ExitCode)
 						ch := val.(*channels.RingChannel)
 						ch.In() <- "failed"
@@ -100,6 +102,8 @@ func InitJobController(wtNamespace string, stop chan struct{}, kubeClient kubern
 				}
 				waiting := buildContainer.State.Waiting
 				if waiting != nil && waiting.Reason == "CrashLoopBackOff" {
+					logrus.Errorln("xxxxxxxxxx2:")
+					logrus.Errorln(buildContainer.State.Waiting.Message)
 					logrus.Infof("job %s container status is waiting and reason is CrashLoopBackOff", job.Name)
 					if val, exist := jobController.subJobStatus.Load(job.Name); exist {
 						ch := val.(*channels.RingChannel)

@@ -39,6 +39,7 @@ import (
 	"github.com/wutong-paas/wutong/util/envutil"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/appm/volume"
+	workerutil "github.com/wutong-paas/wutong/worker/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -153,7 +154,7 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 	}
 
 	c := &corev1.Container{
-		Name:           as.K8sComponentName,
+		Name:           workerutil.ContainerNameFrom(as.K8sComponentName),
 		Image:          imagename,
 		Args:           args,
 		Ports:          ports,

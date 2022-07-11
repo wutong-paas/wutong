@@ -36,6 +36,7 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/util"
 	typesv1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	workerutil "github.com/wutong-paas/wutong/worker/util"
 )
 
 //TenantServicePlugin conv service all plugin
@@ -210,7 +211,7 @@ func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, en
 	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 
 	container := v1.Container{
-		Name:      "default-tcpmesh-" + as.GetK8sWorkloadName(),
+		Name:      workerutil.ContainerNameFrom("default-tcpmesh-" + as.GetK8sWorkloadName()),
 		Env:       envs,
 		Image:     typesv1.GetOnlineTCPMeshImageName(),
 		Resources: createTCPUDPMeshRecources(as),
@@ -263,7 +264,7 @@ func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias
 	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 
 	return v1.Container{
-		Name:      "probe-mesh-" + as.GetK8sWorkloadName(),
+		Name:      workerutil.ContainerNameFrom("probe-mesh-" + as.GetK8sWorkloadName()),
 		Env:       envs,
 		Image:     typesv1.GetOnlineProbeMeshImageName(),
 		Resources: createTCPUDPMeshRecources(as),

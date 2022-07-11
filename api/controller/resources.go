@@ -61,6 +61,7 @@ type V2Routes struct {
 	PodController
 	ApplicationController
 	HelmAppsController
+	RegistryAuthSecretStruct
 }
 
 //Show test

@@ -424,6 +424,7 @@ type loggerWriter struct {
 	step        string
 	level       string
 	fmt         map[string]interface{}
+	tmp         []byte
 	lastMessage string
 }
 
@@ -432,10 +433,25 @@ func (l *loggerWriter) SetFormat(f map[string]interface{}) {
 }
 func (l *loggerWriter) Write(b []byte) (n int, err error) {
 	if len(b) > 0 {
-		message := string(b)
-		if len(strings.TrimRight(message, "\n")) == 0 {
+
+		if !strings.HasSuffix(string(b), "\n") {
+			l.tmp = append(l.tmp, b...)
 			return len(b), nil
 		}
+
+		// message := string(b)
+		// if len(strings.TrimRight(message, "\n")) == 0 {
+		// 	return len(b), nil
+		// }
+
+		var message string
+		if len(l.tmp) > 0 {
+			message = string(append(l.tmp, b...))
+			l.tmp = l.tmp[:0]
+		} else {
+			message = string(b)
+		}
+
 		// if loggerWriter has format, and then use it format message
 		if len(l.fmt) > 0 {
 			newLineMap := make(map[string]interface{}, len(l.fmt))

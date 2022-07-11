@@ -272,7 +272,7 @@ func (i *SourceCodeBuildItem) getHostAlias() (hostAliasList []build.HostAlias, e
 		logrus.Errorf("do not found ep by name: %s in namespace: %s", i.WtRepoName, i.Namespace)
 		return nil, err
 	}
-	hostNames := []string{"maven.wutong.me", "lang.wutong.me"}
+	hostNames := []string{"maven.goodrain.me", "lang.goodrain.me"}
 	for _, subset := range endpoints.Subsets {
 		for _, addr := range subset.Addresses {
 			hostAliasList = append(hostAliasList, build.HostAlias{IP: addr.IP, Hostnames: hostNames})

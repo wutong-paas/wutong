@@ -223,3 +223,8 @@ type HelmAppsInterface interface {
 	ListHelmAppResources(w http.ResponseWriter, r *http.Request)
 	ListHelmApps(w http.ResponseWriter, r *http.Request)
 }
+
+//RegistryAuthSecretInterface registry auth secret interface
+type RegistryAuthSecretInterface interface {
+	RegistryAuthSecret(w http.ResponseWriter, r *http.Request)
+}

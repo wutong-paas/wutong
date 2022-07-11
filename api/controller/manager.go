@@ -50,6 +50,7 @@ type V2Manager interface {
 	api.PodInterface
 	api.ApplicationInterface
 	api.HelmAppsInterface
+	api.RegistryAuthSecretInterface
 }
 
 var defaultV2Manager V2Manager
