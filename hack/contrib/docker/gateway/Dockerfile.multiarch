@@ -16,7 +16,7 @@ COPY --from=wt-all /output/bin/wutong-gateway /run/wutong-gateway
 
 RUN set -eux; \
     if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
-        wget https://wutong-paas-public.obs.cn-east-3.myhuaweicloud.com/arm/1.0/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
+        wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
     fi
 
 ENV NGINX_CONFIG_TMPL=/run/nginxtmp
