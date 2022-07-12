@@ -209,7 +209,6 @@ func Proxy(next http.Handler) http.Handler {
 			if len(paths) > 3 {
 				serviceID := paths[3]
 				proxy := handler.GetDbgateProxy(serviceID)
-				r.URL.Path = strings.Replace(r.URL.Path, "/console/dbgate/"+serviceID, "", 1)
 				proxy.Proxy(w, r)
 				return
 			}
