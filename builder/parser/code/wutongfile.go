@@ -51,12 +51,16 @@ type Port struct {
 	Protocol string `yaml:"protocol"`
 }
 
-//ReadWutongFile 读取云帮代码配置
+//ReadWutongFile
 func ReadWutongFile(homepath string) (*WutongFileConfig, error) {
-	if ok, _ := util.FileExists(path.Join(homepath, "wutongfile")); !ok {
-		return nil, ErrWutongFileNotFound
+	filename := "wutongfile"
+	if ok, _ := util.FileExists(path.Join(homepath, filename)); !ok {
+		filename = "rainbondfile"
+		if ok, _ := util.FileExists(path.Join(homepath, filename)); !ok {
+			return nil, ErrWutongFileNotFound
+		}
 	}
-	body, err := ioutil.ReadFile(path.Join(homepath, "wutongfile"))
+	body, err := ioutil.ReadFile(path.Join(homepath, filename))
 	if err != nil {
 		logrus.Error("read wutong file error,", err.Error())
 		return nil, fmt.Errorf("read wutong file error")

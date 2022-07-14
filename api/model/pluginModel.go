@@ -352,6 +352,10 @@ func (b BuildPluginReq) DbModel(plugin *dbmodel.TenantPlugin) *dbmodel.TenantPlu
 	if b.PluginMemory == 0 {
 		buildVersion.ContainerMemory = 50
 	}
+	if plugin.PluginType == PluginTypeSys {
+		buildVersion.BuildLocalImage = plugin.ImageURL
+		buildVersion.Status = "complete"
+	}
 	return buildVersion
 }
 

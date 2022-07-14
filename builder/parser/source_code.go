@@ -272,7 +272,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 	wtfileConfig, err := code.ReadWutongFile(buildInfo.GetCodeBuildAbsPath())
 	if err != nil {
 		if err != code.ErrWutongFileNotFound {
-			d.errappend(ErrorAndSolve(NegligibleError, "wutongfile定义格式有误", "可以参考文档说明配置此文件定义应用属性"))
+			d.errappend(ErrorAndSolve(NegligibleError, "wutongfile/rainbondfile 定义格式有误", "可以参考文档说明配置此文件定义应用属性"))
 		}
 	}
 	//判断对象目录

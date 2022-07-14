@@ -59,12 +59,19 @@ func (e *exectorManager) pluginImageBuild(task *pb.TaskMessage) {
 		logrus.Errorf("get version error, %v", err)
 		return
 	}
-	version.Status = "failure"
-	if err := db.GetManager().TenantPluginBuildVersionDao().UpdateModel(version); err != nil {
-		logrus.Errorf("update version error, %v", err)
+	tenantPlugin, err := db.GetManager().TenantPluginDao().GetPluginByID(tb.PluginID, tb.TenantID)
+	if err != nil {
+		logrus.Errorf("get plugin error, %v", err)
+		return
+	}
+	if tenantPlugin.PluginType != "sys" {
+		version.Status = "failure"
+		if err := db.GetManager().TenantPluginBuildVersionDao().UpdateModel(version); err != nil {
+			logrus.Errorf("update version error, %v", err)
+		}
 	}
 	MetricErrorTaskNum++
-	logger.Info("镜像构建插件任务执行失败", map[string]string{"step": "callback", "status": "failure"})
+	logger.Error("镜像构建插件任务执行失败", map[string]string{"step": "callback", "status": "failure"})
 }
 
 func (e *exectorManager) run(t *model.BuildPluginTaskBody, logger event.Logger) error {

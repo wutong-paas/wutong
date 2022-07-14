@@ -333,11 +333,17 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 		Info:            b.Body.Info,
 		Status:          "building",
 	}
+
+	if plugin.PluginType == api_model.PluginTypeSys {
+		pbv.BuildLocalImage = plugin.ImageURL
+		pbv.Status = "complete"
+	}
+
 	if b.Body.PluginCPU < 0 {
 		pbv.ContainerCPU = 125
 	}
 	if b.Body.PluginMemory < 0 {
-		pbv.ContainerMemory = 50
+		pbv.ContainerMemory = 64
 	}
 	if err := db.GetManager().TenantPluginBuildVersionDao().AddModel(pbv); err != nil {
 		if !strings.Contains(err.Error(), "exist") {
@@ -377,7 +383,9 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 		Topic:    client.BuilderTopic,
 	})
 	if err != nil {
-		updateVersion()
+		if plugin.PluginType != api_model.PluginTypeSys {
+			updateVersion()
+		}
 		logrus.Errorf("equque mq error, %v", err)
 		return nil, err
 	}
@@ -432,7 +440,9 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 		})
 		pluginBuildVersion := buildReq.DbModel(reqPluginRel[buildReq.PluginID])
 		if err != nil {
-			pluginBuildVersion.Status = "failure"
+			if reqPluginRel[buildReq.PluginID].PluginType != api_model.PluginTypeSys {
+				pluginBuildVersion.Status = "failure"
+			}
 			errPluginIDs = append(errPluginIDs, reqPluginRel[buildReq.PluginID].PluginID)
 			logrus.Errorf("equque mq error, %v", err)
 			logger.Error("构建插件任务发送失败 "+err.Error(), map[string]string{"step": "callback", "status": "failure"})
