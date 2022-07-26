@@ -44,6 +44,18 @@ func (t *ClusterController) GetClusterInfo(w http.ResponseWriter, r *http.Reques
 	httputil.ReturnSuccess(r, w, nodes)
 }
 
+// GetClusterEvents
+func (t *ClusterController) GetClusterEvents(w http.ResponseWriter, r *http.Request) {
+	events, err := handler.GetClusterHandler().GetClusterEvents(r.Context())
+	if err != nil {
+		logrus.Errorf("get cluster events: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, events)
+}
+
 //MavenSettingList maven setting list
 func (t *ClusterController) MavenSettingList(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, handler.GetClusterHandler().MavenSettingList(r.Context()))
