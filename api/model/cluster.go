@@ -1,10 +1,15 @@
 package model
 
 import (
+	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/wutong-paas/wutong/db"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 //ClusterResource -
@@ -32,6 +37,122 @@ type ClusterResource struct {
 	TotalUsedStorage     float32         `json:"total_used_storage"`
 	NodeResources        []*NodeResource `json:"node_resources"`
 	TenantPods           map[string]int  `json:"tenant_pods"`
+}
+
+type ClusterEventLevel string
+
+func (l ClusterEventLevel) String() string {
+	return string(l)
+}
+
+const (
+	ClusterEventLevelNormal  ClusterEventLevel = "Normal"
+	ClusterEventLevelGeneral ClusterEventLevel = "General"
+	ClusterEventLevelWarning ClusterEventLevel = "Warning"
+	ClusterEventLevelFatal   ClusterEventLevel = "Urgent"
+)
+
+// ClusterEvent
+type ClusterEvent struct {
+	Level   ClusterEventLevel `json:"level"`
+	Message string            `json:"message"`
+}
+
+func ClusterEventFrom(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
+	if event.Type == ClusterEventLevelNormal.String() {
+		return nil
+	}
+
+	switch event.InvolvedObject.Kind {
+	case "Pod":
+		return podEvent(event, clientset)
+	case "Node":
+		return nodeEvent(event, clientset)
+	}
+	return nil
+}
+
+func podInfo(pod *corev1.Pod) (string, bool) {
+	tenantID, ok := pod.Labels["tenant_id"]
+	if !ok {
+		return "", false
+	}
+	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+	if err != nil {
+		return "", false
+	}
+	serviceID, ok := pod.Labels["service_id"]
+	if !ok {
+		return "", false
+	}
+	servie, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+	if err != nil {
+		return "", false
+	}
+	return fmt.Sprintf("%s/%s", tenant.Name, servie.K8sComponentName), true
+}
+
+func podEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
+	pod, err := clientset.CoreV1().Pods(event.InvolvedObject.Namespace).Get(context.TODO(), event.InvolvedObject.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil
+	}
+	podInfo, ok := podInfo(pod)
+	if !ok {
+		return nil
+	}
+	var message string
+	switch event.Reason {
+	case "FailedKillPod":
+		message = fmt.Sprintf("容器[%s]退出失败", podInfo)
+	case "BackOff":
+		message = fmt.Sprintf("容器[%s]意外退出", podInfo)
+	case "FailedMount":
+		message = fmt.Sprintf("容器[%s]挂载错误：", podInfo)
+	case "Unhealthy":
+		message = fmt.Sprintf("容器[%s]未通过健康检查", podInfo)
+	case "FailedScheduling":
+		message = fmt.Sprintf("容器[%s]调度失败", podInfo)
+	default:
+		return nil
+	}
+	return &ClusterEvent{
+		Level:   ClusterEventLevelWarning,
+		Message: message,
+	}
+}
+
+func nodeEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
+	var message string
+	if strings.Contains(event.Reason, "bind: address already in use") {
+		reasonParts := strings.Split(event.Reason, ":")
+		if len(reasonParts) < 4 {
+			return nil
+		}
+		if _, err := strconv.Atoi(reasonParts[1]); err != nil {
+			return nil
+		}
+		message = fmt.Sprintf("节点[%s]端口[:%s]已被占用", event.InvolvedObject.Name, reasonParts[1])
+		return &ClusterEvent{
+			Level:   ClusterEventLevelWarning,
+			Message: message,
+		}
+	}
+
+	switch event.Reason {
+	case "NodeHasInsufficientMemory":
+		message = fmt.Sprintf("节点[%s]内存不足", event.InvolvedObject.Name)
+	case "NodeHasDiskPressure":
+		message = fmt.Sprintf("节点[%s]磁盘不足", event.InvolvedObject.Name)
+	case "NodeHasInsufficientPID":
+		message = fmt.Sprintf("节点[%s]PID不足", event.InvolvedObject.Name)
+	default:
+		return nil
+	}
+	return &ClusterEvent{
+		Level:   ClusterEventLevelWarning,
+		Message: message,
+	}
 }
 
 // NodeResource is a collection of compute resource.

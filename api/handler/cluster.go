@@ -24,6 +24,7 @@ import (
 // ClusterHandler -
 type ClusterHandler interface {
 	GetClusterInfo(ctx context.Context) (*model.ClusterResource, error)
+	GetClusterEvents(ctx context.Context) ([]model.ClusterEvent, error)
 	MavenSettingAdd(ctx context.Context, ms *MavenSetting) *util.APIHandleError
 	MavenSettingList(ctx context.Context) (re []MavenSetting)
 	MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *util.APIHandleError
@@ -430,4 +431,36 @@ func (c *clusterAction) GetNodeStorageMetrics(metricName string) map[string]floa
 	}
 
 	return storageMetrics
+}
+
+type clusterEventsCache struct {
+	cacheTime time.Time
+	cacheData []model.ClusterEvent
+}
+
+var cachedClusterEvents *clusterEventsCache
+
+func (c *clusterAction) GetClusterEvents(ctx context.Context) ([]model.ClusterEvent, error) {
+	events, err := c.clientset.CoreV1().Events("").List(ctx, metav1.ListOptions{
+		FieldSelector: "type=Warning",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if cachedClusterEvents == nil || time.Since(cachedClusterEvents.cacheTime) > time.Minute*10 {
+		clusterEvents := make([]model.ClusterEvent, 0)
+		for _, event := range events.Items {
+			clusterEvent := model.ClusterEventFrom(&event, c.clientset)
+			if clusterEvent == nil {
+				continue
+			}
+			clusterEvents = append(clusterEvents, *clusterEvent)
+		}
+		cachedClusterEvents = &clusterEventsCache{
+			cacheTime: time.Now(),
+			cacheData: clusterEvents,
+		}
+	}
+	return cachedClusterEvents.cacheData, nil
 }
