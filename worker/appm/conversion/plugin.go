@@ -211,7 +211,7 @@ func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, en
 	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 
 	container := v1.Container{
-		Name:      workerutil.ContainerNameFrom("default-tcpmesh-" + as.GetK8sWorkloadName()),
+		Name:      workerutil.KeepMaxLength("default-tcpmesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
 		Image:     typesv1.GetOnlineTCPMeshImageName(),
 		Resources: createTCPUDPMeshRecources(as),
@@ -264,7 +264,7 @@ func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias
 	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 
 	return v1.Container{
-		Name:      workerutil.ContainerNameFrom("probe-mesh-" + as.GetK8sWorkloadName()),
+		Name:      workerutil.KeepMaxLength("probe-mesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
 		Image:     typesv1.GetOnlineProbeMeshImageName(),
 		Resources: createTCPUDPMeshRecources(as),

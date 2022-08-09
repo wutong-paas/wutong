@@ -141,10 +141,10 @@ func (s SortableConditionType) Less(i, j int) bool {
 	return podConditionTbl[s[i].Type] > podConditionTbl[s[j].Type]
 }
 
-// ContainerNameFrom a maximum of 63 characters can be reserved for the container name
-func ContainerNameFrom(raw string) string {
-	if len(raw) > 63 {
-		return raw[:63]
+// KeepMaxLength keep max length of string
+func KeepMaxLength(raw string, maxl int) string {
+	if len(raw) > maxl {
+		return raw[:maxl]
 	}
 	return raw
 }

@@ -154,7 +154,7 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 	}
 
 	c := &corev1.Container{
-		Name:           workerutil.ContainerNameFrom(as.K8sComponentName),
+		Name:           workerutil.KeepMaxLength(as.K8sComponentName, 63),
 		Image:          imagename,
 		Args:           args,
 		Ports:          ports,

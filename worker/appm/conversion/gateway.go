@@ -30,6 +30,7 @@ import (
 	"github.com/wutong-paas/wutong/gateway/annotations/parser"
 	"github.com/wutong-paas/wutong/util/k8s"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	workerutil "github.com/wutong-paas/wutong/worker/util"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	betav1 "k8s.io/api/networking/v1beta1"
@@ -421,7 +422,7 @@ func (a *AppServiceBuild) createInnerService(port *model.TenantServicesPort) *co
 	var service corev1.Service
 	service.Name = port.K8sServiceName
 	if service.Name == "" {
-		service.Name = fmt.Sprintf("%s-%d-%d", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort)
+		service.Name = workerutil.KeepMaxLength(fmt.Sprintf("%s-%d-%d", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort), 63)
 	}
 	service.Namespace = a.appService.GetNamespace()
 	service.Labels = a.appService.GetCommonLabels(map[string]string{
@@ -460,7 +461,7 @@ func (a *AppServiceBuild) createInnerService(port *model.TenantServicesPort) *co
 
 func (a *AppServiceBuild) createOuterService(port *model.TenantServicesPort) *corev1.Service {
 	var service corev1.Service
-	service.Name = fmt.Sprintf("%s-%d-%dout", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort)
+	service.Name = workerutil.KeepMaxLength(fmt.Sprintf("%s-%d-%dout", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort), 63)
 	service.Namespace = a.appService.GetNamespace()
 	service.Labels = a.appService.GetCommonLabels(map[string]string{
 		"service_type":  "outer",
