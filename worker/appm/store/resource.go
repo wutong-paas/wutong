@@ -88,8 +88,15 @@ func (r *ResourceCache) RemovePod(pod *corev1.Pod) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	namespace := pod.Namespace
-	if nr, ok := r.resources[namespace]; ok && nr != nil {
-		nr.RemovePod(pod.Name)
+	nsKeys := []string{namespace}
+	labels := pod.Labels
+	if tenantID, ok := labels["tenant_id"]; ok && tenantID != namespace {
+		nsKeys = append(nsKeys, tenantID)
+	}
+	for _, ns := range nsKeys {
+		if nr, ok := r.resources[ns]; ok && nr != nil {
+			nr.RemovePod(pod.Name)
+		}
 	}
 }
 
