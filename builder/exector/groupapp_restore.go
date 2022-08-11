@@ -426,11 +426,8 @@ func (b *BackupAPPRestore) clear() {
 }
 func getNewImageName(imageName string) string {
 	image := parser.ParseImageName(imageName)
-	if image.GetDomain() != builder.REGISTRYDOMAIN {
-		newImageName := strings.Replace(imageName, image.GetDomain(), builder.REGISTRYDOMAIN, 1)
-		return newImageName
-	}
-	return imageName
+	newImageName := fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, image.GetSimpleName(), image.GetTag())
+	return newImageName
 }
 func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
 	for _, app := range appSnapshot.Services {
