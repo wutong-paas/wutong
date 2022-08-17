@@ -50,4 +50,5 @@ type TenantHandler interface {
 	DeleteTenant(ctx context.Context, tenantID string) error
 	GetClusterResource(ctx context.Context) *ClusterResourceStats
 	CheckResourceName(ctx context.Context, namespace string, req *model.CheckResourceNameReq) (*model.CheckResourceNameResp, error)
+	GetKubeConfig(namespace string) (string, error)
 }

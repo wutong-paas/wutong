@@ -46,8 +46,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 )
 
 //TenantAction tenant act
@@ -55,6 +58,7 @@ type TenantAction struct {
 	MQClient                  mqclient.MQClient
 	statusCli                 *client.AppRuntimeSyncClient
 	OptCfg                    *option.Config
+	restConfig                *rest.Config
 	kubeClient                *kubernetes.Clientset
 	cacheClusterResourceStats *ClusterResourceStats
 	cacheTime                 time.Time
@@ -66,6 +70,7 @@ type TenantAction struct {
 //CreateTenManager create Manger
 func CreateTenManager(mqc mqclient.MQClient, statusCli *client.AppRuntimeSyncClient,
 	optCfg *option.Config,
+	config *rest.Config,
 	kubeClient *kubernetes.Clientset,
 	prometheusCli prometheus.Interface,
 	k8sClient k8sclient.Client) *TenantAction {
@@ -79,6 +84,7 @@ func CreateTenManager(mqc mqclient.MQClient, statusCli *client.AppRuntimeSyncCli
 		MQClient:      mqc,
 		statusCli:     statusCli,
 		OptCfg:        optCfg,
+		restConfig:    config,
 		kubeClient:    kubeClient,
 		prometheusCli: prometheusCli,
 		k8sClient:     k8sClient,
@@ -636,4 +642,82 @@ func (t *TenantAction) CheckResourceName(ctx context.Context, namespace string, 
 	return &model.CheckResourceNameResp{
 		Name: req.Name,
 	}, nil
+}
+
+// GetKubeConfig get kubeconfig from tenant namespace by default dev rbac
+func (t *TenantAction) GetKubeConfig(namespace string) (string, error) {
+	sa, err := t.completeServiceAccount(namespace)
+	if err != nil {
+		return "", errors.Wrap(err, "get service account")
+	}
+	secret, err := t.completeSecretFromServiceAccount(sa)
+	if err != nil {
+		return "", errors.Wrap(err, "get secret")
+	}
+	cfgModel := buildConfigFromSecret(t.restConfig, secret)
+	cfgContent, err := yaml.Marshal(cfgModel)
+	if err != nil {
+		return "", errors.Wrap(err, "marshal config")
+	}
+	return string(cfgContent), nil
+}
+
+// createTPServiceAccount create telepresence dev serviceaccount for specified namespace
+func (t *TenantAction) completeServiceAccount(namespace string) (*corev1.ServiceAccount, error) {
+	tpns := "ambassador"
+	saName := fmt.Sprintf("tpdev-%s", namespace)
+	sa, err := t.kubeClient.CoreV1().ServiceAccounts(tpns).Get(context.TODO(), saName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return sa, nil
+}
+
+// completeSecretFromServiceAccount -
+func (t *TenantAction) completeSecretFromServiceAccount(sa *corev1.ServiceAccount) (*corev1.Secret, error) {
+	secret, err := t.kubeClient.CoreV1().Secrets(sa.Namespace).Get(context.TODO(), sa.Secrets[0].Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
+}
+
+// buildConfigFromSecret -
+func buildConfigFromSecret(kubecfg *rest.Config, secret *corev1.Secret) model.Config {
+	cfgContext := "k2-context-" + rand.String(5)
+	cfgCluster := "k2-cluster-" + rand.String(5)
+	cfgUser := "k2-user-" + rand.String(5)
+	cfg := model.Config{
+		APIVersion:     "v1",
+		Kind:           "Config",
+		CurrentContext: cfgContext,
+		Contexts: []*model.ContextItem{
+			{
+				Name: cfgContext,
+				Context: &model.Context{
+					Cluster:   cfgCluster,
+					AuthInfo:  cfgUser,
+					Namespace: string(secret.Data["namespace"]),
+				},
+			},
+		},
+		Clusters: []*model.ClusterItem{
+			{
+				Name: cfgCluster,
+				Cluster: &model.Cluster{
+					Server:                   kubecfg.Host,
+					CertificateAuthorityData: secret.Data["ca.crt"],
+				},
+			},
+		},
+		AuthInfos: []*model.AuthInfoItem{
+			{
+				Name: cfgUser,
+				AuthInfo: &model.AuthInfo{
+					Token: string(secret.Data["token"]),
+				},
+			},
+		},
+	}
+	return cfg
 }

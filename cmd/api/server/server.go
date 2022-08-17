@@ -120,7 +120,7 @@ func Run(s *option.APIServer) error {
 	//初始化 middleware
 	handler.InitProxy(s.Config)
 	//创建handle
-	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, clientset, wutongClient, k8sClient); err != nil {
+	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, config, clientset, wutongClient, k8sClient); err != nil {
 		logrus.Errorf("init all handle error, %v", err)
 		return err
 	}

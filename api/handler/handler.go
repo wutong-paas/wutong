@@ -31,6 +31,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	"github.com/wutong-paas/wutong/worker/client"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -39,6 +40,7 @@ func InitHandle(conf option.Config,
 	etcdClientArgs *etcdutil.ClientArgs,
 	statusCli *client.AppRuntimeSyncClient,
 	etcdcli *clientv3.Client,
+	config *rest.Config,
 	kubeClient *kubernetes.Clientset,
 	wutongClient versioned.Interface,
 	k8sClient k8sclient.Client,
@@ -63,7 +65,7 @@ func InitHandle(conf option.Config,
 	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
-	defaultTenantHandler = CreateTenManager(mqClient, statusCli, &conf, kubeClient, prometheusCli, k8sClient)
+	defaultTenantHandler = CreateTenManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)
 	defaultNetRulesHandler = CreateNetRulesManager(etcdcli)
 	defaultCloudHandler = CreateCloudManager(conf)
 	defaultAPPBackupHandler = group.CreateBackupHandle(mqClient, statusCli, etcdcli)

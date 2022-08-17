@@ -788,3 +788,19 @@ func (t *TenantStruct) Log(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// GetKubeConfig get kube config for developer
+func (t *TenantStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) {
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+	if err != nil {
+		httputil.ReturnError(r, w, 400, err.Error())
+		return
+	}
+	kubeConfig, err := handler.GetTenantManager().GetKubeConfig(tenant.Namespace)
+	if err != nil {
+		httputil.ReturnError(r, w, 400, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, kubeConfig)
+}

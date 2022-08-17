@@ -186,6 +186,9 @@ func (v2 *V2) tenantNameRouter() chi.Router {
 	r.Put("/registry/auth", controller.GetManager().RegistryAuthSecret)
 	r.Delete("/registry/auth", controller.GetManager().RegistryAuthSecret)
 
+	// kubeconfig
+	r.Get("/kubeconfig", controller.GetManager().GetKubeConfig)
+
 	return r
 }
 
@@ -366,6 +369,7 @@ func (v2 *V2) resourcesRouter() chi.Router {
 	r.Get("/tenants/res/page/{curPage}/size/{pageLen}", controller.GetManager().TenantsWithResource)
 	r.Get("/tenants/query/{tenant_name}", controller.GetManager().TenantsQuery)
 	r.Get("/tenants/{tenant_name}/res", controller.GetManager().TenantsGetByName)
+	r.Get("/tenants/kubeconfig", controller.GetManager().GetKubeConfig)
 	return r
 }
 

@@ -37,8 +37,8 @@ var ErrWaitCancel = fmt.Errorf("Wait cancel")
 
 //WaitReady wait ready
 func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) error {
-	if timeout < 40 {
-		timeout = time.Second * 40
+	if timeout < 80 {
+		timeout = time.Second * 80
 	}
 	logger.Info(fmt.Sprintf("waiting app ready timeout %ds", int(timeout.Seconds())), map[string]string{"step": "appruntime", "status": "running"})
 	logrus.Debugf("waiting app ready timeout %ds", int(timeout.Seconds()))
@@ -74,11 +74,11 @@ func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logge
 	if a == nil {
 		return nil
 	}
-	if timeout < 40 {
-		timeout = time.Second * 40
+	if timeout < 80 {
+		timeout = time.Second * 80
 	}
 	logger.Info(fmt.Sprintf("waiting app closed timeout %ds", int(timeout.Seconds())), map[string]string{"step": "appruntime", "status": "running"})
-	logrus.Debugf("waiting app ready timeout %ds", int(timeout.Seconds()))
+	logrus.Debugf("waiting app closed timeout %ds", int(timeout.Seconds()))
 	ticker := time.NewTicker(timeout / 10)
 	timer := time.NewTimer(timeout)
 	defer ticker.Stop()
