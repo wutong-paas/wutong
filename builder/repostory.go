@@ -47,6 +47,11 @@ func init() {
 		BUILDERIMAGENAME = os.Getenv("BUILDER_IMAGE_NAME")
 	}
 
+	CIVERSION = "v1.0.0-stable"
+	if os.Getenv("CI_VERSION") != "" {
+		CIVERSION = os.Getenv("CI_VERSION")
+	}
+
 	BUILDERIMAGENAME = path.Join(REGISTRYDOMAIN, BUILDERIMAGENAME)
 
 	ONLINEBUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(ONLINEREGISTRYDOMAIN, "builder"), CIVERSION)
@@ -64,7 +69,7 @@ func GetImageUserInfoV2(domain, user, pass string) (string, string) {
 	return "", ""
 }
 
-//GetImageRepo -
+// GetImageRepo -
 func GetImageRepo(imageRepo string) string {
 	if imageRepo == "" {
 		return REGISTRYDOMAIN
@@ -72,19 +77,19 @@ func GetImageRepo(imageRepo string) string {
 	return imageRepo
 }
 
-//REGISTRYDOMAIN REGISTRY_DOMAIN
+// REGISTRYDOMAIN REGISTRY_DOMAIN
 var REGISTRYDOMAIN = constants.DefImageRepository
 
-//REGISTRYUSER REGISTRY USER NAME
+// REGISTRYUSER REGISTRY USER NAME
 var REGISTRYUSER = ""
 
-//REGISTRYPASS REGISTRY PASSWORD
+// REGISTRYPASS REGISTRY PASSWORD
 var REGISTRYPASS = ""
 
-//RUNNERIMAGENAME runner image name
+// RUNNERIMAGENAME runner image name
 var RUNNERIMAGENAME string
 
-//BUILDERIMAGENAME builder image name
+// BUILDERIMAGENAME builder image name
 var BUILDERIMAGENAME string
 
 // ONLINEREGISTRYDOMAIN online REGISTRY_DOMAIN
@@ -97,4 +102,4 @@ var ONLINEBUILDERIMAGENAME string
 var ONLINERUNNERIMAGENAME string
 
 // CIVERSION -
-var CIVERSION = "v1.0.0-stable"
+var CIVERSION string

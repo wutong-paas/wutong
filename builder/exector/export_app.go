@@ -42,33 +42,35 @@ import (
 
 var re = regexp.MustCompile(`\s`)
 
-//ExportApp Export app to specified format(wutong-app or dockercompose)
+// ExportApp Export app to specified format(wutong-app or dockercompose)
 type ExportApp struct {
-	EventID      string `json:"event_id"`
-	Format       string `json:"format"`
-	SourceDir    string `json:"source_dir"`
-	Logger       event.Logger
-	DockerClient *client.Client
+	EventID       string `json:"event_id"`
+	Format        string `json:"format"`
+	SourceDir     string `json:"source_dir"`
+	WithImageData bool   `json:"with_image_data"`
+	Logger        event.Logger
+	DockerClient  *client.Client
 }
 
 func init() {
 	RegisterWorker("export_app", NewExportApp)
 }
 
-//NewExportApp create
+// NewExportApp create
 func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
 	logger := event.GetManager().GetLogger(eventID)
 	return &ExportApp{
-		Format:       gjson.GetBytes(in, "format").String(),
-		SourceDir:    gjson.GetBytes(in, "source_dir").String(),
-		Logger:       logger,
-		EventID:      eventID,
-		DockerClient: m.DockerClient,
+		Format:        gjson.GetBytes(in, "format").String(),
+		SourceDir:     gjson.GetBytes(in, "source_dir").String(),
+		WithImageData: gjson.GetBytes(in, "with_image_data").Bool(),
+		Logger:        logger,
+		EventID:       eventID,
+		DockerClient:  m.DockerClient,
 	}, nil
 }
 
-//Run Run
+// Run Run
 func (i *ExportApp) Run(timeout time.Duration) error {
 	defer os.RemoveAll(i.SourceDir)
 	// disable Md5 checksum
@@ -149,23 +151,23 @@ func (i *ExportApp) exportWutongAPP(ram v1alpha1.WutongApplicationConfig) (*expo
 	return ramExporter.Export()
 }
 
-//  exportDockerCompose export app to docker compose app
+// exportDockerCompose export app to docker compose app
 func (i *ExportApp) exportDockerCompose(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
 	ramExporter := export.New(export.DC, i.SourceDir, ram, i.DockerClient, logrus.StandardLogger())
 	return ramExporter.Export()
 }
 
-//Stop stop
+// Stop stop
 func (i *ExportApp) Stop() error {
 	return nil
 }
 
-//Name return worker name
+// Name return worker name
 func (i *ExportApp) Name() string {
 	return "export_app"
 }
 
-//GetLogger GetLogger
+// GetLogger GetLogger
 func (i *ExportApp) GetLogger() event.Logger {
 	return i.Logger
 }
@@ -191,7 +193,7 @@ func (i *ExportApp) isLatest() bool {
 	return true
 }
 
-//CleanSourceDir clean export dir
+// CleanSourceDir clean export dir
 func (i *ExportApp) CleanSourceDir() error {
 	logrus.Debug("Ready clean the source directory.")
 	metaFile := fmt.Sprintf("%s/metadata.json", i.SourceDir)
@@ -223,6 +225,22 @@ func (i *ExportApp) parseRAM() (*ramv1alpha1.WutongApplicationConfig, error) {
 	if err := json.Unmarshal(data, &ram); err != nil {
 		return nil, err
 	}
+
+	// If WithImageData is false, then remove the value of ShareImage from components and plugins
+	if !i.WithImageData {
+		for i := range ram.Components {
+			if ram.Components[i].Image == "" {
+				ram.Components[i].Image = ram.Components[i].ShareImage
+			}
+			ram.Components[i].ShareImage = ""
+		}
+		for i := range ram.Plugins {
+			if ram.Plugins[i].Image == "" {
+				ram.Plugins[i].Image = ram.Plugins[i].ShareImage
+			}
+			ram.Plugins[i].ShareImage = ""
+		}
+	}
 	return &ram, nil
 }
 
@@ -246,7 +264,7 @@ func (i *ExportApp) updateStatus(status, filePath string) error {
 	return nil
 }
 
-//ErrorCallBack if run error will callback
+// ErrorCallBack if run error will callback
 func (i *ExportApp) ErrorCallBack(err error) {
 	i.updateStatus("failed", "")
 }
