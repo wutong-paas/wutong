@@ -1485,10 +1485,12 @@ github.com/willf/bitset v1.1.3/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPyS
 github.com/wonderflow/cert-manager-api v1.0.3/go.mod h1:1Se7MSg11/eNYlo4fWv6vOM55/jTBMOzg2DN1kVFiSc=
 github.com/wutong-paas/gorm-bulk-upsert v1.0.0 h1:Xl3wVHGvPjkz9ASLB0g4GdnAfakeIF9hrGnbHRKdFvY=
 github.com/wutong-paas/gorm-bulk-upsert v1.0.0/go.mod h1:/0dUoW982asTvHKfZpnOJW1nBMG2epY23aQyQLA/Iyc=
-github.com/wutong-paas/wutong-oam v1.0.1 h1:SsydFxF7HvElh3N7pKyIY1vBmiQBaX4DI/zMaReQhPs=
-github.com/wutong-paas/wutong-oam v1.0.1/go.mod h1:F3tyQ3zanE63/Beyz31wp9LUvtj5RGZXL8AwvUVrD3E=
-github.com/wutong-paas/wutong-operator v1.0.0 h1:PrRTq9koipviQ7nlYXz3Asmcg7zPzuUvDvFlRZmK6IE=
-github.com/wutong-paas/wutong-operator v1.0.0/go.mod h1:5778z6HUgaPIdQ/33rq7dEUcLpgYk/jUTQDqJRz++X0=
+github.com/wutong-paas/wutong-oam v1.0.2 h1:xFipF9xYoRsnmezErq44TCVdOdX1g08/z/tJeoF8O9s=
+github.com/wutong-paas/wutong-oam v1.0.2/go.mod h1:F3tyQ3zanE63/Beyz31wp9LUvtj5RGZXL8AwvUVrD3E=
+github.com/wutong-paas/wutong-oam v1.0.3 h1:p2KfKbcEmpl5xGiuB0+zeGND5UX4hyNVYDje6r6di9I=
+github.com/wutong-paas/wutong-oam v1.0.3/go.mod h1:F3tyQ3zanE63/Beyz31wp9LUvtj5RGZXL8AwvUVrD3E=
+github.com/wutong-paas/wutong-oam v1.0.4 h1:WgXtWFOA5UnYOjf5vQ/h8lLT9OhVd1nxSIaWmf/xFwY=
+github.com/wutong-paas/wutong-oam v1.0.4/go.mod h1:F3tyQ3zanE63/Beyz31wp9LUvtj5RGZXL8AwvUVrD3E=
 github.com/wutong-paas/wutong-operator v1.0.1 h1:BnnI+vJY9rUxm0rzJL5rKNjSqIude9HmBv2BZD0QUxI=
 github.com/wutong-paas/wutong-operator v1.0.1/go.mod h1:5778z6HUgaPIdQ/33rq7dEUcLpgYk/jUTQDqJRz++X0=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
