@@ -1755,21 +1755,23 @@ type RollbackInfoRequestStruct struct {
 // BuildMQBodyFrom -
 func BuildMQBodyFrom(app *ExportAppStruct) *MQBody {
 	return &MQBody{
-		EventID:   app.Body.EventID,
-		GroupKey:  app.Body.GroupKey,
-		Version:   app.Body.Version,
-		Format:    app.Body.Format,
-		SourceDir: app.SourceDir,
+		EventID:       app.Body.EventID,
+		GroupKey:      app.Body.GroupKey,
+		Version:       app.Body.Version,
+		Format:        app.Body.Format,
+		SourceDir:     app.SourceDir,
+		WithImageData: app.Body.WithImageData,
 	}
 }
 
 // MQBody -
 type MQBody struct {
-	EventID   string `json:"event_id"`
-	GroupKey  string `json:"group_key"`
-	Version   string `json:"version"`
-	Format    string `json:"format"` // only wutong-app/docker-compose
-	SourceDir string `json:"source_dir"`
+	EventID       string `json:"event_id"`
+	GroupKey      string `json:"group_key"`
+	Version       string `json:"version"`
+	Format        string `json:"format"` // only wutong-app/docker-compose
+	SourceDir     string `json:"source_dir"`
+	WithImageData bool   `json:"with_image_data"`
 }
 
 // NewAppStatusFromExport -
