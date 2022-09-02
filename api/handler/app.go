@@ -103,17 +103,23 @@ func (a *AppAction) ImportApp(importApp *model.ImportAppStruct) error {
 }
 
 func saveMetadata(tr *model.ExportAppStruct) error {
+	retry := true
 	// 创建应用组目录
 	os.MkdirAll(tr.SourceDir, 0755)
 
 	// 写入元数据到文件
-	err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644)
-	if err != nil {
-		if err == os.ErrExist {
-
+	if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
+		if retry && strings.Contains(err.Error(), "no such file or directory") {
+			retry = false
+			os.MkdirAll(tr.SourceDir, 0755)
+			if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
+				logrus.Error("Failed to write metadata: ", err)
+				return err
+			}
+		} else {
+			logrus.Error("Failed to save metadata: ", err)
+			return err
 		}
-		logrus.Error("Failed to save metadata", err)
-		return err
 	}
 
 	return nil
@@ -142,7 +148,6 @@ func unicode2zh(uText string) (context string) {
 				context += char[4:]
 			}
 		}
-
 	}
 
 	context = re.ReplaceAllString(context, "")
