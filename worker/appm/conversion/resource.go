@@ -43,6 +43,7 @@ func createResourcesBySetting(memory int, setCPURequest, setCPULimit int64, setG
 		} else {
 			limits[corev1.ResourceName(setGPUType)] = gpuLimit
 			// limits[getGPULableKey()] = gpuLimit
+			limits[corev1.ResourceName(setGPUType)] = gpuLimit
 		}
 	}
 

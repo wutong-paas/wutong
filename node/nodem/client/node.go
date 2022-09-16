@@ -33,17 +33,17 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-//LabelOS node label about os
-var LabelOS = "beta.kubernetes.io/os"
+// LabelOS node label about os
+var LabelOS = "kubernetes.io/os"
 
 // var LabelGPU = "beta.wutong-paas.com/gpushare"
 
-var gpuTypes = []string{
-	"nvidia.com/gpu",
-	"amd.com/gpu",
-}
+// var gpuTypes = []string{
+// 	"nvidia.com/gpu",
+// 	"amd.com/gpu",
+// }
 
-//APIHostNode api host node
+// APIHostNode api host node
 type APIHostNode struct {
 	ID          string            `json:"uuid" validate:"uuid"`
 	HostName    string            `json:"host_name" validate:"host_name"`
@@ -57,7 +57,7 @@ type APIHostNode struct {
 	Labels      map[string]string `json:"labels"`
 }
 
-//Clone Clone
+// Clone Clone
 func (a APIHostNode) Clone() *HostNode {
 	hn := &HostNode{
 		ID:           a.ID,
@@ -78,7 +78,7 @@ func (a APIHostNode) Clone() *HostNode {
 	return hn
 }
 
-//HostNode wutong node entity
+// HostNode wutong node entity
 type HostNode struct {
 	ID              string            `json:"uuid"`
 	HostName        string            `json:"host_name"`
@@ -99,7 +99,7 @@ type HostNode struct {
 	NodeStatus      NodeStatus        `json:"node_status"`
 }
 
-//Resource 资源
+// Resource 资源
 type Resource struct {
 	CPU  int `json:"cpu"`
 	MemR int `json:"mem"`
@@ -123,7 +123,7 @@ type AllocatedResources struct {
 	CPULimitsR      string
 }
 
-//NodeStatus node status
+// NodeStatus node status
 type NodeStatus struct {
 	//worker maintenance
 	Version string `json:"version"`
@@ -150,7 +150,7 @@ type NodeStatus struct {
 	NodeInfo NodeSystemInfo `json:"nodeInfo,omitempty" protobuf:"bytes,7,opt,name=nodeInfo"`
 }
 
-//UpdateK8sNodeStatus update wutong node status by k8s node
+// UpdateK8sNodeStatus update wutong node status by k8s node
 func (n *HostNode) UpdateK8sNodeStatus(k8sNode v1.Node) {
 	status := k8sNode.Status
 	n.UpdataK8sCondition(status.Conditions)
@@ -230,7 +230,7 @@ const (
 	NotInstalled = "not_installed"
 )
 
-//Decode decode node info
+// Decode decode node info
 func (n *HostNode) Decode(data []byte) error {
 	if err := ffjson.Unmarshal(data, n); err != nil {
 		logrus.Error("decode node info error:", err.Error())
@@ -239,7 +239,7 @@ func (n *HostNode) Decode(data []byte) error {
 	return nil
 }
 
-//NodeList node list
+// NodeList node list
 type NodeList []*HostNode
 
 func (list NodeList) Len() int {
@@ -256,7 +256,7 @@ func (list NodeList) Swap(i, j int) {
 	list[j] = temp
 }
 
-//GetNodeFromKV 从etcd解析node信息
+// GetNodeFromKV 从etcd解析node信息
 func GetNodeFromKV(kv *mvccpb.KeyValue) *HostNode {
 	var node HostNode
 	if err := ffjson.Unmarshal(kv.Value, &node); err != nil {
@@ -266,7 +266,7 @@ func GetNodeFromKV(kv *mvccpb.KeyValue) *HostNode {
 	return &node
 }
 
-//UpdataK8sCondition 更新k8s节点的状态到wutong节点
+// UpdataK8sCondition 更新k8s节点的状态到wutong节点
 func (n *HostNode) UpdataK8sCondition(conditions []v1.NodeCondition) {
 	for _, con := range conditions {
 		var rbcon NodeCondition
@@ -295,7 +295,7 @@ func (n *HostNode) UpdataK8sCondition(conditions []v1.NodeCondition) {
 	}
 }
 
-//DeleteCondition DeleteCondition
+// DeleteCondition DeleteCondition
 func (n *HostNode) DeleteCondition(types ...NodeConditionType) {
 	for _, t := range types {
 		for i, c := range n.NodeStatus.Conditions {
@@ -323,7 +323,7 @@ func (n *HostNode) UpdateReadyStatus() {
 	n.GetAndUpdateCondition(NodeReady, status, Reason, Message)
 }
 
-//GetCondition get condition
+// GetCondition get condition
 func (n *HostNode) GetCondition(ctype NodeConditionType) *NodeCondition {
 	for _, con := range n.NodeStatus.Conditions {
 		if con.Type.Compare(ctype) {
@@ -358,7 +358,7 @@ func (n *HostNode) GetAndUpdateCondition(condType NodeConditionType, status Cond
 	n.UpdataCondition(cond)
 }
 
-//UpdataCondition 更新状态
+// UpdataCondition 更新状态
 func (n *HostNode) UpdataCondition(conditions ...NodeCondition) {
 	for _, newcon := range conditions {
 		if newcon.Type == "" {
@@ -380,25 +380,25 @@ func (n *HostNode) UpdataCondition(conditions ...NodeCondition) {
 	}
 }
 
-//HostRule 节点角色
+// HostRule 节点角色
 type HostRule []string
 
-//SupportNodeRule -
+// SupportNodeRule -
 var SupportNodeRule = []string{ComputeNode, ManageNode, StorageNode, GatewayNode}
 
-//ComputeNode 计算节点
+// ComputeNode 计算节点
 var ComputeNode = "compute"
 
-//ManageNode 管理节点
+// ManageNode 管理节点
 var ManageNode = "manage"
 
-//StorageNode 存储节点
+// StorageNode 存储节点
 var StorageNode = "storage"
 
-//GatewayNode 边缘负载均衡节点
+// GatewayNode 边缘负载均衡节点
 var GatewayNode = "gateway"
 
-//HasRule 是否具有什么角色
+// HasRule 是否具有什么角色
 func (h HostRule) HasRule(rule string) bool {
 	for _, v := range h {
 		if v == rule {
@@ -411,7 +411,7 @@ func (h HostRule) String() string {
 	return strings.Join(h, ",")
 }
 
-//Add add role
+// Add add role
 func (h *HostRule) Add(role ...string) {
 	for _, r := range role {
 		if !util.StringArrayContains(*h, r) {
@@ -420,7 +420,7 @@ func (h *HostRule) Add(role ...string) {
 	}
 }
 
-//Validation host rule validation
+// Validation host rule validation
 func (h HostRule) Validation() error {
 	if len(h) == 0 {
 		return fmt.Errorf("node rule must be seted")
@@ -433,7 +433,7 @@ func (h HostRule) Validation() error {
 	return nil
 }
 
-//NodeConditionType NodeConditionType
+// NodeConditionType NodeConditionType
 type NodeConditionType string
 
 // These are valid conditions of node.
@@ -452,7 +452,7 @@ const (
 
 var masterCondition = []NodeConditionType{NodeReady, KubeNodeReady, NodeUp, InstallNotReady, OutOfDisk, MemoryPressure, DiskPressure, PIDPressure}
 
-//IsMasterCondition Whether it is a preset condition of the system
+// IsMasterCondition Whether it is a preset condition of the system
 func IsMasterCondition(con NodeConditionType) bool {
 	for _, c := range masterCondition {
 		if c.Compare(con) {
@@ -462,12 +462,12 @@ func IsMasterCondition(con NodeConditionType) bool {
 	return false
 }
 
-//Compare 比较
+// Compare 比较
 func (nt NodeConditionType) Compare(ent NodeConditionType) bool {
 	return string(nt) == string(ent)
 }
 
-//ConditionStatus ConditionStatus
+// ConditionStatus ConditionStatus
 type ConditionStatus string
 
 // These are valid condition statuses. "ConditionTrue" means a resource is in the condition.
@@ -500,20 +500,20 @@ type NodeCondition struct {
 	Message string `json:"message,omitempty"`
 }
 
-//String string
+// String string
 func (n *HostNode) String() string {
 	res, _ := ffjson.Marshal(n)
 	return string(res)
 }
 
-//Update update node info
+// Update update node info
 func (n *HostNode) Update() (*client.PutResponse, error) {
 	savenode := *n
 	savenode.NodeStatus.KubeNode = nil
 	return store.DefalutClient.Put(conf.Config.NodePath+"/"+n.ID, savenode.String())
 }
 
-//DeleteNode delete node
+// DeleteNode delete node
 func (n *HostNode) DeleteNode() (*client.DeleteResponse, error) {
 	return store.DefalutClient.Delete(conf.Config.NodePath + "/" + n.ID)
 }

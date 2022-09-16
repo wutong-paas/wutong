@@ -269,10 +269,9 @@ message AppStatus {
   repeated string overrides = 7;
   string version = 8;
   repeated AppStatusCondition conditions=9;
-  string gpuType = 10;
-  int64 gpu = 11;
-  string app_id = 12;
-  string app_name = 13;
+  int64 gpu = 10;
+  string app_id = 11;
+  string app_name = 12;
 }
 
 message AppStatusCondition {

@@ -2305,10 +2305,9 @@ type AppStatus struct {
 	Overrides  []string              `protobuf:"bytes,7,rep,name=overrides,proto3" json:"overrides,omitempty"`
 	Version    string                `protobuf:"bytes,8,opt,name=version,proto3" json:"version,omitempty"`
 	Conditions []*AppStatusCondition `protobuf:"bytes,9,rep,name=conditions,proto3" json:"conditions,omitempty"`
-	GpuType   string                `protobuf:"bytes,10,opt,name=gpuType,proto3" json:"gpuType,omitempty"`
-	Gpu        int64                 `protobuf:"varint,11,opt,name=gpu,proto3" json:"gpu,omitempty"`
-	AppId      string                `protobuf:"bytes,12,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	AppName    string                `protobuf:"bytes,13,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
+	Gpu        int64                 `protobuf:"varint,10,opt,name=gpu,proto3" json:"gpu,omitempty"`
+	AppId      string                `protobuf:"bytes,11,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	AppName    string                `protobuf:"bytes,12,opt,name=app_name,json=appName,proto3" json:"app_name,omitempty"`
 }
 
 func (x *AppStatus) Reset() {
@@ -2404,13 +2403,6 @@ func (x *AppStatus) GetConditions() []*AppStatusCondition {
 		return x.Conditions
 	}
 	return nil
-}
-
-func (x *AppStatus) GetGpuType() string{
-	if x!=nil {
-		return x.GpuType
-	}
-	return ""
 }
 
 func (x *AppStatus) GetGpu() int64 {
