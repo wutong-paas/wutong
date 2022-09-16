@@ -214,6 +214,7 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	var cpuSet, gpuSet, memorySet *int
+	var gpuTypeSet *string
 	if cpu, ok := data["container_cpu"].(float64); ok {
 		cpuInt := int(cpu)
 		cpuSet = &cpuInt
@@ -221,6 +222,9 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 	if memory, ok := data["container_memory"].(float64); ok {
 		memoryInt := int(memory)
 		memorySet = &memoryInt
+	}
+	if gpuType, ok := data["container_gpu_type"].(string); ok {
+		gpuTypeSet = &gpuType
 	}
 	if gpu, ok := data["container_gpu"].(float64); ok {
 		gpuInt := int(gpu)
@@ -235,12 +239,13 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	verticalTask := &model.VerticalScalingTaskBody{
-		TenantID:        tenantID,
-		ServiceID:       serviceID,
-		EventID:         sEvent.EventID,
-		ContainerCPU:    cpuSet,
-		ContainerMemory: memorySet,
-		ContainerGPU:    gpuSet,
+		TenantID:         tenantID,
+		ServiceID:        serviceID,
+		EventID:          sEvent.EventID,
+		ContainerCPU:     cpuSet,
+		ContainerMemory:  memorySet,
+		ContainerGPUType: gpuTypeSet,
+		ContainerGPU:     gpuSet,
 	}
 	if err := handler.GetServiceManager().ServiceVertical(r.Context(), verticalTask); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("service vertical error. %v", err))

@@ -290,6 +290,10 @@ type ServiceStruct struct {
 	// in: body
 	// required: false
 	ContainerMemory int `json:"container_memory" validate:"container_memory"`
+	// GPU 类型
+	// in: body
+	// required: false
+	ContainerGPUType string `json:"container_gpu_type" validate:"container_gpu_type"`
 	// component gpu video memory
 	// in: body
 	// required: false

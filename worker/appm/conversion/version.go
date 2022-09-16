@@ -509,16 +509,16 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 		cpuLimit = int64(as.ContainerCPU)
 		cpuRequest = int64(as.ContainerCPU)
 	}
-	rr := createResourcesBySetting(as.ContainerMemory, cpuRequest, cpuLimit, int64(as.ContainerGPU))
+	rr := createResourcesBySetting(as.ContainerMemory, cpuRequest, cpuLimit, as.ContainerGPUType, int64(as.ContainerGPU))
 	return rr
 }
 
-func getGPULableKey() corev1.ResourceName {
-	if os.Getenv("GPU_LABLE_KEY") != "" {
-		return corev1.ResourceName(os.Getenv("GPU_LABLE_KEY"))
-	}
-	return "wutong-paas.com/gpu-mem"
-}
+// func getGPULableKey() corev1.ResourceName {
+// 	if os.Getenv("GPU_LABLE_KEY") != "" {
+// 		return corev1.ResourceName(os.Getenv("GPU_LABLE_KEY"))
+// 	}
+// 	return "wutong-paas.com/gpu-mem"
+// }
 
 func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, error) {
 	inBoundOK, err := dbmanager.TenantServicePluginRelationDao().CheckSomeModelPluginByServiceID(
@@ -666,7 +666,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	podAffinity := make([]corev1.PodAffinityTerm, 0)
 	podAntAffinity := make([]corev1.PodAffinityTerm, 0)
 	osWindowsSelect := false
-	enableGPU := as.ContainerGPU > 0
+	// enableGPU := as.ContainerGPUType != "" && as.ContainerGPU > 0
 	labels, err := dbmanager.TenantServiceLabelDao().GetTenantServiceAffinityLabel(as.ServiceID)
 	if err == nil && labels != nil && len(labels) > 0 {
 		for _, l := range labels {
@@ -727,19 +727,19 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 			Values:   []string{"windows"},
 		})
 	}
-	if !enableGPU {
-		nsr = append(nsr, corev1.NodeSelectorRequirement{
-			Key:      client.LabelGPU,
-			Values:   []string{"true"},
-			Operator: corev1.NodeSelectorOpNotIn,
-		})
-	} else {
-		nsr = append(nsr, corev1.NodeSelectorRequirement{
-			Key:      client.LabelGPU,
-			Values:   []string{"true"},
-			Operator: corev1.NodeSelectorOpIn,
-		})
-	}
+	// if !enableGPU {
+	// 	nsr = append(nsr, corev1.NodeSelectorRequirement{
+	// 		Key:      client.LabelGPU,
+	// 		Values:   []string{"true"},
+	// 		Operator: corev1.NodeSelectorOpNotIn,
+	// 	})
+	// } else {
+	// 	nsr = append(nsr, corev1.NodeSelectorRequirement{
+	// 		Key:      client.LabelGPU,
+	// 		Values:   []string{"true"},
+	// 		Operator: corev1.NodeSelectorOpIn,
+	// 	})
+	// }
 	if hostname, ok := as.ExtensionSet["selecthost"]; ok {
 		nsr = append(nsr, corev1.NodeSelectorRequirement{
 			Key:      "kubernetes.io/hostname",

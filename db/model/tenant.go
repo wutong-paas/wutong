@@ -171,6 +171,9 @@ type TenantServices struct {
 	// 容器最大内存
 	// default is 0, This means that Memory resources are not limited
 	ContainerMemory int `gorm:"column:container_memory;default:0" json:"container_memory"`
+	// Container GPU Type
+	// default is "", That means no GPU settings
+	ContainerGPUType string `gorm:"column:container_gpu_type;size:100" json:"container_gpu_type"`
 	// container GPU, The amount of video memory applied for GPU. The unit is MiB
 	// default is 0, That means no GPU is required
 	ContainerGPU int `gorm:"column:container_gpu;default:0" json:"container_gpu"`
@@ -284,6 +287,9 @@ type TenantServicesDelete struct {
 	ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu"`
 	// 容器最大内存
 	ContainerMemory int `gorm:"column:container_memory;default:128" json:"container_memory"`
+	// Container GPU Type
+	// default is "", That means no GPU settings
+	ContainerGPUType string `gorm:"column:container_gpu_type;size:100" json:"container_gpu_type"`
 	// container GPU, The amount of video memory applied for GPU. The unit is MiB
 	// default is 0, That means no GPU is required
 	ContainerGPU int `gorm:"column:container_gpu;default:0" json:"container_gpu"`

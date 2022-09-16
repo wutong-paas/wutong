@@ -128,6 +128,7 @@ func TenantServiceBase(as *v1.AppService, dbmanager db.Manager) error {
 
 	// component resource config
 	as.ContainerCPU = tenantService.ContainerCPU
+	as.ContainerGPUType = tenantService.ContainerGPUType
 	as.ContainerGPU = tenantService.ContainerGPU
 	as.ContainerMemory = tenantService.ContainerMemory
 	as.Replicas = tenantService.Replicas

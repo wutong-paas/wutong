@@ -36,6 +36,10 @@ type ComponentBase struct {
 	// in: body
 	// required: false
 	ContainerMemory int `json:"container_memory" validate:"container_memory"`
+	// GPU 类型
+	// in: body
+	// required: false
+	ContainerGPUType string `json:"container_gpu_type" validate:"container_gpu_type"`
 	// 容器GPU
 	// in: body
 	// required: false
@@ -83,6 +87,7 @@ func (c *ComponentBase) DbModel(tenantID, appID, deployVersion string) *dbmodel.
 		Comment:          c.Comment,
 		ContainerCPU:     c.ContainerCPU,
 		ContainerMemory:  c.ContainerMemory,
+		ContainerGPUType: c.ContainerGPUType,
 		ContainerGPU:     c.ContainerGPU,
 		ExtendMethod:     c.ExtendMethod,
 		Replicas:         c.Replicas,

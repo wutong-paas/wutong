@@ -16,6 +16,7 @@ type AppStatus struct {
 	AppName    string                `json:"app_name"`
 	Status     string                `json:"status"`
 	CPU        *int64                `json:"cpu"`
+	GPUType    *string               `json:"gpu_type"`
 	GPU        *int64                `json:"gpu"`
 	Memory     *int64                `json:"memory"`
 	Disk       int64                 `json:"disk"`

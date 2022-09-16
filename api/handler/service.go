@@ -391,6 +391,7 @@ func (s *ServiceAction) ServiceVertical(ctx context.Context, vs *model.VerticalS
 	}
 	oldMemory := service.ContainerMemory
 	oldCPU := service.ContainerCPU
+	oldGPUType := service.ContainerGPUType
 	oldGPU := service.ContainerGPU
 	var rollback = func() {
 		service.ContainerMemory = oldMemory
@@ -404,6 +405,9 @@ func (s *ServiceAction) ServiceVertical(ctx context.Context, vs *model.VerticalS
 	if vs.ContainerMemory != nil {
 		service.ContainerMemory = *vs.ContainerMemory
 	}
+	if vs.ContainerGPUType != nil {
+		service.ContainerGPUType = *vs.ContainerGPUType
+	}
 	if vs.ContainerGPU != nil {
 		service.ContainerGPU = *vs.ContainerGPU
 	}
@@ -411,7 +415,7 @@ func (s *ServiceAction) ServiceVertical(ctx context.Context, vs *model.VerticalS
 	if licenseInfo == nil || !licenseInfo.HaveFeature("GPU") {
 		service.ContainerGPU = 0
 	}
-	if service.ContainerMemory == oldMemory && service.ContainerCPU == oldCPU && service.ContainerGPU == oldGPU {
+	if service.ContainerMemory == oldMemory && service.ContainerCPU == oldCPU && service.ContainerGPUType == oldGPUType && service.ContainerGPU == oldGPU {
 		db.GetManager().ServiceEventDao().SetEventStatus(ctx, dbmodel.EventStatusSuccess)
 		return nil
 	}
@@ -893,6 +897,9 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 	}
 	if cpu, ok := sc["container_cpu"].(int); ok && cpu >= 0 {
 		ts.ContainerCPU = cpu
+	}
+	if gpuType, ok := sc["container_gpu_type"].(string); ok {
+		ts.ContainerGPUType = gpuType
 	}
 	if gpu, ok := sc["container_gpu"].(int); ok {
 		ts.ContainerCPU = gpu

@@ -35,7 +35,13 @@ import (
 
 //LabelOS node label about os
 var LabelOS = "beta.kubernetes.io/os"
-var LabelGPU = "beta.wutong-paas.com/gpushare"
+
+// var LabelGPU = "beta.wutong-paas.com/gpushare"
+
+var gpuTypes = []string{
+	"nvidia.com/gpu",
+	"amd.com/gpu",
+}
 
 //APIHostNode api host node
 type APIHostNode struct {

@@ -96,6 +96,7 @@ type AppServiceBase struct {
 	DeployVersion    string
 	ContainerCPU     int
 	ContainerMemory  int
+	ContainerGPUType string
 	ContainerGPU     int
 	UpgradeMethod    TypeUpgradeMethod
 	Replicas         int

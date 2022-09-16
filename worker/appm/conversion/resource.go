@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func createResourcesBySetting(memory int, setCPURequest, setCPULimit, setGPULimit int64) corev1.ResourceRequirements {
+func createResourcesBySetting(memory int, setCPURequest, setCPULimit int64, setGPUType string, setGPULimit int64) corev1.ResourceRequirements {
 	limits := corev1.ResourceList{}
 	request := corev1.ResourceList{}
 
@@ -36,12 +36,13 @@ func createResourcesBySetting(memory int, setCPURequest, setCPULimit, setGPULimi
 	if setCPULimit > 0 {
 		limits[corev1.ResourceCPU] = *resource.NewMilliQuantity(setCPULimit, resource.DecimalSI)
 	}
-	if setGPULimit > 0 {
+	if setGPUType != "" && setGPULimit > 0 {
 		gpuLimit, err := resource.ParseQuantity(fmt.Sprintf("%d", setGPULimit))
 		if err != nil {
 			logrus.Errorf("gpu request is invalid")
 		} else {
-			limits[getGPULableKey()] = gpuLimit
+			limits[corev1.ResourceName(setGPUType)] = gpuLimit
+			// limits[getGPULableKey()] = gpuLimit
 		}
 	}
 

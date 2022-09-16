@@ -25,9 +25,10 @@ import (
 
 // NodeResource is a collection of compute resource.
 type NodeResource struct {
-	MilliCPU         int64 `json:"milli_cpu"`
-	Memory           int64 `json:"memory"`
-	NvidiaGPU        int64 `json:"nvidia_gpu"`
+	MilliCPU int64 `json:"milli_cpu"`
+	Memory   int64 `json:"memory"`
+	// NvidiaGPU        int64 `json:"nvidia_gpu"`
+	GPU              int64 `json:"gpu"`
 	EphemeralStorage int64 `json:"ephemeral_storage"`
 	// We store allowedPodNumber (which is Node.Status.Allocatable.Pods().Value())
 	// explicitly as int, to avoid conversions and improve performance.
