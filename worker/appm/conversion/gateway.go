@@ -79,8 +79,6 @@ func TenantServiceRegist(as *v1.AppService, dbmanager db.Manager) error {
 	for _, sec := range k8s.Secrets {
 		as.SetSecret(sec)
 	}
-
-	logrus.Infof("TenantServiceRegist --------------------%v", as)
 	return nil
 }
 

@@ -193,6 +193,7 @@ func getStatefulsetAllowFields(s *v1.StatefulSet) *v1.StatefulSet {
 		Spec: v1.StatefulSetSpec{
 			Replicas: s.Spec.Replicas,
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: s.Spec.Template.ObjectMeta,
 				Spec: corev1.PodSpec{
 					Volumes:          s.Spec.Template.Spec.Volumes,
 					InitContainers:   s.Spec.Template.Spec.InitContainers,
@@ -210,6 +211,7 @@ func getStatefulsetAllowFields(s *v1.StatefulSet) *v1.StatefulSet {
 			},
 			UpdateStrategy: s.Spec.UpdateStrategy,
 		},
+		// ObjectMeta: s.Spec.Template.ObjectMeta,
 	}
 }
 
@@ -241,8 +243,10 @@ func getDeploymentAllowFields(d *v1.Deployment) *v1.Deployment {
 					HostNetwork:      d.Spec.Template.Spec.HostNetwork,
 					SchedulerName:    d.Spec.Template.Spec.SchedulerName,
 				},
+				ObjectMeta: d.Spec.Template.ObjectMeta,
 			},
 		},
+		ObjectMeta: d.Spec.Template.ObjectMeta,
 	}
 }
 
