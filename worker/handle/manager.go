@@ -306,6 +306,7 @@ func (m *Manager) verticalScalingExec(task *model.Task) error {
 	}
 	appService.ContainerCPU = service.ContainerCPU
 	appService.ContainerMemory = service.ContainerMemory
+	appService.ContainerGPUType = service.ContainerGPUType
 	appService.ContainerGPU = service.ContainerGPU
 	appService.Logger = logger
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
