@@ -2,18 +2,19 @@ package controller
 
 import (
 	"fmt"
-	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	"net/http"
 	"strconv"
 
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/handler"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	httputil "github.com/wutong-paas/wutong/util/http"
-	"github.com/sirupsen/logrus"
 )
 
 // ApplicationController -
@@ -311,4 +312,12 @@ func (a *ApplicationController) ChangeVolumes(w http.ResponseWriter, r *http.Req
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
+}
+
+// GetApplicationKubeResources get kube resources for application
+func (t *TenantStruct) GetApplicationKubeResources(w http.ResponseWriter, r *http.Request) {
+	app := r.Context().Value(ctxutil.ContextKey("application")).(*dbmodel.Application)
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+	resources := handler.GetApplicationHandler().GetKubeResources(tenant.Namespace, app.AppID)
+	httputil.ReturnSuccess(r, w, resources)
 }

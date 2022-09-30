@@ -56,6 +56,7 @@ type TenantInterface interface {
 	CheckResourceName(w http.ResponseWriter, r *http.Request)
 	Log(w http.ResponseWriter, r *http.Request)
 	GetKubeConfig(w http.ResponseWriter, r *http.Request)
+	GetTenantKubeResources(w http.ResponseWriter, r *http.Request)
 }
 
 //ServiceInterface ServiceInterface
@@ -90,6 +91,7 @@ type ServiceInterface interface {
 	AddServiceMonitors(w http.ResponseWriter, r *http.Request)
 	DeleteServiceMonitors(w http.ResponseWriter, r *http.Request)
 	UpdateServiceMonitors(w http.ResponseWriter, r *http.Request)
+	GetServiceKubeResources(w http.ResponseWriter, r *http.Request)
 }
 
 //TenantInterfaceWithV1 funcs for both v2 and v1
@@ -182,6 +184,8 @@ type ApplicationInterface interface {
 	ListAppStatuses(w http.ResponseWriter, r *http.Request)
 	CheckGovernanceMode(w http.ResponseWriter, r *http.Request)
 	ChangeVolumes(w http.ResponseWriter, r *http.Request)
+
+	GetApplicationKubeResources(w http.ResponseWriter, r *http.Request)
 }
 
 //Gatewayer gateway api interface

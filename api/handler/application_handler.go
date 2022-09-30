@@ -15,6 +15,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
@@ -30,6 +31,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	clientset "k8s.io/client-go/kubernetes"
 )
 
@@ -68,6 +70,7 @@ type ApplicationHandler interface {
 	ListAppStatuses(ctx context.Context, appIDs []string) ([]*model.AppStatus, error)
 	CheckGovernanceMode(ctx context.Context, governanceMode string) error
 	ChangeVolumes(app *dbmodel.Application) error
+	GetKubeResources(namespace, appID string) string
 }
 
 // NewApplicationHandler creates a new Tenant Application Handler.
@@ -840,4 +843,10 @@ func changeVolumeDirectoryNames(parentDir, newPath string) error {
 		}
 	}
 	return nil
+}
+
+// GetKubeResources get kube resources for application
+func (s *ApplicationAction) GetKubeResources(namespace, appID string) string {
+	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"app_id": appID}))
+	return resources
 }

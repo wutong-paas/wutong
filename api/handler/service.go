@@ -37,6 +37,7 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/twinj/uuid"
+	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
@@ -58,6 +59,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apiserver/pkg/util/flushwriter"
 	"k8s.io/client-go/kubernetes"
 )
@@ -3005,6 +3007,12 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 		logrus.Warningf("write stream to response: %v", err)
 	}
 	return nil
+}
+
+// GetKubeResources get kube resources for component
+func (s *ServiceAction) GetKubeResources(namespace, serviceID string) string {
+	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"service_id": serviceID}))
+	return resources
 }
 
 // TransStatus trans service status

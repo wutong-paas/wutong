@@ -106,4 +106,6 @@ type ServiceHandler interface {
 	SyncComponentEndpoints(tx *gorm.DB, components []*api_model.Component) error
 
 	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantServices, podName, containerName string, follow bool) error
+
+	GetKubeResources(namespace, serviceID string) string
 }

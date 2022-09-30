@@ -189,6 +189,8 @@ func (v2 *V2) tenantNameRouter() chi.Router {
 	// kubeconfig
 	r.Get("/kubeconfig", controller.GetManager().GetKubeConfig)
 
+	r.Get("/kube-resources", controller.GetManager().GetTenantKubeResources)
+
 	return r
 }
 
@@ -322,6 +324,8 @@ func (v2 *V2) serviceRouter() chi.Router {
 
 	r.Get("/log", controller.GetManager().Log)
 
+	r.Get("/kube-resources", controller.GetManager().GetServiceKubeResources)
+
 	return r
 }
 
@@ -355,6 +359,8 @@ func (v2 *V2) applicationRouter() chi.Router {
 	// Synchronize component information, full coverage
 	r.Post("/components", controller.GetManager().SyncComponents)
 	r.Post("/app-config-groups", controller.GetManager().SyncAppConfigGroups)
+
+	r.Get("/kube-resources", controller.GetManager().GetApplicationKubeResources)
 	return r
 }
 

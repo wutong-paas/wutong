@@ -27,6 +27,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/api/model"
 	api_model "github.com/wutong-paas/wutong/api/model"
@@ -44,6 +45,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -660,6 +662,12 @@ func (t *TenantAction) GetKubeConfig(namespace string) (string, error) {
 		return "", errors.Wrap(err, "marshal config")
 	}
 	return string(cfgContent), nil
+}
+
+// GetKubeResources get kube resources for tenant
+func (s *TenantAction) GetKubeResources(namespace, tenantID string) string {
+	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"tenant_id": tenantID}))
+	return resources
 }
 
 // createTPServiceAccount create telepresence dev serviceaccount for specified namespace

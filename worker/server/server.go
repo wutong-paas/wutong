@@ -406,11 +406,15 @@ func (r *RuntimeServer) GetDeployInfo(ctx context.Context, re *pb.ServiceRequest
 		deployinfo.Namespace = appService.TenantID
 		if appService.GetStatefulSet() != nil {
 			deployinfo.Statefuleset = appService.GetStatefulSet().Name
-			deployinfo.StartTime = appService.GetStatefulSet().ObjectMeta.CreationTimestamp.Format(time.RFC3339)
+			if !appService.GetStatefulSet().ObjectMeta.CreationTimestamp.IsZero() {
+				deployinfo.StartTime = appService.GetStatefulSet().ObjectMeta.CreationTimestamp.Format(time.RFC3339)
+			}
 		}
 		if appService.GetDeployment() != nil {
 			deployinfo.Deployment = appService.GetDeployment().Name
-			deployinfo.StartTime = appService.GetDeployment().ObjectMeta.CreationTimestamp.Format(time.RFC3339)
+			if !appService.GetDeployment().ObjectMeta.CreationTimestamp.IsZero() {
+				deployinfo.StartTime = appService.GetDeployment().ObjectMeta.CreationTimestamp.Format(time.RFC3339)
+			}
 		}
 		if services := appService.GetServices(false); services != nil {
 			service := make(map[string]string, len(services))

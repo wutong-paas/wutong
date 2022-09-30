@@ -809,3 +809,18 @@ func (t *TenantStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	httputil.ReturnSuccess(r, w, kubeConfig)
 }
+
+// GetTenantKubeResources get kube resources for tenant
+func (t *TenantStruct) GetTenantKubeResources(w http.ResponseWriter, r *http.Request) {
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+	resources := handler.GetTenantManager().GetKubeResources(tenant.Namespace, tenant.UUID)
+	httputil.ReturnSuccess(r, w, resources)
+}
+
+// GetServiceKubeResources get kube resources for component
+func (t *TenantStruct) GetServiceKubeResources(w http.ResponseWriter, r *http.Request) {
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	resources := handler.GetServiceManager().GetKubeResources(tenant.Namespace, serviceID)
+	httputil.ReturnSuccess(r, w, resources)
+}
