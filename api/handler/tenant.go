@@ -665,8 +665,8 @@ func (t *TenantAction) GetKubeConfig(namespace string) (string, error) {
 }
 
 // GetKubeResources get kube resources for tenant
-func (s *TenantAction) GetKubeResources(namespace, tenantID string) string {
-	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"tenant_id": tenantID}))
+func (s *TenantAction) GetKubeResources(namespace, tenantID string, customSetting model.KubeResourceCustomSetting) string {
+	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"tenant_id": tenantID}), &customSetting)
 	return resources
 }
 

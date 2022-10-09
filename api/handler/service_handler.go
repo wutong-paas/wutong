@@ -31,7 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/worker/server/pb"
 )
 
-//ServiceHandler service handler
+// ServiceHandler service handler
 type ServiceHandler interface {
 	ServiceBuild(tenantID, serviceID string, r *api_model.BuildServiceStruct) error
 	AddLabel(l *api_model.LabelsStruct, serviceID string) error
@@ -107,5 +107,5 @@ type ServiceHandler interface {
 
 	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantServices, podName, containerName string, follow bool) error
 
-	GetKubeResources(namespace, serviceID string) string
+	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) string
 }

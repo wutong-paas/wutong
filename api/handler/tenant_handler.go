@@ -21,13 +21,12 @@ package handler
 import (
 	"context"
 
-	"github.com/wutong-paas/wutong/api/model"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//TenantHandler tenant handler
+// TenantHandler tenant handler
 type TenantHandler interface {
 	GetTenants(query string) ([]*dbmodel.Tenants, error)
 	GetTenantsByName(name string) (*dbmodel.Tenants, error)
@@ -49,7 +48,7 @@ type TenantHandler interface {
 	UpdateTenant(*dbmodel.Tenants) error
 	DeleteTenant(ctx context.Context, tenantID string) error
 	GetClusterResource(ctx context.Context) *ClusterResourceStats
-	CheckResourceName(ctx context.Context, namespace string, req *model.CheckResourceNameReq) (*model.CheckResourceNameResp, error)
+	CheckResourceName(ctx context.Context, namespace string, req *api_model.CheckResourceNameReq) (*api_model.CheckResourceNameResp, error)
 	GetKubeConfig(namespace string) (string, error)
-	GetKubeResources(namespace, tenantID string) string
+	GetKubeResources(namespace, tenantID string, customSetting api_model.KubeResourceCustomSetting) string
 }

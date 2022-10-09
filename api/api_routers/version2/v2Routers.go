@@ -26,12 +26,12 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//V2 v2
+// V2 v2
 type V2 struct {
 	Cfg *option.Config
 }
 
-//Routes routes
+// Routes routes
 func (v2 *V2) Routes() chi.Router {
 	r := chi.NewRouter()
 	license := middleware.NewLicense(v2.Cfg)

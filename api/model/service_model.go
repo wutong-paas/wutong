@@ -59,3 +59,7 @@ type BuildVersion struct {
 	FinishTime  time.Time `json:"finish_time"`
 	PlanVersion string    `json:"plan_version"`
 }
+
+type KubeResourceCustomSetting struct {
+	Namespace string `json:"namespace"`
+}

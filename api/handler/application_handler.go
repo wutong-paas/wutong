@@ -70,7 +70,7 @@ type ApplicationHandler interface {
 	ListAppStatuses(ctx context.Context, appIDs []string) ([]*model.AppStatus, error)
 	CheckGovernanceMode(ctx context.Context, governanceMode string) error
 	ChangeVolumes(app *dbmodel.Application) error
-	GetKubeResources(namespace, appID string) string
+	GetKubeResources(namespace, appID string, customSetting model.KubeResourceCustomSetting) string
 }
 
 // NewApplicationHandler creates a new Tenant Application Handler.
@@ -846,7 +846,7 @@ func changeVolumeDirectoryNames(parentDir, newPath string) error {
 }
 
 // GetKubeResources get kube resources for application
-func (s *ApplicationAction) GetKubeResources(namespace, appID string) string {
-	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"app_id": appID}))
+func (s *ApplicationAction) GetKubeResources(namespace, appID string, customSetting model.KubeResourceCustomSetting) string {
+	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"app_id": appID}), &customSetting)
 	return resources
 }

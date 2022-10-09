@@ -3010,8 +3010,8 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 }
 
 // GetKubeResources get kube resources for component
-func (s *ServiceAction) GetKubeResources(namespace, serviceID string) string {
-	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"service_id": serviceID}))
+func (s *ServiceAction) GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) string {
+	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, labels.SelectorFromSet(labels.Set{"service_id": serviceID}), &customSetting)
 	return resources
 }
 
