@@ -25,7 +25,7 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//AddHTTPRuleStruct is used to add http rule, certificate and rule extensions
+// AddHTTPRuleStruct is used to add http rule, certificate and rule extensions
 type AddHTTPRuleStruct struct {
 	HTTPRuleID     string                 `json:"http_rule_id" validate:"http_rule_id|required"`
 	ServiceID      string                 `json:"service_id" validate:"service_id|required"`
@@ -66,7 +66,7 @@ func (h *AddHTTPRuleStruct) DbModel(serviceID string) *dbmodel.HTTPRule {
 	}
 }
 
-//UpdateHTTPRuleStruct is used to update http rule, certificate and rule extensions
+// UpdateHTTPRuleStruct is used to update http rule, certificate and rule extensions
 type UpdateHTTPRuleStruct struct {
 	HTTPRuleID     string                 `json:"http_rule_id" validate:"http_rule_id|required"`
 	ServiceID      string                 `json:"service_id"`
@@ -85,7 +85,7 @@ type UpdateHTTPRuleStruct struct {
 	Rewrites       []*Rewrite             `json:"rewrites"`
 }
 
-//DeleteHTTPRuleStruct contains the id of http rule that will be deleted
+// DeleteHTTPRuleStruct contains the id of http rule that will be deleted
 type DeleteHTTPRuleStruct struct {
 	HTTPRuleID string `json:"http_rule_id" validate:"http_rule_id|required"`
 }
@@ -180,16 +180,17 @@ type Body struct {
 
 // HTTPRuleConfig -
 type HTTPRuleConfig struct {
-	RuleID              string       `json:"rule_id,omitempty" validate:"rule_id|required"`
-	ProxyConnectTimeout int          `json:"proxy_connect_timeout,omitempty" validate:"proxy_connect_timeout|required"`
-	ProxySendTimeout    int          `json:"proxy_send_timeout,omitempty" validate:"proxy_send_timeout|required"`
-	ProxyReadTimeout    int          `json:"proxy_read_timeout,omitempty" validate:"proxy_read_timeout|required"`
-	ProxyBodySize       int          `json:"proxy_body_size,omitempty" validate:"proxy_body_size|required"`
-	SetHeaders          []*SetHeader `json:"set_headers,omitempty" `
-	Rewrites            []*Rewrite   `json:"rewrite,omitempty"`
-	ProxyBufferSize     int          `json:"proxy_buffer_size,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
-	ProxyBufferNumbers  int          `json:"proxy_buffer_numbers,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
-	ProxyBuffering      string       `json:"proxy_buffering,omitempty" validate:"proxy_buffering|required"`
+	RuleID              string `json:"rule_id,omitempty" validate:"rule_id|required"`
+	ProxyConnectTimeout int    `json:"proxy_connect_timeout,omitempty" validate:"proxy_connect_timeout|required"`
+	ProxySendTimeout    int    `json:"proxy_send_timeout,omitempty" validate:"proxy_send_timeout|required"`
+	ProxyReadTimeout    int    `json:"proxy_read_timeout,omitempty" validate:"proxy_read_timeout|required"`
+	ProxyBodySize       int    `json:"proxy_body_size,omitempty" validate:"proxy_body_size|required"`
+	// SetHeaders          []*SetHeader `json:"set_headers,omitempty" `
+	SetHeaders         map[string]string `json:"set_headers,omitempty" `
+	Rewrites           []*Rewrite        `json:"rewrite,omitempty"`
+	ProxyBufferSize    int               `json:"proxy_buffer_size,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
+	ProxyBufferNumbers int               `json:"proxy_buffer_numbers,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
+	ProxyBuffering     string            `json:"proxy_buffering,omitempty" validate:"proxy_buffering|required"`
 }
 
 // DbModel return database model
@@ -231,15 +232,19 @@ func (h *HTTPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 		Value:  h.ProxyBuffering,
 	})
 	setheaders := make(map[string]string)
-	for _, item := range h.SetHeaders {
-		if strings.TrimSpace(item.Key) == "" {
-			continue
-		}
-		if strings.TrimSpace(item.Value) == "" {
-			item.Value = "empty"
-		}
-		// filter same key
-		setheaders["set-header-"+item.Key] = item.Value
+	// for _, item := range h.SetHeaders {
+	// 	if strings.TrimSpace(item.Key) == "" {
+	// 		continue
+	// 	}
+	// 	if strings.TrimSpace(item.Value) == "" {
+	// 		item.Value = "empty"
+	// 	}
+	// 	// filter same key
+	// 	setheaders["set-header-"+item.Key] = item.Value
+	// }
+
+	for k, v := range h.SetHeaders {
+		setheaders["set-header-"+k] = v
 	}
 	for k, v := range setheaders {
 		configs = append(configs, &dbmodel.GwRuleConfig{
@@ -251,7 +256,7 @@ func (h *HTTPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 	return configs
 }
 
-//SetHeader set header
+// SetHeader set header
 type SetHeader struct {
 	Key   string `json:"item_key"`
 	Value string `json:"item_value"`
