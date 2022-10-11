@@ -116,6 +116,9 @@ func (t *TenantPluginBuildVersion) CreateShareImage(hubURL, namespace string) (s
 	if namespace != "" {
 		image.Namespace = namespace
 	}
+	if image.Host == "docker.io" {
+		return image.String(), nil
+	}
 	image.Name = image.Name + "_" + t.VersionID
 	return image.String(), nil
 }

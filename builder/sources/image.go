@@ -57,15 +57,26 @@ func ImagePull(dockerCli *client.Client, image string, username, password string
 	printLog(logger, "info", fmt.Sprintf("start get image:%s", image), map[string]string{"step": "pullimage"})
 	var pullipo types.ImagePullOptions
 	if username != "" && password != "" {
-		auth, err := EncodeAuthToBase64(types.AuthConfig{Username: username, Password: password})
+		n, err := reference.ParseNormalizedNamed(image)
 		if err != nil {
-			logrus.Errorf("make auth base63 push image error: %s", err.Error())
-			printLog(logger, "error", fmt.Sprintf("Failed to generate a Token to get the image"), map[string]string{"step": "builder-exector", "status": "failure"})
+			logrus.Errorf("ParseNormalizedNamed error: %s", err.Error())
+			printLog(logger, "error", "Failed to ParseNormalizedNamed", map[string]string{"step": "builder-exector", "status": "failure"})
 			return nil, err
 		}
-		pullipo = types.ImagePullOptions{
-			RegistryAuth: auth,
+		if reference.Domain(n) == "docker.io" {
+			pullipo = types.ImagePullOptions{}
+		} else {
+			auth, err := EncodeAuthToBase64(types.AuthConfig{Username: username, Password: password})
+			if err != nil {
+				logrus.Errorf("make auth base63 push image error: %s", err.Error())
+				printLog(logger, "error", "Failed to generate a Token to get the image", map[string]string{"step": "builder-exector", "status": "failure"})
+				return nil, err
+			}
+			pullipo = types.ImagePullOptions{
+				RegistryAuth: auth,
+			}
 		}
+
 	} else {
 		pullipo = types.ImagePullOptions{}
 	}
@@ -74,6 +85,7 @@ func ImagePull(dockerCli *client.Client, image string, username, password string
 		logrus.Errorf("reference image error: %s", err.Error())
 		return nil, err
 	}
+
 	//最少一分钟
 	if timeout < 1 {
 		timeout = 1

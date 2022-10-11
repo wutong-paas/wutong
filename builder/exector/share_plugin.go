@@ -26,6 +26,7 @@ import (
 	"github.com/wutong-paas/wutong/builder"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/client"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
@@ -84,6 +85,15 @@ func (i *PluginShareItem) Run(timeout time.Duration) error {
 		logrus.Errorf("change image tag error: %s", err.Error())
 		i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.LocalImageName, i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
+	}
+	n, err := reference.ParseNormalizedNamed(i.ImageName)
+	if err != nil {
+		logrus.Errorf("ParseNormalizedNamed(%s) error: %s", i.ImageName, err.Error())
+		i.Logger.Error(fmt.Sprintf("Failed to ParseNormalizedNamed(%s)", i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+		return nil
+	}
+	if reference.Domain(n) == "docker.io" {
+		return i.updateShareStatus("success")
 	}
 	user, pass := builder.GetImageUserInfoV2(i.ImageName, i.ImageInfo.HubUser, i.ImageInfo.HubPassword)
 	if i.ImageInfo.IsTrust {
