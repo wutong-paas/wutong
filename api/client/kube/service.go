@@ -9,13 +9,17 @@ import (
 )
 
 type Services struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	Services []*corev1.Service `json:"services"`
+}
+
+func (s *Services) SetClientset(clientset kubernetes.Interface) {
+	s.Interface = clientset
 }
 
 func (s *Services) Migrate(namespace string, seletcor labels.Selector) {
 	services, err := GetCachedResources(s).ServiceLister.Services(namespace).List(seletcor)
-	if err != nil {
+	if err == nil {
 		s.Services = services
 	}
 }
@@ -55,8 +59,9 @@ func (s *Services) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	}
 }
 
-func (s *Services) AppendTo(objs []interface{}) {
+func (s *Services) AppendTo(objs []interface{}) []interface{} {
 	for _, service := range s.Services {
 		objs = append(objs, service)
 	}
+	return objs
 }

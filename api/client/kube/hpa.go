@@ -9,13 +9,17 @@ import (
 )
 
 type HorizontalPodAutoscalers struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	HorizontalPodAutoscalers []*autosaclingv1.HorizontalPodAutoscaler `json:"horizontalpodautoscalers"`
+}
+
+func (h *HorizontalPodAutoscalers) SetClientset(clientset kubernetes.Interface) {
+	h.Interface = clientset
 }
 
 func (h *HorizontalPodAutoscalers) Migrate(namespace string, seletcor labels.Selector) {
 	hpas, err := GetCachedResources(h).HPAV1Lister.HorizontalPodAutoscalers(namespace).List(seletcor)
-	if err != nil {
+	if err == nil {
 		h.HorizontalPodAutoscalers = hpas
 	}
 }
@@ -47,8 +51,9 @@ func (h *HorizontalPodAutoscalers) Decorate(setting *api_model.KubeResourceCusto
 	}
 }
 
-func (h *HorizontalPodAutoscalers) AppendTo(objs []interface{}) {
+func (h *HorizontalPodAutoscalers) AppendTo(objs []interface{}) []interface{} {
 	for _, hpa := range h.HorizontalPodAutoscalers {
 		objs = append(objs, hpa)
 	}
+	return objs
 }

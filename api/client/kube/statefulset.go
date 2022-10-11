@@ -9,13 +9,17 @@ import (
 )
 
 type Statefulsets struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	StatefulSets []*appsv1.StatefulSet `json:"statefulsets"`
+}
+
+func (s *Statefulsets) SetClientset(clientset kubernetes.Interface) {
+	s.Interface = clientset
 }
 
 func (s *Statefulsets) Migrate(namespace string, seletcor labels.Selector) {
 	statefulsets, err := GetCachedResources(s).StatefuleSetLister.StatefulSets(namespace).List(seletcor)
-	if err != nil {
+	if err == nil {
 		s.StatefulSets = statefulsets
 	}
 }
@@ -53,8 +57,9 @@ func (s *Statefulsets) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	}
 }
 
-func (s *Statefulsets) AppendTo(objs []interface{}) {
+func (s *Statefulsets) AppendTo(objs []interface{}) []interface{} {
 	for _, statefulset := range s.StatefulSets {
 		objs = append(objs, statefulset)
 	}
+	return objs
 }

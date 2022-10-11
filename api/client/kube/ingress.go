@@ -9,13 +9,17 @@ import (
 )
 
 type Ingresses struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	Ingresses []*networkingv1.Ingress `json:"ingresses"`
+}
+
+func (i *Ingresses) SetClientset(clientset kubernetes.Interface) {
+	i.Interface = clientset
 }
 
 func (i *Ingresses) Migrate(namespace string, seletcor labels.Selector) {
 	ingresses, err := GetCachedResources(i).IngressV1Lister.Ingresses(namespace).List(seletcor)
-	if err != nil {
+	if err == nil {
 		i.Ingresses = ingresses
 	}
 }
@@ -47,8 +51,9 @@ func (i *Ingresses) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	}
 }
 
-func (i *Ingresses) AppendTo(objs []interface{}) {
+func (i *Ingresses) AppendTo(objs []interface{}) []interface{} {
 	for _, ingress := range i.Ingresses {
 		objs = append(objs, ingress)
 	}
+	return objs
 }

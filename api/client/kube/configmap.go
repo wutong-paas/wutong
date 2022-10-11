@@ -10,13 +10,17 @@ import (
 )
 
 type ConfigMaps struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	ConfigMaps []*corev1.ConfigMap `json:"configmaps"`
+}
+
+func (c *ConfigMaps) SetClientset(clientset kubernetes.Interface) {
+	c.Interface = clientset
 }
 
 func (c *ConfigMaps) Migrate(namespace string, seletcor labels.Selector) {
 	configMaps, err := GetCachedResources(c).ConfigMapLister.ConfigMaps(namespace).List(seletcor)
-	if err != nil {
+	if err == nil {
 		c.ConfigMaps = configMaps
 	}
 }
@@ -47,8 +51,9 @@ func (c *ConfigMaps) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	}
 }
 
-func (c *ConfigMaps) AppendTo(objs []interface{}) {
+func (c *ConfigMaps) AppendTo(objs []interface{}) []interface{} {
 	for _, configMap := range c.ConfigMaps {
 		objs = append(objs, configMap)
 	}
+	return objs
 }

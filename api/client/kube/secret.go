@@ -10,13 +10,17 @@ import (
 )
 
 type Secrets struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	Secrets []*corev1.Secret `json:"secrets"`
 }
 
+func (s *Secrets) SetClientset(clientset kubernetes.Interface) {
+	s.Interface = clientset
+}
+
 func (s *Secrets) Migrate(namespace string, seletcor labels.Selector) {
-	secrets, err := GetCachedResources(s).SecretLister.Secrets(namespace).List(seletcor)
-	if err != nil {
+	secrets, err := GetCachedResources(s).SecretLister.Secrets(namespace).List(labels.SelectorFromSet(wutongSelectorLabels))
+	if err == nil {
 		s.Secrets = secrets
 	}
 }
@@ -45,8 +49,9 @@ func (s *Secrets) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	}
 }
 
-func (s *Secrets) AppendTo(objs []interface{}) {
+func (s *Secrets) AppendTo(objs []interface{}) []interface{} {
 	for _, secret := range s.Secrets {
 		objs = append(objs, secret)
 	}
+	return objs
 }

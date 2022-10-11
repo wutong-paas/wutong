@@ -22,9 +22,10 @@ func GetResourcesYamlFormat(clientset kubernetes.Interface, namespace string, se
 	objs := []interface{}{}
 
 	for _, resource := range resources {
+		resource.SetClientset(clientset)
 		resource.Migrate(namespace, selector)
 		resource.Decorate(customSetting)
-		resource.AppendTo(objs)
+		objs = resource.AppendTo(objs)
 	}
 
 	return marshal(objs)

@@ -9,13 +9,17 @@ import (
 )
 
 type Deployments struct {
-	kubernetes.Clientset
+	kubernetes.Interface
 	Deployments []*appsv1.Deployment `json:"deployments"`
+}
+
+func (d *Deployments) SetClientset(clientset kubernetes.Interface) {
+	d.Interface = clientset
 }
 
 func (d *Deployments) Migrate(namespace string, seletcor labels.Selector) {
 	deployments, err := GetCachedResources(d).DeploymentLister.Deployments(namespace).List(seletcor)
-	if err != nil {
+	if err == nil {
 		d.Deployments = deployments
 	}
 }
@@ -57,8 +61,9 @@ func (d *Deployments) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	}
 }
 
-func (d *Deployments) AppendTo(objs []interface{}) {
+func (d *Deployments) AppendTo(objs []interface{}) []interface{} {
 	for _, deployment := range d.Deployments {
 		objs = append(objs, deployment)
 	}
+	return objs
 }
