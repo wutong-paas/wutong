@@ -23,14 +23,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/util"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//SetUpgradePatch create and set upgrade pathch for deployment and statefulset
+// SetUpgradePatch create and set upgrade pathch for deployment and statefulset
 func (a *AppService) SetUpgradePatch(new *AppService) error {
 	if a.statefulset != nil && new.statefulset != nil {
 		// If the controller originally had a startup sequence, then the startup sequence needs to be updated
@@ -68,14 +70,14 @@ func (a *AppService) SetUpgradePatch(new *AppService) error {
 	return nil
 }
 
-//EncodeNode encode node
+// EncodeNode encode node
 type EncodeNode struct {
 	body  []byte
 	value []byte
 	Field map[string]EncodeNode
 }
 
-//UnmarshalJSON custom yaml decoder
+// UnmarshalJSON custom yaml decoder
 func (e *EncodeNode) UnmarshalJSON(code []byte) error {
 	e.body = code
 	if len(code) < 1 {
@@ -93,7 +95,7 @@ func (e *EncodeNode) UnmarshalJSON(code []byte) error {
 	return nil
 }
 
-//MarshalJSON custom marshal json
+// MarshalJSON custom marshal json
 func (e *EncodeNode) MarshalJSON() ([]byte, error) {
 	if e.value != nil {
 		return e.value, nil
@@ -123,12 +125,12 @@ func (e *EncodeNode) MarshalJSON() ([]byte, error) {
 	return nil, fmt.Errorf("marshal error")
 }
 
-//Contrast Compare value
+// Contrast Compare value
 func (e *EncodeNode) Contrast(endpoint *EncodeNode) bool {
 	return util.BytesSliceEqual(e.value, endpoint.value)
 }
 
-//GetChange get change fields
+// GetChange get change fields
 func (e *EncodeNode) GetChange(endpoint *EncodeNode) *EncodeNode {
 	if util.BytesSliceEqual(e.body, endpoint.body) {
 		return nil
@@ -179,9 +181,10 @@ func getChange(old, new EncodeNode) *EncodeNode {
 	return &result
 }
 
-//stateful label can not be patch
+// stateful label can not be patch
 func getStatefulsetModifiedConfiguration(old, new *v1.StatefulSet) ([]byte, error) {
 	old.Status = new.Status
+	new.Spec.Template.Labels["settingTime"] = time.Now().Format("20060102150405")
 	oldNeed := getStatefulsetAllowFields(old)
 	newNeed := getStatefulsetAllowFields(new)
 	return getchange(oldNeed, newNeed)
@@ -193,7 +196,6 @@ func getStatefulsetAllowFields(s *v1.StatefulSet) *v1.StatefulSet {
 		Spec: v1.StatefulSetSpec{
 			Replicas: s.Spec.Replicas,
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: s.Spec.Template.ObjectMeta,
 				Spec: corev1.PodSpec{
 					Volumes:          s.Spec.Template.Spec.Volumes,
 					InitContainers:   s.Spec.Template.Spec.InitContainers,
@@ -208,16 +210,19 @@ func getStatefulsetAllowFields(s *v1.StatefulSet) *v1.StatefulSet {
 					HostNetwork:      s.Spec.Template.Spec.HostNetwork,
 					SchedulerName:    s.Spec.Template.Spec.SchedulerName,
 				},
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: s.Spec.Template.Labels,
+				},
 			},
 			UpdateStrategy: s.Spec.UpdateStrategy,
 		},
-		// ObjectMeta: s.Spec.Template.ObjectMeta,
 	}
 }
 
-//deployment label can not be patch
+// deployment label can not be patch
 func getDeploymentModifiedConfiguration(old, new *v1.Deployment) ([]byte, error) {
 	old.Status = new.Status
+	new.Spec.Template.Labels["settingTime"] = time.Now().Format("20060102150405")
 	oldNeed := getDeploymentAllowFields(old)
 	newNeed := getDeploymentAllowFields(new)
 	return getchange(oldNeed, newNeed)
@@ -243,10 +248,11 @@ func getDeploymentAllowFields(d *v1.Deployment) *v1.Deployment {
 					HostNetwork:      d.Spec.Template.Spec.HostNetwork,
 					SchedulerName:    d.Spec.Template.Spec.SchedulerName,
 				},
-				ObjectMeta: d.Spec.Template.ObjectMeta,
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: d.Spec.Template.Labels,
+				},
 			},
 		},
-		ObjectMeta: d.Spec.Template.ObjectMeta,
 	}
 }
 
