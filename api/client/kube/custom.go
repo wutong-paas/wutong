@@ -13,20 +13,27 @@ var resources = []ResourceListInterface{
 	&Services{},
 	&Ingresses{},
 	&ConfigMaps{},
-	&Secrets{},
 	&HorizontalPodAutoscalers{},
 }
 
 // GetResourcesYamlFormat
-func GetResourcesYamlFormat(clientset kubernetes.Interface, namespace string, selector labels.Selector, customSetting *api_model.KubeResourceCustomSetting) string {
+func GetResourcesYamlFormat(clientset kubernetes.Interface, namespace string, selectors []labels.Selector, customSetting *api_model.KubeResourceCustomSetting) string {
 	objs := []interface{}{}
 
-	for _, resource := range resources {
-		resource.SetClientset(clientset)
-		resource.Migrate(namespace, selector)
-		resource.Decorate(customSetting)
-		objs = resource.AppendTo(objs)
+	for _, selector := range selectors {
+		for _, resource := range resources {
+			resource.SetClientset(clientset)
+			resource.Migrate(namespace, selector)
+			resource.Decorate(customSetting)
+			objs = resource.AppendTo(objs)
+		}
 	}
+
+	var secret = Secrets{}
+	secret.SetClientset(clientset)
+	secret.Migrate(namespace, nil)
+	secret.Decorate(customSetting)
+	objs = secret.AppendTo(objs)
 
 	return marshal(objs)
 }

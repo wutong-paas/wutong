@@ -318,8 +318,8 @@ func (a *ApplicationController) ChangeVolumes(w http.ResponseWriter, r *http.Req
 func (t *TenantStruct) GetApplicationKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting model.KubeResourceCustomSetting
 	customSetting.Namespace = r.URL.Query().Get("namespace")
-	app := r.Context().Value(ctxutil.ContextKey("application")).(*dbmodel.Application)
+	serviceAliases := r.URL.Query()["service_aliases"]
 	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	resources := handler.GetApplicationHandler().GetKubeResources(tenant.Namespace, app.AppID, customSetting)
+	resources := handler.GetApplicationHandler().GetKubeResources(tenant.Namespace, serviceAliases, customSetting)
 	httputil.ReturnSuccess(r, w, resources)
 }
