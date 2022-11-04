@@ -2,7 +2,7 @@ ARG BASE_IMAGE_VERSION
 ARG VERSION
 FROM --platform=${TARGETPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-all:${VERSION} AS wt-all
 
-FROM --platform=${TARGETPLATFORM} wutongpaas/alpine:${BASE_IMAGE_VERSION}
+FROM --platform=${TARGETPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:${BASE_IMAGE_VERSION}
 ARG RELEASE_DESC
 ARG TARGETOS TARGETARCH TARGETPLATFORM
 

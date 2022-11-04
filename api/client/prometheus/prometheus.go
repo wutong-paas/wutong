@@ -96,11 +96,11 @@ func (p prometheus) GetMetricOverTime(expr string, start, end time.Time, step ti
 	return parsedResp
 }
 
-func (p prometheus) GetMetadata(namespace string) []Metadata {
+func (p prometheus) GetMetadata(tenantID string) []Metadata {
 	var meta []Metadata
 
 	// Filter metrics available to members of this namespace
-	matchTarget := fmt.Sprintf("{namespace=\"%s\"}", namespace)
+	matchTarget := fmt.Sprintf("{tenant_id=\"%s\"}", tenantID)
 	fmt.Println(matchTarget)
 	items, err := p.client.TargetsMetadata(context.Background(), matchTarget, "", "")
 	if err != nil {
@@ -125,11 +125,11 @@ func (p prometheus) GetMetadata(namespace string) []Metadata {
 	return meta
 }
 
-func (p prometheus) GetAppMetadata(namespace, appID string) []Metadata {
+func (p prometheus) GetAppMetadata(tenantID, appID string) []Metadata {
 	var meta []Metadata
 
 	// Filter metrics available to members of this namespace
-	matchTarget := fmt.Sprintf("{namespace=\"%s\",app_id=\"%s\"}", namespace, appID)
+	matchTarget := fmt.Sprintf("{tenant_id=\"%s\",app_id=\"%s\"}", tenantID, appID)
 	items, err := p.client.TargetsMetadata(context.Background(), matchTarget, "", "")
 	if err != nil {
 		logrus.Error(err)
@@ -152,14 +152,14 @@ func (p prometheus) GetAppMetadata(namespace, appID string) []Metadata {
 	return meta
 }
 
-func (p prometheus) GetComponentMetadata(namespace, componentID string) []Metadata {
+func (p prometheus) GetComponentMetadata(tenantID, componentID string) []Metadata {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	var meta []Metadata
 
 	// Filter metrics available to members of this namespace
-	matchTarget := fmt.Sprintf("{namespace=\"%s\",service_id=\"%s\"}", namespace, componentID)
+	matchTarget := fmt.Sprintf("{tenant_id=\"%s\",service_id=\"%s\"}", tenantID, componentID)
 	items, err := p.client.TargetsMetadata(ctx, matchTarget, "", "")
 	if err != nil {
 		logrus.Error(err)

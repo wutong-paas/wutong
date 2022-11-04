@@ -24,9 +24,9 @@ import "time"
 type Interface interface {
 	GetMetric(expr string, time time.Time) Metric
 	GetMetricOverTime(expr string, start, end time.Time, step time.Duration) Metric
-	GetMetadata(namespace string) []Metadata
+	GetMetadata(tenantID string) []Metadata
 	//TODO Query dimensions to be improved
-	GetAppMetadata(namespace, appID string) []Metadata
-	GetComponentMetadata(namespace, componentID string) []Metadata
+	GetAppMetadata(tenantID, appID string) []Metadata
+	GetComponentMetadata(tenantID, componentID string) []Metadata
 	GetMetricLabelSet(expr string, start, end time.Time) []map[string]string
 }

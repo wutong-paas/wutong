@@ -32,7 +32,7 @@ RUN go mod vendor
 ENV GO111MODULE=on TARGETOS=${TARGETOS} TARGETARCH=${TARGETARCH}
 RUN mkdir /output/bin -p && ./build-wtall.sh
 
-FROM --platform=${TARGETPLATFORM} wutongpaas/alpine:3.15
+FROM --platform=${TARGETPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
 ARG TARGETOS TARGETARCH TARGETPLATFORM
 RUN mkdir /output/bin -p && chmod 777 /output/bin
 
