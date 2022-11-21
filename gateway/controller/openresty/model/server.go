@@ -47,6 +47,11 @@ type Server struct {
 	ProxyStreamNextUpstreamTries   int    `json:"proxyStreamNextUpstreamTries"`
 	//proxy protocol for tcp real ip
 	ProxyProtocol ProxyProtocol
+
+	TCPKeepAliveEnabled bool `json:"tcpKeepAliveEnabled"`
+	TCPKeepAliveIdle    int  `json:"tcpKeepAliveIdle"`
+	TCPKeepAliveIntvl   int  `json:"tcpKeepAliveIntvl"`
+	TCPKeepAliveCnt     int  `json:"tcpKeepAliveCnt"`
 }
 
 // ProxyProtocol describes the proxy protocol configuration
@@ -55,7 +60,7 @@ type ProxyProtocol struct {
 	Encode bool `json:"encode"`
 }
 
-//Validation validation nginx parameters
+// Validation validation nginx parameters
 func (s *Server) Validation() error {
 	if s.ServerName != "" && strings.Contains(s.ServerName, " ") {
 		return fmt.Errorf("servername %s is valid", s.ServerName)
@@ -124,7 +129,7 @@ type Location struct {
 	Proxy proxy.Config `json:"proxy,omitempty"`
 }
 
-//Validation validation nginx parameters
+// Validation validation nginx parameters
 func (s *Location) Validation() error {
 	if s.Path == "" {
 		return fmt.Errorf("location path can not be empty")

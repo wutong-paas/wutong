@@ -5,7 +5,7 @@ server {
         ngx.var.proxy_upstream_name="{{ $tcpServer.UpstreamName }}";
     }
 
-    {{ if .Listen }}listen {{.Listen}} {{ if $tcpServer.ProxyProtocol.Decode }} proxy_protocol{{ end }};{{ end }}
+    {{ if .Listen }}listen {{.Listen}} {{ if $tcpServer.ProxyProtocol.Decode }} proxy_protocol{{ end }} {{if $tcpServer.TCPKeepAliveEnabled }} so_keepalive=30m::{{ end }};{{ end }}
     proxy_timeout           {{ $tcpServer.ProxyStreamTimeout }};
     proxy_pass              upstream_balancer;
     proxy_next_upstream         {{ if $tcpServer.ProxyStreamNextUpstream }}on{{ else }}off{{ end }};
