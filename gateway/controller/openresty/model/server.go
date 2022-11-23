@@ -48,10 +48,10 @@ type Server struct {
 	//proxy protocol for tcp real ip
 	ProxyProtocol ProxyProtocol
 
-	TCPKeepAliveEnabled bool `json:"tcpKeepAliveEnabled"`
-	TCPKeepAliveIdle    int  `json:"tcpKeepAliveIdle"`
-	TCPKeepAliveIntvl   int  `json:"tcpKeepAliveIntvl"`
-	TCPKeepAliveCnt     int  `json:"tcpKeepAliveCnt"`
+	TCPKeepaliveEnabled bool   `json:"tcpKeepaliveEnabled"`
+	TCPKeepaliveIdle    string `json:"tcpKeepaliveIdle"`
+	TCPKeepaliveIntvl   string `json:"tcpKeepaliveIntvl"`
+	TCPKeepaliveCnt     string `json:"tcpKeepaliveCnt"`
 }
 
 // ProxyProtocol describes the proxy protocol configuration

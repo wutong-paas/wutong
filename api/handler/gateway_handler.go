@@ -55,6 +55,7 @@ type GatewayHandler interface {
 	SendTaskDeprecated(in map[string]interface{}) error
 	SendTask(task *ComponentIngressTask) error
 	RuleConfig(req *apimodel.RuleConfigReq) error
+	TCPRuleConfig(req *apimodel.TCPRuleConfigReq) error
 	UpdCertificate(req *apimodel.UpdCertificateReq) error
 	GetGatewayIPs() []IPAndAvailablePort
 	ListHTTPRulesByCertID(certID string) ([]*dbmodel.HTTPRule, error)

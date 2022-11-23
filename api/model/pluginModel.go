@@ -147,7 +147,7 @@ type UpdatePluginStruct struct {
 		//插件模式
 		//in: body
 		//required: false
-		PluginModel string `json:"origin" validate:"origin"`
+		PluginModel string `json:"plugin_model" validate:"plugin_model"`
 	}
 }
 

@@ -194,6 +194,7 @@ type Gatewayer interface {
 	TCPRule(w http.ResponseWriter, r *http.Request)
 	GetAvailablePort(w http.ResponseWriter, r *http.Request)
 	RuleConfig(w http.ResponseWriter, r *http.Request)
+	TCPRuleConfig(w http.ResponseWriter, r *http.Request)
 	Certificate(w http.ResponseWriter, r *http.Request)
 }
 

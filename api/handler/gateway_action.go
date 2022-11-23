@@ -792,6 +792,73 @@ func (g *GatewayAction) RuleConfig(req *apimodel.RuleConfigReq) error {
 	return nil
 }
 
+// TCPRuleConfig -
+func (g *GatewayAction) TCPRuleConfig(req *apimodel.TCPRuleConfigReq) error {
+	var configs []*model.GwRuleConfig
+	// TODO: use reflect to read the field of req, huangrh
+	keepaliveEnabled := "true"
+	if !req.Body.KeepaliveEnabled {
+		keepaliveEnabled = "false"
+	}
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "keepalive-enabled",
+		Value:  keepaliveEnabled,
+	})
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "keepalive-idle",
+		Value:  fmt.Sprintf("%dm", req.Body.KeepaliveIdle),
+	})
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "keepalive-intvl",
+		Value:  fmt.Sprintf("%ds", req.Body.KeepaliveIntvl),
+	})
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "keepalive-cnt",
+		Value:  fmt.Sprintf("%d", req.Body.KeepaliveCnt),
+	})
+
+	rule, err := g.dbmanager.TCPRuleDao().GetTCPRuleByID(req.RuleID)
+	if err != nil {
+		return err
+	}
+
+	tx := db.GetManager().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("Unexpected panic occurred, rollback transaction: %v", r)
+			tx.Rollback()
+		}
+	}()
+	if err := g.dbmanager.GwRuleConfigDaoTransactions(tx).DeleteByRuleID(req.RuleID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	for _, cfg := range configs {
+		if err := g.dbmanager.GwRuleConfigDaoTransactions(tx).AddModel(cfg); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := g.SendTaskDeprecated(map[string]interface{}{
+		"service_id": req.ServiceID,
+		"action":     "update-tcprule-config",
+		"event_id":   req.EventID,
+		"limit":      map[string]string{"tcp-address": fmt.Sprintf("%s:%d", rule.IP, rule.Port)},
+	}); err != nil {
+		logrus.Errorf("send runtime message about gateway failure %s", err.Error())
+	}
+	return nil
+}
+
 // UpdCertificate -
 func (g *GatewayAction) UpdCertificate(req *apimodel.UpdCertificateReq) error {
 	cert, err := db.GetManager().CertificateDao().GetCertificateByID(req.CertificateID)

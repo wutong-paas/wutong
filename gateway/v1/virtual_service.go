@@ -60,6 +60,11 @@ type VirtualService struct {
 	Locations        []*Location            `json:"locations"`
 	ForceSSLRedirect bool                   `json:"force_ssl_redirect"`
 	ExtensionConfig  map[string]interface{} `json:"extension_config"`
+
+	TCPKeepaliveEnabled bool   `json:"tcp_keepalive_enabled"`
+	TCPKeepaliveIdle    string `json:"tcp_keepalive_idle"`
+	TCPKeepaliveIntvl   string `json:"tcp_keepalive_intvl"`
+	TCPKeepaliveCnt     string `json:"tcp_keepalive_cnt"`
 }
 
 //Equals equals vs

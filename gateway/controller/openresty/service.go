@@ -220,7 +220,6 @@ func (o *OrService) getNgxServer(conf *v1.Config) (l7srv []*model.Server, l4srv 
 			server.SSLCertificate = vs.SSLCert.CertificatePem
 			server.SSLCertificateKey = vs.SSLCert.CertificatePem
 			server.EnableSSLStapling = o.ocfg.EnableSSLStapling
-
 		}
 		for _, loc := range vs.Locations {
 			location := &model.Location{
@@ -251,6 +250,10 @@ func (o *OrService) getNgxServer(conf *v1.Config) (l7srv []*model.Server, l4srv 
 			ProxyStreamNextUpstream:        true,
 			ProxyStreamNextUpstreamTimeout: "600s",
 			ProxyStreamNextUpstreamTries:   3,
+			TCPKeepaliveEnabled:            vs.TCPKeepaliveEnabled,
+			TCPKeepaliveIdle:               vs.TCPKeepaliveIdle,
+			TCPKeepaliveIntvl:              vs.TCPKeepaliveIntvl,
+			TCPKeepaliveCnt:                vs.TCPKeepaliveCnt,
 		}
 		server.Listen = strings.Join(vs.Listening, " ")
 		for _, loc := range vs.Locations {

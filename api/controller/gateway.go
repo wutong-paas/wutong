@@ -325,6 +325,25 @@ func (g *GatewayStruct) RuleConfig(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, "success")
 }
 
+// TCPRuleConfig is used to add, update or delete tcp rule config.
+func (g *GatewayStruct) TCPRuleConfig(w http.ResponseWriter, r *http.Request) {
+	var req api_model.TCPRuleConfigReq
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		return
+	}
+
+	sid := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	eventID := r.Context().Value(ctxutil.ContextKey("event_id")).(string)
+	req.ServiceID = sid
+	req.EventID = eventID
+	if err := handler.GetGatewayHandler().TCPRuleConfig(&req); err != nil {
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("Rule id: %s; error update tcp rule config: %v", req.RuleID, err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, "success")
+}
+
 // Certificate -
 func (g *GatewayStruct) Certificate(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {

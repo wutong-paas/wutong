@@ -241,7 +241,7 @@ func (a AppServiceBuild) ApplyRules(serviceID string, containerPort, pluginConta
 	return ingresses, secrets, nil
 }
 
-// applyTCPRule applies stream rule into ingress
+// applyHTTPRule applies stream rule into ingress
 func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, pluginContainerPort int,
 	service *corev1.Service) (ingress interface{}, sec *corev1.Secret, err error) {
 	//deal with empty path and domain
@@ -311,6 +311,16 @@ func (a *AppServiceBuild) applyTCPRule(rule *model.TCPRule, service *corev1.Serv
 	annos[parser.GetAnnotationWithPrefix("l4-enable")] = "true"
 	annos[parser.GetAnnotationWithPrefix("l4-host")] = rule.IP
 	annos[parser.GetAnnotationWithPrefix("l4-port")] = fmt.Sprintf("%v", rule.Port)
+
+	configs, err := db.GetManager().GwRuleConfigDao().ListByRuleID(rule.UUID)
+	if err != nil {
+		return nil, err
+	}
+	if len(configs) > 0 {
+		for _, cfg := range configs {
+			annos[parser.GetAnnotationWithPrefix(cfg.Key)] = cfg.Value
+		}
+	}
 
 	// create ingress
 	objectMeta := createIngressMeta(rule.UUID, namespace, a.appService.GetCommonLabels())

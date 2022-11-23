@@ -19,6 +19,7 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -165,6 +166,14 @@ type RuleConfigReq struct {
 	Body      Body `json:"body" validate:"body|required"`
 }
 
+// TCPRuleConfigReq -
+type TCPRuleConfigReq struct {
+	RuleID    string `json:"rule_id,omitempty" validate:"rule_id|required"`
+	ServiceID string
+	EventID   string
+	Body      TCPBody `json:"body" validate:"body|required"`
+}
+
 // Body is a embedded sturct of RuleConfigReq.
 type Body struct {
 	ProxyConnectTimeout int          `json:"proxy_connect_timeout,omitempty" validate:"proxy_connect_timeout|required"`
@@ -176,6 +185,14 @@ type Body struct {
 	ProxyBufferSize     int          `json:"proxy_buffer_size,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBufferNumbers  int          `json:"proxy_buffer_numbers,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBuffering      string       `json:"proxy_buffering,omitempty" validate:"proxy_buffering|required"`
+}
+
+// TCPBody is a embedded sturct of TCPRuleConfigReq.
+type TCPBody struct {
+	KeepaliveEnabled bool `json:"keepalive_enabled,omitempty"`
+	KeepaliveIdle    int  `json:"keepalive_idle,omitempty"`
+	KeepaliveIntvl   int  `json:"keepalive_intvl,omitempty"`
+	KeepaliveCnt     int  `json:"keepalive_cnt,omitempty"`
 }
 
 // HTTPRuleConfig -
@@ -191,6 +208,15 @@ type HTTPRuleConfig struct {
 	ProxyBufferSize    int               `json:"proxy_buffer_size,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBufferNumbers int               `json:"proxy_buffer_numbers,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBuffering     string            `json:"proxy_buffering,omitempty" validate:"proxy_buffering|required"`
+}
+
+// TCPRuleConfig -
+type TCPRuleConfig struct {
+	RuleID           string `json:"rule_id,omitempty" validate:"rule_id|required"`
+	KeepaliveEnabled bool   `json:"keepalive_enabled,omitempty"`
+	KeepaliveIdle    int    `json:"keepalive_idle,omitempty"`
+	KeepaliveIntvl   int    `json:"keepalive_intvl,omitempty"`
+	KeepaliveCnt     int    `json:"keepalive_cnt,omitempty"`
 }
 
 // DbModel return database model
@@ -253,6 +279,36 @@ func (h *HTTPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 			Value:  v,
 		})
 	}
+	return configs
+}
+
+// DbModel return database model
+func (t *TCPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
+	var configs []*dbmodel.GwRuleConfig
+	keepaliveEnabled := "true"
+	if !t.KeepaliveEnabled {
+		keepaliveEnabled = "false"
+	}
+	configs = append(configs, &dbmodel.GwRuleConfig{
+		RuleID: t.RuleID,
+		Key:    "keepalive-enabled",
+		Value:  keepaliveEnabled,
+	})
+	configs = append(configs, &dbmodel.GwRuleConfig{
+		RuleID: t.RuleID,
+		Key:    "keepalive-idle",
+		Value:  fmt.Sprintf("%dm", t.KeepaliveIdle),
+	})
+	configs = append(configs, &dbmodel.GwRuleConfig{
+		RuleID: t.RuleID,
+		Key:    "keepalive-intvl",
+		Value:  fmt.Sprintf("%ds", t.KeepaliveIntvl),
+	})
+	configs = append(configs, &dbmodel.GwRuleConfig{
+		RuleID: t.RuleID,
+		Key:    "keepalive-cnt",
+		Value:  fmt.Sprintf("%d", t.KeepaliveCnt),
+	})
 	return configs
 }
 

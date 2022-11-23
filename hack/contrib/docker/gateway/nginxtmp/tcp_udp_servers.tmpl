@@ -5,7 +5,7 @@ server {
         ngx.var.proxy_upstream_name="{{ $tcpServer.UpstreamName }}";
     }
 
-    {{ if .Listen }}listen {{.Listen}} {{ if $tcpServer.ProxyProtocol.Decode }} proxy_protocol{{ end }} {{if $tcpServer.TCPKeepAliveEnabled }} so_keepalive=30m::{{ end }};{{ end }}
+    {{ if .Listen }}listen {{.Listen}} {{ if $tcpServer.ProxyProtocol.Decode }} proxy_protocol{{ end }} {{ if $tcpServer.TCPKeepaliveEnabled }} so_keepalive={{ $tcpServer.TCPKeepaliveIdle }}:{{ $tcpServer.TCPKeepaliveIntvl }}:{{ $tcpServer.TCPKeepaliveCnt }}{{ end }};{{ end }}
     proxy_timeout           {{ $tcpServer.ProxyStreamTimeout }};
     proxy_pass              upstream_balancer;
     proxy_next_upstream         {{ if $tcpServer.ProxyStreamNextUpstream }}on{{ else }}off{{ end }};
@@ -23,7 +23,7 @@ server {
     preread_by_lua_block {
         ngx.var.proxy_upstream_name="{{ $udpServer.UpstreamName }}";
     }
-    {{ if $udpServer.Listen }}listen {{$udpServer.Listen}} {{ if $udpServer.ProxyProtocol.Decode }} proxy_protocol{{ end }};{{ end }}
+    {{ if $udpServer.Listen }}listen {{$udpServer.Listen}} {{ if $udpServer.ProxyProtocol.Decode }} proxy_protocol{{ end }} {{ if $udpServer.TCPKeepaliveEnabled }} so_keepalive={{ $udpServer.TCPKeepaliveIdle }}:{{ $udpServer.TCPKeepaliveIntvl }}:{{ $udpServer.TCPKeepaliveCnt }}{{ end }};{{ end }}
     {{ if $udpServer.ProxyStreamResponses }}proxy_responses {{ $udpServer.ProxyStreamResponses }}; {{ end }}
     proxy_timeout           {{ $udpServer.ProxyStreamTimeout }};
     proxy_next_upstream         {{ if $udpServer.ProxyStreamNextUpstream }}on{{ else }}off{{ end }};

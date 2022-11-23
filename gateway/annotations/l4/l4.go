@@ -28,9 +28,13 @@ import (
 
 // Config -
 type Config struct {
-	L4Enable bool
-	L4Host   string
-	L4Port   int
+	L4Enable         bool
+	L4Host           string
+	L4Port           int
+	KeepaliveEnabled bool
+	KeepaliveIdle    string // default 30m
+	KeepaliveIntvl   string // deafult 75s
+	KeepaliveCnt     string // default 9
 }
 
 type l4 struct {
@@ -53,9 +57,19 @@ func (l l4) Parse(meta *metav1.ObjectMeta) (interface{}, error) {
 	if l4Enable && (l4Port <= 0 || l4Port > 65535) {
 		return nil, fmt.Errorf("error l4Port: %d", l4Port)
 	}
+
+	keepaliveEnabled, _ := parser.GetBoolAnnotation("keepalive-enabled", meta)
+	keepaliveIdle, _ := parser.GetStringAnnotation("keepalive-idle", meta)
+	keepaliveIntvl, _ := parser.GetStringAnnotation("keepalive-intvl", meta)
+	keepaliveCnt, _ := parser.GetStringAnnotation("keepalive-cnt", meta)
+
 	return &Config{
-		L4Enable: l4Enable,
-		L4Host:   l4Host,
-		L4Port:   l4Port,
+		L4Enable:         l4Enable,
+		L4Host:           l4Host,
+		L4Port:           l4Port,
+		KeepaliveEnabled: keepaliveEnabled,
+		KeepaliveIdle:    keepaliveIdle,
+		KeepaliveIntvl:   keepaliveIntvl,
+		KeepaliveCnt:     keepaliveCnt,
 	}, nil
 }

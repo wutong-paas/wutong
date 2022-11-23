@@ -583,6 +583,10 @@ func (s *k8sStore) ListVirtualService() (l7vs []*v1.VirtualService, l4vs []*v1.V
 			}
 			vs.Namespace = anns.Namespace
 			vs.ServiceID = anns.Labels["service_id"]
+			vs.TCPKeepaliveEnabled = anns.L4.KeepaliveEnabled
+			vs.TCPKeepaliveIdle = anns.L4.KeepaliveIdle
+			vs.TCPKeepaliveIntvl = anns.L4.KeepaliveIntvl
+			vs.TCPKeepaliveCnt = anns.L4.KeepaliveCnt
 			l4PoolMap[ingServiceName] = struct{}{}
 			l4vsMap[listening] = vs
 			l4vs = append(l4vs, vs)
