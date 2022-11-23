@@ -83,7 +83,7 @@ var l4PoolMap = make(map[string]struct{})
 // l4PoolBackendMap is the mapping between backend and pool
 var l4PoolBackendMap map[string][]backend
 
-//Storer is the interface that wraps the required methods to gather information
+// Storer is the interface that wraps the required methods to gather information
 type Storer interface {
 	// list endpoints pool
 	ListPool() ([]*v1.Pool, []*v1.Pool)
