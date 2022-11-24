@@ -149,6 +149,10 @@ type Backend struct {
 	// http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
 	ProxyBuffering string `json:"proxy-buffering"`
 
+	// Enables or disables access log for the location.
+	// http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log
+	AccessLog string `json:"access-log"`
+
 	// Allows redefining or appending fields to the request header passed to the proxied server.
 	// http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header
 	ProxySetHeaders map[string]string `json:"proxy-set-headers"`

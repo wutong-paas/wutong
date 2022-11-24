@@ -46,7 +46,7 @@ type GatewayAction struct {
 	etcdCli   *clientv3.Client
 }
 
-//CreateGatewayManager creates gateway manager.
+// CreateGatewayManager creates gateway manager.
 func CreateGatewayManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *GatewayAction {
 	return &GatewayAction{
 		dbmanager: dbmanager,
@@ -735,6 +735,12 @@ func (g *GatewayAction) RuleConfig(req *apimodel.RuleConfigReq) error {
 		Key:    "proxy-buffering",
 		Value:  req.Body.ProxyBuffering,
 	})
+
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "access-log",
+		Value:  req.Body.AccessLog,
+	})
 	setheaders := make(map[string]string)
 	for _, item := range req.Body.SetHeaders {
 		if strings.TrimSpace(item.Key) == "" {
@@ -917,13 +923,13 @@ func (g *GatewayAction) ListHTTPRulesByCertID(certID string) ([]*model.HTTPRule,
 	return db.GetManager().HTTPRuleDao().ListByCertID(certID)
 }
 
-//IPAndAvailablePort ip and advice available port
+// IPAndAvailablePort ip and advice available port
 type IPAndAvailablePort struct {
 	IP            string `json:"ip"`
 	AvailablePort int    `json:"available_port"`
 }
 
-//GetGatewayIPs get all gateway node ips
+// GetGatewayIPs get all gateway node ips
 func (g *GatewayAction) GetGatewayIPs() []IPAndAvailablePort {
 	defaultAvailablePort, _ := g.GetAvailablePort("0.0.0.0", false)
 	defaultIps := []IPAndAvailablePort{{

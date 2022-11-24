@@ -101,6 +101,7 @@ func NewDefault() Configuration {
 			LimitRate:                0,
 			LimitRateAfter:           0,
 			ProxyBuffering:           "off",
+			AccessLog:                "off",
 			//defaut set header
 			ProxySetHeaders: map[string]string{
 				"Host":              "$host",

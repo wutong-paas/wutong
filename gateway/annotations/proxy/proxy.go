@@ -18,14 +18,15 @@ package proxy
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"regexp"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/gateway/annotations/parser"
 	"github.com/wutong-paas/wutong/gateway/annotations/resolver"
 	"github.com/wutong-paas/wutong/gateway/controller/config"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/net/http/httpguts"
 )
 
@@ -46,10 +47,11 @@ type Config struct {
 	ProxyRedirectTo     string            `json:"proxyRedirectTo"`
 	RequestBuffering    string            `json:"requestBuffering"`
 	ProxyBuffering      string            `json:"proxyBuffering"`
+	AccessLog           bool              `json:"accessLog"`
 	SetHeaders          map[string]string `json:"setHeaders"`
 }
 
-//Validation validation nginx parameters
+// Validation validation nginx parameters
 func (s *Config) Validation() error {
 	defBackend := config.NewDefault()
 	for k, v := range s.SetHeaders {
@@ -64,6 +66,7 @@ func (s *Config) Validation() error {
 		logrus.Warningf("invalid proxy buffering: %s; use the default one: %s", s.ProxyBuffering, defBackend.ProxyBuffering)
 		s.ProxyBuffering = defBackend.ProxyBuffering
 	}
+
 	if !s.validateBufferSize() {
 		logrus.Warningf("invalid proxy buffer size: %s; use the default one: %s", s.BufferSize, defBackend.ProxyBufferSize)
 		s.BufferSize = defBackend.ProxyBufferSize
@@ -94,9 +97,10 @@ func (s *Config) validateBuffering(buffering string) bool {
 	return buffering == "off" || buffering == "on"
 }
 
-//NewProxyConfig new proxy config
+// NewProxyConfig new proxy config
 func NewProxyConfig() Config {
 	defBackend := config.NewDefault()
+
 	return Config{
 		BodySize:            defBackend.ProxyBodySize,
 		ConnectTimeout:      defBackend.ProxyConnectTimeout,
@@ -113,6 +117,7 @@ func NewProxyConfig() Config {
 		ProxyRedirectFrom:   defBackend.ProxyRedirectFrom,
 		ProxyRedirectTo:     defBackend.ProxyRedirectTo,
 		ProxyBuffering:      defBackend.ProxyBuffering,
+		AccessLog:           defBackend.AccessLog == "on",
 		SetHeaders:          defBackend.ProxySetHeaders,
 	}
 }
@@ -165,6 +170,9 @@ func (s *Config) Equal(l2 *Config) bool {
 		return false
 	}
 	if s.ProxyBuffering != l2.ProxyBuffering {
+		return false
+	}
+	if s.AccessLog != l2.AccessLog {
 		return false
 	}
 
@@ -270,6 +278,13 @@ func (a proxy) Parse(meta *metav1.ObjectMeta) (interface{}, error) {
 	config.ProxyBuffering, err = parser.GetStringAnnotation("proxy-buffering", meta)
 	if err != nil {
 		config.ProxyBuffering = defBackend.ProxyBuffering
+	}
+
+	accessLogAnnotation, err := parser.GetStringAnnotation("access-log", meta)
+	if err != nil {
+		config.AccessLog = defBackend.AccessLog == "on"
+	} else {
+		config.AccessLog = accessLogAnnotation == "on"
 	}
 
 	config.SetHeaders = make(map[string]string)

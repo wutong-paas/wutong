@@ -84,7 +84,9 @@ server {
 
         client_max_body_size        {{ $loc.Proxy.BodySize }}m;
 
-        {{ if $loc.DisableAccessLog }}
+        {{ if $loc.Proxy.AccessLog }}
+        access_log /dev/stdout proxy;
+        {{ else if $loc.DisableAccessLog }}
         access_log off;
         {{ else if $loc.AccessLogPath }}
         access_log {{$loc.AccessLogPath}} proxy;
