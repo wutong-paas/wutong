@@ -32,7 +32,7 @@ const (
 	ProtocolSCTP Protocol = "SCTP"
 )
 
-//VirtualService VirtualService
+// VirtualService VirtualService
 type VirtualService struct {
 	Meta
 	Enabled  bool            `json:"enable"`
@@ -67,7 +67,7 @@ type VirtualService struct {
 	TCPKeepaliveCnt     string `json:"tcp_keepalive_cnt"`
 }
 
-//Equals equals vs
+// Equals equals vs
 func (v *VirtualService) Equals(c *VirtualService) bool {
 	if v == c {
 		return true
@@ -88,6 +88,19 @@ func (v *VirtualService) Equals(c *VirtualService) bool {
 		return false
 	}
 	if v.Port != c.Port {
+		return false
+	}
+	// tcp keepalive config
+	if v.TCPKeepaliveEnabled != c.TCPKeepaliveEnabled {
+		return false
+	}
+	if v.TCPKeepaliveIdle != c.TCPKeepaliveIdle {
+		return false
+	}
+	if v.TCPKeepaliveIntvl != c.TCPKeepaliveIntvl {
+		return false
+	}
+	if v.TCPKeepaliveCnt != c.TCPKeepaliveCnt {
 		return false
 	}
 

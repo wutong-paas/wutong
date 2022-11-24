@@ -177,7 +177,7 @@ func (gwc *GWController) syncGateway(key interface{}) error {
 	return nil
 }
 
-//NewGWController new Gateway controller
+// NewGWController new Gateway controller
 func NewGWController(ctx context.Context, clientset kubernetes.Interface, cfg *option.Config, mc metric.Collector, node *cluster.NodeManager) (*GWController, error) {
 	gwc := &GWController{
 		updateCh:        channels.NewRingChannel(1024),
