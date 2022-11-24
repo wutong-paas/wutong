@@ -110,6 +110,7 @@ func getClusterInfo(c *cli.Context) error {
 		}
 		fmt.Println("The current cluster api server is not working properly.")
 		fmt.Println("You can query the service log for troubleshooting.")
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 	healthCPUFree := fmt.Sprintf("%.2f", float32(clusterInfo.HealthCapCPU)-clusterInfo.HealthReqCPU)
