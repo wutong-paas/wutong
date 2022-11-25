@@ -736,10 +736,14 @@ func (g *GatewayAction) RuleConfig(req *apimodel.RuleConfigReq) error {
 		Value:  req.Body.ProxyBuffering,
 	})
 
+	accessLog := "off"
+	if req.Body.AccessLog {
+		accessLog = "on"
+	}
 	configs = append(configs, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "access-log",
-		Value:  req.Body.AccessLog,
+		Value:  accessLog,
 	})
 	setheaders := make(map[string]string)
 	for _, item := range req.Body.SetHeaders {

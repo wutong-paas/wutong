@@ -185,7 +185,7 @@ type Body struct {
 	ProxyBufferSize     int          `json:"proxy_buffer_size,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBufferNumbers  int          `json:"proxy_buffer_numbers,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBuffering      string       `json:"proxy_buffering,omitempty" validate:"proxy_buffering|required"`
-	AccessLog           string       `json:"access_log,omitempty" validate:"access_log|required"`
+	AccessLog           bool         `json:"access_log,omitempty" validate:"access_log|required"`
 }
 
 // TCPBody is a embedded sturct of TCPRuleConfigReq.
@@ -209,7 +209,7 @@ type HTTPRuleConfig struct {
 	ProxyBufferSize    int               `json:"proxy_buffer_size,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBufferNumbers int               `json:"proxy_buffer_numbers,omitempty" validate:"proxy_buffer_size|numeric_between:1,65535"`
 	ProxyBuffering     string            `json:"proxy_buffering,omitempty" validate:"proxy_buffering|required"`
-	AccessLog          string            `json:"access_log,omitempty" validate:"access_log|required"`
+	AccessLog          bool              `json:"access_log,omitempty" validate:"access_log|required"`
 }
 
 // TCPRuleConfig -
@@ -259,10 +259,14 @@ func (h *HTTPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 		Key:    "proxy-buffering",
 		Value:  h.ProxyBuffering,
 	})
+	accessLog := "off"
+	if h.AccessLog {
+		accessLog = "on"
+	}
 	configs = append(configs, &dbmodel.GwRuleConfig{
 		RuleID: h.RuleID,
 		Key:    "access-log",
-		Value:  h.AccessLog,
+		Value:  accessLog,
 	})
 	setheaders := make(map[string]string)
 	// for _, item := range h.SetHeaders {
