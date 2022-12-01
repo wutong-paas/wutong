@@ -115,7 +115,7 @@ func (s *slugBuild) writeRunDockerfile(sourceDir, packageName string, envs map[s
 	return ioutil.WriteFile(path.Join(sourceDir, "Dockerfile"), []byte(result), 0755)
 }
 
-//buildRunnerImage Wrap slug in the runner image
+// buildRunnerImage Wrap slug in the runner image
 func (s *slugBuild) buildRunnerImage(slugPackage string) (string, error) {
 	imageName := CreateImageName(s.re.ServiceID, s.re.DeployVersion)
 	cacheDir := path.Join(path.Dir(slugPackage), "."+s.re.DeployVersion)
@@ -203,8 +203,8 @@ func (s *slugBuild) getSourceCodeTarFile(re *Request) (string, error) {
 	return sourceTarFile, nil
 }
 
-//stopPreBuildJob Stops previous build tasks for the same component
-//The same component retains only one build task to perform
+// stopPreBuildJob Stops previous build tasks for the same component
+// The same component retains only one build task to perform
 func (s *slugBuild) stopPreBuildJob(re *Request) error {
 	jobList, err := jobc.GetJobController().GetServiceJobs(re.ServiceID)
 	if err != nil {
@@ -535,7 +535,7 @@ func (s *slugBuild) setImagePullSecretsForPod(pod *corev1.Pod) {
 	}
 }
 
-//ErrorBuild build error
+// ErrorBuild build error
 type ErrorBuild struct {
 	Code int
 }

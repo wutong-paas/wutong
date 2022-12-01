@@ -37,14 +37,11 @@ func init() {
 	if os.Getenv("BUILD_IMAGE_REPOSTORY_PASS") != "" {
 		REGISTRYPASS = os.Getenv("BUILD_IMAGE_REPOSTORY_PASS")
 	}
-	RUNNERIMAGENAME = "/runner"
+
+	// set runner image name
+	RUNNERIMAGENAME = "runner"
 	if os.Getenv("RUNNER_IMAGE_NAME") != "" {
 		RUNNERIMAGENAME = os.Getenv("RUNNER_IMAGE_NAME")
-	}
-	RUNNERIMAGENAME = path.Join(REGISTRYDOMAIN, RUNNERIMAGENAME)
-	BUILDERIMAGENAME = "builder"
-	if os.Getenv("BUILDER_IMAGE_NAME") != "" {
-		BUILDERIMAGENAME = os.Getenv("BUILDER_IMAGE_NAME")
 	}
 
 	CIVERSION = "v1.0.0-stable"
@@ -52,10 +49,17 @@ func init() {
 		CIVERSION = os.Getenv("CI_VERSION")
 	}
 
-	BUILDERIMAGENAME = path.Join(REGISTRYDOMAIN, BUILDERIMAGENAME)
-
-	ONLINEBUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(ONLINEREGISTRYDOMAIN, "builder"), CIVERSION)
+	RUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(REGISTRYDOMAIN, RUNNERIMAGENAME), CIVERSION)
 	ONLINERUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(ONLINEREGISTRYDOMAIN, "runner"), CIVERSION)
+
+	// set builder image name
+	BUILDERIMAGENAME = "builder"
+	if os.Getenv("BUILDER_IMAGE_NAME") != "" {
+		BUILDERIMAGENAME = os.Getenv("BUILDER_IMAGE_NAME")
+	}
+
+	BUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(REGISTRYDOMAIN, BUILDERIMAGENAME), CIVERSION)
+	ONLINEBUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(ONLINEREGISTRYDOMAIN, "builder"), CIVERSION)
 }
 
 // GetImageUserInfoV2 -
