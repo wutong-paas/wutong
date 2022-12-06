@@ -31,11 +31,12 @@ var nodeProxy proxy.Proxy
 var builderProxy proxy.Proxy
 var prometheusProxy proxy.Proxy
 var monitorProxy proxy.Proxy
+var obsProxy proxy.Proxy
 
 var filebrowserProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
 var dbgateProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
 
-//InitProxy 初始化
+// InitProxy 初始化
 func InitProxy(conf option.Config) {
 	if nodeProxy == nil {
 		nodeProxy = proxy.CreateProxy("acp_node", "http", conf.NodeAPI)
@@ -51,25 +52,27 @@ func InitProxy(conf option.Config) {
 		monitorProxy = proxy.CreateProxy("monitor", "http", []string{"127.0.0.1:3329"})
 		discover.GetEndpointDiscover().AddProject("monitor", monitorProxy)
 	}
-
+	if obsProxy == nil {
+		obsProxy = proxy.CreateProxy("obs", "http", conf.ObsAPI)
+	}
 }
 
-//GetNodeProxy GetNodeProxy
+// GetNodeProxy GetNodeProxy
 func GetNodeProxy() proxy.Proxy {
 	return nodeProxy
 }
 
-//GetBuilderProxy GetNodeProxy
+// GetBuilderProxy GetNodeProxy
 func GetBuilderProxy() proxy.Proxy {
 	return builderProxy
 }
 
-//GetPrometheusProxy GetPrometheusProxy
+// GetPrometheusProxy GetPrometheusProxy
 func GetPrometheusProxy() proxy.Proxy {
 	return prometheusProxy
 }
 
-//GetMonitorProxy GetMonitorProxy
+// GetMonitorProxy GetMonitorProxy
 func GetMonitorProxy() proxy.Proxy {
 	return monitorProxy
 }
@@ -112,4 +115,9 @@ func GetDbgateProxy(serviceID string) proxy.Proxy {
 		dbgateProxies[serviceID] = dbgateProxy
 	}
 	return dbgateProxy
+}
+
+// GetObsProxy GetObsProxy
+func GetObsProxy() proxy.Proxy {
+	return obsProxy
 }
