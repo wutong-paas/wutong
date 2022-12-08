@@ -32,7 +32,7 @@ import (
 	"github.com/wutong-paas/wutong/node/statsd/exporter"
 )
 
-//Exporter receive statsd metric and export prometheus metric
+// Exporter receive statsd metric and export prometheus metric
 type Exporter struct {
 	statsdListenAddress string
 	statsdListenUDP     string
@@ -44,7 +44,7 @@ type Exporter struct {
 	mapper              *exporter.MetricMapper
 }
 
-//CreateExporter create a exporter
+// CreateExporter create a exporter
 func CreateExporter(sc option.StatsdConfig, register *prometheus.Registry) *Exporter {
 	exp := &Exporter{
 		statsdListenAddress: sc.StatsdListenAddress,
@@ -58,7 +58,7 @@ func CreateExporter(sc option.StatsdConfig, register *prometheus.Registry) *Expo
 	return exp
 }
 
-//Start Start
+// Start Start
 func (e *Exporter) Start() error {
 	if e.statsdListenAddress != "" {
 		logrus.Warnln("Warning: statsd.listen-address is DEPRECATED, please use statsd.listen-udp instead.")
@@ -125,7 +125,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 }
 
-//GetRegister GetRegister
+// GetRegister GetRegister
 func (e *Exporter) GetRegister() *prometheus.Registry {
 	return e.register
 }
@@ -196,14 +196,14 @@ func watchConfig(fileName string, mapper *exporter.MetricMapper) {
 			// Re-add the file watcher since it can get lost on some changes. E.g.
 			// saving a file with vim results in a RENAME-MODIFY-DELETE event
 			// sequence, after which the newly written file is no longer watched.
-			err = watcher.WatchFlags(fileName, fsnotify.FSN_MODIFY)
+			watcher.WatchFlags(fileName, fsnotify.FSN_MODIFY)
 		case err := <-watcher.Error:
 			logrus.Errorln("Error watching config:", err)
 		}
 	}
 }
 
-//ReloadConfig reload mapper config file
+// ReloadConfig reload mapper config file
 func (e *Exporter) ReloadConfig() (err error) {
 	logrus.Infof("Config file changed, attempting reload")
 	err = e.mapper.InitFromFile(e.mappingConfig)

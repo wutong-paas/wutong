@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/testcontainers/testcontainers-go"
+	testcontainers "github.com/testcontainers/testcontainers-go"
 	"github.com/wutong-paas/wutong/db"
 	dbconfig "github.com/wutong-paas/wutong/db/config"
 )

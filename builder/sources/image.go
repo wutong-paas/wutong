@@ -45,14 +45,14 @@ import (
 	"golang.org/x/net/context"
 )
 
-//ErrorNoAuth error no auth
+// ErrorNoAuth error no auth
 var ErrorNoAuth = fmt.Errorf("pull image require docker login")
 
-//ErrorNoImage error no image
+// ErrorNoImage error no image
 var ErrorNoImage = fmt.Errorf("image not exist")
 
-//ImagePull pull docker image
-//timeout minutes of the unit
+// ImagePull pull docker image
+// timeout minutes of the unit
 func ImagePull(dockerCli *client.Client, image string, username, password string, logger event.Logger, timeout int) (*types.ImageInspect, error) {
 	printLog(logger, "info", fmt.Sprintf("start get image:%s", image), map[string]string{"step": "pullimage"})
 	var pullipo types.ImagePullOptions
@@ -122,7 +122,7 @@ func ImagePull(dockerCli *client.Client, image string, username, password string
 			logrus.Debugf("error pulling image: %v", jm.Error)
 			return nil, jm.Error
 		}
-		printLog(logger, "debug", fmt.Sprintf(jm.JSONString()), map[string]string{"step": "progress"})
+		printLog(logger, "debug", jm.JSONString(), map[string]string{"step": "progress"})
 		logrus.Debug(jm.JSONString())
 	}
 	printLog(logger, "debug", "Get the image information and its raw representation", map[string]string{"step": "progress"})
@@ -135,7 +135,7 @@ func ImagePull(dockerCli *client.Client, image string, username, password string
 	return &ins, nil
 }
 
-//ImageTag change docker image tag
+// ImageTag change docker image tag
 func ImageTag(dockerCli *client.Client, source, target string, logger event.Logger, timeout int) error {
 	logrus.Debugf(fmt.Sprintf("change image tag：%s -> %s", source, target))
 	printLog(logger, "info", fmt.Sprintf("change image tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
@@ -151,7 +151,7 @@ func ImageTag(dockerCli *client.Client, source, target string, logger event.Logg
 	return nil
 }
 
-//ImageNameHandle 解析imagename
+// ImageNameHandle 解析imagename
 func ImageNameHandle(imageName string) *model.ImageName {
 	var i model.ImageName
 	if strings.Contains(imageName, "/") {
@@ -179,7 +179,7 @@ func ImageNameHandle(imageName string) *model.ImageName {
 	return &i
 }
 
-//ImageNameWithNamespaceHandle if have namespace,will parse namespace
+// ImageNameWithNamespaceHandle if have namespace,will parse namespace
 func ImageNameWithNamespaceHandle(imageName string) *model.ImageName {
 	var i model.ImageName
 	if strings.Contains(imageName, "/") {
@@ -218,8 +218,8 @@ func GenSaveImageName(name string) string {
 	return fmt.Sprintf("%s:%s", imageName.Name, imageName.Tag)
 }
 
-//ImagePush push image to registry
-//timeout minutes of the unit
+// ImagePush push image to registry
+// timeout minutes of the unit
 func ImagePush(dockerCli *client.Client, image, user, pass string, logger event.Logger, timeout int) error {
 	printLog(logger, "info", fmt.Sprintf("start push image：%s", image), map[string]string{"step": "pushimage"})
 	if timeout < 1 {
@@ -285,7 +285,7 @@ func ImagePush(dockerCli *client.Client, image, user, pass string, logger event.
 	return nil
 }
 
-//TrustedImagePush push image to trusted registry
+// TrustedImagePush push image to trusted registry
 func TrustedImagePush(dockerCli *client.Client, image, user, pass string, logger event.Logger, timeout int) error {
 	if err := CheckTrustedRepositories(image, user, pass); err != nil {
 		return err
@@ -293,7 +293,7 @@ func TrustedImagePush(dockerCli *client.Client, image, user, pass string, logger
 	return ImagePush(dockerCli, image, user, pass, logger, timeout)
 }
 
-//CheckTrustedRepositories check Repositories is exist ,if not create it.
+// CheckTrustedRepositories check Repositories is exist ,if not create it.
 func CheckTrustedRepositories(image, user, pass string) error {
 	ref, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
@@ -351,7 +351,7 @@ func EncodeAuthToBase64(authConfig types.AuthConfig) (string, error) {
 	return base64.URLEncoding.EncodeToString(buf), nil
 }
 
-//ImageBuild ImageBuild
+// ImageBuild ImageBuild
 func ImageBuild(dockerCli *client.Client, contextDir string, options types.ImageBuildOptions, logger event.Logger, timeout int) error {
 	var ctx context.Context
 	if timeout != 0 {
@@ -391,7 +391,7 @@ func ImageBuild(dockerCli *client.Client, contextDir string, options types.Image
 	return nil
 }
 
-//ImageInspectWithRaw get image inspect
+// ImageInspectWithRaw get image inspect
 func ImageInspectWithRaw(dockerCli *client.Client, image string) (*types.ImageInspect, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -402,7 +402,7 @@ func ImageInspectWithRaw(dockerCli *client.Client, image string) (*types.ImageIn
 	return &ins, nil
 }
 
-//ImageSave save image to tar file
+// ImageSave save image to tar file
 // destination destination file name eg. /tmp/xxx.tar
 func ImageSave(dockerCli *client.Client, image, destination string, logger event.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -415,7 +415,7 @@ func ImageSave(dockerCli *client.Client, image, destination string, logger event
 	return CopyToFile(destination, rc)
 }
 
-//MultiImageSave save multi image to tar file
+// MultiImageSave save multi image to tar file
 // destination destination file name eg. /tmp/xxx.tar
 func MultiImageSave(ctx context.Context, dockerCli *client.Client, destination string, logger event.Logger, images ...string) error {
 	rc, err := dockerCli.ImageSave(ctx, images)
@@ -426,7 +426,7 @@ func MultiImageSave(ctx context.Context, dockerCli *client.Client, destination s
 	return CopyToFile(destination, rc)
 }
 
-//ImageLoad load image from  tar file
+// ImageLoad load image from  tar file
 // destination destination file name eg. /tmp/xxx.tar
 func ImageLoad(dockerCli *client.Client, tarFile string, logger event.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -468,7 +468,7 @@ func ImageLoad(dockerCli *client.Client, tarFile string, logger event.Logger) er
 	return nil
 }
 
-//ImageImport save image to tar file
+// ImageImport save image to tar file
 // source source file name eg. /tmp/xxx.tar
 func ImageImport(dockerCli *client.Client, image, source string, logger event.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -539,7 +539,7 @@ func CopyToFile(outfile string, r io.Reader) error {
 	return nil
 }
 
-//ImageRemove remove image
+// ImageRemove remove image
 func ImageRemove(dockerCli *client.Client, image string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -590,7 +590,7 @@ func ImagesPullAndPush(sourceImage, targetImage, username, password string, logg
 		logrus.Errorf("failed to check whether the builder mirror exists: %s", err.Error())
 		return err
 	}
-	logrus.Debugf("source image %v, targetImage %v, exists %v", sourceImage, exists)
+	logrus.Debugf("source image %v, targetImage %v", sourceImage, exists)
 	if !exists {
 		hubUser, hubPass := builder.GetImageUserInfoV2(sourceImage, username, password)
 		if _, err := ImagePull(dockerClient, targetImage, hubUser, hubPass, logger, 15); err != nil {

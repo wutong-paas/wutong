@@ -36,7 +36,7 @@ import (
 // PodController is an implementation of PodInterface
 type PodController struct{}
 
-//Pods get some service pods
+// Pods get some service pods
 // swagger:operation GET /v2/tenants/{tenant_name}/pods v2/tenants pods
 //
 // 获取一些应用的Pod信息
@@ -53,10 +53,11 @@ type PodController struct{}
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: get some service pods
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: get some service pods
 func Pods(w http.ResponseWriter, r *http.Request) {
 	serviceIDs := strings.Split(r.FormValue("service_ids"), ",")
 	if serviceIDs == nil || len(serviceIDs) == 0 {
@@ -78,9 +79,7 @@ func Pods(w http.ResponseWriter, r *http.Request) {
 		} else {
 			pods = podinfo.NewPods
 		}
-		for _, pod := range pods {
-			allpods = append(allpods, pod)
-		}
+		allpods = append(allpods, pods...)
 	}
 	httputil.ReturnSuccess(r, w, allpods)
 }

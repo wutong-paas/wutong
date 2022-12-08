@@ -36,7 +36,7 @@ import (
 	"github.com/wutong-paas/wutong/util/watch"
 )
 
-//Monitor monitor
+// Monitor monitor
 type Monitor struct {
 	config         *option.Config
 	ctx            context.Context
@@ -50,7 +50,7 @@ type Monitor struct {
 	stopCh         chan struct{}
 }
 
-//Start start
+// Start start
 func (d *Monitor) Start() {
 	d.discoverv1.AddProject("prometheus", &callback.Prometheus{Prometheus: d.manager})
 	d.discoverv1.AddProject("event_log_event_http", &callback.EventLog{Prometheus: d.manager})
@@ -191,13 +191,13 @@ func (d *Monitor) discoverCadvisor(c *callback.Cadvisor, done <-chan struct{}) {
 }
 
 func (d *Monitor) discoverEtcd(e *callback.Etcd, done <-chan struct{}) {
-	t := time.Tick(time.Minute)
+	t := time.NewTicker(time.Minute)
 	for {
 		select {
 		case <-done:
 			logrus.Info("stop discover etcd because received stop signal.")
 			return
-		case <-t:
+		case <-t.C:
 			resp, err := d.client.MemberList(d.ctx)
 			if err != nil {
 				logrus.Error("Failed to list etcd members for discover etcd.")

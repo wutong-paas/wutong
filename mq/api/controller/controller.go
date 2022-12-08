@@ -32,17 +32,17 @@ import (
 	restful "github.com/emicklei/go-restful"
 )
 
-//Register 注册
+// Register 注册
 func Register(container *restful.Container, mq mq.ActionMQ) {
 	MQSource{mq}.Register(container)
 }
 
-//MQSource 消息队列接口
+// MQSource 消息队列接口
 type MQSource struct {
 	mq mq.ActionMQ
 }
 
-//Register 注册
+// Register 注册
 func (u MQSource) Register(container *restful.Container) {
 	ws := new(restful.WebService)
 	ws.Path("/mq").
@@ -81,7 +81,7 @@ func (u MQSource) Register(container *restful.Container) {
 	container.Add(ws)
 }
 
-//ResponseType 返回内容
+// ResponseType 返回内容
 type ResponseType struct {
 	Code      int          `json:"code"`
 	Message   string       `json:"msg"`
@@ -89,7 +89,7 @@ type ResponseType struct {
 	Body      ResponseBody `json:"body,omitempty"`
 }
 
-//ResponseBody 返回主要内容体
+// ResponseBody 返回主要内容体
 type ResponseBody struct {
 	Bean     interface{}   `json:"bean,omitempty"`
 	List     []interface{} `json:"list,omitempty"`
@@ -98,7 +98,7 @@ type ResponseBody struct {
 	Total    int           `json:"total,omitempty"`
 }
 
-//NewResponseType 构建返回结构
+// NewResponseType 构建返回结构
 func NewResponseType(code int, message string, messageCN string, bean interface{}, list []interface{}) ResponseType {
 	return ResponseType{
 		Code:      code,
@@ -111,28 +111,24 @@ func NewResponseType(code int, message string, messageCN string, bean interface{
 	}
 }
 
-//NewPostSuccessResponse 创建成功返回结构
+// NewPostSuccessResponse 创建成功返回结构
 func NewPostSuccessResponse(bean interface{}, list []interface{}, response *restful.Response) {
 	response.WriteHeaderAndJson(201, NewResponseType(201, "", "", bean, list), restful.MIME_JSON)
-	return
 }
 
-//NewSuccessResponse 创建成功返回结构
+// NewSuccessResponse 创建成功返回结构
 func NewSuccessResponse(bean interface{}, list []interface{}, response *restful.Response) {
 	response.WriteHeaderAndJson(200, NewResponseType(200, "", "", bean, list), restful.MIME_JSON)
-	return
 }
 
-//NewSuccessMessageResponse 创建成功返回结构
+// NewSuccessMessageResponse 创建成功返回结构
 func NewSuccessMessageResponse(bean interface{}, list []interface{}, message, messageCN string, response *restful.Response) {
 	response.WriteHeaderAndJson(200, NewResponseType(200, message, messageCN, bean, list), restful.MIME_JSON)
-	return
 }
 
-//NewFaliResponse 创建返回失败结构
+// NewFaliResponse 创建返回失败结构
 func NewFaliResponse(code int, message string, messageCN string, response *restful.Response) {
 	response.WriteHeaderAndJson(code, NewResponseType(code, message, messageCN, nil, nil), restful.MIME_JSON)
-	return
 }
 
 func (u *MQSource) enqueue(request *restful.Request, response *restful.Response) {

@@ -24,7 +24,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-//AddModel AddModel
+// AddModel AddModel
 func (c *CodeCheckResultDaoImpl) AddModel(mo model.Interface) error {
 	result := mo.(*model.CodeCheckResult)
 	var oldResult model.CodeCheckResult
@@ -42,7 +42,7 @@ func (c *CodeCheckResultDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel UpdateModel
+// UpdateModel UpdateModel
 func (c *CodeCheckResultDaoImpl) UpdateModel(mo model.Interface) error {
 	result := mo.(*model.CodeCheckResult)
 	var oldResult model.CodeCheckResult
@@ -55,7 +55,7 @@ func (c *CodeCheckResultDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//CodeCheckResultDaoImpl EventLogMessageDaoImpl
+// CodeCheckResultDaoImpl EventLogMessageDaoImpl
 type CodeCheckResultDaoImpl struct {
 	DB *gorm.DB
 }
@@ -88,13 +88,10 @@ func update(target, old *model.CodeCheckResult) {
 	//logrus.Infof("after update,%s,%s",string(o2),string(t2))
 }
 
-//GetCodeCheckResult get event log message
+// GetCodeCheckResult get event log message
 func (c *CodeCheckResultDaoImpl) GetCodeCheckResult(serviceID string) (*model.CodeCheckResult, error) {
 	var result model.CodeCheckResult
 	if err := c.DB.Where("service_id=?", serviceID).Find(&result).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			//return messageRaw, nil
-		}
 		return nil, err
 	}
 	return &result, nil

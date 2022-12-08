@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//EndpointDiscover 后端服务自动发现
+// EndpointDiscover 后端服务自动发现
 type EndpointDiscover interface {
 	AddProject(name string, proxy proxy.Proxy)
 	Remove(name string)
@@ -39,7 +39,7 @@ type EndpointDiscover interface {
 
 var defaultEndpointDiscover EndpointDiscover
 
-//CreateEndpointDiscover create endpoint discover
+// CreateEndpointDiscover create endpoint discover
 func CreateEndpointDiscover(etcdClientArgs *etcdutil.ClientArgs) (EndpointDiscover, error) {
 	if defaultEndpointDiscover == nil {
 		if etcdClientArgs == nil {
@@ -57,7 +57,7 @@ func CreateEndpointDiscover(etcdClientArgs *etcdutil.ClientArgs) (EndpointDiscov
 	return defaultEndpointDiscover, nil
 }
 
-//GetEndpointDiscover get endpoints discover
+// GetEndpointDiscover get endpoints discover
 func GetEndpointDiscover() EndpointDiscover {
 	return defaultEndpointDiscover
 }
@@ -86,9 +86,7 @@ func (e *endpointDiscover) AddProject(name string, pro proxy.Proxy) {
 func (e *endpointDiscover) Remove(name string) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
-	if _, ok := e.projects[name]; ok {
-		delete(e.projects, name)
-	}
+	delete(e.projects, name)
 }
 func (e *endpointDiscover) Stop() {
 	e.dis.Stop()
@@ -119,7 +117,7 @@ func (e *defalt) UpdateEndpoints(endpoints ...*corediscoverconfig.Endpoint) {
 	e.cacheEndpointURL = endStr
 }
 
-//when watch occurred error,will exec this method
+// when watch occurred error,will exec this method
 func (e *endpointDiscover) Error(err error) {
 	logrus.Errorf("discover error %s", err.Error())
 }

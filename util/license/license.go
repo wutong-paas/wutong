@@ -135,7 +135,7 @@ func GetLicInfo(licPath, licSoPath string) (*LicInfo, error) {
 		logrus.Errorf("method 'Decrypt'; error looking up func: %v", err)
 		return nil, fmt.Errorf("method 'Decrypt'; error looking up func: %v", err)
 	}
-	bytes, err := f.(func(string) ([]byte, error))(lic)
+	bytes, _ := f.(func(string) ([]byte, error))(lic)
 	var licInfo LicInfo
 	if err := json.Unmarshal(bytes, &licInfo); err != nil {
 		logrus.Errorf("error unmarshalling license: %v", err)

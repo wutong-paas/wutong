@@ -110,7 +110,6 @@ func saveMetadata(tr *model.ExportAppStruct) error {
 	// 写入元数据到文件
 	if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
 		if retry && strings.Contains(err.Error(), "no such file or directory") {
-			retry = false
 			os.MkdirAll(tr.SourceDir, 0755)
 			if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
 				logrus.Error("Failed to write metadata: ", err)

@@ -31,7 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/util/watch"
 )
 
-//Node node discover
+// Node node discover
 type Node struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
@@ -40,7 +40,7 @@ type Node struct {
 	endpoints []*config.Endpoint
 }
 
-//UpdateEndpoints update endpoints
+// UpdateEndpoints update endpoints
 func (e *Node) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -61,18 +61,16 @@ func (e *Node) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (e *Node) Name() string {
 	return "wt_node"
 }
 
 func (e *Node) toScrape() []*prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(e.sortedEndpoints))
-	for _, end := range e.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, e.sortedEndpoints...)
 
-	return []*prometheus.ScrapeConfig{&prometheus.ScrapeConfig{
+	return []*prometheus.ScrapeConfig{{
 		JobName:        e.Name(),
 		ScrapeInterval: model.Duration(30 * time.Second),
 		ScrapeTimeout:  model.Duration(30 * time.Second),
@@ -88,7 +86,7 @@ func (e *Node) toScrape() []*prometheus.ScrapeConfig {
 			},
 		},
 	},
-		&prometheus.ScrapeConfig{
+		{
 			JobName:        "wt_cluster",
 			ScrapeInterval: model.Duration(30 * time.Second),
 			ScrapeTimeout:  model.Duration(30 * time.Second),
@@ -105,13 +103,13 @@ func (e *Node) toScrape() []*prometheus.ScrapeConfig {
 	}
 }
 
-//AddEndpoint add endpoint
+// AddEndpoint add endpoint
 func (e *Node) AddEndpoint(end *config.Endpoint) {
 	e.endpoints = append(e.endpoints, end)
 	e.UpdateEndpoints(e.endpoints...)
 }
 
-//Add add
+// Add add
 func (e *Node) Add(event *watch.Event) {
 	url := gjson.Get(event.GetValueString(), "internal_ip").String() + ":6100"
 	end := &config.Endpoint{
@@ -121,7 +119,7 @@ func (e *Node) Add(event *watch.Event) {
 	e.AddEndpoint(end)
 }
 
-//Modify modify
+// Modify modify
 func (e *Node) Modify(event *watch.Event) {
 	var update bool
 	url := gjson.Get(event.GetValueString(), "internal_ip").String() + ":6100"
@@ -142,7 +140,7 @@ func (e *Node) Modify(event *watch.Event) {
 	}
 }
 
-//Delete delete
+// Delete delete
 func (e *Node) Delete(event *watch.Event) {
 	for i, end := range e.endpoints {
 		if end.Name == event.GetKey() {

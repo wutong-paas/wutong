@@ -32,8 +32,9 @@ func IsBoolean(str string) bool {
 	return false
 }
 
-//IsCreditCard check the provided card number is a valid
-//  Visa, MasterCard, American Express, Diners Club, Discover or JCB card
+// IsCreditCard check the provided card number is a valid
+//
+//	Visa, MasterCard, American Express, Diners Club, Discover or JCB card
 func IsCreditCard(card string) bool {
 	return regexCreditCard.MatchString(card)
 }
@@ -82,10 +83,7 @@ func IsIn(haystack []string, niddle string) bool {
 func IsJSON(str string) bool {
 	var data interface{}
 	err := json.Unmarshal([]byte(str), &data)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // IsNumeric check the provided input string is numeric or not

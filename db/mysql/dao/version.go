@@ -27,7 +27,7 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 )
 
-//DeleteVersionByEventID DeleteVersionByEventID
+// DeleteVersionByEventID DeleteVersionByEventID
 func (c *VersionInfoDaoImpl) DeleteVersionByEventID(eventID string) error {
 	version := &model.VersionInfo{
 		EventID: eventID,
@@ -38,7 +38,7 @@ func (c *VersionInfoDaoImpl) DeleteVersionByEventID(eventID string) error {
 	return nil
 }
 
-//DeleteVersionByServiceID DeleteVersionByServiceID
+// DeleteVersionByServiceID DeleteVersionByServiceID
 func (c *VersionInfoDaoImpl) DeleteVersionByServiceID(serviceID string) error {
 	var version model.VersionInfo
 	if err := c.DB.Where("service_id = ? ", serviceID).Delete(&version).Error; err != nil {
@@ -47,7 +47,7 @@ func (c *VersionInfoDaoImpl) DeleteVersionByServiceID(serviceID string) error {
 	return nil
 }
 
-//AddModel AddModel
+// AddModel AddModel
 func (c *VersionInfoDaoImpl) AddModel(mo model.Interface) error {
 	result := mo.(*model.VersionInfo)
 	if len(result.CommitMsg) > 1024 {
@@ -63,7 +63,7 @@ func (c *VersionInfoDaoImpl) AddModel(mo model.Interface) error {
 	return errors.ErrRecordAlreadyExist
 }
 
-//UpdateModel UpdateModel
+// UpdateModel UpdateModel
 func (c *VersionInfoDaoImpl) UpdateModel(mo model.Interface) error {
 	result := mo.(*model.VersionInfo)
 	if len(result.CommitMsg) > 1024 {
@@ -75,7 +75,7 @@ func (c *VersionInfoDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//VersionInfoDaoImpl VersionInfoDaoImpl
+// VersionInfoDaoImpl VersionInfoDaoImpl
 type VersionInfoDaoImpl struct {
 	DB *gorm.DB
 }
@@ -103,19 +103,16 @@ func (c *VersionInfoDaoImpl) ListByServiceIDStatus(serviceID string, finalStatus
 	return versoins, nil
 }
 
-//GetVersionByEventID get version by event id
+// GetVersionByEventID get version by event id
 func (c *VersionInfoDaoImpl) GetVersionByEventID(eventID string) (*model.VersionInfo, error) {
 	var result model.VersionInfo
 	if err := c.DB.Where("event_id=?", eventID).Find(&result).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			//return messageRaw, nil
-		}
 		return nil, err
 	}
 	return &result, nil
 }
 
-//GetVersionByDeployVersion get version by deploy version
+// GetVersionByDeployVersion get version by deploy version
 func (c *VersionInfoDaoImpl) GetVersionByDeployVersion(version, serviceID string) (*model.VersionInfo, error) {
 	var result model.VersionInfo
 	if err := c.DB.Where("build_version =? and service_id = ?", version, serviceID).Find(&result).Error; err != nil {
@@ -124,8 +121,8 @@ func (c *VersionInfoDaoImpl) GetVersionByDeployVersion(version, serviceID string
 	return &result, nil
 }
 
-//GetVersionByServiceID get versions by service id
-//only return success version info
+// GetVersionByServiceID get versions by service id
+// only return success version info
 func (c *VersionInfoDaoImpl) GetVersionByServiceID(serviceID string) ([]*model.VersionInfo, error) {
 	var result []*model.VersionInfo
 	if err := c.DB.Where("service_id=? and final_status=?", serviceID, "success").Find(&result).Error; err != nil {
@@ -143,7 +140,7 @@ func (c *VersionInfoDaoImpl) GetLatestScsVersion(sid string) (*model.VersionInfo
 	return &result, nil
 }
 
-//GetAllVersionByServiceID get all versions by service id, not only successful
+// GetAllVersionByServiceID get all versions by service id, not only successful
 func (c *VersionInfoDaoImpl) GetAllVersionByServiceID(serviceID string) ([]*model.VersionInfo, error) {
 	var result []*model.VersionInfo
 	if err := c.DB.Where("service_id=?", serviceID).Find(&result).Error; err != nil {
@@ -152,7 +149,7 @@ func (c *VersionInfoDaoImpl) GetAllVersionByServiceID(serviceID string) ([]*mode
 	return result, nil
 }
 
-//GetVersionInfo get version info by service ids
+// GetVersionInfo get version info by service ids
 func (c *VersionInfoDaoImpl) GetVersionInfo(timePoint time.Time, serviceIDs []string) ([]*model.VersionInfo, error) {
 	var result []*model.VersionInfo
 
@@ -163,7 +160,7 @@ func (c *VersionInfoDaoImpl) GetVersionInfo(timePoint time.Time, serviceIDs []st
 
 }
 
-//DeleteVersionInfo delete version
+// DeleteVersionInfo delete version
 func (c *VersionInfoDaoImpl) DeleteVersionInfo(obj *model.VersionInfo) error {
 	if err := c.DB.Delete(obj).Error; err != nil {
 		return err
@@ -171,7 +168,7 @@ func (c *VersionInfoDaoImpl) DeleteVersionInfo(obj *model.VersionInfo) error {
 	return nil
 }
 
-//DeleteFailureVersionInfo delete failure version
+// DeleteFailureVersionInfo delete failure version
 func (c *VersionInfoDaoImpl) DeleteFailureVersionInfo(timePoint time.Time, status string, serviceIDs []string) error {
 	if err := c.DB.Where("service_id in (?) and create_time  < ? and final_status = ?", serviceIDs, timePoint, status).Delete(&model.VersionInfo{}).Error; err != nil {
 		return err
@@ -179,7 +176,7 @@ func (c *VersionInfoDaoImpl) DeleteFailureVersionInfo(timePoint time.Time, statu
 	return nil
 }
 
-//SearchVersionInfo query version count >5
+// SearchVersionInfo query version count >5
 func (c *VersionInfoDaoImpl) SearchVersionInfo() ([]*model.VersionInfo, error) {
 	var result []*model.VersionInfo
 	versionInfo := &model.VersionInfo{}

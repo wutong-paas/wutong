@@ -29,23 +29,23 @@ import (
 	"github.com/wutong-paas/wutong/discover/config"
 )
 
-//TrimAndSort TrimAndSort
+// TrimAndSort TrimAndSort
 func TrimAndSort(endpoints []*config.Endpoint) []string {
 	arr := make([]string, 0, len(endpoints))
 	for _, end := range endpoints {
 		if strings.HasPrefix(end.URL, "https://") {
-			url := strings.TrimLeft(end.URL, "https://")
+			url := strings.TrimPrefix(end.URL, "https://")
 			arr = append(arr, url)
 			continue
 		}
-		url := strings.TrimLeft(end.URL, "http://")
+		url := strings.TrimPrefix(end.URL, "http://")
 		arr = append(arr, url)
 	}
 	sort.Strings(arr)
 	return arr
 }
 
-//ArrCompare ArrCompare
+// ArrCompare ArrCompare
 func ArrCompare(arr1, arr2 []string) bool {
 	if len(arr1) != len(arr2) {
 		return false
@@ -60,13 +60,13 @@ func ArrCompare(arr1, arr2 []string) bool {
 	return true
 }
 
-//ListenStop ListenStop
+// ListenStop ListenStop
 func ListenStop() {
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGKILL, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-sigs
-	signal.Ignore(syscall.SIGKILL, syscall.SIGINT, syscall.SIGTERM)
+	signal.Ignore(syscall.SIGINT, syscall.SIGTERM)
 
 	logrus.Warn("monitor manager received signal: ", sig.String())
 	close(sigs)

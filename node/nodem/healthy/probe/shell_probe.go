@@ -11,7 +11,7 @@ import (
 	"github.com/wutong-paas/wutong/node/nodem/service"
 )
 
-//ShellProbe -
+// ShellProbe -
 type ShellProbe struct {
 	Name         string
 	Address      string
@@ -23,17 +23,17 @@ type ShellProbe struct {
 	MaxErrorsNum int
 }
 
-//Check -
+// Check -
 func (h *ShellProbe) Check() {
 	go h.ShellCheck()
 }
 
-//Stop -
+// Stop -
 func (h *ShellProbe) Stop() {
 	h.Cancel()
 }
 
-//ShellCheck -
+// ShellCheck -
 func (h *ShellProbe) ShellCheck() {
 	timer := time.NewTimer(time.Second * time.Duration(h.TimeInterval))
 	defer timer.Stop()
@@ -62,7 +62,7 @@ func GetShellHealth(address string) map[string]string {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if err != nil {
-		errStr := string(stderr.Bytes())
+		errStr := stderr.String()
 		return map[string]string{"status": service.Stat_death, "info": strings.TrimSpace(errStr)}
 	}
 	return map[string]string{"status": service.Stat_healthy, "info": "service healthy"}

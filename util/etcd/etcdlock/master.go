@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-//Package etcdlock Master election using etcd.
+// Package etcdlock Master election using etcd.
 package etcdlock
 
 import (
@@ -31,7 +31,7 @@ import (
 	"github.com/coreos/etcd/clientv3/concurrency"
 )
 
-//MasterEventType Various event types for the events channel.
+// MasterEventType Various event types for the events channel.
 type MasterEventType int
 
 const (
@@ -52,7 +52,7 @@ type MasterEvent struct {
 	Error  error
 }
 
-//MasterInterface Interface used by the etcd master lock clients.
+// MasterInterface Interface used by the etcd master lock clients.
 type MasterInterface interface {
 	// Start the election and attempt to acquire the lock. If acquired, the
 	// lock is refreshed periodically based on the ttl.
@@ -83,9 +83,9 @@ type masterLock struct {
 	once          sync.Once
 }
 
-//CreateMasterLock  create master lock
+// CreateMasterLock  create master lock
 func CreateMasterLock(etcdEndpoints []string, election string, prop string, ttl int64) (MasterInterface, error) {
-	if etcdEndpoints == nil || len(etcdEndpoints) == 0 {
+	if len(etcdEndpoints) == 0 {
 		etcdEndpoints = []string{"http://127.0.0.1:2379"}
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -135,17 +135,14 @@ func (m *masterLock) campaign() error {
 		return err
 	}
 slect:
-	for {
-		select {
-		case res := <-m.election.Observe(ctx):
-			if len(res.Kvs) > 0 {
-				if string(res.Kvs[0].Value) == m.prop {
-					logrus.Infof("current node is be elected master")
-					m.eventchan <- MasterEvent{Type: MasterAdded, Master: string(res.Kvs[0].Value)}
-					break slect
-				} else {
-					logrus.Infof("Current node is not master node, master is %s", string(res.Kvs[0].Value))
-				}
+	for res := range m.election.Observe(ctx) {
+		if len(res.Kvs) > 0 {
+			if string(res.Kvs[0].Value) == m.prop {
+				logrus.Infof("current node is be elected master")
+				m.eventchan <- MasterEvent{Type: MasterAdded, Master: string(res.Kvs[0].Value)}
+				break slect
+			} else {
+				logrus.Infof("Current node is not master node, master is %s", string(res.Kvs[0].Value))
 			}
 		}
 	}

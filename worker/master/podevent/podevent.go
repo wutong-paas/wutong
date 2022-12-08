@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
@@ -13,8 +15,6 @@ import (
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	wutil "github.com/wutong-paas/wutong/worker/util"
-	"github.com/jinzhu/gorm"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -92,7 +92,7 @@ func (p *PodEvent) Handle() {
 		select {
 		case pod := <-p.podEventCh:
 			// do not record events that occur 10 minutes after startup
-			if time.Now().Sub(pod.CreationTimestamp.Time) > 10*time.Minute {
+			if time.Since(pod.CreationTimestamp.Time) > 10*time.Minute {
 				recordUpdateEvent(p.clientset, pod, defDetermineOptType)
 			}
 		case <-p.stopCh:
@@ -101,7 +101,7 @@ func (p *PodEvent) Handle() {
 	}
 }
 
-//GetChan get pod update chan
+// GetChan get pod update chan
 func (p *PodEvent) GetChan() chan<- *corev1.Pod {
 	return p.podEventCh
 }
@@ -159,7 +159,7 @@ func recordUpdateEvent(clientset kubernetes.Interface, pod *corev1.Pod, f determ
 		logrus.Debugf("Service id: %s; %s.", serviceID, msg)
 		loggerOpt := event.GetLoggerOption("failure")
 
-		if !rtime.IsZero() && time.Now().Sub(rtime) > 2*time.Minute {
+		if !rtime.IsZero() && time.Since(rtime) > 2*time.Minute {
 			evt.FinalStatus = model.EventFinalStatusEmptyComplete.String()
 			if err := db.GetManager().ServiceEventDao().UpdateModel(evt); err != nil {
 				logrus.Warningf("event id: %s; failed to update service event: %v", evt.EventID, err)

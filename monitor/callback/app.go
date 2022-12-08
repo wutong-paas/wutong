@@ -41,7 +41,7 @@ type App struct {
 	endpoints []*config.Endpoint
 }
 
-//UpdateEndpoints update endpoint
+// UpdateEndpoints update endpoint
 func (e *App) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -60,16 +60,14 @@ func (e *App) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (e *App) Name() string {
 	return "app"
 }
 
 func (e *App) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(e.sortedEndpoints))
-	for _, end := range e.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, e.sortedEndpoints...)
 
 	return &prometheus.ScrapeConfig{
 		JobName:        e.Name(),
@@ -89,13 +87,13 @@ func (e *App) toScrape() *prometheus.ScrapeConfig {
 	}
 }
 
-//AddEndpoint add endpoint
+// AddEndpoint add endpoint
 func (e *App) AddEndpoint(end *config.Endpoint) {
 	e.endpoints = append(e.endpoints, end)
 	e.UpdateEndpoints(e.endpoints...)
 }
 
-//Add add
+// Add add
 func (e *App) Add(event *watch.Event) {
 	url := gjson.Get(event.GetValueString(), "internal_ip").String() + ":6100"
 	end := &config.Endpoint{
@@ -105,7 +103,7 @@ func (e *App) Add(event *watch.Event) {
 	e.AddEndpoint(end)
 }
 
-//Modify Modify
+// Modify Modify
 func (e *App) Modify(event *watch.Event) {
 	var update bool
 	url := gjson.Get(event.GetValueString(), "internal_ip").String() + ":6100"
@@ -126,7 +124,7 @@ func (e *App) Modify(event *watch.Event) {
 	}
 }
 
-//Delete Delete
+// Delete Delete
 func (e *App) Delete(event *watch.Event) {
 	for i, end := range e.endpoints {
 		if end.Name == event.GetKey() {

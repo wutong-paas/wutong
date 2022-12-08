@@ -24,7 +24,6 @@ import (
 // This data structure is frankly pretty lousy for handling complex languages,
 // but lucky for us the Dockerfile isn't very complicated. This structure
 // works a little more effectively than a "proper" parse tree for our needs.
-//
 type Node struct {
 	Value      string          // actual content
 	Next       *Node           // the next item in the current sexp
@@ -101,7 +100,7 @@ func ParseLine(line string, d *Directive) (string, *Node, error) {
 	if d.LookingForDirectives {
 		tecMatch := tokenEscapeCommand.FindStringSubmatch(strings.ToLower(line))
 		if len(tecMatch) > 0 {
-			if d.EscapeSeen == true {
+			if d.EscapeSeen {
 				return "", nil, fmt.Errorf("only one escape parser directive can be used")
 			}
 			for i, n := range tokenEscapeCommand.SubexpNames() {

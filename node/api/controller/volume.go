@@ -31,7 +31,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//CreateLocalVolume crete local volume dir
+// CreateLocalVolume crete local volume dir
 func CreateLocalVolume(w http.ResponseWriter, r *http.Request) {
 	var requestopt = make(map[string]string)
 	if err := json.NewDecoder(r.Body).Decode(&requestopt); err != nil {
@@ -41,7 +41,6 @@ func CreateLocalVolume(w http.ResponseWriter, r *http.Request) {
 	tenantID := requestopt["tenant_id"]
 	serviceID := requestopt["service_id"]
 	pvcName := requestopt["pvcname"]
-	var volumeHostPath = ""
 	localPath := os.Getenv("LOCAL_DATA_PATH")
 	if runtime.GOOS == "windows" {
 		if localPath == "" {
@@ -52,7 +51,7 @@ func CreateLocalVolume(w http.ResponseWriter, r *http.Request) {
 			localPath = "/wtlocaldata"
 		}
 	}
-	volumeHostPath = path.Join(localPath, "tenant", tenantID, "service", serviceID, pvcName)
+	volumeHostPath := path.Join(localPath, "tenant", tenantID, "service", serviceID, pvcName)
 	volumePath, volumeok := requestopt["volume_path"]
 	podName, podok := requestopt["pod_name"]
 	if volumeok && podok {

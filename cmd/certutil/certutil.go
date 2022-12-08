@@ -51,7 +51,7 @@ type CertInformation struct {
 	Domains            []string
 }
 
-//CreateCRT create crt
+// CreateCRT create crt
 func CreateCRT(RootCa *x509.Certificate, RootKey *rsa.PrivateKey, info CertInformation) error {
 	Crt := newCertificate(info)
 	Key, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -87,7 +87,7 @@ func CreateCRT(RootCa *x509.Certificate, RootKey *rsa.PrivateKey, info CertInfor
 	return nil
 }
 
-//编码写入文件
+// 编码写入文件
 func write(filename, Type string, p []byte) error {
 	File, err := os.Create(filename)
 	defer File.Close()
@@ -98,7 +98,7 @@ func write(filename, Type string, p []byte) error {
 	return pem.Encode(File, b)
 }
 
-//Parse Parse
+// Parse Parse
 func Parse(crtPath, keyPath string) (rootcertificate *x509.Certificate, rootPrivateKey *rsa.PrivateKey, err error) {
 	rootcertificate, err = ParseCrt(crtPath)
 	if err != nil {
@@ -108,24 +108,23 @@ func Parse(crtPath, keyPath string) (rootcertificate *x509.Certificate, rootPriv
 	return
 }
 
-//ParseCrt ParseCrt
+// ParseCrt ParseCrt
 func ParseCrt(path string) (*x509.Certificate, error) {
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	p := &pem.Block{}
-	p, buf = pem.Decode(buf)
+	p, _ := pem.Decode(buf)
 	return x509.ParseCertificate(p.Bytes)
 }
 
-//ParseKey ParseKey
+// ParseKey ParseKey
 func ParseKey(path string) (*rsa.PrivateKey, error) {
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	p, buf := pem.Decode(buf)
+	p, _ := pem.Decode(buf)
 	return x509.ParsePKCS1PrivateKey(p.Bytes)
 }
 

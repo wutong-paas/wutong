@@ -55,7 +55,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//Manager apiserver
+// Manager apiserver
 type Manager struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
@@ -67,7 +67,7 @@ type Manager struct {
 	exporter        *metric.Exporter
 }
 
-//NewManager newManager
+// NewManager newManager
 func NewManager(c option.Config, etcdcli *clientv3.Client) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	manager := &Manager{
@@ -83,7 +83,7 @@ func NewManager(c option.Config, etcdcli *clientv3.Client) *Manager {
 	return manager
 }
 
-//SetMiddleware set api meddleware
+// SetMiddleware set api meddleware
 func (m *Manager) SetMiddleware() {
 	c := m.conf
 	r := m.r
@@ -117,14 +117,14 @@ func (m *Manager) SetMiddleware() {
 	r.Use(apimiddleware.Proxy)
 }
 
-//Start manager
+// Start manager
 func (m *Manager) Start() error {
 	go m.Do()
 	logrus.Info("start api router success.")
 	return nil
 }
 
-//Do do
+// Do do
 func (m *Manager) Do() {
 	for {
 		select {
@@ -136,14 +136,14 @@ func (m *Manager) Do() {
 	}
 }
 
-//Stop manager
+// Stop manager
 func (m *Manager) Stop() error {
 	logrus.Info("api router is stopped.")
 	m.cancel()
 	return nil
 }
 
-//Run run
+// Run run
 func (m *Manager) Run() {
 	v2R := &version2.V2{
 		Cfg: &m.conf,
@@ -204,7 +204,7 @@ func (m *Manager) Run() {
 	logrus.Fatal(http.ListenAndServe(m.conf.APIAddr, m.r))
 }
 
-//EventLogInstance 查询event server instance
+// EventLogInstance 查询event server instance
 func (m *Manager) EventLogInstance(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(m.ctx)
 	defer cancel()
@@ -228,12 +228,12 @@ func (m *Manager) EventLogInstance(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-//PrometheusAPI prometheus api 代理
+// PrometheusAPI prometheus api 代理
 func (m *Manager) PrometheusAPI(w http.ResponseWriter, r *http.Request) {
 	handler.GetPrometheusProxy().Proxy(w, r)
 }
 
-//Metric prometheus metric
+// Metric prometheus metric
 func (m *Manager) Metric() {
 	prometheus.MustRegister(version.NewCollector("wt_api"))
 	exporter := metric.NewExporter()
@@ -242,13 +242,13 @@ func (m *Manager) Metric() {
 	m.r.Handle("/metrics", promhttp.Handler())
 }
 
-//RequestMetric request metric midd
+// RequestMetric request metric midd
 func (m *Manager) RequestMetric(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		defer func() {
 			path := r.RequestURI
-			if strings.Index(r.RequestURI, "?") > -1 {
+			if strings.Contains(r.RequestURI, "?") {
 				path = r.RequestURI[:strings.Index(r.RequestURI, "?")]
 			}
 			m.exporter.RequestInc(ww.Status(), path)

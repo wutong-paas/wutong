@@ -51,7 +51,7 @@ func UpdateVersionByEventID(w http.ResponseWriter, r *http.Request) {
 		httputil.ReturnError(r, w, 404, err.Error())
 		return
 	}
-	in, err := ioutil.ReadAll(r.Body)
+	in, _ := ioutil.ReadAll(r.Body)
 	json, err := simplejson.NewJson(in)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
@@ -99,7 +99,7 @@ func GetVersionByServiceID(w http.ResponseWriter, r *http.Request) {
 func DeleteVersionByEventID(w http.ResponseWriter, r *http.Request) {
 	eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 
-	versionInfo, err := db.GetManager().VersionInfoDao().GetVersionByEventID(eventID)
+	versionInfo, _ := db.GetManager().VersionInfoDao().GetVersionByEventID(eventID)
 	if versionInfo.DeliveredType == "" || versionInfo.DeliveredPath == "" {
 		httputil.ReturnError(r, w, 500, errors.New("交付物类型及交付路径为空").Error())
 		return
@@ -113,7 +113,7 @@ func DeleteVersionByEventID(w http.ResponseWriter, r *http.Request) {
 			logrus.Errorf("error delete image :%s ,details %s", versionInfo.DeliveredPath, err.Error())
 		}
 	}
-	err = db.GetManager().VersionInfoDao().DeleteVersionByEventID(eventID)
+	err := db.GetManager().VersionInfoDao().DeleteVersionByEventID(eventID)
 	if err != nil {
 		httputil.ReturnError(r, w, 404, err.Error())
 		return

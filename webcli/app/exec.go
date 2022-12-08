@@ -39,7 +39,7 @@ type execContext struct {
 	closed      bool
 }
 
-//NewExecContext new exec Context
+// NewExecContext new exec Context
 func NewExecContext(kubeRequest *restclient.Request, config *restclient.Config) (server.Slave, error) {
 	pty, tty, err := pty.Open()
 	if err != nil {
@@ -60,10 +60,7 @@ func NewExecContext(kubeRequest *restclient.Request, config *restclient.Config) 
 }
 
 func (e *execContext) WaitingStop() bool {
-	if e.closed {
-		return false
-	}
-	return true
+	return !e.closed
 }
 
 func (e *execContext) Run() error {

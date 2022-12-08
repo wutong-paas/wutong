@@ -34,7 +34,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-//GetPluginConfigs get plugin config model
+// GetPluginConfigs get plugin config model
 func GetPluginConfigs(configs *corev1.ConfigMap) (*api_model.ResourceSpec, string, error) {
 	if configs == nil {
 		return nil, "", fmt.Errorf("no config for mesh")
@@ -47,7 +47,7 @@ func GetPluginConfigs(configs *corev1.ConfigMap) (*api_model.ResourceSpec, strin
 	return &rs, configs.Labels["plugin_id"], nil
 }
 
-//OneNodeListerner conver listerner of on envoy node
+// OneNodeListerner conver listerner of on envoy node
 func OneNodeListerner(serviceAlias, namespace string, configs *corev1.ConfigMap, services []*corev1.Service) ([]types.Resource, error) {
 	resources, _, err := GetPluginConfigs(configs)
 	if err != nil {
@@ -89,7 +89,7 @@ func OneNodeListerner(serviceAlias, namespace string, configs *corev1.ConfigMap,
 	return listener, nil
 }
 
-//upstreamListener handle upstream app listener
+// upstreamListener handle upstream app listener
 // handle kubernetes inner service
 func upstreamListener(serviceAlias, namespace string, dependsServices []*api_model.BaseService, services []*corev1.Service, createHTTPListen bool) (ldsL []*v2.Listener) {
 	var ListennerConfig = make(map[string]*api_model.BaseService, len(dependsServices))
@@ -168,7 +168,7 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 			portMap[ListenPort] = len(ldsL) - 1
 		}
 
-		portProtocol, _ := service.Labels["port_protocol"]
+		portProtocol := service.Labels["port_protocol"]
 		if destService != nil && destService.Protocol != "" {
 			portProtocol = destService.Protocol
 		}
@@ -258,7 +258,7 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 	return
 }
 
-//downstreamListener handle app self port listener
+// downstreamListener handle app self port listener
 func downstreamListener(serviceAlias, namespace string, ports []*api_model.BasePort) (ls []*v2.Listener) {
 	var portMap = make(map[int32]int, 0)
 	for i := range ports {
@@ -327,7 +327,7 @@ func downstreamListener(serviceAlias, namespace string, ports []*api_model.BaseP
 	return
 }
 
-//GetServiceAliasByService get service alias from k8s service
+// GetServiceAliasByService get service alias from k8s service
 func GetServiceAliasByService(service *corev1.Service) string {
 	//v5.1 and later
 	if serviceAlias, ok := service.Labels["service_alias"]; ok {

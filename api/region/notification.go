@@ -29,7 +29,7 @@ import (
 	utilhttp "github.com/wutong-paas/wutong/util/http"
 )
 
-//NotificationInterface cluster api
+// NotificationInterface cluster api
 type NotificationInterface interface {
 	GetNotification(start string, end string) ([]*model.NotificationEvent, *util.APIHandleError)
 	HandleNotification(serviceName string, message string) ([]*model.NotificationEvent, *util.APIHandleError)
@@ -63,7 +63,7 @@ func (n *notification) HandleNotification(serviceName string, message string) ([
 	var ne []*model.NotificationEvent
 	var decode utilhttp.ResponseBody
 	decode.List = &ne
-	handleMessage, err := json.Marshal(map[string]string{"handle_message": message})
+	handleMessage, _ := json.Marshal(map[string]string{"handle_message": message})
 	body := bytes.NewBuffer(handleMessage)
 	code, err := n.DoRequest(n.prefix+"/"+serviceName, "PUT", body, &decode)
 	if err != nil {

@@ -30,14 +30,14 @@ import (
 	"github.com/wutong-paas/wutong/monitor/utils"
 )
 
-//Builder builder
+// Builder builder
 type Builder struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoints
+// UpdateEndpoints update endpoints
 func (b *Builder) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	// 用v3 API注册，返回json格试，所以要提前处理一下
 	newEndpoints := make([]*config.Endpoint, 0, len(endpoints))
@@ -63,21 +63,19 @@ func (b *Builder) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	b.Prometheus.UpdateScrape(scrape)
 }
 
-//Error handle error
+// Error handle error
 func (b *Builder) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (b *Builder) Name() string {
 	return "builder"
 }
 
 func (b *Builder) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(b.sortedEndpoints))
-	for _, end := range b.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, b.sortedEndpoints...)
 
 	return &prometheus.ScrapeConfig{
 		JobName:        b.Name(),

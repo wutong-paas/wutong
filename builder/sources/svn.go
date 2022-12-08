@@ -241,7 +241,7 @@ func (c *svnclient) Info() (*Info, error) {
 	if err == nil {
 		info.Logs = log
 	}
-	fmt.Println(time.Now().Sub(start).String())
+	fmt.Println(time.Since(start).String())
 	info.Branchs = c.readBranchs()
 	info.Tags = c.readTags()
 	return info, nil

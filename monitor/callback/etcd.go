@@ -29,7 +29,7 @@ import (
 	"github.com/wutong-paas/wutong/monitor/utils"
 )
 
-//Etcd etcd discover
+// Etcd etcd discover
 type Etcd struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
@@ -38,7 +38,7 @@ type Etcd struct {
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoints
+// UpdateEndpoints update endpoints
 func (e *Etcd) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -57,16 +57,14 @@ func (e *Etcd) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (e *Etcd) Name() string {
 	return "etcd"
 }
 
 func (e *Etcd) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(e.sortedEndpoints))
-	for _, end := range e.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, e.sortedEndpoints...)
 
 	sc := &prometheus.ScrapeConfig{
 		JobName:        e.Name(),

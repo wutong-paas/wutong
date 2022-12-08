@@ -331,7 +331,7 @@ func (sc *SocketCollector) RemoveMetrics(hosts []string, registry prometheus.Gat
 			}
 			// remove labels that are constant
 			deleteConstants(labels)
-			ingKey, ok := labels["host"]
+			ingKey := labels["host"]
 			if !toRemove.Has(ingKey) {
 				continue
 			}

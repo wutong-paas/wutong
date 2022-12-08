@@ -34,7 +34,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//Distribution 数据分区
+// Distribution 数据分区
 type Distribution struct {
 	monitorDatas map[string]*db.MonitorData
 	updateTime   map[string]time.Time
@@ -64,18 +64,18 @@ func NewDistribution(etcdClient *clientv3.Client, conf conf.DiscoverConf, dis di
 	return d
 }
 
-//Start 开始健康监测
+// Start 开始健康监测
 func (d *Distribution) Start() error {
 	go d.checkHealth()
 	return nil
 }
 
-//Stop 停止
+// Stop 停止
 func (d *Distribution) Stop() {
 	d.cancel()
 }
 
-//Update 更新监控数据
+// Update 更新监控数据
 func (d *Distribution) Update(m db.MonitorData) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -86,9 +86,7 @@ func (d *Distribution) Update(m db.MonitorData) {
 	if md, ok := d.monitorDatas[m.InstanceID]; ok {
 		md.LogSizePeerM = m.LogSizePeerM
 		md.ServiceSize = m.ServiceSize
-		if _, ok := d.abnormalNode[m.InstanceID]; ok {
-			delete(d.abnormalNode, m.InstanceID)
-		}
+		delete(d.abnormalNode, m.InstanceID)
 	} else {
 		d.monitorDatas[m.InstanceID] = &m
 	}
@@ -96,10 +94,10 @@ func (d *Distribution) Update(m db.MonitorData) {
 }
 
 func (d *Distribution) checkHealth() {
-	tike := time.Tick(time.Second * 5)
+	tick := time.NewTicker(time.Second * 5)
 	for {
 		select {
-		case <-tike:
+		case <-tick.C:
 		case <-d.context.Done():
 			return
 		}
@@ -122,7 +120,7 @@ func (d *Distribution) checkHealth() {
 	}
 }
 
-//GetSuitableInstance 获取推荐节点
+// GetSuitableInstance 获取推荐节点
 func (d *Distribution) GetSuitableInstance(serviceID string) *discover.Instance {
 	d.lock.Lock()
 	defer d.lock.Unlock()

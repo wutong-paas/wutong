@@ -40,12 +40,12 @@ type scalingController struct {
 	stopChan     chan struct{}
 }
 
-//Begin  start handle service scaling
+// Begin  start handle service scaling
 func (s *scalingController) Begin() {
 	var wait sync.WaitGroup
 	for _, service := range s.appService {
+		wait.Add(1)
 		go func(service v1.AppService) {
-			wait.Add(1)
 			defer wait.Done()
 			service.Logger.Info("App runtime begin horizontal scaling app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
 			if err := s.scalingOne(service); err != nil {
@@ -64,7 +64,7 @@ func (s *scalingController) Begin() {
 	s.manager.callback(s.controllerID, nil)
 }
 
-//Replicas petch replicas to n
+// Replicas petch replicas to n
 func Replicas(n int) []byte {
 	return []byte(fmt.Sprintf(`{"spec":{"replicas":%d}}`, n))
 }
@@ -99,7 +99,7 @@ func (s *scalingController) scalingOne(service v1.AppService) error {
 	return s.WaitingReady(service)
 }
 
-//WaitingReady wait app start or upgrade ready
+// WaitingReady wait app start or upgrade ready
 func (s *scalingController) WaitingReady(app v1.AppService) error {
 	storeAppService := s.manager.store.GetAppService(app.ServiceID)
 	var initTime int32

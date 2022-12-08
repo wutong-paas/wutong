@@ -33,7 +33,7 @@ import (
 	"github.com/wutong-paas/wutong/util/constants"
 )
 
-//DockerConsole docker console
+// DockerConsole docker console
 type DockerConsole struct {
 	socketproxy proxy.Proxy
 }
@@ -43,7 +43,7 @@ var defaultEventLogEndpoints = []string{"local=>wt-eventlog:6363"}
 
 var dockerConsole *DockerConsole
 
-//GetDockerConsole get Docker console
+// GetDockerConsole get Docker console
 func GetDockerConsole() *DockerConsole {
 	if dockerConsole != nil {
 		return dockerConsole
@@ -55,19 +55,19 @@ func GetDockerConsole() *DockerConsole {
 	return dockerConsole
 }
 
-//Get get
+// Get get
 func (d DockerConsole) Get(w http.ResponseWriter, r *http.Request) {
 	d.socketproxy.Proxy(w, r)
 }
 
 var dockerLog *DockerLog
 
-//DockerLog docker log
+// DockerLog docker log
 type DockerLog struct {
 	socketproxy proxy.Proxy
 }
 
-//GetDockerLog get docker log
+// GetDockerLog get docker log
 func GetDockerLog() *DockerLog {
 	if dockerLog == nil {
 		dockerLog = &DockerLog{
@@ -78,19 +78,19 @@ func GetDockerLog() *DockerLog {
 	return dockerLog
 }
 
-//Get get
+// Get get
 func (d DockerLog) Get(w http.ResponseWriter, r *http.Request) {
 	d.socketproxy.Proxy(w, r)
 }
 
-//MonitorMessage monitor message
+// MonitorMessage monitor message
 type MonitorMessage struct {
 	socketproxy proxy.Proxy
 }
 
 var monitorMessage *MonitorMessage
 
-//GetMonitorMessage get MonitorMessage
+// GetMonitorMessage get MonitorMessage
 func GetMonitorMessage() *MonitorMessage {
 	if monitorMessage == nil {
 		monitorMessage = &MonitorMessage{
@@ -101,19 +101,19 @@ func GetMonitorMessage() *MonitorMessage {
 	return monitorMessage
 }
 
-//Get get
+// Get get
 func (d MonitorMessage) Get(w http.ResponseWriter, r *http.Request) {
 	d.socketproxy.Proxy(w, r)
 }
 
-//EventLog event log
+// EventLog event log
 type EventLog struct {
 	socketproxy proxy.Proxy
 }
 
 var eventLog *EventLog
 
-//GetEventLog get event log
+// GetEventLog get event log
 func GetEventLog() *EventLog {
 	if eventLog == nil {
 		eventLog = &EventLog{
@@ -124,19 +124,19 @@ func GetEventLog() *EventLog {
 	return eventLog
 }
 
-//Get get
+// Get get
 func (d EventLog) Get(w http.ResponseWriter, r *http.Request) {
 	d.socketproxy.Proxy(w, r)
 }
 
-//LogFile log file down server
+// LogFile log file down server
 type LogFile struct {
 	Root string
 }
 
 var logFile *LogFile
 
-//GetLogFile get  log file
+// GetLogFile get  log file
 func GetLogFile() *LogFile {
 	root := os.Getenv("SERVICE_LOG_ROOT")
 	if root == "" {
@@ -151,7 +151,7 @@ func GetLogFile() *LogFile {
 	return logFile
 }
 
-//Get get
+// Get get
 func (d LogFile) Get(w http.ResponseWriter, r *http.Request) {
 	gid := chi.URLParam(r, "gid")
 	filename := chi.URLParam(r, "filename")
@@ -180,12 +180,12 @@ func (d LogFile) GetInstallLog(w http.ResponseWriter, r *http.Request) {
 
 var pubSubControll *PubSubControll
 
-//PubSubControll service pub sub
+// PubSubControll service pub sub
 type PubSubControll struct {
 	socketproxy proxy.Proxy
 }
 
-//GetPubSubControll get service pub sub controller
+// GetPubSubControll get service pub sub controller
 func GetPubSubControll() *PubSubControll {
 	if pubSubControll == nil {
 		pubSubControll = &PubSubControll{
@@ -196,23 +196,23 @@ func GetPubSubControll() *PubSubControll {
 	return pubSubControll
 }
 
-//Get pubsub controller
+// Get pubsub controller
 func (d PubSubControll) Get(w http.ResponseWriter, r *http.Request) {
 	serviceID := chi.URLParam(r, "serviceID")
 	name, _ := handler.GetEventHandler().GetLogInstance(serviceID)
 	if name != "" {
-		r.URL.Query().Add("host_id", name)
+		// r.URL.Query().Add("host_id", name)
 		r = r.WithContext(context.WithValue(r.Context(), proxy.ContextKey("host_id"), name))
 	}
 	d.socketproxy.Proxy(w, r)
 }
 
-//GetHistoryLog get service docker logs
+// GetHistoryLog get service docker logs
 func (d PubSubControll) GetHistoryLog(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	name, _ := handler.GetEventHandler().GetLogInstance(serviceID)
 	if name != "" {
-		r.URL.Query().Add("host_id", name)
+		// r.URL.Query().Add("host_id", name)
 		r = r.WithContext(context.WithValue(r.Context(), proxy.ContextKey("host_id"), name))
 	}
 	d.socketproxy.Proxy(w, r)

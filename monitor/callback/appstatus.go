@@ -39,7 +39,7 @@ type Worker struct {
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoint
+// UpdateEndpoints update endpoint
 func (e *Worker) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	// 用v3 API注册，返回json格试，所以要提前处理一下
 	newEndpoints := make([]*config.Endpoint, 0, len(endpoints))
@@ -74,16 +74,14 @@ func (e *Worker) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name return name
+// Name return name
 func (e *Worker) Name() string {
 	return "worker"
 }
 
 func (e *Worker) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(e.sortedEndpoints))
-	for _, end := range e.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, e.sortedEndpoints...)
 
 	return &prometheus.ScrapeConfig{
 		JobName:        e.Name(),

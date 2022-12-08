@@ -84,8 +84,7 @@ func (lf *logdriverFactory) getLogOptValidator(name string) LogOptValidator {
 	lf.m.Lock()
 	defer lf.m.Unlock()
 
-	c, _ := lf.optValidator[name]
-	return c
+	return lf.optValidator[name]
 }
 
 var factory = &logdriverFactory{registry: make(map[string]Creator), optValidator: make(map[string]LogOptValidator)} // global factory instance

@@ -145,7 +145,7 @@ func listModules(prefix, topPref, finalName string) ([]*module, error) {
 				}
 				return "jar"
 			}(),
-			MavenCustomOpts:  fmt.Sprintf("-DskipTests"),
+			MavenCustomOpts:  "-DskipTests",
 			MavenCustomGoals: fmt.Sprintf("clean dependency:list install -pl %s -am", name),
 			Procfile: func() string {
 				if pom.Packaging == "war" {
@@ -166,7 +166,7 @@ func listModules(prefix, topPref, finalName string) ([]*module, error) {
 				path.Join(prefix, name), err)
 			continue
 		}
-		if submodules != nil && len(submodules) > 0 {
+		if len(submodules) > 0 {
 			modules = append(modules, submodules...)
 		}
 	}

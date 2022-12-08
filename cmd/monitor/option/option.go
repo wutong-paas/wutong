@@ -134,7 +134,7 @@ func NewConfig() *Config {
 	return config
 }
 
-//AddFlag monitor flag
+// AddFlag monitor flag
 func (c *Config) AddFlag(cmd *pflag.FlagSet) {
 	cmd.StringVar(&c.EtcdEndpointsLine, "etcd-endpoints", c.EtcdEndpointsLine, "etcd endpoints list.")
 	cmd.StringVar(&c.EtcdCaFile, "etcd-ca", "", "etcd tls ca file ")
@@ -148,7 +148,7 @@ func (c *Config) AddFlag(cmd *pflag.FlagSet) {
 	cmd.StringVar(&c.KubeConfig, "kube-config", "", "kubernetes api server config file")
 }
 
-//AddPrometheusFlag prometheus flag
+// AddPrometheusFlag prometheus flag
 func (c *Config) AddPrometheusFlag(cmd *pflag.FlagSet) {
 	cmd.StringVar(&c.ConfigFile, "config.file", c.ConfigFile, "Prometheus configuration file path.")
 
@@ -203,9 +203,7 @@ func (c *Config) AddPrometheusFlag(cmd *pflag.FlagSet) {
 // CompleteConfig complete config
 func (c *Config) CompleteConfig() {
 	// parse etcd urls line to array
-	for _, url := range strings.Split(c.EtcdEndpointsLine, ",") {
-		c.EtcdEndpoints = append(c.EtcdEndpoints, url)
-	}
+	c.EtcdEndpoints = append(c.EtcdEndpoints, strings.Split(c.EtcdEndpointsLine, ",")...)
 
 	if len(c.EtcdEndpoints) < 1 {
 		logrus.Error("Must define the etcd endpoints by --etcd-endpoints")
@@ -213,7 +211,7 @@ func (c *Config) CompleteConfig() {
 	}
 
 	// parse values from prometheus options to config
-	ipPort := strings.TrimLeft(c.AdvertiseAddr, "shttp://")
+	ipPort := strings.TrimPrefix(c.AdvertiseAddr, "https://")
 	ipPortArr := strings.Split(ipPort, ":")
 	c.BindIP = ipPortArr[0]
 	port, err := strconv.Atoi(ipPortArr[1])
