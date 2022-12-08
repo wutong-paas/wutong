@@ -114,7 +114,7 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")
 	fs.StringVar(&a.WtNamespace, "wt-namespace", "wt-system", "wt component namespace")
 	fs.BoolVar(&a.ShowSQL, "show-sql", false, "The trigger for showing sql.")
-	fs.StringSliceVar(&a.ObsAPI, "obs-api", []string{"wutong-obs/wutong-obs-application:8089"}, "the obs api")
+	fs.StringSliceVar(&a.ObsAPI, "obs-api", []string{"wutong-obs-application.wutong-obs:8089"}, "the obs api")
 }
 
 // SetLog 设置log
