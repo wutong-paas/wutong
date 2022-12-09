@@ -74,8 +74,7 @@ func HTTPRequest(w http.ResponseWriter, r *http.Request, endpoint string) {
 // DirectRequest direct request
 func DirectRequest(w http.ResponseWriter, r *http.Request, endpoint string) {
 	director := func(req *http.Request) {
-		fmt.Println(r.URL.Scheme, r.URL.Host)
-		req = r
+		// req.Clone(r.Context())
 		req.URL.Scheme = "http"
 		req.URL.Host = endpoint
 	}
@@ -139,7 +138,7 @@ func CheckLabel(serviceID string) bool {
 	if err != nil {
 		return false
 	}
-	if serviceLabel != nil && len(serviceLabel) > 0 {
+	if len(serviceLabel) > 0 {
 		return true
 	}
 	return false
@@ -148,7 +147,6 @@ func CheckLabel(serviceID string) bool {
 // TestFunc test func
 func TestFunc(w http.ResponseWriter) {
 	w.Write([]byte("here"))
-	return
 }
 
 // CheckMapKey CheckMapKey

@@ -12,6 +12,7 @@ linters:
     - typecheck
 
 issues:
+  max-same-issues: 50
   exclude:
     - could not import
     - invalid JSON field name

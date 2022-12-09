@@ -20,6 +20,10 @@ package parser
 
 import (
 	"fmt"
+	"runtime"
+	"strconv"
+	"strings" //"github.com/docker/docker/client"
+
 	"github.com/docker/distribution/reference" //"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/wutong-paas/wutong/builder/parser/types"
@@ -27,12 +31,9 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/util"
-	"runtime"
-	"strconv"
-	"strings" //"github.com/docker/docker/client"
 )
 
-//DockerRunOrImageParse docker run 命令解析或直接镜像名解析
+// DockerRunOrImageParse docker run 命令解析或直接镜像名解析
 type DockerRunOrImageParse struct {
 	user, pass   string
 	ports        map[int]*types.Port
@@ -48,7 +49,7 @@ type DockerRunOrImageParse struct {
 	logger       event.Logger
 }
 
-//CreateDockerRunOrImageParse create parser
+// CreateDockerRunOrImageParse create parser
 func CreateDockerRunOrImageParse(user, pass, source string, dockerclient *client.Client, logger event.Logger) *DockerRunOrImageParse {
 	source = strings.TrimLeft(source, " ")
 	source = strings.Replace(source, "\n", "", -1)
@@ -66,8 +67,8 @@ func CreateDockerRunOrImageParse(user, pass, source string, dockerclient *client
 	}
 }
 
-//Parse 解码，获取镜像，解析镜像
-//eg. docker run -it -p 80:80 nginx
+// Parse 解码，获取镜像，解析镜像
+// eg. docker run -it -p 80:80 nginx
 func (d *DockerRunOrImageParse) Parse() ParseErrorList {
 	if d.source == "" {
 		d.errappend(Errorf(FatalError, "source can not be empty"))
@@ -77,7 +78,7 @@ func (d *DockerRunOrImageParse) Parse() ParseErrorList {
 	if strings.HasPrefix(d.source, "docker") {
 		d.ParseDockerun(d.source)
 		if d.image.String() == "" || d.image.String() == ":" {
-			d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("镜像名称识别失败"), SolveAdvice("modify_image", "请确认输入DockerRun命令是否正确")))
+			d.errappend(ErrorAndSolve(FatalError, "镜像名称识别失败", SolveAdvice("modify_image", "请确认输入DockerRun命令是否正确")))
 			return d.errors
 		}
 		if _, err := reference.ParseAnyReference(d.image.String()); err != nil {
@@ -138,7 +139,7 @@ func (d *DockerRunOrImageParse) Parse() ParseErrorList {
 	return d.errors
 }
 
-//ParseDockerun parse docker run command
+// ParseDockerun parse docker run command
 func (d *DockerRunOrImageParse) ParseDockerun(cmd string) {
 	var name string
 	cmd = strings.TrimLeft(cmd, " ")
@@ -222,12 +223,12 @@ func (d *DockerRunOrImageParse) errappend(pe ParseError) {
 	d.errors = append(d.errors, pe)
 }
 
-//GetBranchs 获取分支列表
+// GetBranchs 获取分支列表
 func (d *DockerRunOrImageParse) GetBranchs() []string {
 	return nil
 }
 
-//GetPorts 获取端口列表
+// GetPorts 获取端口列表
 func (d *DockerRunOrImageParse) GetPorts() (ports []types.Port) {
 	for _, cv := range d.ports {
 		ports = append(ports, *cv)
@@ -235,7 +236,7 @@ func (d *DockerRunOrImageParse) GetPorts() (ports []types.Port) {
 	return ports
 }
 
-//GetVolumes 获取存储列表
+// GetVolumes 获取存储列表
 func (d *DockerRunOrImageParse) GetVolumes() (volumes []types.Volume) {
 	for _, cv := range d.volumes {
 		volumes = append(volumes, *cv)
@@ -243,12 +244,12 @@ func (d *DockerRunOrImageParse) GetVolumes() (volumes []types.Volume) {
 	return
 }
 
-//GetValid 获取源是否合法
+// GetValid 获取源是否合法
 func (d *DockerRunOrImageParse) GetValid() bool {
 	return false
 }
 
-//GetEnvs 环境变量
+// GetEnvs 环境变量
 func (d *DockerRunOrImageParse) GetEnvs() (envs []types.Env) {
 	for _, cv := range d.envs {
 		envs = append(envs, *cv)
@@ -256,22 +257,22 @@ func (d *DockerRunOrImageParse) GetEnvs() (envs []types.Env) {
 	return
 }
 
-//GetImage 获取镜像
+// GetImage 获取镜像
 func (d *DockerRunOrImageParse) GetImage() Image {
 	return d.image
 }
 
-//GetArgs 启动参数
+// GetArgs 启动参数
 func (d *DockerRunOrImageParse) GetArgs() []string {
 	return d.args
 }
 
-//GetMemory 获取内存
+// GetMemory 获取内存
 func (d *DockerRunOrImageParse) GetMemory() int {
 	return d.memory
 }
 
-//GetServiceInfo 获取service info
+// GetServiceInfo 获取service info
 func (d *DockerRunOrImageParse) GetServiceInfo() []ServiceInfo {
 	serviceInfo := ServiceInfo{
 		Ports:       d.GetPorts(),

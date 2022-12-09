@@ -3,14 +3,13 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	"github.com/wutong-paas/wutong/worker/util"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -92,7 +91,7 @@ func (r *RuntimeServer) listPodEventsByPod(pod *corev1.Pod) []*pb.PodEvent {
 		// custome event
 		event := &pb.PodEvent{
 			Type:    "Warning", // TODO: use k8s enum
-			Reason:  fmt.Sprintf("error getting pod events."),
+			Reason:  "error getting pod events.",
 			Message: err.Error(),
 		}
 		return []*pb.PodEvent{event}
@@ -120,7 +119,7 @@ func (r RuntimeServer) listPodEventsByName(name, namespace string) []*pb.PodEven
 		// custome event
 		event := &pb.PodEvent{
 			Type:    "Warning", // TODO: use k8s enum
-			Reason:  fmt.Sprintf("error getting pod events."),
+			Reason:  "error getting pod events.",
 			Message: err.Error(),
 		}
 		return []*pb.PodEvent{event}

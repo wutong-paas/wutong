@@ -41,7 +41,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//ParseClientCommnad parse client command
+// ParseClientCommnad parse client command
 // node service xxx :Operation of the guard component
 // node reg : Register the daemon configuration for node
 // node run: daemon start node server
@@ -133,7 +133,7 @@ func ParseClientCommnad(args []string) {
 	}
 }
 
-//upgrade image name
+// upgrade image name
 func upgradeImages(ctx *cli.Context) error {
 	services := service.LoadServicesWithFileFromLocal(ctx.String("c"))
 	for i, serviceList := range services {
@@ -185,5 +185,5 @@ func (c *controllerServiceClient) stopService(serviceName string) error {
 	return c.request(fmt.Sprintf("http://127.0.0.1:6100/services/%s/stop", serviceName))
 }
 func (c *controllerServiceClient) updateConfig() error {
-	return c.request(fmt.Sprintf("http://127.0.0.1:6100/services/update"))
+	return c.request("http://127.0.0.1:6100/services/update")
 }

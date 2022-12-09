@@ -244,7 +244,7 @@ func ImagePush(dockerCli *client.Client, image, user, pass string, logger event.
 	if err != nil {
 		logrus.Errorf("make auth base63 push image error: %s", err.Error())
 		if logger != nil {
-			logger.Error(fmt.Sprintf("Failed to generate a token to get the image"), map[string]string{"step": "builder-exector", "status": "failure"})
+			logger.Error("Failed to generate a token to get the image", map[string]string{"step": "builder-exector", "status": "failure"})
 		}
 		return err
 	}

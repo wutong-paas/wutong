@@ -44,7 +44,7 @@ func (d *dockerfileBuild) Build(re *Request) (*Response, error) {
 	_, err := sources.ParseFile(filepath)
 	if err != nil {
 		logrus.Error("parse dockerfile error.", err.Error())
-		re.Logger.Error(fmt.Sprintf("Parse dockerfile error"), map[string]string{"step": "builder-exector"})
+		re.Logger.Error("Parse dockerfile error", map[string]string{"step": "builder-exector"})
 		return nil, err
 	}
 	buildImageName := CreateImageName(re.ServiceID, re.DeployVersion)
@@ -97,7 +97,7 @@ func (d *dockerfileBuild) Build(re *Request) (*Response, error) {
 	}, nil
 }
 
-//GetARGs get args and parse value
+// GetARGs get args and parse value
 func GetARGs(buildEnvs map[string]string) map[string]*string {
 	args := make(map[string]*string)
 	argStr := make(map[string]string)

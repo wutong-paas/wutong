@@ -148,12 +148,12 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 		rs, err := svnclient.UpdateOrCheckout(rbi.BuildPath)
 		if err != nil {
 			logrus.Errorf("checkout svn code error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("Checkout svn code failed, please make sure the code can be downloaded properly"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("Checkout svn code failed, please make sure the code can be downloaded properly", map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		if rs.Logs == nil || len(rs.Logs.CommitEntrys) < 1 {
 			logrus.Errorf("get code commit info error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("读取代码版本信息失败"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("读取代码版本信息失败", map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.commit = Commit{
@@ -201,7 +201,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 		_, lang, err := parser.ReadWtConfigAndLang(rbi)
 		if err != nil {
 			logrus.Errorf("reparse code lange error %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("重新解析代码语言错误"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("重新解析代码语言错误", map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.Lang = string(lang)

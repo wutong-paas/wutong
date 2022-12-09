@@ -86,7 +86,6 @@ func (e *EventLogStruct) LogList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.ReturnSuccess(r, w, fileList)
-	return
 }
 
 // LogFile GetLogFile
@@ -155,7 +154,6 @@ func (e *EventLogStruct) LogSocket(w http.ResponseWriter, r *http.Request) {
 	rc := make(map[string]string)
 	rc["host_id"] = value
 	httputil.ReturnSuccess(r, w, rc)
-	return
 }
 
 // LogByAction GetLogByAction
@@ -188,7 +186,6 @@ func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.ReturnSuccess(r, w, dl.Data)
-	return
 }
 
 // TenantLogByAction GetTenantLogByAction
@@ -223,7 +220,6 @@ func (e *EventLogStruct) TenantLogByAction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	httputil.ReturnSuccess(r, w, dl.Data)
-	return
 }
 
 // Events get log by target
@@ -270,5 +266,4 @@ func (e *EventLogStruct) EventLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.ReturnSuccess(r, w, dl.Data)
-	return
 }

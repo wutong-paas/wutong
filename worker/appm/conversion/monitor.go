@@ -27,7 +27,7 @@ func createServiceMonitor(as *v1.AppService, dbmanager db.Manager) []*mv1.Servic
 		logrus.Errorf("get service %s monitor config failure %s", as.ServiceID, err.Error())
 		return nil
 	}
-	if tsms == nil || len(tsms) == 0 {
+	if len(tsms) == 0 {
 		return nil
 	}
 	services := as.GetServices(false)

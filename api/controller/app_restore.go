@@ -37,7 +37,6 @@ func (a *AppRestoreController) RestoreEnvs(w http.ResponseWriter, r *http.Reques
 	}
 
 	httputil.ReturnSuccess(r, w, "ok")
-	return
 }
 
 // RestorePorts restores service ports. delete the existing ports first,
@@ -59,7 +58,6 @@ func (a *AppRestoreController) RestorePorts(w http.ResponseWriter, r *http.Reque
 	}
 
 	httputil.ReturnSuccess(r, w, "ok")
-	return
 }
 
 // RestoreVolumes restores service volumes. delete the existing volumes first,
@@ -81,7 +79,6 @@ func (a *AppRestoreController) RestoreVolumes(w http.ResponseWriter, r *http.Req
 	}
 
 	httputil.ReturnSuccess(r, w, "ok")
-	return
 }
 
 // RestoreProbe restores service probe. delete the existing probe first,
@@ -115,7 +112,6 @@ func (a *AppRestoreController) RestoreProbe(w http.ResponseWriter, r *http.Reque
 	}
 
 	httputil.ReturnSuccess(r, w, "ok")
-	return
 }
 
 // RestoreDeps restores service dependencies. delete the existing dependencies first,
@@ -137,7 +133,6 @@ func (a *AppRestoreController) RestoreDeps(w http.ResponseWriter, r *http.Reques
 	}
 
 	httputil.ReturnSuccess(r, w, "ok")
-	return
 }
 
 // RestoreDepVols restores service dependent volumes. delete the existing

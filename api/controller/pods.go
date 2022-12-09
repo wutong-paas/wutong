@@ -60,7 +60,7 @@ type PodController struct{}
 //	  description: get some service pods
 func Pods(w http.ResponseWriter, r *http.Request) {
 	serviceIDs := strings.Split(r.FormValue("service_ids"), ",")
-	if serviceIDs == nil || len(serviceIDs) == 0 {
+	if len(serviceIDs) == 0 {
 		tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*model.Tenants)
 		services, _ := db.GetManager().TenantServiceDao().GetServicesByTenantID(tenant.UUID)
 		for _, s := range services {

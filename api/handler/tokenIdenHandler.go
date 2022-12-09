@@ -28,7 +28,7 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//TokenMapHandler DefaultTokenMapHandler
+// TokenMapHandler DefaultTokenMapHandler
 type TokenMapHandler interface {
 	AddTokenIntoMap(rui *dbmodel.RegionUserInfo)
 	DeleteTokenFromMap(oldtoken string, rui *dbmodel.RegionUserInfo)
@@ -41,14 +41,14 @@ type TokenMapHandler interface {
 
 var defaultTokenIdenHandler TokenMapHandler
 
-//TokenMap TokenMap
+// TokenMap TokenMap
 type TokenMap map[string]*dbmodel.RegionUserInfo
 
 var defaultTokenMap map[string]*dbmodel.RegionUserInfo
 
 var defaultSourceURI map[string][]*dbmodel.RegionAPIClass
 
-//CreateTokenIdenHandler create token identification handler
+// CreateTokenIdenHandler create token identification handler
 func CreateTokenIdenHandler(conf option.Config) error {
 	CreateDefaultTokenMap(conf)
 	var err error
@@ -90,7 +90,7 @@ func resourceURI() (map[string][]*dbmodel.RegionAPIClass, error) {
 	return sourceMap, nil
 }
 
-//CreateDefaultTokenMap CreateDefaultTokenMap
+// CreateDefaultTokenMap CreateDefaultTokenMap
 func CreateDefaultTokenMap(conf option.Config) {
 	createDefaultSourceURI()
 	if defaultTokenMap != nil {
@@ -108,25 +108,24 @@ func CreateDefaultTokenMap(conf option.Config) {
 	tokenMap := make(map[string]*dbmodel.RegionUserInfo)
 	tokenMap[consoleToken] = rui
 	defaultTokenMap = tokenMap
-	return
 }
 
-//GetTokenIdenHandler GetTokenIdenHandler
+// GetTokenIdenHandler GetTokenIdenHandler
 func GetTokenIdenHandler() TokenMapHandler {
 	return defaultTokenIdenHandler
 }
 
-//GetDefaultTokenMap GetDefaultTokenMap
+// GetDefaultTokenMap GetDefaultTokenMap
 func GetDefaultTokenMap() map[string]*dbmodel.RegionUserInfo {
 	return defaultTokenMap
 }
 
-//SetTokenCache SetTokenCache
+// SetTokenCache SetTokenCache
 func SetTokenCache(info *dbmodel.RegionUserInfo) {
 	defaultTokenMap[info.Token] = info
 }
 
-//GetDefaultSourceURI GetDefaultSourceURI
+// GetDefaultSourceURI GetDefaultSourceURI
 func GetDefaultSourceURI() map[string][]*dbmodel.RegionAPIClass {
 	return defaultSourceURI
 }

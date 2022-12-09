@@ -166,5 +166,4 @@ func UpdateDeliveredPath(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
-	return
 }

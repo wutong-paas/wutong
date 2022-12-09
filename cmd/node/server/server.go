@@ -44,7 +44,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//Run start run
+// Run start run
 func Run(cfg *option.Conf) error {
 	var stoped = make(chan struct{})
 	stopfunc := func() error {
@@ -168,7 +168,7 @@ func Run(cfg *option.Conf) error {
 
 		defer controller.Exist(nil)
 		//step finally: listen Signal
-		term := make(chan os.Signal)
+		term := make(chan os.Signal, 1)
 		signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 		select {
 		case <-stoped:

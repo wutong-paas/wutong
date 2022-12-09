@@ -43,7 +43,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
-//Run start run
+// Run start run
 func Run(s *option.Builder) error {
 	errChan := make(chan error)
 	//init mysql
@@ -117,7 +117,7 @@ func Run(s *option.Builder) error {
 
 	logrus.Info("builder begin running...")
 	//step finally: listen Signal
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-term:

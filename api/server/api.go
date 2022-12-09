@@ -225,7 +225,6 @@ func (m *Manager) EventLogInstance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(404)
-	return
 }
 
 // PrometheusAPI prometheus api 代理

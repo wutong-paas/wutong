@@ -32,7 +32,7 @@ import (
 	"github.com/wutong-paas/wutong/event"
 )
 
-//DockerComposeParse docker compose 文件解析
+// DockerComposeParse docker compose 文件解析
 type DockerComposeParse struct {
 	services     map[string]*ServiceInfoFromDC
 	errors       []ParseError
@@ -43,7 +43,7 @@ type DockerComposeParse struct {
 	password     string
 }
 
-//ServiceInfoFromDC service info from dockercompose
+// ServiceInfoFromDC service info from dockercompose
 type ServiceInfoFromDC struct {
 	ports       map[int]*types.Port
 	volumes     map[string]*types.Volume
@@ -58,7 +58,7 @@ type ServiceInfoFromDC struct {
 	name        string
 }
 
-//GetPorts 获取端口列表
+// GetPorts 获取端口列表
 func (d *ServiceInfoFromDC) GetPorts() (ports []types.Port) {
 	for _, cv := range d.ports {
 		ports = append(ports, *cv)
@@ -66,7 +66,7 @@ func (d *ServiceInfoFromDC) GetPorts() (ports []types.Port) {
 	return ports
 }
 
-//GetVolumes 获取存储列表
+// GetVolumes 获取存储列表
 func (d *ServiceInfoFromDC) GetVolumes() (volumes []types.Volume) {
 	for _, cv := range d.volumes {
 		volumes = append(volumes, *cv)
@@ -74,7 +74,7 @@ func (d *ServiceInfoFromDC) GetVolumes() (volumes []types.Volume) {
 	return
 }
 
-//GetEnvs 环境变量
+// GetEnvs 环境变量
 func (d *ServiceInfoFromDC) GetEnvs() (envs []types.Env) {
 	for _, cv := range d.envs {
 		envs = append(envs, *cv)
@@ -82,7 +82,7 @@ func (d *ServiceInfoFromDC) GetEnvs() (envs []types.Env) {
 	return
 }
 
-//CreateDockerComposeParse create parser
+// CreateDockerComposeParse create parser
 func CreateDockerComposeParse(source string, dockerclient *client.Client, user, pass string, logger event.Logger) Parser {
 	return &DockerComposeParse{
 		source:       source,
@@ -94,7 +94,7 @@ func CreateDockerComposeParse(source string, dockerclient *client.Client, user, 
 	}
 }
 
-//Parse 解码
+// Parse 解码
 func (d *DockerComposeParse) Parse() ParseErrorList {
 	if d.source == "" {
 		d.errappend(Errorf(FatalError, "source can not be empty"))
@@ -104,7 +104,7 @@ func (d *DockerComposeParse) Parse() ParseErrorList {
 	co, err := comp.LoadBytes([][]byte{[]byte(d.source)})
 	if err != nil {
 		logrus.Warning("parse compose file error,", err.Error())
-		d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("ComposeFile解析错误"), SolveAdvice("modify_compose", "请确认ComposeFile输入是否语法正确")))
+		d.errappend(ErrorAndSolve(FatalError, "ComposeFile解析错误", SolveAdvice("modify_compose", "请确认ComposeFile输入是否语法正确")))
 		return d.errors
 	}
 	for kev, sc := range co.ServiceConfigs {
@@ -112,7 +112,7 @@ func (d *DockerComposeParse) Parse() ParseErrorList {
 		ports := make(map[int]*types.Port)
 
 		if sc.Image == "" {
-			d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("ComposeFile解析错误"), SolveAdvice(fmt.Sprintf("Service %s has no image specified", kev), fmt.Sprintf("请为%s指定一个镜像", kev))))
+			d.errappend(ErrorAndSolve(FatalError, "ComposeFile解析错误", SolveAdvice(fmt.Sprintf("Service %s has no image specified", kev), fmt.Sprintf("请为%s指定一个镜像", kev))))
 			continue
 		}
 
@@ -208,7 +208,7 @@ func (d *DockerComposeParse) errappend(pe ParseError) {
 	d.errors = append(d.errors, pe)
 }
 
-//GetServiceInfo 获取service info
+// GetServiceInfo 获取service info
 func (d *DockerComposeParse) GetServiceInfo() []ServiceInfo {
 	var sis []ServiceInfo
 	for _, service := range d.services {
@@ -235,7 +235,7 @@ func (d *DockerComposeParse) GetServiceInfo() []ServiceInfo {
 	return sis
 }
 
-//GetImage 获取镜像名
+// GetImage 获取镜像名
 func (d *DockerComposeParse) GetImage() Image {
 	return Image{}
 }
