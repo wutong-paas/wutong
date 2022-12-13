@@ -37,7 +37,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-//NewCmdCluster cmd for cluster
+// NewCmdCluster cmd for cluster
 func NewCmdCluster() cli.Command {
 	c := cli.Command{
 		Name:  "cluster",
@@ -115,8 +115,8 @@ func getClusterInfo(c *cli.Context) error {
 	}
 	healthCPUFree := fmt.Sprintf("%.2f", float32(clusterInfo.HealthCapCPU)-clusterInfo.HealthReqCPU)
 	unhealthCPUFree := fmt.Sprintf("%.2f", float32(clusterInfo.UnhealthCapCPU)-clusterInfo.UnhealthReqCPU)
-	healthMemFree := fmt.Sprintf("%d", clusterInfo.HealthCapMem-clusterInfo.HealthReqMem)
-	unhealthMemFree := fmt.Sprintf("%d", clusterInfo.UnhealthCapMem-clusterInfo.UnhealthReqMem)
+	healthMemFree := fmt.Sprintf("%.2f", clusterInfo.HealthCapMem-clusterInfo.HealthReqMem)
+	unhealthMemFree := fmt.Sprintf("%.2f", clusterInfo.UnhealthCapMem-clusterInfo.UnhealthReqMem)
 	table := uitable.New()
 	table.AddRow("", "Used/Total", "Use of", "Health free", "Unhealth free")
 	table.AddRow("CPU(Core)", fmt.Sprintf("%.2f/%d", clusterInfo.ReqCPU, clusterInfo.CapCPU),
@@ -126,7 +126,7 @@ func getClusterInfo(c *cli.Context) error {
 			}
 			return int(clusterInfo.ReqCPU * 100 / float32(clusterInfo.CapCPU))
 		}())+"%", "\033[0;32;32m"+healthCPUFree+"\033[0m \t\t", unhealthCPUFree)
-	table.AddRow("Memory(Mb)", fmt.Sprintf("%d/%d", clusterInfo.ReqMem, clusterInfo.CapMem),
+	table.AddRow("Memory(Mb)", fmt.Sprintf("%.2f/%.2f", clusterInfo.ReqMem, clusterInfo.CapMem),
 		fmt.Sprintf("%d", func() int {
 			if clusterInfo.CapMem == 0 {
 				return 0
@@ -176,7 +176,7 @@ func getServicesHealthy(nodes []*client.HostNode) map[string][]map[string]string
 		for _, v := range n.NodeStatus.Conditions {
 			status, ok := StatusMap[string(v.Type)]
 			if !ok {
-				StatusMap[string(v.Type)] = []map[string]string{map[string]string{"type": string(v.Type), "status": string(v.Status), "message": string(v.Message), "hostname": n.HostName}}
+				StatusMap[string(v.Type)] = []map[string]string{{"type": string(v.Type), "status": string(v.Status), "message": string(v.Message), "hostname": n.HostName}}
 			} else {
 				list := status
 				list = append(list, map[string]string{"type": string(v.Type), "status": string(v.Status), "message": string(v.Message), "hostname": n.HostName})
@@ -227,10 +227,7 @@ func handleNodeReady(list []map[string]string) bool {
 			trueNum++
 		}
 	}
-	if trueNum == len(list) {
-		return true
-	}
-	return false
+	return trueNum == len(list)
 }
 
 func clusterStatus(roleList []map[string]string, ReadyList []map[string]string) (string, string) {

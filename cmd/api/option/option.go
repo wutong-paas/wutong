@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-//Config config
+// Config config
 type Config struct {
 	DBType             string
 	APIAddr            string
@@ -61,21 +61,22 @@ type Config struct {
 	PrometheusEndpoint string
 	WtNamespace        string
 	ShowSQL            bool
+	ObsAPI             []string
 }
 
-//APIServer  apiserver server
+// APIServer  apiserver server
 type APIServer struct {
 	Config
 	LogLevel       string
 	StartRegionAPI bool
 }
 
-//NewAPIServer new server
+// NewAPIServer new server
 func NewAPIServer() *APIServer {
 	return &APIServer{}
 }
 
-//AddFlags config
+// AddFlags config
 func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the api log level")
 	fs.StringVar(&a.DBType, "db-type", "mysql", "db type mysql or etcd")
@@ -113,9 +114,10 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")
 	fs.StringVar(&a.WtNamespace, "wt-namespace", "wt-system", "wt component namespace")
 	fs.BoolVar(&a.ShowSQL, "show-sql", false, "The trigger for showing sql.")
+	fs.StringSliceVar(&a.ObsAPI, "obs-api", []string{"wutong-obs-application.wutong-obs:8089"}, "the obs api")
 }
 
-//SetLog 设置log
+// SetLog 设置log
 func (a *APIServer) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {

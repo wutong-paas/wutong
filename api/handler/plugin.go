@@ -36,12 +36,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//PluginAction  plugin action struct
+// PluginAction  plugin action struct
 type PluginAction struct {
 	MQClient client.MQClient
 }
 
-//CreatePluginManager get plugin manager
+// CreatePluginManager get plugin manager
 func CreatePluginManager(mqClient client.MQClient) *PluginAction {
 	return &PluginAction{
 		MQClient: mqClient,
@@ -60,7 +60,7 @@ func (p *PluginAction) BatchCreatePlugins(tenantID string, plugins []*api_model.
 	return nil
 }
 
-//BatchBuildPlugins -
+// BatchBuildPlugins -
 func (p *PluginAction) BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenantID string) *util.APIHandleError {
 	var pluginIDs []string
 	for _, buildReq := range req.Plugins {
@@ -77,7 +77,7 @@ func (p *PluginAction) BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenan
 	return nil
 }
 
-//CreatePluginAct PluginAct
+// CreatePluginAct PluginAct
 func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.APIHandleError {
 	tp := &dbmodel.TenantPlugin{
 		TenantID:    cps.Body.TenantID,
@@ -101,7 +101,7 @@ func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.
 	return nil
 }
 
-//UpdatePluginAct UpdatePluginAct
+// UpdatePluginAct UpdatePluginAct
 func (p *PluginAction) UpdatePluginAct(pluginID, tenantID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError {
 	tp, err := db.GetManager().TenantPluginDao().GetPluginByID(pluginID, tenantID)
 	if err != nil {
@@ -120,7 +120,7 @@ func (p *PluginAction) UpdatePluginAct(pluginID, tenantID string, cps *api_model
 	return nil
 }
 
-//DeletePluginAct DeletePluginAct
+// DeletePluginAct DeletePluginAct
 func (p *PluginAction) DeletePluginAct(pluginID, tenantID string) *util.APIHandleError {
 	tx := db.GetManager().Begin()
 	defer func() {
@@ -154,7 +154,7 @@ func (p *PluginAction) DeletePluginAct(pluginID, tenantID string) *util.APIHandl
 	return nil
 }
 
-//GetPlugins get all plugins by tenantID
+// GetPlugins get all plugins by tenantID
 func (p *PluginAction) GetPlugins(tenantID string) ([]*dbmodel.TenantPlugin, *util.APIHandleError) {
 	plugins, err := db.GetManager().TenantPluginDao().GetPluginsByTenantID(tenantID)
 	if err != nil {
@@ -163,7 +163,7 @@ func (p *PluginAction) GetPlugins(tenantID string) ([]*dbmodel.TenantPlugin, *ut
 	return plugins, nil
 }
 
-//AddDefaultEnv AddDefaultEnv
+// AddDefaultEnv AddDefaultEnv
 func (p *PluginAction) AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError {
 	tx := db.GetManager().Begin()
 	defer func() {
@@ -193,7 +193,7 @@ func (p *PluginAction) AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleEr
 	return nil
 }
 
-//UpdateDefaultEnv UpdateDefaultEnv
+// UpdateDefaultEnv UpdateDefaultEnv
 func (p *PluginAction) UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError {
 	for _, env := range est.Body.EVNInfo {
 		vis := &dbmodel.TenantPluginDefaultENV{
@@ -210,7 +210,7 @@ func (p *PluginAction) UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandl
 	return nil
 }
 
-//DeleteDefaultEnv DeleteDefaultEnv
+// DeleteDefaultEnv DeleteDefaultEnv
 func (p *PluginAction) DeleteDefaultEnv(pluginID, versionID, name string) *util.APIHandleError {
 	if err := db.GetManager().TenantPluginDefaultENVDao().DeleteDefaultENVByName(pluginID, name, versionID); err != nil {
 		return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("delete default env %s", name), err)
@@ -218,7 +218,7 @@ func (p *PluginAction) DeleteDefaultEnv(pluginID, versionID, name string) *util.
 	return nil
 }
 
-//GetDefaultEnv GetDefaultEnv
+// GetDefaultEnv GetDefaultEnv
 func (p *PluginAction) GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.TenantPluginDefaultENV, *util.APIHandleError) {
 	envs, err := db.GetManager().TenantPluginDefaultENVDao().GetDefaultENVSByPluginID(pluginID, versionID)
 	if err != nil {
@@ -227,7 +227,7 @@ func (p *PluginAction) GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.Ten
 	return envs, nil
 }
 
-//GetEnvsWhichCanBeSet GetEnvsWhichCanBeSet
+// GetEnvsWhichCanBeSet GetEnvsWhichCanBeSet
 func (p *PluginAction) GetEnvsWhichCanBeSet(serviceID, pluginID string) (interface{}, *util.APIHandleError) {
 	relation, err := db.GetManager().TenantServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(serviceID, pluginID)
 	if err != nil {
@@ -247,7 +247,7 @@ func (p *PluginAction) GetEnvsWhichCanBeSet(serviceID, pluginID string) (interfa
 	return envD, nil
 }
 
-//BuildPluginManual BuildPluginManual
+// BuildPluginManual BuildPluginManual
 func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantPluginBuildVersion, *util.APIHandleError) {
 	eventID := bps.Body.EventID
 	logger := event.GetManager().GetLogger(eventID)
@@ -257,23 +257,19 @@ func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbm
 		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", bps.PluginID), err)
 	}
 	switch plugin.BuildModel {
-	case "image":
+	case "image", "dockerfile":
 		pbv, err := p.buildPlugin(bps, plugin)
 		if err != nil {
-			logrus.Error("build plugin from image error ", err.Error())
-			logger.Error("从镜像构建插件任务发送失败 "+err.Error(), map[string]string{"step": "callback", "status": "failure"})
-			return nil, util.CreateAPIHandleError(500, fmt.Errorf("build plugin from image error"))
+			logrus.Errorf("build plugin from %s error: %s", plugin.BuildModel, err.Error())
+			logger.Error(fmt.Sprintf("从 %s 构建插件任务发送失败: %s", plugin.BuildModel, err.Error()), map[string]string{"step": "callback", "status": "failure"})
+			return nil, util.CreateAPIHandleError(500, fmt.Errorf("build plugin from %s error", plugin.BuildModel))
 		}
-		logger.Info("从镜像构建插件任务发送成功 ", map[string]string{"step": "image-plugin", "status": "starting"})
-		return pbv, nil
-	case "dockerfile":
-		pbv, err := p.buildPlugin(bps, plugin)
+		logger.Info(fmt.Sprintf("从 %s 构建插件任务发送成功", plugin.BuildModel), map[string]string{"step": "image-plugin", "status": "starting"})
+		plugin.ImageURL = bps.Body.BuildImage
+		err = db.GetManager().TenantPluginDao().UpdateModel(plugin)
 		if err != nil {
-			logrus.Error("build plugin from image error ", err.Error())
-			logger.Error("从dockerfile构建插件任务发送失败 "+err.Error(), map[string]string{"step": "callback", "status": "failure"})
-			return nil, util.CreateAPIHandleError(500, fmt.Errorf("build plugin from dockerfile error"))
+			logrus.Error("update tenant plugin image url error ", err.Error())
 		}
-		logger.Info("从dockerfile构建插件任务发送成功 ", map[string]string{"step": "dockerfile-plugin", "status": "starting"})
 		return pbv, nil
 	default:
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("unexpect kind"))
@@ -312,7 +308,7 @@ func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.Te
 	return nil
 }
 
-//buildPlugin buildPlugin
+// buildPlugin buildPlugin
 func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmodel.TenantPlugin) (
 	*dbmodel.TenantPluginBuildVersion, error) {
 	if err := p.checkBuildPluginParam(b, plugin); err != nil {
@@ -325,7 +321,7 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 		Kind:            plugin.BuildModel,
 		Repo:            b.Body.RepoURL,
 		GitURL:          plugin.GitURL,
-		BaseImage:       plugin.ImageURL,
+		BaseImage:       b.Body.BuildImage,
 		ContainerCPU:    b.Body.PluginCPU,
 		ContainerMemory: b.Body.PluginMemory,
 		ContainerCMD:    b.Body.PluginCMD,
@@ -360,7 +356,7 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 		PluginID:      b.PluginID,
 		Operator:      b.Body.Operator,
 		DeployVersion: b.Body.DeployVersion,
-		ImageURL:      plugin.ImageURL,
+		ImageURL:      b.Body.BuildImage,
 		EventID:       b.Body.EventID,
 		Kind:          plugin.BuildModel,
 		PluginCMD:     b.Body.PluginCMD,
@@ -393,7 +389,7 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 	return pbv, nil
 }
 
-//buildPlugin buildPlugin
+// buildPlugin buildPlugin
 func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugins []*dbmodel.TenantPlugin) error {
 	reqPluginRel := make(map[string]*dbmodel.TenantPlugin)
 	for _, plugin := range plugins {
@@ -462,7 +458,7 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 	return nil
 }
 
-//GetAllPluginBuildVersions GetAllPluginBuildVersions
+// GetAllPluginBuildVersions GetAllPluginBuildVersions
 func (p *PluginAction) GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.TenantPluginBuildVersion, *util.APIHandleError) {
 	versions, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByPluginID(pluginID)
 	if err != nil {
@@ -471,7 +467,7 @@ func (p *PluginAction) GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.Te
 	return versions, nil
 }
 
-//GetPluginBuildVersion GetPluginBuildVersion
+// GetPluginBuildVersion GetPluginBuildVersion
 func (p *PluginAction) GetPluginBuildVersion(pluginID, versionID string) (*dbmodel.TenantPluginBuildVersion, *util.APIHandleError) {
 	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByVersionID(pluginID, versionID)
 	if err != nil {
@@ -488,7 +484,7 @@ func (p *PluginAction) GetPluginBuildVersion(pluginID, versionID string) (*dbmod
 	return version, nil
 }
 
-//DeletePluginBuildVersion DeletePluginBuildVersion
+// DeletePluginBuildVersion DeletePluginBuildVersion
 func (p *PluginAction) DeletePluginBuildVersion(pluginID, versionID string) *util.APIHandleError {
 
 	tx := db.GetManager().Begin()

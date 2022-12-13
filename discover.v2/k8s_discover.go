@@ -127,9 +127,7 @@ func (k *k8sDiscover) discover(name string, callback CallbackUpdate) {
 func (k *k8sDiscover) removeProject(name string) {
 	k.lock.Lock()
 	defer k.lock.Unlock()
-	if _, ok := k.projects[name]; ok {
-		delete(k.projects, name)
-	}
+	delete(k.projects, name)
 }
 
 func (k *k8sDiscover) rewatchWithErr(name string, callback CallbackUpdate, err error) {

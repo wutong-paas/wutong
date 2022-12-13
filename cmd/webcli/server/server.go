@@ -32,7 +32,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
-//Run start run
+// Run start run
 func Run(s *option.WebCliServer) error {
 	errChan := make(chan error)
 	option := app.DefaultOptions
@@ -64,7 +64,7 @@ func Run(s *option.WebCliServer) error {
 	}
 	defer keepalive.Stop()
 	//step finally: listen Signal
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-term:

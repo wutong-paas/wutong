@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,11 +18,11 @@ import (
 
 	"sync"
 
-	"github.com/wutong-paas/wutong/node/nodem/logger"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/node/nodem/logger"
 )
 
-//STREAMLOGNAME driver name
+// STREAMLOGNAME driver name
 const name = "streamlog"
 const defaultClusterAddress = "http://wt-eventlog:6363/docker-instance"
 const defaultAddress = "wt-eventlog:6362"
@@ -31,7 +30,7 @@ const defaultAddress = "wt-eventlog:6362"
 var etcdV3Endpoints = []string{"wt-etcd:2379"}
 var clusterAddress = []string{defaultClusterAddress}
 
-//Dis dis manage
+// Dis dis manage
 type Dis struct {
 	discoverAddress string
 }
@@ -67,7 +66,7 @@ func (c *Dis) discoverEventServer() {
 	}
 }
 
-//ResponseBody api返回数据格式
+// ResponseBody api返回数据格式
 type ResponseBody struct {
 	ValidationError url.Values  `json:"validation_error,omitempty"`
 	Msg             string      `json:"msg,omitempty"`
@@ -79,7 +78,7 @@ type ResponseBody struct {
 	Page int `json:"page,omitempty"`
 }
 
-//Endpoint endpoint
+// Endpoint endpoint
 type Endpoint struct {
 	Name   string `json:"name"`
 	URL    string `json:"url"`
@@ -87,7 +86,7 @@ type Endpoint struct {
 	Mode   int    `json:"-"` //0 表示URL变化，1表示Weight变化 ,2表示全变化
 }
 
-//ParseResponseBody 解析成ResponseBody
+// ParseResponseBody 解析成ResponseBody
 func ParseResponseBody(red io.ReadCloser) (re ResponseBody, err error) {
 	if red == nil {
 		err = errors.New("readcloser can not be nil")
@@ -109,7 +108,7 @@ func init() {
 	go dis.discoverEventServer()
 }
 
-//StreamLog 消息流log
+// StreamLog 消息流log
 type StreamLog struct {
 	writer                         *Client
 	serviceID                      string
@@ -130,7 +129,7 @@ type StreamLog struct {
 	once                           sync.Once
 }
 
-//New new logger
+// New new logger
 func New(ctx logger.Info) (logger.Logger, error) {
 	var (
 		env       = make(map[string]string)
@@ -196,13 +195,10 @@ func getTCPConnConfig(serviceID, address string) string {
 	if address == "" {
 		address = GetLogAddress(serviceID)
 	}
-	if strings.HasPrefix(address, "tcp://") {
-		address = address[6:]
-	}
-	return address
+	return strings.TrimPrefix(address, "tcp://")
 }
 
-//ValidateLogOpt 验证参数
+// ValidateLogOpt 验证参数
 func ValidateLogOpt(cfg map[string]string) error {
 	for key, value := range cfg {
 		switch key {
@@ -254,9 +250,6 @@ func (s *StreamLog) sendMsg(msg string) {
 		if err != nil {
 			logrus.Debug("send log message to stream server error.", err.Error())
 			s.cache(msg)
-			neterr, ok := err.(net.Error)
-			if ok && neterr.Timeout() {
-			}
 			if len(s.reConnecting) < 1 {
 				s.reConect()
 			}
@@ -278,7 +271,7 @@ func (s *StreamLog) ping() {
 	s.sendMsg(pingMsg)
 }
 
-//Log log
+// Log log
 func (s *StreamLog) Log(msg *logger.Message) error {
 	defer func() {
 		if err := recover(); err != nil {
@@ -344,14 +337,14 @@ func (s *StreamLog) reConect() {
 		}
 
 		select {
-		case <-time.Tick(time.Second * 5):
+		case <-time.NewTicker(time.Second * 5).C:
 		case <-s.ctx.Done():
 			return
 		}
 	}
 }
 
-//Close 关闭
+// Close 关闭
 func (s *StreamLog) Close() error {
 	s.cancel()
 	<-s.closedChan
@@ -362,7 +355,7 @@ func (s *StreamLog) Close() error {
 	return nil
 }
 
-//Name 返回logger name
+// Name 返回logger name
 func (s *StreamLog) Name() string {
 	return name
 }

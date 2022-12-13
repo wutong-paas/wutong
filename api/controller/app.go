@@ -21,10 +21,10 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//AppStruct -
+// AppStruct -
 type AppStruct struct{}
 
-//ExportApp -
+// ExportApp -
 func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
@@ -57,7 +57,7 @@ func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 		if eventID == "" {
-			httputil.ReturnError(r, w, 400, fmt.Sprintf("Arguments eventID is must defined."))
+			httputil.ReturnError(r, w, 400, "Arguments eventID is must defined.")
 			return
 		}
 
@@ -72,7 +72,7 @@ func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//Download -
+// Download -
 func (a *AppStruct) Download(w http.ResponseWriter, r *http.Request) {
 	format := strings.TrimSpace(chi.URLParam(r, "format"))
 	fileName := strings.TrimSpace(chi.URLParam(r, "fileName"))
@@ -87,7 +87,7 @@ func (a *AppStruct) Download(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, tarFile)
 }
 
-//ImportID -
+// ImportID -
 func (a *AppStruct) ImportID(w http.ResponseWriter, r *http.Request) {
 	eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 	if eventID == "" {
@@ -156,7 +156,7 @@ func (a *AppStruct) ImportID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//NewUpload -
+// NewUpload -
 func (a *AppStruct) NewUpload(w http.ResponseWriter, r *http.Request) {
 	eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 	switch r.Method {
@@ -181,7 +181,7 @@ func (a *AppStruct) NewUpload(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//Upload -
+// Upload -
 func (a *AppStruct) Upload(w http.ResponseWriter, r *http.Request) {
 	eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 	switch r.Method {
@@ -236,7 +236,7 @@ func (a *AppStruct) Upload(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//ImportApp -
+// ImportApp -
 func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
@@ -270,7 +270,7 @@ func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 		if eventID == "" {
-			httputil.ReturnError(r, w, 400, fmt.Sprintf("Arguments eventID is must defined."))
+			httputil.ReturnError(r, w, 400, "Arguments eventID is must defined.")
 			return
 		}
 
@@ -306,7 +306,7 @@ func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 	case "DELETE":
 		eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 		if eventID == "" {
-			httputil.ReturnError(r, w, 400, fmt.Sprintf("Arguments eventID is must defined."))
+			httputil.ReturnError(r, w, 400, "Arguments eventID is must defined.")
 			return
 		}
 		res, err := db.GetManager().AppDao().GetByEventId(eventID)

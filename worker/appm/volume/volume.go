@@ -20,7 +20,6 @@ package volume
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"sort"
 	"strconv"
@@ -128,9 +127,9 @@ func newVolumeClaim(name, volumePath, accessMode, storageClassName string, capac
 }
 
 /*
-	RWO - ReadWriteOnce
-	ROX - ReadOnlyMany
-	RWX - ReadWriteMany
+RWO - ReadWriteOnce
+ROX - ReadOnlyMany
+RWX - ReadWriteMany
 */
 func parseAccessMode(accessMode string) corev1.PersistentVolumeAccessMode {
 	accessMode = strings.ToUpper(accessMode)
@@ -328,22 +327,14 @@ func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmode
 	return
 }
 
-//RewriteHostPathInWindows rewrite host path
+// RewriteHostPathInWindows rewrite host path
 func RewriteHostPathInWindows(hostPath string) string {
-	localPath := os.Getenv("LOCAL_DATA_PATH")
-	sharePath := os.Getenv("SHARE_DATA_PATH")
-	if localPath == "" {
-		localPath = "/wtlocaldata"
-	}
-	if sharePath == "" {
-		sharePath = "/wtdata"
-	}
 	hostPath = strings.Replace(hostPath, "/wtdata", `z:`, 1)
 	hostPath = strings.Replace(hostPath, "/", `\`, -1)
 	return hostPath
 }
 
-//RewriteContainerPathInWindows mount path in windows
+// RewriteContainerPathInWindows mount path in windows
 func RewriteContainerPathInWindows(mountPath string) string {
 	if mountPath == "" {
 		return ""

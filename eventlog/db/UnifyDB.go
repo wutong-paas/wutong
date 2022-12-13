@@ -27,11 +27,10 @@ import (
 	"github.com/wutong-paas/wutong/eventlog/conf"
 )
 
-//CreateDBManager -
+// CreateDBManager -
 func CreateDBManager(conf conf.DBConf) error {
 	logrus.Infof("creating dbmanager ,details %v", conf)
 	var tryTime time.Duration
-	tryTime = 0
 	var err error
 	for tryTime < 4 {
 		tryTime++

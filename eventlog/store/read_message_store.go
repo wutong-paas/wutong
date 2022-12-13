@@ -102,7 +102,7 @@ func (h *readMessageStore) Gc() {
 				gcEvent = append(gcEvent, k)
 			}
 		}
-		if gcEvent != nil && len(gcEvent) > 0 {
+		if len(gcEvent) > 0 {
 			for _, id := range gcEvent {
 				barrel := h.barrels[id]
 				barrel.empty()

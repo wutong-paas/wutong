@@ -334,7 +334,7 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 		}()
 	}
 	re.Logger.Info(util.Translation("make code package success"), map[string]string{"step": "build-exector"})
-	logrus.Infof("package code for building service %s version %s successful, take time %s", re.ServiceID, re.DeployVersion, time.Now().Sub(start))
+	logrus.Infof("package code for building service %s version %s successful, take time %s", re.ServiceID, re.DeployVersion, time.Since(start))
 
 	name := fmt.Sprintf("%s-%s", re.ServiceID, re.DeployVersion)
 	namespace := re.WtNamespace

@@ -30,42 +30,40 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//TokenIdenAction  TokenIdenAction
+// TokenIdenAction  TokenIdenAction
 type TokenIdenAction struct{}
 
-//CreateTokenIdenManager token identification
+// CreateTokenIdenManager token identification
 func CreateTokenIdenManager(conf option.Config) (*TokenIdenAction, error) {
 	return &TokenIdenAction{}, nil
 }
 
-//AddTokenIntoMap AddTokenIntoMap
+// AddTokenIntoMap AddTokenIntoMap
 func (t *TokenIdenAction) AddTokenIntoMap(rui *dbmodel.RegionUserInfo) {
 	m := GetDefaultTokenMap()
 	m[rui.Token] = rui
 }
 
-//DeleteTokenFromMap DeleteTokenFromMap
+// DeleteTokenFromMap DeleteTokenFromMap
 func (t *TokenIdenAction) DeleteTokenFromMap(oldtoken string, rui *dbmodel.RegionUserInfo) {
 	m := GetDefaultTokenMap()
 	t.AddTokenIntoMap(rui)
 	delete(m, oldtoken)
 }
 
-//GetAPIManager GetAPIManager
+// GetAPIManager GetAPIManager
 func (t *TokenIdenAction) GetAPIManager() map[string][]*dbmodel.RegionAPIClass {
 	return GetDefaultSourceURI()
 }
 
-//AddAPIManager AddAPIManager
+// AddAPIManager AddAPIManager
 func (t *TokenIdenAction) AddAPIManager(am *api_model.APIManager) *util.APIHandleError {
 	m := GetDefaultSourceURI()
 	ra := &dbmodel.RegionAPIClass{
 		ClassLevel: am.Body.ClassLevel,
 		Prefix:     am.Body.Prefix,
 	}
-	if sourceList, ok := m[am.Body.ClassLevel]; ok {
-		sourceList = append(sourceList, ra)
-	} else {
+	if _, ok := m[am.Body.ClassLevel]; !ok {
 		//支持新增类型
 		newL := []*dbmodel.RegionAPIClass{ra}
 		m[am.Body.ClassLevel] = newL
@@ -79,7 +77,7 @@ func (t *TokenIdenAction) AddAPIManager(am *api_model.APIManager) *util.APIHandl
 	return nil
 }
 
-//DeleteAPIManager DeleteAPIManager
+// DeleteAPIManager DeleteAPIManager
 func (t *TokenIdenAction) DeleteAPIManager(am *api_model.APIManager) *util.APIHandleError {
 	m := GetDefaultSourceURI()
 	if sourceList, ok := m[am.Body.ClassLevel]; ok {
@@ -105,7 +103,7 @@ func (t *TokenIdenAction) DeleteAPIManager(am *api_model.APIManager) *util.APIHa
 	return nil
 }
 
-//CheckToken CheckToken
+// CheckToken CheckToken
 func (t *TokenIdenAction) CheckToken(token, uri string) bool {
 	m := GetDefaultTokenMap()
 	//logrus.Debugf("default token map is %v", m)
@@ -154,7 +152,7 @@ func (t *TokenIdenAction) CheckToken(token, uri string) bool {
 	return false
 }
 
-//InitTokenMap InitTokenMap
+// InitTokenMap InitTokenMap
 func (t *TokenIdenAction) InitTokenMap() error {
 	ruis, err := db.GetManager().RegionUserInfoDao().GetALLTokenInValidityPeriod()
 	if err != nil {

@@ -44,7 +44,7 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//Run start run
+// Run start run
 func Run(s *option.APIServer) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -137,7 +137,7 @@ func Run(s *option.APIServer) error {
 	logrus.Info("api router is running...")
 
 	//step finally: listen Signal
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
 	case s := <-term:

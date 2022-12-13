@@ -29,7 +29,7 @@ import (
 	"github.com/wutong-paas/wutong/monitor/utils"
 )
 
-//GatewayNode node discover
+// GatewayNode node discover
 type GatewayNode struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
@@ -38,7 +38,7 @@ type GatewayNode struct {
 	endpoints []*config.Endpoint
 }
 
-//UpdateEndpoints update endpoints
+// UpdateEndpoints update endpoints
 func (e *GatewayNode) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -57,16 +57,14 @@ func (e *GatewayNode) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (e *GatewayNode) Name() string {
 	return "gateway"
 }
 
 func (e *GatewayNode) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(e.sortedEndpoints))
-	for _, end := range e.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, e.sortedEndpoints...)
 
 	return &prometheus.ScrapeConfig{
 		JobName:        e.Name(),
@@ -84,7 +82,7 @@ func (e *GatewayNode) toScrape() *prometheus.ScrapeConfig {
 	}
 }
 
-//AddEndpoint add endpoint
+// AddEndpoint add endpoint
 func (e *GatewayNode) AddEndpoint(end *config.Endpoint) {
 	e.endpoints = append(e.endpoints, end)
 	e.UpdateEndpoints(e.endpoints...)

@@ -89,7 +89,7 @@ func (g *GatewayStruct) addHTTPRule(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	errs := validateDomain(req.Domain)
-	if errs != nil && len(errs) > 0 {
+	if len(errs) > 0 {
 		logrus.Debugf("Invalid domain: %s", strings.Join(errs, ";"))
 		values["domain"] = []string{"The domain field is invalid"}
 	}
@@ -137,7 +137,7 @@ func (g *GatewayStruct) updateHTTPRule(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	errs := validateDomain(req.Domain)
-	if errs != nil && len(errs) > 0 {
+	if len(errs) > 0 {
 		logrus.Debugf("Invalid domain: %s", strings.Join(errs, ";"))
 		values["domain"] = []string{"The domain field is invalid"}
 	}
@@ -352,7 +352,7 @@ func (g *GatewayStruct) Certificate(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//updCertificate updates certificate and refresh http rules based on certificate id
+// updCertificate updates certificate and refresh http rules based on certificate id
 func (g *GatewayStruct) updCertificate(w http.ResponseWriter, r *http.Request) {
 	var req api_model.UpdCertificateReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
@@ -373,7 +373,7 @@ func (g *GatewayStruct) updCertificate(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GetGatewayIPs get gateway ips
+// GetGatewayIPs get gateway ips
 func GetGatewayIPs(w http.ResponseWriter, r *http.Request) {
 	ips := handler.GetGatewayHandler().GetGatewayIPs()
 	httputil.ReturnSuccess(r, w, ips)

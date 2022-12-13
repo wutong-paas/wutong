@@ -2,10 +2,11 @@ package adaptor
 
 import (
 	"context"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clientset "k8s.io/client-go/kubernetes"
 	"os"
 	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clientset "k8s.io/client-go/kubernetes"
 )
 
 type istioServiceMeshMode struct {
@@ -28,10 +29,8 @@ func (i *istioServiceMeshMode) IsInstalledControlPlane() bool {
 		cmName = "istio-ca-root-cert"
 	}
 	_, err := i.kubeClient.CoreV1().ConfigMaps("default").Get(ctx, cmName, metav1.GetOptions{})
-	if err != nil {
-		return false
-	}
-	return true
+
+	return err == nil
 }
 
 // GetInjectLabels -

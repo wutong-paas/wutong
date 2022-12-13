@@ -29,34 +29,30 @@ import (
 	"github.com/wutong-paas/wutong/monitor/prometheus"
 )
 
-//WtAPI wt api metrics
+// WtAPI wt api metrics
 type WtAPI struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoint
+// UpdateEndpoints update endpoint
 func (b *WtAPI) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	scrape := b.toScrape()
 	b.Prometheus.UpdateScrape(scrape)
 }
 
-//Error handle error
+// Error handle error
 func (b *WtAPI) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (b *WtAPI) Name() string {
 	return "wtapi"
 }
 
 func (b *WtAPI) toScrape() *prometheus.ScrapeConfig {
-	ts := make([]string, 0, len(b.sortedEndpoints))
-	for _, end := range b.sortedEndpoints {
-		ts = append(ts, end)
-	}
 	namespace := os.Getenv("NAMESPACE")
 
 	return &prometheus.ScrapeConfig{
@@ -67,13 +63,13 @@ func (b *WtAPI) toScrape() *prometheus.ScrapeConfig {
 		HonorLabels:    true,
 		ServiceDiscoveryConfig: prometheus.ServiceDiscoveryConfig{
 			KubernetesSDConfigs: []*prometheus.SDConfig{
-				&prometheus.SDConfig{
+				{
 					Role: prometheus.RoleEndpoint,
 					NamespaceDiscovery: prometheus.NamespaceDiscovery{
 						Names: []string{namespace},
 					},
 					Selectors: []prometheus.SelectorConfig{
-						prometheus.SelectorConfig{
+						{
 							Role:  prometheus.RoleEndpoint,
 							Field: "metadata.name=wt-api-api-inner",
 						},

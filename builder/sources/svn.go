@@ -35,7 +35,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-//SVNClient svn svnclient
+// SVNClient svn svnclient
 type SVNClient interface {
 	Checkout() (*Info, error)
 	Update(childpath string) (*Info, error)
@@ -196,7 +196,7 @@ func (c *svnclient) UpdateOrCheckout(childpath string) (*Info, error) {
 		rs, err = c.Update(childpath)
 		if err != nil {
 			logrus.Errorf("update svn code error: %s", err.Error())
-			c.logger.Error(fmt.Sprintf("Update svn code failed, please make sure the code can be downloaded properly"), map[string]string{"step": "builder-exector", "status": "failure"})
+			c.logger.Error("Update svn code failed, please make sure the code can be downloaded properly", map[string]string{"step": "builder-exector", "status": "failure"})
 		} else {
 			return rs, nil
 		}
@@ -204,7 +204,7 @@ func (c *svnclient) UpdateOrCheckout(childpath string) (*Info, error) {
 	rs, err = c.Checkout()
 	if err != nil {
 		logrus.Errorf("checkout svn code error: %s", err.Error())
-		c.logger.Error(fmt.Sprintf("Checkout svn code failed, please make sure the code can be downloaded properly"), map[string]string{"step": "builder-exector", "status": "failure"})
+		c.logger.Error("Checkout svn code failed, please make sure the code can be downloaded properly", map[string]string{"step": "builder-exector", "status": "failure"})
 		return nil, err
 	}
 	return rs, nil
@@ -241,7 +241,7 @@ func (c *svnclient) Info() (*Info, error) {
 	if err == nil {
 		info.Logs = log
 	}
-	fmt.Println(time.Now().Sub(start).String())
+	fmt.Println(time.Since(start).String())
 	info.Branchs = c.readBranchs()
 	info.Tags = c.readTags()
 	return info, nil
@@ -336,7 +336,7 @@ func (c *svnclient) run(args ...string) ([]byte, error) {
 	return cmd.Output()
 }
 
-//Logs commit logs
+// Logs commit logs
 type Logs struct {
 	XMLName      xml.Name `xml:"log"`
 	CommitEntrys []Commit `xml:"logentry"`
@@ -350,7 +350,7 @@ type paths struct {
 	Kind     string `xml:"kind,attr"`
 }
 
-//Info Info
+// Info Info
 type Info struct {
 	XMLName       xml.Name `xml:"info"`
 	URL           string   `xml:"entry>url"`
@@ -365,7 +365,7 @@ type Info struct {
 	Tags          []string
 }
 
-//Commit Commit
+// Commit Commit
 type Commit struct {
 	Revision string `xml:"revision,attr"`
 	Author   string `xml:"author"`

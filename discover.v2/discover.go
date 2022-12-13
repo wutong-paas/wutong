@@ -34,7 +34,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
-//CallbackUpdate 每次返还变化
+// CallbackUpdate 每次返还变化
 type CallbackUpdate interface {
 	//TODO:
 	//weight自动发现更改实现暂时不 Ready
@@ -43,14 +43,14 @@ type CallbackUpdate interface {
 	Error(error)
 }
 
-//Callback 每次返回全部节点
+// Callback 每次返回全部节点
 type Callback interface {
 	UpdateEndpoints(endpoints ...*config.Endpoint)
 	//when watch occurred error,will exec this method
 	Error(error)
 }
 
-//Discover 后端服务自动发现
+// Discover 后端服务自动发现
 type Discover interface {
 	// Add project to cache if not exists, then watch the endpoints.
 	AddProject(name string, callback Callback)
@@ -59,7 +59,7 @@ type Discover interface {
 	Stop()
 }
 
-//GetDiscover 获取服务发现管理器
+// GetDiscover 获取服务发现管理器
 func GetDiscover(opt config.DiscoverConfig) (Discover, error) {
 	if opt.Ctx == nil {
 		opt.Ctx = context.Background()
@@ -145,9 +145,7 @@ func (d *defaultCallBackUpdate) UpdateEndpoints(operation config.Operation, endp
 				}
 			}
 			if e.Mode == 2 {
-				if _, ok := d.endpoints[e.Name]; ok {
-					delete(d.endpoints, e.Name)
-				}
+				delete(d.endpoints, e.Name)
 			}
 		}
 	case config.UPDATE:
@@ -212,16 +210,14 @@ func (e *etcdDiscover) Stop() {
 func (e *etcdDiscover) removeProject(name string) {
 	e.lock.Lock()
 	defer e.lock.Unlock()
-	if _, ok := e.projects[name]; ok {
-		delete(e.projects, name)
-	}
+	delete(e.projects, name)
 }
 
 func (e *etcdDiscover) discover(name string, callback CallbackUpdate) {
 	ctx, cancel := context.WithCancel(e.ctx)
 	defer cancel()
 	endpoints := e.list(name)
-	if endpoints != nil && len(endpoints) > 0 {
+	if len(endpoints) > 0 {
 		callback.UpdateEndpoints(config.SYNC, endpoints...)
 	}
 	watch := e.client.Watch(ctx, fmt.Sprintf("%s/%s", e.prefix, name), clientv3.WithPrefix())

@@ -29,7 +29,7 @@ import (
 	v1 "github.com/wutong-paas/wutong/util/prober/types/v1"
 )
 
-//Prober Prober
+// Prober Prober
 type Prober interface {
 	GetServiceHealthy(serviceName string) (*v1.HealthStatus, bool)
 	WatchServiceHealthy(serviceName string) Watcher
@@ -68,7 +68,7 @@ func NewProber(ctx context.Context, cancel context.CancelFunc) Prober {
 	return m
 }
 
-//Watcher watcher
+// Watcher watcher
 type Watcher interface {
 	GetID() string
 	GetServiceName() string
@@ -184,7 +184,7 @@ func (p *probeManager) updateServiceStatus(status *v1.HealthStatus) {
 		} else {
 			status.StartErrorTime = exist.StartErrorTime
 		}
-		status.ErrorDuration = time.Now().Sub(exist.StartErrorTime)
+		status.ErrorDuration = time.Since(exist.StartErrorTime)
 		p.status[status.Name] = status
 	} else {
 		status.ErrorNumber = 0
@@ -360,7 +360,7 @@ func (p *probeManager) UpdateServiceProbe(service *v1.Service) {
 
 // UpdateServicesProbe updates and runs services probe.
 func (p *probeManager) UpdateServicesProbe(services []*v1.Service) {
-	if services == nil || len(services) == 0 {
+	if len(services) == 0 {
 		return
 	}
 	oldSvcs := p.ListServicesBySid(services[0].Sid)

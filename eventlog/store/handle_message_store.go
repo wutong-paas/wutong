@@ -93,9 +93,9 @@ func (h *handleMessageStore) SubChan(eventID, subID string) chan *db.EventLogMes
 }
 func (h *handleMessageStore) RealseSubChan(eventID, subID string) {}
 
-//GC 操作进行时 消息接收会停止
-//TODD 怎么加快gc?
-//使用对象池
+// GC 操作进行时 消息接收会停止
+// TODD 怎么加快gc?
+// 使用对象池
 func (h *handleMessageStore) Gc() {
 	h.log.Debug("Handle message store gc core start.")
 	tiker := time.NewTicker(time.Second * 30)
@@ -125,7 +125,7 @@ func (h *handleMessageStore) gcRun() {
 			gcEvent = append(gcEvent, k)
 		}
 	}
-	if gcEvent != nil && len(gcEvent) > 0 {
+	if len(gcEvent) > 0 {
 		for _, id := range gcEvent {
 			barrel := h.barrels[id]
 			barrel.empty()
@@ -206,10 +206,10 @@ func (h *handleMessageStore) InsertGarbageMessage(message ...*db.EventLogMessage
 }
 
 func (h *handleMessageStore) handleGarbageMessage() {
-	tike := time.Tick(10 * time.Second)
+	tick := time.NewTicker(10 * time.Second)
 	for {
 		select {
-		case <-tike:
+		case <-tick.C:
 			if len(h.garbageMessage) > 0 {
 				h.saveGarbageMessage()
 			}
@@ -259,7 +259,7 @@ func (h *handleMessageStore) persistence(eventID string) {
 	}
 }
 
-//TODD
+// TODD
 func (h *handleMessageStore) handleBarrelEvent() {
 	for {
 		select {

@@ -29,7 +29,7 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-//SSHClient ssh client
+// SSHClient ssh client
 type SSHClient struct {
 	IP             string
 	Port           int
@@ -41,7 +41,7 @@ type SSHClient struct {
 	Cmd            string
 }
 
-//NewSSHClient new ssh client
+// NewSSHClient new ssh client
 func NewSSHClient(ip, user, password, cmd string, port int, stdout, stderr io.Writer) *SSHClient {
 	var method = "password"
 	if password == "" {
@@ -59,7 +59,7 @@ func NewSSHClient(ip, user, password, cmd string, port int, stdout, stderr io.Wr
 	}
 }
 
-//Connection 执行远程连接
+// Connection 执行远程连接
 func (server *SSHClient) Connection() error {
 	auths, err := parseAuthMethods(server)
 	if err != nil {
@@ -96,7 +96,6 @@ func parseAuthMethods(server *SSHClient) ([]ssh.AuthMethod, error) {
 	switch server.Method {
 	case "password":
 		sshs = append(sshs, ssh.Password(server.Password))
-		break
 	case "publickey":
 		socket := os.Getenv("SSH_AUTH_SOCK")
 		conn, err := net.Dial("unix", socket)
@@ -105,7 +104,6 @@ func parseAuthMethods(server *SSHClient) ([]ssh.AuthMethod, error) {
 		}
 		agentClient := agent.NewClient(conn)
 		sshs = append(sshs, ssh.PublicKeysCallback(agentClient.Signers))
-		break
 	default:
 		return nil, errors.New("无效的密码方式: " + server.Method)
 	}

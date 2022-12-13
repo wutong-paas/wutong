@@ -91,7 +91,7 @@ func waitReady(domain string) bool {
 				body, _ := ioutil.ReadAll(res.Body)
 				res.Body.Close()
 				if strings.Contains(string(body), "2048") {
-					logrus.Infof("%s is ready take %s", domain, time.Now().Sub(start))
+					logrus.Infof("%s is ready take %s", domain, time.Since(start))
 					return true
 				}
 			}

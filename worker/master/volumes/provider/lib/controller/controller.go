@@ -56,13 +56,13 @@ import (
 )
 
 // annClass annotation represents the storage class associated with a resource:
-// - in PersistentVolumeClaim it represents required class to match.
-//   Only PersistentVolumes with the same class (i.e. annotation with the same
-//   value) can be bound to the claim. In case no such volume exists, the
-//   controller will provision a new one using StorageClass instance with
-//   the same name as the annotation value.
-// - in PersistentVolume it represents storage class to which the persistent
-//   volume belongs.
+//   - in PersistentVolumeClaim it represents required class to match.
+//     Only PersistentVolumes with the same class (i.e. annotation with the same
+//     value) can be bound to the claim. In case no such volume exists, the
+//     controller will provision a new one using StorageClass instance with
+//     the same name as the annotation value.
+//   - in PersistentVolume it represents storage class to which the persistent
+//     volume belongs.
 const annClass = "volume.beta.kubernetes.io/storage-class"
 
 // This annotation is added to a PV that has been dynamically provisioned by
@@ -642,7 +642,7 @@ func (ctrl *ProvisionController) Run(ctx context.Context) {
 	logger := logrus.WithField("WHO", "ProvisionController")
 	logger.Infof("Started provisioner controller %s!", ctrl.component)
 	<-stop
-	logger.Info("stop provisioner controller: %s", ctrl.component)
+	logger.Infof("stop provisioner controller: %s", ctrl.component)
 }
 
 func (ctrl *ProvisionController) runClaimWorker() {

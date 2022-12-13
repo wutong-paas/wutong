@@ -34,7 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 )
 
-//Cluster  node  controller
+// Cluster  node  controller
 type Cluster struct {
 	ctx              context.Context
 	cancel           context.CancelFunc
@@ -47,7 +47,7 @@ type Cluster struct {
 	datacenterConfig *config.DataCenterConfig
 }
 
-//CreateCluster create node controller
+// CreateCluster create node controller
 func CreateCluster(kubecli kubecache.KubeClient, node *client.HostNode, datacenterConfig *config.DataCenterConfig) *Cluster {
 	ctx, cancel := context.WithCancel(context.Background())
 	nc := Cluster{
@@ -63,7 +63,7 @@ func CreateCluster(kubecli kubecache.KubeClient, node *client.HostNode, datacent
 	return &nc
 }
 
-//Start 启动
+// Start 启动
 func (n *Cluster) Start(errchan chan error) error {
 	go n.loadAndWatchNodes(errchan)
 	// disable after 5.2.0
@@ -72,7 +72,7 @@ func (n *Cluster) Start(errchan chan error) error {
 	return nil
 }
 
-//Stop 停止
+// Stop 停止
 func (n *Cluster) Stop(i interface{}) {
 	n.cancel()
 }
@@ -88,7 +88,7 @@ func (n *Cluster) installWorker(errchan chan error) {
 	}
 }
 
-//UpdateNode update node info
+// UpdateNode update node info
 func (n *Cluster) UpdateNode(node *client.HostNode) {
 	n.nodes[node.ID] = node
 	saveNode := *node
@@ -99,7 +99,7 @@ func (n *Cluster) UpdateNode(node *client.HostNode) {
 	}
 }
 
-//GetNode get wutong node info
+// GetNode get wutong node info
 func (n *Cluster) GetNode(id string) *client.HostNode {
 	n.lock.Lock()
 	defer n.lock.Unlock()
@@ -127,7 +127,7 @@ func (n *Cluster) loopHandleNodeStatus(errchan chan error) {
 	}
 }
 
-//handleNodeStatus Master integrates node status and kube node status
+// handleNodeStatus Master integrates node status and kube node status
 func (n *Cluster) handleNodeStatus(v *client.HostNode) {
 	if v.Status == client.NotInstalled || v.Status == client.Installing || v.Status == client.InstallFailed {
 		if v.NodeStatus.Status != "running" {
@@ -198,17 +198,6 @@ func (n *Cluster) handleNodeStatus(v *client.HostNode) {
 					}
 				}
 			}
-			if action == "scheduler" && !v.Unschedulable {
-				//if node status is not scheduler
-				// disable from 5.2.0
-				// if v.NodeStatus.KubeNode != nil && v.NodeStatus.KubeNode.Spec.Unschedulable {
-				// 	logrus.Infof("node %s is advice set scheduler,will do this action", v.ID)
-				// 	_, err := n.kubecli.CordonOrUnCordon(v.ID, false)
-				// 	if err != nil {
-				// 		logrus.Errorf("auto set node is scheduler failure.")
-				// 	}
-				// }
-			}
 			if action == "offline" {
 				logrus.Warningf("node %s is advice set offline", v.ID)
 				// k8s will offline node itself.
@@ -251,13 +240,13 @@ func (n *Cluster) loadAndWatchNodes(errChan chan error) {
 	}
 }
 
-//installNode install node
-//Call the ansible installation script
+// installNode install node
+// Call the ansible installation script
 func (n *Cluster) installNode(node *client.HostNode) {
 	//TODO:
 }
 
-//GetAllNode get all node info from local cache
+// GetAllNode get all node info from local cache
 func (n *Cluster) GetAllNode() (nodes []*client.HostNode) {
 	n.lock.Lock()
 	defer n.lock.Unlock()
@@ -267,7 +256,7 @@ func (n *Cluster) GetAllNode() (nodes []*client.HostNode) {
 	return
 }
 
-//CacheNode add node to local cache
+// CacheNode add node to local cache
 func (n *Cluster) CacheNode(node *client.HostNode) {
 	n.lock.Lock()
 	defer n.lock.Unlock()
@@ -275,16 +264,14 @@ func (n *Cluster) CacheNode(node *client.HostNode) {
 	n.nodes[node.ID] = node
 }
 
-//RemoveNode remove node from local cache
+// RemoveNode remove node from local cache
 func (n *Cluster) RemoveNode(nodeID string) {
 	n.lock.Lock()
 	defer n.lock.Unlock()
-	if _, ok := n.nodes[nodeID]; ok {
-		delete(n.nodes, nodeID)
-	}
+	delete(n.nodes, nodeID)
 }
 
-//GetLabelsNode return node ids that matching labels
+// GetLabelsNode return node ids that matching labels
 func (n *Cluster) GetLabelsNode(labels map[string]string) []string {
 	var nodes []string
 	for _, node := range n.nodes {

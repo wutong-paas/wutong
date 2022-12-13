@@ -30,13 +30,13 @@ import (
 	"github.com/wutong-paas/wutong/node/core/store"
 )
 
-//GroupContext 组任务会话
+// GroupContext 组任务会话
 type GroupContext struct {
 	ctx     context.Context
 	groupID string
 }
 
-//NewGroupContext 创建组配置会话
+// NewGroupContext 创建组配置会话
 func NewGroupContext(groupID string) *GroupContext {
 	return &GroupContext{
 		ctx:     context.Background(),
@@ -44,13 +44,13 @@ func NewGroupContext(groupID string) *GroupContext {
 	}
 }
 
-//Add 添加配置项
+// Add 添加配置项
 func (g *GroupContext) Add(k, v interface{}) {
 	g.ctx = context.WithValue(g.ctx, k, v)
 	store.DefalutClient.Put(fmt.Sprintf("%s/group/%s/%s", option.Config.ConfigStoragePath, g.groupID, k), v.(string))
 }
 
-//Get get
+// Get get
 func (g *GroupContext) Get(k interface{}) interface{} {
 	if v := g.ctx.Value(k); v != nil {
 		return v
@@ -62,7 +62,7 @@ func (g *GroupContext) Get(k interface{}) interface{} {
 	return ""
 }
 
-//GetString get
+// GetString get
 func (g *GroupContext) GetString(k interface{}) string {
 	if v := g.ctx.Value(k); v != nil {
 		return v.(string)
@@ -76,7 +76,7 @@ func (g *GroupContext) GetString(k interface{}) string {
 
 var reg = regexp.MustCompile(`(?U)\$\{.*\}`)
 
-//GetConfigKey 获取配置key
+// GetConfigKey 获取配置key
 func GetConfigKey(rk string) string {
 	if len(rk) < 4 {
 		return ""
@@ -86,13 +86,11 @@ func GetConfigKey(rk string) string {
 	return rk[left+1 : right]
 }
 
-//ResettingArray 根据实际配置解析数组字符串
+// ResettingArray 根据实际配置解析数组字符串
 func ResettingArray(groupCtx *GroupContext, source []string) ([]string, error) {
 	sourcecopy := make([]string, len(source))
 	// 使用copy
-	for i, s := range source {
-		sourcecopy[i] = s
-	}
+	copy(sourcecopy, source)
 	for i, s := range sourcecopy {
 		resultKey := reg.FindAllString(s, -1)
 		for _, rk := range resultKey {
@@ -107,37 +105,37 @@ func ResettingArray(groupCtx *GroupContext, source []string) ([]string, error) {
 	return sourcecopy, nil
 }
 
-//GetConfig 获取配置信息
+// GetConfig 获取配置信息
 func GetConfig(groupCtx *GroupContext, key string) string {
 	if groupCtx != nil {
 		value := groupCtx.Get(key)
 		if value != nil {
-			switch value.(type) {
+			switch value := value.(type) {
 			case string:
-				if value.(string) != "" {
-					return value.(string)
+				if value != "" {
+					return value
 				}
 			case int:
-				if value.(int) != 0 {
-					return strconv.Itoa(value.(int))
+				if value != 0 {
+					return strconv.Itoa(value)
 				}
 			case []string:
-				if value.([]string) != nil {
-					result := strings.Join(value.([]string), ",")
+				if value != nil {
+					result := strings.Join(value, ",")
 					if strings.HasSuffix(result, ",") {
 						return result
 					}
 					return result + ","
 				}
 			case []interface{}:
-				if value.([]interface{}) != nil && len(value.([]interface{})) > 0 {
+				if len(value) > 0 {
 					result := ""
-					for _, v := range value.([]interface{}) {
-						switch v.(type) {
+					for _, v := range value {
+						switch v := v.(type) {
 						case string:
-							result += v.(string) + ","
+							result += v + ","
 						case int:
-							result += strconv.Itoa(v.(int)) + ","
+							result += strconv.Itoa(v) + ","
 						}
 					}
 					return result
@@ -161,11 +159,11 @@ func GetConfig(groupCtx *GroupContext, key string) string {
 				vas := cn.Value.([]interface{})
 				result := ""
 				for _, va := range vas {
-					switch va.(type) {
+					switch va := va.(type) {
 					case string:
-						result += va.(string) + ","
+						result += va + ","
 					case int:
-						result += strconv.Itoa(va.(int)) + ","
+						result += strconv.Itoa(va) + ","
 					}
 				}
 				return result
@@ -179,7 +177,7 @@ func GetConfig(groupCtx *GroupContext, key string) string {
 	return ""
 }
 
-//ResettingString 根据实际配置解析字符串
+// ResettingString 根据实际配置解析字符串
 func ResettingString(groupCtx *GroupContext, source string) (string, error) {
 	resultKey := reg.FindAllString(source, -1)
 	for _, rk := range resultKey {
@@ -193,7 +191,7 @@ func ResettingString(groupCtx *GroupContext, source string) (string, error) {
 	return source, nil
 }
 
-//ResettingMap 根据实际配置解析Map字符串
+// ResettingMap 根据实际配置解析Map字符串
 func ResettingMap(groupCtx *GroupContext, source map[string]string) (map[string]string, error) {
 	sourcecopy := make(map[string]string, len(source))
 	for k, v := range source {

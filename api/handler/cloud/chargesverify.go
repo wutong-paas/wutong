@@ -34,7 +34,7 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 )
 
-//PubChargeSverify service Charge Sverify
+// PubChargeSverify service Charge Sverify
 func PubChargeSverify(tenant *model.Tenants, quantity int, reason string) *util.APIHandleError {
 	cloudAPI := os.Getenv("CLOUD_API")
 	if cloudAPI == "" {
@@ -89,7 +89,7 @@ func PriChargeSverify(ctx context.Context, tenant *model.Tenants, quantity int) 
 		}
 		return util.CreateAPIHandleError(200, fmt.Errorf("cluster_lack_of_memory"))
 	}
-	tenantStas, err := handler.GetTenantManager().GetTenantResource(tenant.UUID)
+	tenantStas, _ := handler.GetTenantManager().GetTenantResource(tenant.UUID)
 	// TODO: it should be limit, not request
 	availMem := int64(t.LimitMemory) - (tenantStas.MemoryRequest + tenantStas.UnscdMemoryReq)
 	if availMem >= int64(quantity) {

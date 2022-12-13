@@ -143,7 +143,7 @@ func (h *newMonitorMessageStore) Gc() {
 				}
 			}
 		}
-		if gcEvent != nil && len(gcEvent) > 0 {
+		if len(gcEvent) > 0 {
 			for _, id := range gcEvent {
 				h.log.Infof("monitor message barrel %s will be gc", id)
 				barrel := h.barrels[id]
@@ -161,7 +161,7 @@ func (h *newMonitorMessageStore) GetHistoryMessage(eventID string, length int) (
 	return nil
 }
 
-//MonitorMessage 性能监控消息系统模型
+// MonitorMessage 性能监控消息系统模型
 type MonitorMessage struct {
 	ServiceID   string
 	Port        string
@@ -177,14 +177,14 @@ type MonitorMessage struct {
 	AbnormalCount uint64
 }
 
-//cacheMonitorMessage 每个实例的数据缓存
+// cacheMonitorMessage 每个实例的数据缓存
 type cacheMonitorMessage struct {
 	updateTime time.Time
 	hostName   string
 	mms        MonitorMessageList
 }
 
-//CacheMonitorMessageList 某个应用性能分析数据
+// CacheMonitorMessageList 某个应用性能分析数据
 type CacheMonitorMessageList struct {
 	list          []*cacheMonitorMessage
 	subSocketChan map[string]chan *db.EventLogMessage
@@ -193,7 +193,7 @@ type CacheMonitorMessageList struct {
 	UpdateTime    time.Time
 }
 
-//CreateCacheMonitorMessageList 创建应用监控信息缓存器
+// CreateCacheMonitorMessageList 创建应用监控信息缓存器
 func CreateCacheMonitorMessageList(eventID string) *CacheMonitorMessageList {
 	return &CacheMonitorMessageList{
 		subSocketChan: make(map[string]chan *db.EventLogMessage),
@@ -203,8 +203,8 @@ func CreateCacheMonitorMessageList(eventID string) *CacheMonitorMessageList {
 	}
 }
 
-//Insert 认为mms的hostname一致
-//每次收到消息进行gc
+// Insert 认为mms的hostname一致
+// 每次收到消息进行gc
 func (c *CacheMonitorMessageList) Insert(mms ...MonitorMessage) {
 	if mms == nil || len(mms) < 1 {
 		return
@@ -240,7 +240,7 @@ func (c *CacheMonitorMessageList) Insert(mms ...MonitorMessage) {
 	c.pushMessage()
 }
 
-//Gc 清理数据
+// Gc 清理数据
 func (c *CacheMonitorMessageList) Gc() {
 	var list []*cacheMonitorMessage
 	for i := range c.list {
@@ -256,10 +256,6 @@ func (c *CacheMonitorMessageList) pushMessage() {
 	if len(c.list) == 0 {
 		return
 	}
-	var mdata []byte
-	if len(c.list) == 1 {
-		mdata = getByte(c.list[0].mms)
-	}
 	source := c.list[0].mms
 	for i := 1; i < len(c.list); i++ {
 		addSource := c.list[i].mms
@@ -267,7 +263,7 @@ func (c *CacheMonitorMessageList) pushMessage() {
 	}
 	//降序排序
 	sort.Sort(sort.Reverse(&source))
-	mdata = getByte(*source.Pop(20))
+	mdata := getByte(*source.Pop(20))
 	c.message.MonitorData = mdata
 	for _, ch := range c.subSocketChan {
 		select {
@@ -290,7 +286,7 @@ func (c *CacheMonitorMessageList) addSubChan(subID string) chan *db.EventLogMess
 	return ch
 }
 
-//delSubChan delete socket sub chan
+// delSubChan delete socket sub chan
 func (c *CacheMonitorMessageList) delSubChan(subID string) {
 	c.subLock.Lock()
 	defer c.subLock.Unlock()
@@ -341,16 +337,16 @@ func merge(source, addsource MonitorMessageList) (result MonitorMessageList) {
 	return
 }
 
-//Round Round
+// Round Round
 func Round(f float64, n int) float64 {
 	pow10n := math.Pow10(n)
 	return math.Trunc((f+0.5/pow10n)*pow10n) / pow10n
 }
 
-//MonitorMessageList 消息列表
+// MonitorMessageList 消息列表
 type MonitorMessageList []MonitorMessage
 
-//Add 添加
+// Add 添加
 func (m *MonitorMessageList) Add(mm *MonitorMessage) {
 	*m = append(*m, *mm)
 }
@@ -360,7 +356,7 @@ func (m *MonitorMessageList) Len() int {
 	return len(*m)
 }
 
-//Less 如果index为i的元素小于index为j的元素，则返回true，否则返回false
+// Less 如果index为i的元素小于index为j的元素，则返回true，否则返回false
 func (m *MonitorMessageList) Less(i, j int) bool {
 	return (*m)[i].CumulativeTime < (*m)[j].CumulativeTime
 }
@@ -372,7 +368,7 @@ func (m *MonitorMessageList) Swap(i, j int) {
 	(*m)[j] = tmp
 }
 
-//Pop Pop
+// Pop Pop
 func (m *MonitorMessageList) Pop(i int) *MonitorMessageList {
 	if len(*m) <= i {
 		return m
@@ -381,7 +377,7 @@ func (m *MonitorMessageList) Pop(i int) *MonitorMessageList {
 	return &cache
 }
 
-//String json string
+// String json string
 func (m *MonitorMessageList) String() string {
 	body, _ := json.Marshal(m)
 	return string(body)

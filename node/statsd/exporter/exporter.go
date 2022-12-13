@@ -382,15 +382,13 @@ func (b *Exporter) Listen(e <-chan Events) {
 	}
 }
 
-//GCollector 循环检查Exporter对象中的性能指标数据是否有过期，有则清除
+// GCollector 循环检查Exporter对象中的性能指标数据是否有过期，有则清除
 func (b *Exporter) GCollector() {
 	var HP = b.vitality
 	timer := time.NewTicker(time.Second * 10)
 	defer timer.Stop()
 	for {
-		select {
-		case <-timer.C:
-		}
+		<-timer.C
 		currentTime := time.Now().Unix()
 		oldCounters := len(b.Counters.Elements)
 		oldGauges := len(b.Gauges.Elements)
@@ -431,7 +429,7 @@ func (b *Exporter) GCollector() {
 	}
 }
 
-//NewExporter new exporter
+// NewExporter new exporter
 func NewExporter(mapper *MetricMapper, Register prometheus.Registerer) *Exporter {
 	return &Exporter{
 		Counters:   NewCounterContainer(Register),
@@ -514,7 +512,6 @@ samples:
 	for _, sample := range samples {
 		samplesReceived.Inc()
 		components := strings.Split(sample, "|")
-		samplingFactor := 1.0
 		if len(components) < 2 || len(components) > 4 {
 			sampleErrors.WithLabelValues("malformed_component").Inc()
 			log.Debugln("Bad component on line:", line)
@@ -553,7 +550,7 @@ samples:
 						sampleErrors.WithLabelValues("illegal_sample_factor").Inc()
 						continue
 					}
-					samplingFactor, err = strconv.ParseFloat(component[1:], 64)
+					samplingFactor, err := strconv.ParseFloat(component[1:], 64)
 					if err != nil {
 						log.Debugf("Invalid sampling factor %s on line %s", component[1:], line)
 						sampleErrors.WithLabelValues("invalid_sample_factor").Inc()

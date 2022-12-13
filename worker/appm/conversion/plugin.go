@@ -39,7 +39,7 @@ import (
 	workerutil "github.com/wutong-paas/wutong/worker/util"
 )
 
-//TenantServicePlugin conv service all plugin
+// TenantServicePlugin conv service all plugin
 func TenantServicePlugin(as *typesv1.AppService, dbmanager db.Manager) error {
 	initContainers, preContainers, postContainers, err := conversionServicePlugin(as, dbmanager)
 	if err != nil {
@@ -146,7 +146,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 			if config != nil {
 				var resourceConfig api_model.ResourceSpec
 				if err := json.Unmarshal([]byte(config.ConfigStr), &resourceConfig); err != nil {
-					logrus.Warningf("load mesh plugin %s config of componet %s failure %s")
+					logrus.Warningf("load mesh plugin %s config of componet %s failure %s", pluginR.PluginID, as.ServiceID, err.Error())
 				}
 				if len(resourceConfig.BaseServices) > 0 {
 					setSidecarContainerLifecycle(as, &pc, &resourceConfig)
@@ -271,7 +271,7 @@ func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias
 	}
 }
 
-//ApplyPluginConfig applyPluginConfig
+// ApplyPluginConfig applyPluginConfig
 func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.TenantServicePluginRelation,
 	dbmanager db.Manager, inboundPluginConfig *api_model.ResourceSpec) {
 	config, err := dbmanager.TenantPluginVersionConfigDao().GetPluginConfig(servicePluginRelation.ServiceID,
@@ -314,7 +314,7 @@ func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.Tena
 	}
 }
 
-//applyDefaultMeshPluginConfig applyDefaultMeshPluginConfig
+// applyDefaultMeshPluginConfig applyDefaultMeshPluginConfig
 func applyDefaultMeshPluginConfig(as *typesv1.AppService, dbmanager db.Manager) (string, *api_model.ResourceSpec, error) {
 	var baseServices []*api_model.BaseService
 	deps, err := dbmanager.TenantServiceRelationDao().GetTenantServiceRelations(as.ServiceID)
@@ -393,7 +393,7 @@ func getXDSHostIPAndPort() (string, string, string) {
 	return xdsHost, xdsHostPort, apiHostPort
 }
 
-//container envs
+// container envs
 func createPluginEnvs(pluginID, tenantID, serviceAlias string, mainEnvs []v1.EnvVar, versionID, serviceID string, dbmanager db.Manager) (*[]v1.EnvVar, error) {
 	versionEnvs, err := dbmanager.TenantPluginVersionENVDao().GetVersionEnvByServiceID(serviceID, pluginID)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
@@ -401,9 +401,8 @@ func createPluginEnvs(pluginID, tenantID, serviceAlias string, mainEnvs []v1.Env
 	}
 	var envs []v1.EnvVar
 	//first set main service env
-	for _, e := range mainEnvs {
-		envs = append(envs, e)
-	}
+	envs = append(envs, mainEnvs...)
+
 	for _, e := range versionEnvs {
 		envs = append(envs, v1.EnvVar{Name: e.EnvName, Value: e.EnvValue})
 	}

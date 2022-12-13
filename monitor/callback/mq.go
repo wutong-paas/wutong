@@ -30,14 +30,14 @@ import (
 	"github.com/wutong-paas/wutong/monitor/utils"
 )
 
-//Mq discover
+// Mq discover
 type Mq struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoint
+// UpdateEndpoints update endpoint
 func (m *Mq) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newEndpoints := make([]*config.Endpoint, 0, len(endpoints))
 	for _, end := range endpoints {
@@ -66,16 +66,14 @@ func (m *Mq) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (m *Mq) Name() string {
 	return "mq"
 }
 
 func (m *Mq) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(m.sortedEndpoints))
-	for _, end := range m.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, m.sortedEndpoints...)
 
 	return &prometheus.ScrapeConfig{
 		JobName:        m.Name(),

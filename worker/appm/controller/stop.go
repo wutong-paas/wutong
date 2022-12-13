@@ -46,8 +46,8 @@ type stopController struct {
 func (s *stopController) Begin() {
 	var wait sync.WaitGroup
 	for _, service := range s.appService {
+		wait.Add(1)
 		go func(service v1.AppService) {
-			wait.Add(1)
 			defer wait.Done()
 			service.Logger.Info("App runtime begin stop app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
 			if err := s.stopOne(service); err != nil {
@@ -213,7 +213,7 @@ func (s *stopController) Stop() error {
 	return nil
 }
 
-//WaitingReady wait app start or upgrade ready
+// WaitingReady wait app start or upgrade ready
 func (s *stopController) WaitingReady(app v1.AppService) error {
 	storeAppService := s.manager.store.GetAppService(app.ServiceID)
 	//at least waiting time is 40 second

@@ -29,7 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//StartRegionAPI 启动
+// StartRegionAPI 启动
 func StartRegionAPI(ch chan os.Signal) {
 	logrus.Info("old region api begin start..")
 	arg := []string{"region_api.wsgi", "-b=127.0.0.1:8887", "--max-requests=5000", "--reload", "--debug", "--workers=4", "--log-file", "-", "--access-logfile", "-", "--error-logfile", "-"}
@@ -50,7 +50,6 @@ func StartRegionAPI(ch chan os.Signal) {
 			monitor()
 		}
 	}()
-	return
 }
 func monitor() {
 	response, err := http.Get("http://127.0.0.1:8887/monitor")
@@ -62,5 +61,4 @@ func monitor() {
 	if response != nil && response.StatusCode/100 > 2 {
 		logrus.Errorf("monitor region old api error. response code is %s", response.Status)
 	}
-
 }

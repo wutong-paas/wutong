@@ -34,11 +34,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-//DependServiceHealthController Detect the health of the dependent service
-//Health based conditions：
-//------- lds: discover all dependent services
-//------- cds: discover all dependent services
-//------- sds: every service has at least one Ready instance
+// DependServiceHealthController Detect the health of the dependent service
+// Health based conditions：
+// ------- lds: discover all dependent services
+// ------- cds: discover all dependent services
+// ------- sds: every service has at least one Ready instance
 type DependServiceHealthController struct {
 	listeners                       []v2.Listener
 	clusters                        []v2.Cluster
@@ -54,7 +54,7 @@ type DependServiceHealthController struct {
 	ignoreCheckEndpointsClusterName []string
 }
 
-//NewDependServiceHealthController create a controller
+// NewDependServiceHealthController create a controller
 func NewDependServiceHealthController() (*DependServiceHealthController, error) {
 	clusterID := os.Getenv("ENVOY_NODE_ID")
 	if clusterID == "" {
@@ -82,7 +82,7 @@ func NewDependServiceHealthController() (*DependServiceHealthController, error) 
 	return &dsc, nil
 }
 
-//Check check all conditions
+// Check check all conditions
 func (d *DependServiceHealthController) Check() {
 	logrus.Info("start denpenent health check.")
 	ticker := time.NewTicker(d.interval)
@@ -100,9 +100,7 @@ func (d *DependServiceHealthController) Check() {
 			logrus.Info("Depend services all check passed, will start service")
 			return
 		}
-		select {
-		case <-ticker.C:
-		}
+		<-ticker.C
 	}
 }
 

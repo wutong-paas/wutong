@@ -31,7 +31,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
-//KeepAlive 服务注册
+// KeepAlive 服务注册
 type KeepAlive struct {
 	cancel        context.CancelFunc
 	EtcdClentArgs *etcdutil.ClientArgs
@@ -44,7 +44,7 @@ type KeepAlive struct {
 	etcdClient    *client.Client
 }
 
-//CreateKeepAlive create keepalive for server
+// CreateKeepAlive create keepalive for server
 func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, serverName string, hostName string, HostIP string, Port int) (*KeepAlive, error) {
 	if serverName == "" || Port == 0 {
 		return nil, fmt.Errorf("servername or serverport can not be empty")
@@ -74,11 +74,12 @@ func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, serverName string, hos
 	}, nil
 }
 
-//Start 开始
+// Start 开始
 func (k *KeepAlive) Start() error {
 	duration := time.Duration(k.TTL) * time.Second
 	timer := time.NewTimer(duration)
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	etcdclient, err := etcdutil.NewClient(ctx, k.EtcdClentArgs)
 	if err != nil {
 		return err
@@ -140,7 +141,7 @@ func (k *KeepAlive) reg() error {
 	return nil
 }
 
-//Stop 结束
+// Stop 结束
 func (k *KeepAlive) Stop() error {
 	close(k.Done)
 	defer k.cancel()

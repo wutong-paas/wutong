@@ -44,7 +44,7 @@ import (
 func handleErr(err *util.APIHandleError) {
 	if err != nil {
 		if err.Err != nil {
-			fmt.Printf(err.String())
+			fmt.Println(err.String())
 			os.Exit(1)
 		} else {
 			fmt.Printf("API return %d", err.Code)
@@ -68,7 +68,6 @@ func getExternalIP(path string, node []*client.HostNode) []string {
 		if err != nil {
 			return nil
 		}
-		strings.TrimSpace(string(externalIP))
 		result = append(result, strings.TrimSpace(string(externalIP)))
 	} else {
 		for _, v := range node {
@@ -180,7 +179,7 @@ func handleMessage(status string, message string) string {
 	return message
 }
 
-//NewCmdNode NewCmdNode
+// NewCmdNode NewCmdNode
 func NewCmdNode() cli.Command {
 	c := cli.Command{
 		Name:  "node",

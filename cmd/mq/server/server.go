@@ -31,7 +31,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
-//Run start run
+// Run start run
 func Run(s *option.MQServer) error {
 	errChan := make(chan error)
 
@@ -71,7 +71,7 @@ func Run(s *option.MQServer) error {
 	defer exportKeepalive.Stop()
 
 	//step finally: listen Signal
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-term:

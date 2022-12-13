@@ -71,7 +71,6 @@ func EmitAll(arg interface{}) {
 			f(arg)
 		}
 	}
-	return
 }
 
 func Off(name string, f func(interface{})) error {

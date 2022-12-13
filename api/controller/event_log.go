@@ -36,19 +36,19 @@ import (
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 )
 
-//EventLogStruct eventlog struct
+// EventLogStruct eventlog struct
 type EventLogStruct struct {
 	EventlogServerProxy proxy.Proxy
 }
 
-//HistoryLogs get service history logs
-//proxy
+// HistoryLogs get service history logs
+// proxy
 func (e *EventLogStruct) HistoryLogs(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
 	name, _ := handler.GetEventHandler().GetLogInstance(serviceID)
 	if name != "" {
-		r.URL.Query().Add("host_id", name)
+		// r.URL.Query().Add("host_id", name)
 		r = r.WithContext(context.WithValue(r.Context(), proxy.ContextKey("host_id"), name))
 	}
 	//Replace service alias to service id in path
@@ -57,7 +57,7 @@ func (e *EventLogStruct) HistoryLogs(w http.ResponseWriter, r *http.Request) {
 	e.EventlogServerProxy.Proxy(w, r)
 }
 
-//LogList GetLogList
+// LogList GetLogList
 func (e *EventLogStruct) LogList(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET  /v2/tenants/{tenant_name}/services/{service_alias}/log-file v2 logList
 	//
@@ -86,10 +86,9 @@ func (e *EventLogStruct) LogList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.ReturnSuccess(r, w, fileList)
-	return
 }
 
-//LogFile GetLogFile
+// LogFile GetLogFile
 func (e *EventLogStruct) LogFile(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/log-file/{file_name} v2 logFile
 	//
@@ -123,7 +122,7 @@ func (e *EventLogStruct) LogFile(w http.ResponseWriter, r *http.Request) {
 	//fs.ServeHTTP(w, r)
 }
 
-//LogSocket GetLogSocket
+// LogSocket GetLogSocket
 func (e *EventLogStruct) LogSocket(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/log-instance v2 logSocket
 	//
@@ -155,10 +154,9 @@ func (e *EventLogStruct) LogSocket(w http.ResponseWriter, r *http.Request) {
 	rc := make(map[string]string)
 	rc["host_id"] = value
 	httputil.ReturnSuccess(r, w, rc)
-	return
 }
 
-//LogByAction GetLogByAction
+// LogByAction GetLogByAction
 func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/event-log v2 logByAction
 	//
@@ -188,10 +186,9 @@ func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httputil.ReturnSuccess(r, w, dl.Data)
-	return
 }
 
-//TenantLogByAction GetTenantLogByAction
+// TenantLogByAction GetTenantLogByAction
 // swagger:operation POST /v2/tenants/{tenant_name}/event-log v2 tenantLogByAction
 //
 // 获取指定操作的操作日志
@@ -204,10 +201,11 @@ func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
 func (e *EventLogStruct) TenantLogByAction(w http.ResponseWriter, r *http.Request) {
 	var elog api_model.TenantLogByLevelStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &elog.Body, nil)
@@ -222,10 +220,9 @@ func (e *EventLogStruct) TenantLogByAction(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	httputil.ReturnSuccess(r, w, dl.Data)
-	return
 }
 
-//Events get log by target
+// Events get log by target
 func (e *EventLogStruct) Events(w http.ResponseWriter, r *http.Request) {
 	target := r.FormValue("target")
 	targetID := r.FormValue("target-id")
@@ -253,7 +250,7 @@ func (e *EventLogStruct) Events(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnList(r, w, total, page, list)
 }
 
-//EventLog get event log by eventID
+// EventLog get event log by eventID
 func (e *EventLogStruct) EventLog(w http.ResponseWriter, r *http.Request) {
 	eventID := chi.URLParam(r, "eventID")
 	if strings.TrimSpace(eventID) == "" {
@@ -269,5 +266,4 @@ func (e *EventLogStruct) EventLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.ReturnSuccess(r, w, dl.Data)
-	return
 }

@@ -31,7 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-//Manager Manager
+// Manager Manager
 type Manager interface {
 	GetServiceHealthy(serviceName string) (*service.HealthStatus, bool)
 	GetCurrentServiceHealthy(serviceName string) (*service.HealthStatus, error)
@@ -46,7 +46,7 @@ type Manager interface {
 	EnableWatcher(serviceName, watcherID string)
 }
 
-//Watcher watcher
+// Watcher watcher
 type Watcher interface {
 	GetID() string
 	GetServiceName() string
@@ -74,7 +74,7 @@ type probeManager struct {
 	hostNode     *client.HostNode
 }
 
-//CreateManager create manager
+// CreateManager create manager
 func CreateManager() Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	statusChan := make(chan *service.HealthStatus, 100)
@@ -153,7 +153,7 @@ func (p *probeManager) updateServiceStatus(status *service.HealthStatus) {
 		} else {
 			status.StartErrorTime = exist.StartErrorTime
 		}
-		status.ErrorDuration = time.Now().Sub(exist.StartErrorTime)
+		status.ErrorDuration = time.Since(exist.StartErrorTime)
 		p.status[status.Name] = status
 	} else {
 		status.ErrorNumber = 0

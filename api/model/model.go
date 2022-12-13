@@ -1664,7 +1664,6 @@ func (b *ComponentBuildReq) GetVersion() string {
 // SetVersion -
 func (b *ComponentBuildReq) SetVersion(string) {
 	// no need
-	return
 }
 
 // OpType -

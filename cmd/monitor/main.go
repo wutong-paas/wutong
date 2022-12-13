@@ -77,7 +77,7 @@ func main() {
 	go http.ListenAndServe(":3329", r)
 
 	//step finally: listen Signal
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	defer close(term)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 

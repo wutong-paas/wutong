@@ -143,7 +143,7 @@ func (h *Helm) locateChart(chart, version string) (string, error) {
 	}
 
 	cpo := &ChartPathOptions{}
-	cpo.Version = version
+	cpo.ChartPathOptions.Version = version
 	settings := h.settings
 	cp, err := cpo.LocateChart(chart, chartCache, settings)
 	if err != nil {
@@ -366,15 +366,15 @@ type ChartPathOptions struct {
 // LocateChart looks for a chart directory in known places, and returns either the full path or an error.
 func (c *ChartPathOptions) LocateChart(name, dest string, settings *cli.EnvSettings) (string, error) {
 	name = strings.TrimSpace(name)
-	version := strings.TrimSpace(c.Version)
+	version := strings.TrimSpace(c.ChartPathOptions.Version)
 
 	if _, err := os.Stat(name); err == nil {
 		abs, err := filepath.Abs(name)
 		if err != nil {
 			return abs, err
 		}
-		if c.Verify {
-			if _, err := downloader.VerifyChart(abs, c.Keyring); err != nil {
+		if c.ChartPathOptions.Verify {
+			if _, err := downloader.VerifyChart(abs, c.ChartPathOptions.Keyring); err != nil {
 				return "", err
 			}
 		}
@@ -386,22 +386,22 @@ func (c *ChartPathOptions) LocateChart(name, dest string, settings *cli.EnvSetti
 
 	dl := downloader.ChartDownloader{
 		Out:     os.Stdout,
-		Keyring: c.Keyring,
+		Keyring: c.ChartPathOptions.Keyring,
 		Getters: getter.All(settings),
 		Options: []getter.Option{
-			getter.WithBasicAuth(c.Username, c.Password),
-			getter.WithTLSClientConfig(c.CertFile, c.KeyFile, c.CaFile),
-			getter.WithInsecureSkipVerifyTLS(c.InsecureSkipTLSverify),
+			getter.WithBasicAuth(c.ChartPathOptions.Username, c.ChartPathOptions.Password),
+			getter.WithTLSClientConfig(c.ChartPathOptions.CertFile, c.ChartPathOptions.KeyFile, c.ChartPathOptions.CaFile),
+			getter.WithInsecureSkipVerifyTLS(c.ChartPathOptions.InsecureSkipTLSverify),
 		},
 		RepositoryConfig: settings.RepositoryConfig,
 		RepositoryCache:  settings.RepositoryCache,
 	}
-	if c.Verify {
+	if c.ChartPathOptions.Verify {
 		dl.Verify = downloader.VerifyAlways
 	}
-	if c.RepoURL != "" {
-		chartURL, err := repo.FindChartInAuthAndTLSRepoURL(c.RepoURL, c.Username, c.Password, name, version,
-			c.CertFile, c.KeyFile, c.CaFile, c.InsecureSkipTLSverify, getter.All(settings))
+	if c.ChartPathOptions.RepoURL != "" {
+		chartURL, err := repo.FindChartInAuthAndTLSRepoURL(c.ChartPathOptions.RepoURL, c.ChartPathOptions.Username, c.ChartPathOptions.Password, name, version,
+			c.ChartPathOptions.CertFile, c.ChartPathOptions.KeyFile, c.ChartPathOptions.CaFile, c.ChartPathOptions.InsecureSkipTLSverify, getter.All(settings))
 		if err != nil {
 			return "", err
 		}

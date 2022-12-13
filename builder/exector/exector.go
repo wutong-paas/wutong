@@ -47,16 +47,16 @@ import (
 	workermodel "github.com/wutong-paas/wutong/worker/discover/model"
 )
 
-//MetricTaskNum task number
+// MetricTaskNum task number
 var MetricTaskNum float64
 
-//MetricErrorTaskNum error run task number
+// MetricErrorTaskNum error run task number
 var MetricErrorTaskNum float64
 
-//MetricBackTaskNum back task number
+// MetricBackTaskNum back task number
 var MetricBackTaskNum float64
 
-//Manager 任务执行管理器
+// Manager 任务执行管理器
 type Manager interface {
 	GetMaxConcurrentTask() float64
 	GetCurrentConcurrentTask() float64
@@ -66,7 +66,7 @@ type Manager interface {
 	Stop() error
 }
 
-//NewManager new manager
+// NewManager new manager
 func NewManager(conf option.Config, mqc mqclient.MQClient) (Manager, error) {
 	dockerClient, err := client.NewEnvClient()
 	if err != nil {
@@ -137,7 +137,7 @@ type exectorManager struct {
 	cfg               option.Config
 }
 
-//TaskWorker worker interface
+// TaskWorker worker interface
 type TaskWorker interface {
 	Run(timeout time.Duration) error
 	GetLogger() event.Logger
@@ -149,27 +149,27 @@ type TaskWorker interface {
 
 var workerCreaterList = make(map[string]func([]byte, *exectorManager) (TaskWorker, error))
 
-//RegisterWorker register worker creator
+// RegisterWorker register worker creator
 func RegisterWorker(name string, fun func([]byte, *exectorManager) (TaskWorker, error)) {
 	workerCreaterList[name] = fun
 }
 
-//ErrCallback do not handle this task
+// ErrCallback do not handle this task
 var ErrCallback = fmt.Errorf("callback task to mq")
 
 func (e *exectorManager) SetReturnTaskChan(re func(*pb.TaskMessage)) {
 	e.callback = re
 }
 
-//TaskType:
-//build_from_image build app from docker image
-//build_from_source_code build app from source code
-//build_from_market_slug build app from app market by download slug
-//service_check check service source info
-//plugin_image_build build plugin from image
-//plugin_dockerfile_build build plugin from dockerfile
-//share-slug share app with slug
-//share-image share app with image
+// TaskType:
+// build_from_image build app from docker image
+// build_from_source_code build app from source code
+// build_from_market_slug build app from app market by download slug
+// service_check check service source info
+// plugin_image_build build plugin from image
+// plugin_dockerfile_build build plugin from dockerfile
+// share-slug share app with slug
+// share-image share app with image
 func (e *exectorManager) AddTask(task *pb.TaskMessage) error {
 	select {
 	case e.tasks <- task:
@@ -272,7 +272,7 @@ func (e *exectorManager) exec(task *pb.TaskMessage) error {
 	return nil
 }
 
-//buildFromImage build app from docker image
+// buildFromImage build app from docker image
 func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 	i := NewImageBuildItem(task.TaskBody)
 	i.DockerClient = e.DockerClient
@@ -320,8 +320,8 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 	}
 }
 
-//buildFromSourceCode build app from source code
-//support git repository
+// buildFromSourceCode build app from source code
+// support git repository
 func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 	i := NewSouceCodeBuildItem(task.TaskBody)
 	i.DockerClient = e.DockerClient
@@ -344,7 +344,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 		}
 	}()
 	defer func() {
-		logrus.Debugf("Complete build from source code, consuming time %s", time.Now().Sub(start).String())
+		logrus.Debugf("Complete build from source code, consuming time %s", time.Since(start).String())
 	}()
 	err := i.Run(time.Minute * 30)
 	if err != nil {
@@ -379,7 +379,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 	}
 }
 
-//buildFromMarketSlug build app from market slug
+// buildFromMarketSlug build app from market slug
 func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 	eventID := gjson.GetBytes(task.TaskBody, "event_id").String()
 	logger := event.GetManager().GetLogger(eventID)
@@ -400,7 +400,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 			}
 		}()
 		defer func() {
-			logrus.Debugf("complete build from market slug consuming time %s", time.Now().Sub(start).String())
+			logrus.Debugf("complete build from market slug consuming time %s", time.Since(start).String())
 		}()
 		for n := 0; n < 2; n++ {
 			err := i.Run()
@@ -428,7 +428,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 
 }
 
-//rollingUpgradeTaskBody upgrade message body type
+// rollingUpgradeTaskBody upgrade message body type
 type rollingUpgradeTaskBody struct {
 	TenantID  string   `json:"tenant_id"`
 	ServiceID string   `json:"service_id"`
@@ -477,7 +477,7 @@ func (e *exectorManager) sendAction(tenantID, serviceID, eventID, newVersion, ac
 	return nil
 }
 
-//slugShare share app of slug
+// slugShare share app of slug
 func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 	i, err := NewSlugShareItem(task.TaskBody, e.EtcdCli)
 	if err != nil {
@@ -517,7 +517,7 @@ func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 	}()
 }
 
-//imageShare share app of docker image
+// imageShare share app of docker image
 func (e *exectorManager) imageShare(task *pb.TaskMessage) {
 	i, err := NewImageShareItem(task.TaskBody, e.DockerClient, e.EtcdCli)
 	if err != nil {

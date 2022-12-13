@@ -51,7 +51,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 )
 
-//CodeSourceInfo 代码源信息
+// CodeSourceInfo 代码源信息
 type CodeSourceInfo struct {
 	ServerType    string `json:"server_type"`
 	RepositoryURL string `json:"repository_url"`
@@ -63,12 +63,12 @@ type CodeSourceInfo struct {
 	ServiceID string `json:"service_id"`
 }
 
-//GetCodeSourceDir get source storage directory
+// GetCodeSourceDir get source storage directory
 func (c CodeSourceInfo) GetCodeSourceDir() string {
 	return GetCodeSourceDir(c.RepositoryURL, c.Branch, c.TenantID, c.ServiceID)
 }
 
-//GetCodeSourceDir get source storage directory
+// GetCodeSourceDir get source storage directory
 // it changes as gitrepostory address, branch, and service id change
 func GetCodeSourceDir(RepositoryURL, branch, tenantID string, ServiceID string) string {
 	sourceDir := os.Getenv("SOURCE_DIR")
@@ -82,19 +82,16 @@ func GetCodeSourceDir(RepositoryURL, branch, tenantID string, ServiceID string) 
 	return path.Join(sourceDir, "build", tenantID, bsStr)
 }
 
-//CheckFileExist CheckFileExist
+// CheckFileExist CheckFileExist
 func CheckFileExist(path string) bool {
 	_, err := os.Stat(path)
 	if err != nil {
-		if os.IsExist(err) {
-			return true
-		}
-		return false
+		return os.IsExist(err)
 	}
 	return true
 }
 
-//RemoveDir RemoveDir
+// RemoveDir RemoveDir
 func RemoveDir(path string) error {
 	if path == "/" {
 		return fmt.Errorf("remove wrong dir")
@@ -110,7 +107,7 @@ func getShowURL(rurl string) string {
 	return ""
 }
 
-//GitClone git clone code
+// GitClone git clone code
 func GitClone(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout int) (*git.Repository, error) {
 	GetPrivateFileParam := csi.TenantID
 	if !strings.HasSuffix(csi.RepositoryURL, ".git") {
@@ -150,7 +147,7 @@ Loop:
 		sshAuth, auerr := ssh.NewPublicKeysFromFile("git", publichFile, "")
 		if auerr != nil {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("Create PublicKeys failure"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("Create PublicKeys failure", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return nil, auerr
 		}
@@ -185,30 +182,30 @@ Loop:
 	if err != nil {
 		if reerr := os.RemoveAll(sourceDir); reerr != nil {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("拉取代码发生错误删除代码目录失败。"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("拉取代码发生错误删除代码目录失败。", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 		}
 		if err == transport.ErrAuthenticationRequired {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("拉取代码发生错误，代码源需要授权访问。"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("拉取代码发生错误，代码源需要授权访问。", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if err == transport.ErrAuthorizationFailed {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("拉取代码发生错误，代码源鉴权失败。"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("拉取代码发生错误，代码源鉴权失败。", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if err == transport.ErrRepositoryNotFound {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("拉取代码发生错误，仓库不存在。"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("拉取代码发生错误，仓库不存在。", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if err == transport.ErrEmptyRemoteRepository {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("拉取代码发生错误，远程仓库为空。"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("拉取代码发生错误，远程仓库为空。", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return rs, err
 		}
@@ -226,13 +223,13 @@ Loop:
 				goto Loop
 			}
 			if logger != nil {
-				logger.Error(fmt.Sprintf("远程代码库需要配置SSH Key。"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("远程代码库需要配置SSH Key。", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if strings.Contains(err.Error(), "context deadline exceeded") {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("获取代码超时"), map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("获取代码超时", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return rs, err
 		}
@@ -254,7 +251,7 @@ func retryAuth(ep *transport.Endpoint, csi CodeSourceInfo) (transport.AuthMethod
 	return nil, nil
 }
 
-//GitPull git pull code
+// GitPull git pull code
 func GitPull(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout int) (*git.Repository, error) {
 	GetPrivateFileParam := csi.TenantID
 	flag := true
@@ -286,7 +283,7 @@ Loop:
 		sshAuth, auerr := ssh.NewPublicKeysFromFile("git", publichFile, "")
 		if auerr != nil {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("创建PublicKeys错误"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("创建PublicKeys错误", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return nil, auerr
 		}
@@ -324,26 +321,26 @@ Loop:
 	if err != nil {
 		if err == transport.ErrAuthenticationRequired {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("更新代码发生错误，代码源需要授权访问。"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("更新代码发生错误，代码源需要授权访问。", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if err == transport.ErrAuthorizationFailed {
 
 			if logger != nil {
-				logger.Error(fmt.Sprintf("更新代码发生错误，代码源鉴权失败。"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("更新代码发生错误，代码源鉴权失败。", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if err == transport.ErrRepositoryNotFound {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("更新代码发生错误，仓库不存在。"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("更新代码发生错误，仓库不存在。", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if err == transport.ErrEmptyRemoteRepository {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("更新代码发生错误，远程仓库为空。"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("更新代码发生错误，远程仓库为空。", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return rs, err
 		}
@@ -360,13 +357,13 @@ Loop:
 				goto Loop
 			}
 			if logger != nil {
-				logger.Error(fmt.Sprintf("远程代码库需要配置SSH Key。"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("远程代码库需要配置SSH Key。", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return rs, err
 		}
 		if strings.Contains(err.Error(), "context deadline exceeded") {
 			if logger != nil {
-				logger.Error(fmt.Sprintf("更新代码超时"), map[string]string{"step": "pull-code", "status": "failure"})
+				logger.Error("更新代码超时", map[string]string{"step": "pull-code", "status": "failure"})
 			}
 			return rs, err
 		}
@@ -377,7 +374,7 @@ Loop:
 	return rs, err
 }
 
-//GitCloneOrPull if code exist in local,use git pull.
+// GitCloneOrPull if code exist in local,use git pull.
 func GitCloneOrPull(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout int) (*git.Repository, error) {
 	if ok, err := util.FileExists(path.Join(sourceDir, ".git")); err == nil && ok && !strings.HasPrefix(csi.Branch, "tag:") {
 		re, err := GitPull(csi, sourceDir, logger, timeout)
@@ -390,13 +387,13 @@ func GitCloneOrPull(csi CodeSourceInfo, sourceDir string, logger event.Logger, t
 	if reerr := os.RemoveAll(sourceDir); reerr != nil {
 		logrus.Error("empty the source code dir error,", reerr.Error())
 		if logger != nil {
-			logger.Error(fmt.Sprintf("清空代码目录失败。"), map[string]string{"step": "clone-code", "status": "failure"})
+			logger.Error("清空代码目录失败。", map[string]string{"step": "clone-code", "status": "failure"})
 		}
 	}
 	return GitClone(csi, sourceDir, logger, timeout)
 }
 
-//GitCheckout checkout the specified branch
+// GitCheckout checkout the specified branch
 func GitCheckout(sourceDir, branch string) error {
 	// option := git.CheckoutOptions{
 	// 	Branch: getBranch(branch),
@@ -410,8 +407,8 @@ func getBranch(branch string) plumbing.ReferenceName {
 	return plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", branch))
 }
 
-//GetLastCommit get last commit info
-//get commit by head reference
+// GetLastCommit get last commit info
+// get commit by head reference
 func GetLastCommit(re *git.Repository) (*object.Commit, error) {
 	ref, err := re.Head()
 	if err != nil {
@@ -420,7 +417,7 @@ func GetLastCommit(re *git.Repository) (*object.Commit, error) {
 	return re.CommitObject(ref.Hash())
 }
 
-//GetPrivateFile 获取私钥文件地址
+// GetPrivateFile 获取私钥文件地址
 func GetPrivateFile(tenantID string) string {
 	home, _ := Home()
 	if home == "" {
@@ -437,7 +434,7 @@ func GetPrivateFile(tenantID string) string {
 
 }
 
-//GetPublicKey 获取公钥
+// GetPublicKey 获取公钥
 func GetPublicKey(tenantID string) string {
 	home, _ := Home()
 	if home == "" {
@@ -472,7 +469,7 @@ func GetPublicKey(tenantID string) string {
 
 }
 
-//GenerateKey GenerateKey
+// GenerateKey GenerateKey
 func GenerateKey(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	private, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
@@ -482,7 +479,7 @@ func GenerateKey(bits int) (*rsa.PrivateKey, *rsa.PublicKey, error) {
 
 }
 
-//EncodePrivateKey EncodePrivateKey
+// EncodePrivateKey EncodePrivateKey
 func EncodePrivateKey(private *rsa.PrivateKey) []byte {
 	return pem.EncodeToMemory(&pem.Block{
 		Bytes: x509.MarshalPKCS1PrivateKey(private),
@@ -490,7 +487,7 @@ func EncodePrivateKey(private *rsa.PrivateKey) []byte {
 	})
 }
 
-//EncodeSSHKey EncodeSSHKey
+// EncodeSSHKey EncodeSSHKey
 func EncodeSSHKey(public *rsa.PublicKey) ([]byte, error) {
 	publicKey, err := sshkey.NewPublicKey(public)
 	if err != nil {
@@ -499,7 +496,7 @@ func EncodeSSHKey(public *rsa.PublicKey) ([]byte, error) {
 	return sshkey.MarshalAuthorizedKey(publicKey), nil
 }
 
-//MakeSSHKeyPair make ssh key
+// MakeSSHKeyPair make ssh key
 func MakeSSHKeyPair() (string, string, error) {
 
 	pkey, pubkey, err := GenerateKey(2048)

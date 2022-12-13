@@ -30,13 +30,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//APIHandleError handle create err for api
+// APIHandleError handle create err for api
 type APIHandleError struct {
 	Code int
 	Err  error
 }
 
-//CreateAPIHandleError create APIHandleError
+// CreateAPIHandleError create APIHandleError
 func CreateAPIHandleError(code int, err error) *APIHandleError {
 	return &APIHandleError{
 		Code: code,
@@ -44,7 +44,7 @@ func CreateAPIHandleError(code int, err error) *APIHandleError {
 	}
 }
 
-//CreateAPIHandleErrorf create handle error
+// CreateAPIHandleErrorf create handle error
 func CreateAPIHandleErrorf(code int, format string, args ...interface{}) *APIHandleError {
 	return &APIHandleError{
 		Code: code,
@@ -52,7 +52,7 @@ func CreateAPIHandleErrorf(code int, format string, args ...interface{}) *APIHan
 	}
 }
 
-//CreateAPIHandleErrorFromDBError from db error create APIHandleError
+// CreateAPIHandleErrorFromDBError from db error create APIHandleError
 func CreateAPIHandleErrorFromDBError(msg string, err error) *APIHandleError {
 	if err.Error() == gorm.ErrRecordNotFound.Error() {
 		return &APIHandleError{
@@ -79,7 +79,7 @@ func (a *APIHandleError) String() string {
 	return fmt.Sprintf("(Code:%d) %s", a.Code, a.Err.Error())
 }
 
-//Handle 处理
+// Handle 处理
 func (a *APIHandleError) Handle(r *http.Request, w http.ResponseWriter) {
 	if a.Code >= 500 {
 		logrus.Error(a.String())
@@ -87,5 +87,4 @@ func (a *APIHandleError) Handle(r *http.Request, w http.ResponseWriter) {
 		return
 	}
 	httputil.ReturnError(r, w, a.Code, a.Error())
-	return
 }

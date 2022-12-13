@@ -80,7 +80,7 @@ func (l l) contains(k, v string) bool {
 	return true
 }
 
-//KubeClient KubeClient
+// KubeClient KubeClient
 type KubeClient interface {
 	UpK8sNode(*client.HostNode) (*v1.Node, error)
 	DownK8sNode(nodename string) error
@@ -100,7 +100,7 @@ type KubeClient interface {
 	Stop()
 }
 
-//NewKubeClient NewKubeClient
+// NewKubeClient NewKubeClient
 func NewKubeClient(cfg *conf.Conf, clientset kubernetes.Interface) (KubeClient, error) {
 	stop := make(chan struct{})
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(clientset, cfg.MinResyncPeriod)
@@ -131,12 +131,12 @@ func (k *kubeClient) Stop() {
 	}
 }
 
-//GetNodeByName get node
+// GetNodeByName get node
 func (k *kubeClient) GetNodeByName(nodename string) (*v1.Node, error) {
 	return k.sharedInformers.Core().V1().Nodes().Lister().Get(nodename)
 }
 
-//CordonOrUnCordon node scheduler
+// CordonOrUnCordon node scheduler
 // drain:true can't scheduler ,false can scheduler
 func (k *kubeClient) CordonOrUnCordon(nodeName string, drain bool) (*v1.Node, error) {
 	data := fmt.Sprintf(`{"spec":{"unschedulable":%t}}`, drain)
@@ -147,7 +147,7 @@ func (k *kubeClient) CordonOrUnCordon(nodeName string, drain bool) (*v1.Node, er
 	return node, nil
 }
 
-//UpdateLabels update lables
+// UpdateLabels update lables
 func (k *kubeClient) UpdateLabels(nodeName string, labels map[string]string) (*v1.Node, error) {
 	labelStr, err := ffjson.Marshal(labels)
 	if err != nil {
@@ -161,7 +161,7 @@ func (k *kubeClient) UpdateLabels(nodeName string, labels map[string]string) (*v
 	return node, nil
 }
 
-//DeleteOrEvictPodsSimple Evict the Pod from a node
+// DeleteOrEvictPodsSimple Evict the Pod from a node
 func (k *kubeClient) DeleteOrEvictPodsSimple(nodeName string) error {
 	pods, err := k.GetPodsByNodes(nodeName)
 	if err != nil {
@@ -186,13 +186,11 @@ func (k *kubeClient) GetPodsByNodes(nodeName string) (pods []v1.Pod, err error) 
 	if err != nil {
 		return pods, err
 	}
-	for _, pod := range podList.Items {
-		pods = append(pods, pod)
-	}
+	pods = append(pods, podList.Items...)
 	return pods, nil
 }
 
-//evictPod 驱离POD
+// evictPod 驱离POD
 func (k *kubeClient) evictPod(pod v1.Pod, policyGroupVersion string) error {
 	deleteOptions := &metav1.DeleteOptions{}
 	eviction := &v1beta1.Eviction{
@@ -318,8 +316,7 @@ func (k *kubeClient) evictPods(pods []v1.Pod, policyGroupVersion string, getPodF
 
 	doneCount := 0
 	// 0 timeout means infinite, we use MaxInt64 to represent it.
-	var globalTimeout time.Duration
-	globalTimeout = time.Duration(math.MaxInt64)
+	globalTimeout := time.Duration(math.MaxInt64)
 	//if conf.Config.ReqTimeout == 0 {
 	//	//if Timeout == 0 {
 	//	globalTimeout = time.Duration(math.MaxInt64)
@@ -374,7 +371,7 @@ func (k *kubeClient) SupportEviction() (string, error) {
 	return "", nil
 }
 
-//GetAllPods get all pods
+// GetAllPods get all pods
 func (k *kubeClient) GetAllPods() (pods []*v1.Pod, err error) {
 	podList, err := k.sharedInformers.Core().V1().Pods().Lister().List(labels.Everything())
 	if err != nil {
@@ -383,7 +380,7 @@ func (k *kubeClient) GetAllPods() (pods []*v1.Pod, err error) {
 	return podList, nil
 }
 
-//GetAllPods get all pods
+// GetAllPods get all pods
 func (k *kubeClient) GetPods(namespace string) (pods []*v1.Pod, err error) {
 	podList, err := k.sharedInformers.Core().V1().Pods().Lister().Pods(namespace).List(labels.Everything())
 	if err != nil {
@@ -392,7 +389,7 @@ func (k *kubeClient) GetPods(namespace string) (pods []*v1.Pod, err error) {
 	return podList, nil
 }
 
-//DeleteNode  k8s节点下线
+// DeleteNode  k8s节点下线
 func (k *kubeClient) DownK8sNode(nodename string) error {
 	_, err := k.GetNodeByName(nodename)
 	if err != nil {
@@ -429,7 +426,7 @@ func (k *kubeClient) deleteNodeWithoutPods(name string) error {
 	return nil
 }
 
-//UpK8sNode create k8s node by wutong node info
+// UpK8sNode create k8s node by wutong node info
 func (k *kubeClient) UpK8sNode(wutongNode *client.HostNode) (*v1.Node, error) {
 	capacity := make(v1.ResourceList)
 	capacity[v1.ResourceCPU] = *resource.NewQuantity(wutongNode.AvailableCPU, resource.BinarySI)
@@ -460,7 +457,7 @@ func (k *kubeClient) UpK8sNode(wutongNode *client.HostNode) (*v1.Node, error) {
 	if err != nil {
 		return nil, err
 	}
-	logrus.Info("creating new node success , details: %v ", savedNode)
+	logrus.Infof("creating new node success , details: %v ", savedNode)
 	return node, nil
 }
 

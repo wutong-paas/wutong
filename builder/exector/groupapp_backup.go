@@ -51,10 +51,10 @@ const (
 	NewMetadata = "NewMetadata"
 )
 
-//maxBackupVersionSize Maximum number of backup versions per service
+// maxBackupVersionSize Maximum number of backup versions per service
 var maxBackupVersionSize = 3
 
-//BackupAPPNew backup group app new version
+// BackupAPPNew backup group app new version
 type BackupAPPNew struct {
 	GroupID      string   `json:"group_id" `
 	ServiceIDs   []string `json:"service_ids" `
@@ -82,7 +82,7 @@ func init() {
 	RegisterWorker("backup_apps_new", BackupAPPNewCreater)
 }
 
-//BackupAPPNewCreater create
+// BackupAPPNewCreater create
 func BackupAPPNewCreater(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
 	logger := event.GetManager().GetLogger(eventID)
@@ -104,7 +104,7 @@ type AppSnapshot struct {
 	PluginBuildVersions []*dbmodel.TenantPluginBuildVersion
 }
 
-//RegionServiceSnapshot RegionServiceSnapshot
+// RegionServiceSnapshot RegionServiceSnapshot
 type RegionServiceSnapshot struct {
 	ServiceID          string
 	Service            *dbmodel.TenantServices
@@ -126,7 +126,7 @@ type RegionServiceSnapshot struct {
 	PluginStreamPorts []*dbmodel.TenantServicesStreamPluginPort
 }
 
-//Run Run
+// Run Run
 func (b *BackupAPPNew) Run(timeout time.Duration) error {
 	//read region group app metadata
 	metadata, err := ioutil.ReadFile(fmt.Sprintf("%s/region_apps_metadata.json", b.SourceDir))
@@ -136,31 +136,31 @@ func (b *BackupAPPNew) Run(timeout time.Duration) error {
 
 	metaVersion, err := judgeMetadataVersion(metadata)
 	if err != nil {
-		b.Logger.Info(fmt.Sprintf("Failed to judge the version of metadata"), map[string]string{"step": "backup_builder", "status": "failure"})
+		b.Logger.Info("Failed to judge the version of metadata", map[string]string{"step": "backup_builder", "status": "failure"})
 		return err
 	}
 	if metaVersion == OldMetadata {
 		var svcSnapshot []*RegionServiceSnapshot
 		if err := ffjson.Unmarshal(metadata, &svcSnapshot); err != nil {
-			b.Logger.Info(fmt.Sprintf("Failed to unmarshal metadata into RegionServiceSnapshot"), map[string]string{"step": "backup_builder", "status": "failure"})
+			b.Logger.Info("Failed to unmarshal metadata into RegionServiceSnapshot", map[string]string{"step": "backup_builder", "status": "failure"})
 			return err
 		}
 		if err := b.backupServiceInfo(svcSnapshot); err != nil {
-			b.Logger.Info(fmt.Sprintf("Failed to backup metadata service info"), map[string]string{"step": "backup_builder", "status": "failure"})
+			b.Logger.Info("Failed to backup metadata service info", map[string]string{"step": "backup_builder", "status": "failure"})
 			return err
 		}
 	} else {
 		var appSnapshot AppSnapshot
 		if err := ffjson.Unmarshal(metadata, &appSnapshot); err != nil {
-			b.Logger.Info(fmt.Sprintf("Failed to unmarshal metadata into AppSnapshot"), map[string]string{"step": "backup_builder", "status": "failure"})
+			b.Logger.Info("Failed to unmarshal metadata into AppSnapshot", map[string]string{"step": "backup_builder", "status": "failure"})
 			return err
 		}
 		if err := b.backupServiceInfo(appSnapshot.Services); err != nil {
-			b.Logger.Info(fmt.Sprintf("Failed to backup metadata service info"), map[string]string{"step": "backup_builder", "status": "failure"})
+			b.Logger.Info("Failed to backup metadata service info", map[string]string{"step": "backup_builder", "status": "failure"})
 			return err
 		}
 		if err := b.backupPluginInfo(&appSnapshot); err != nil {
-			b.Logger.Info(fmt.Sprintf("Failed to backup metadata plugin info"), map[string]string{"step": "backup_builder", "status": "failure"})
+			b.Logger.Info("Failed to backup metadata plugin info", map[string]string{"step": "backup_builder", "status": "failure"})
 			return err
 		}
 	}
@@ -169,7 +169,7 @@ func (b *BackupAPPNew) Run(timeout time.Duration) error {
 		b.SourceDir = b.SourceDir[:len(b.SourceDir)-2]
 	}
 	if err := util.Zip(b.SourceDir, fmt.Sprintf("%s.zip", b.SourceDir)); err != nil {
-		b.Logger.Info(fmt.Sprintf("Compressed backup metadata failed"), map[string]string{"step": "backup_builder", "status": "starting"})
+		b.Logger.Info("Compressed backup metadata failed", map[string]string{"step": "backup_builder", "status": "starting"})
 		return err
 	}
 	b.BackupSize += util.GetFileSize(fmt.Sprintf("%s.zip", b.SourceDir))
@@ -306,7 +306,7 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 }
 
 func (b *BackupAPPNew) backupPluginInfo(appSnapshot *AppSnapshot) error {
-	b.Logger.Info(fmt.Sprintf("Start backup plugin"), map[string]string{"step": "backup_builder", "status": "starting"})
+	b.Logger.Info("Start backup plugin", map[string]string{"step": "backup_builder", "status": "starting"})
 	for _, pv := range appSnapshot.PluginBuildVersions {
 		dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.SourceDir, pv.PluginID, pv.DeployVersion)
 		util.CheckAndCreateDir(filepath.Dir(dstDir))
@@ -385,22 +385,22 @@ func (b *BackupAPPNew) saveImagePkg(app *RegionServiceSnapshot, version *dbmodel
 	return nil
 }
 
-//Stop stop
+// Stop stop
 func (b *BackupAPPNew) Stop() error {
 	return nil
 }
 
-//Name return worker name
+// Name return worker name
 func (b *BackupAPPNew) Name() string {
 	return "backup_apps_new"
 }
 
-//GetLogger GetLogger
+// GetLogger GetLogger
 func (b *BackupAPPNew) GetLogger() event.Logger {
 	return b.Logger
 }
 
-//ErrorCallBack if run error will callback
+// ErrorCallBack if run error will callback
 func (b *BackupAPPNew) ErrorCallBack(err error) {
 	if err != nil {
 		logrus.Errorf("backup group app failure %s", err)
@@ -422,7 +422,7 @@ func (b *BackupAPPNew) updateBackupStatu(status string) error {
 	return db.GetManager().AppBackupDao().UpdateModel(backupstatus)
 }
 
-//GetVolumeDir get volume path prifix
+// GetVolumeDir get volume path prifix
 func GetVolumeDir() (string, string) {
 	localPath := os.Getenv("LOCAL_DATA_PATH")
 	sharePath := os.Getenv("SHARE_DATA_PATH")

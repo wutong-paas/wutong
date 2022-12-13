@@ -29,14 +29,14 @@ import (
 	"github.com/wutong-paas/wutong/monitor/utils"
 )
 
-//Webcli webcli
+// Webcli webcli
 type Webcli struct {
 	discover.Callback
 	Prometheus      *prometheus.Manager
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoints
+// UpdateEndpoints update endpoints
 func (w *Webcli) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -51,21 +51,19 @@ func (w *Webcli) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	w.Prometheus.UpdateScrape(scrape)
 }
 
-//Error handle error
+// Error handle error
 func (w *Webcli) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (w *Webcli) Name() string {
 	return "webcli"
 }
 
 func (w *Webcli) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(w.sortedEndpoints))
-	for _, end := range w.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, w.sortedEndpoints...)
 	return &prometheus.ScrapeConfig{
 		JobName:        w.Name(),
 		ScrapeInterval: model.Duration(time.Minute),

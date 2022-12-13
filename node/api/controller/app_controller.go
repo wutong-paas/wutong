@@ -28,26 +28,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//APPRegister 服务注册
+// APPRegister 服务注册
 func APPRegister(w http.ResponseWriter, r *http.Request) {
 	appName := strings.TrimSpace(chi.URLParam(r, "app_name"))
 	logrus.Infof(appName)
 }
 
-//APPDiscover 服务发现
-//用于实时性要求不高的场景，例如docker发现event_log地址
-//请求API返回可用地址
+// APPDiscover 服务发现
+// 用于实时性要求不高的场景，例如docker发现event_log地址
+// 请求API返回可用地址
 func APPDiscover(w http.ResponseWriter, r *http.Request) {
 	appName := strings.TrimSpace(chi.URLParam(r, "app_name"))
 	endpoints := appService.FindAppEndpoints(appName)
-	if endpoints == nil || len(endpoints) == 0 {
+	if len(endpoints) == 0 {
 		httputil.ReturnError(r, w, 404, "app endpoints not found")
 		return
 	}
 	httputil.ReturnSuccess(r, w, endpoints)
 }
 
-//APPList 列出已注册应用
+// APPList 列出已注册应用
 func APPList(w http.ResponseWriter, r *http.Request) {
 
 }

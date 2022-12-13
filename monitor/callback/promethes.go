@@ -36,7 +36,7 @@ type Prometheus struct {
 	sortedEndpoints []string
 }
 
-//UpdateEndpoints update endpoint
+// UpdateEndpoints update endpoint
 func (e *Prometheus) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -51,21 +51,19 @@ func (e *Prometheus) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	e.Prometheus.UpdateScrape(scrape)
 }
 
-//Error handle error
+// Error handle error
 func (e *Prometheus) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (e *Prometheus) Name() string {
 	return "prometheus"
 }
 
 func (e *Prometheus) toScrape() *prometheus.ScrapeConfig {
 	ts := make([]string, 0, len(e.sortedEndpoints))
-	for _, end := range e.sortedEndpoints {
-		ts = append(ts, end)
-	}
+	ts = append(ts, e.sortedEndpoints...)
 
 	return &prometheus.ScrapeConfig{
 		JobName:        e.Name(),

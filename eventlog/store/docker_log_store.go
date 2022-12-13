@@ -174,7 +174,7 @@ func (h *dockerLogStore) gcRun() {
 	h.LogSizePeerM = h.LogSize
 	h.LogSize = 0
 	gcEvent := h.handle()
-	if gcEvent != nil && len(gcEvent) > 0 {
+	if len(gcEvent) > 0 {
 		h.rwLock.Lock()
 		defer h.rwLock.Unlock()
 		for _, id := range gcEvent {
@@ -214,7 +214,7 @@ func (h *dockerLogStore) saveBeforeGc(eventID string, v *dockerLogEventBarrel) {
 }
 func (h *dockerLogStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
 
-//TODD
+// TODD
 func (h *dockerLogStore) handleBarrelEvent() {
 	for {
 		select {
