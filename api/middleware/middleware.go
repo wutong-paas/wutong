@@ -214,6 +214,7 @@ func Proxy(next http.Handler) http.Handler {
 			}
 		}
 		if strings.HasPrefix(r.RequestURI, "/obs") {
+			r.URL.Path = strings.Replace(r.URL.Path, "/obs", "", 1)
 			handler.GetObsProxy().Proxy(w, r)
 			return
 		}
