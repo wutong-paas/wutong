@@ -22,8 +22,6 @@ import (
 	"net/http"
 	"strings"
 	"sync/atomic"
-
-	"github.com/sirupsen/logrus"
 )
 
 // ContextKey context key
@@ -181,13 +179,11 @@ func (s *SelectBalance) Select(r *http.Request, endpoints EndpointList) Endpoint
 			}
 		}
 		if e, ok := id2ip[hostID]; ok {
-			logrus.Infof("[lb selelct] find host %s from name %s success", e, hostID)
 			return Endpoint(e)
 		}
 	}
 
 	if len(endpoints) > 0 {
-		logrus.Infof("default endpoint is %s", endpoints[len(endpoints)-1])
 		return endpoints[len(endpoints)-1]
 	}
 

@@ -200,6 +200,16 @@ func (m *Manager) Run() {
 			logrus.Fatal(s.ListenAndServeTLS(m.conf.APICertFile, m.conf.APIKeyFile))
 		}()
 	}
+	// health check
+	go func() {
+		healthzRouter := chi.NewRouter()
+		healthzRouter.Get("/healthz", func(res http.ResponseWriter, req *http.Request) {
+			res.Write([]byte("ok"))
+			res.WriteHeader(http.StatusOK)
+		})
+		logrus.Infof("health check listen on (HTTP) %s", m.conf.APIHealthzAddr)
+		logrus.Fatal(http.ListenAndServe(m.conf.APIHealthzAddr, healthzRouter))
+	}()
 	logrus.Infof("api listen on (HTTP) %s", m.conf.APIAddr)
 	logrus.Fatal(http.ListenAndServe(m.conf.APIAddr, m.r))
 }
