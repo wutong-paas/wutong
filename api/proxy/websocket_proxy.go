@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//WebSocketProxy WebSocketProxy
+// WebSocketProxy WebSocketProxy
 type WebSocketProxy struct {
 	name      string
 	endpoints EndpointList
@@ -38,7 +38,7 @@ type WebSocketProxy struct {
 	upgrader  *websocket.Upgrader
 }
 
-//Proxy websocket proxy
+// Proxy websocket proxy
 func (h *WebSocketProxy) Proxy(w http.ResponseWriter, req *http.Request) {
 	endpoint := h.lb.Select(req, h.endpoints)
 	path := req.RequestURI
@@ -146,17 +146,20 @@ func (h *WebSocketProxy) Proxy(w http.ResponseWriter, req *http.Request) {
 	case err = <-errBackend:
 		message = "websocketproxy: Error when copying from client to backend: %v"
 	}
-	if e, ok := err.(*websocket.CloseError); !ok || e.Code == websocket.CloseAbnormalClosure {
+	// if e, ok := err.(*websocket.CloseError); !ok || e.Code == websocket.CloseAbnormalClosure {
+	// 	logrus.Errorf(message, err)
+	// }
+	if _, ok := err.(*websocket.CloseError); !ok {
 		logrus.Errorf(message, err)
 	}
 }
 
-//UpdateEndpoints 更新后端点
+// UpdateEndpoints 更新后端点
 func (h *WebSocketProxy) UpdateEndpoints(endpoints ...string) {
 	h.endpoints = CreateEndpoints(endpoints)
 }
 
-//Do do proxy
+// Do do proxy
 func (h *WebSocketProxy) Do(r *http.Request) (*http.Response, error) {
 	return nil, fmt.Errorf("do not support")
 }
