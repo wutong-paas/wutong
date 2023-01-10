@@ -26,13 +26,19 @@ import (
 	"path"
 	"time"
 
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/namespaces"
 	client "github.com/coreos/etcd/clientv3"
-	dockercli "github.com/docker/docker/client"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	criapis "k8s.io/cri-api/pkg/apis"
+
+	// Register grpc event types
+	_ "github.com/containerd/containerd/api/events"
 )
 
 var (
@@ -46,7 +52,7 @@ var (
 	exitChan = make(chan struct{})
 )
 
-//Init  init config
+// Init  init config
 func Init() error {
 	if initialized {
 		return nil
@@ -60,7 +66,7 @@ func Init() error {
 	return nil
 }
 
-//Conf Conf
+// Conf Conf
 type Conf struct {
 	APIAddr                         string //api server listen port
 	GrpcAPIAddr                     string //grpc api server listen port
@@ -99,9 +105,12 @@ type Conf struct {
 	EnableInitStart bool
 	AutoRegistNode  bool
 	//enable collect docker container log
-	EnableCollectLog bool
-	DockerCli        *dockercli.Client
-	EtcdCli          *client.Client
+	EnableCollectLog  bool
+	ContainerRuntime  string
+	RuntimeEndpoint   string
+	ContainerImageCli sources.ContainerImageCli
+	RuntimeService    criapis.RuntimeService
+	EtcdCli           *client.Client
 
 	LicPath   string
 	LicSoPath string
@@ -129,7 +138,7 @@ type Conf struct {
 	HostsFile           string
 }
 
-//StatsdConfig StatsdConfig
+// StatsdConfig StatsdConfig
 type StatsdConfig struct {
 	StatsdListenAddress string
 	StatsdListenUDP     string
@@ -138,13 +147,13 @@ type StatsdConfig struct {
 	ReadBuffer          int
 }
 
-//UDPMonitorConfig UDPMonitorConfig
+// UDPMonitorConfig UDPMonitorConfig
 type UDPMonitorConfig struct {
 	ListenHost string
 	ListenPort string
 }
 
-//AddFlags AddFlags
+// AddFlags AddFlags
 func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the log level")
 	fs.StringVar(&a.LogFile, "log-file", "", "the log file path that log output")
@@ -191,9 +200,11 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.ImageRepositoryHost, "image-repo-host", "wutong.me", "The host of image repository")
 	fs.StringVar(&a.GatewayVIP, "gateway-vip", "", "The vip of gateway")
 	fs.StringVar(&a.HostsFile, "hostsfile", "/newetc/hosts", "/etc/hosts mapped path in the container. eg. /etc/hosts:/tmp/hosts. Do not set hostsfile to /etc/hosts")
+	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
+	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.RuntimeEndpointDocker, "container runtime endpoint")
 }
 
-//SetLog 设置log
+// SetLog 设置log
 func (a *Conf) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
@@ -215,13 +226,27 @@ func (a *Conf) SetLog() {
 	}
 }
 
-//ParseClient handle config and create some api
-func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientArgs) (err error) {
-	a.DockerCli, err = dockercli.NewEnvClient()
+func newClient(namespace, address string, opts ...containerd.ClientOpt) (*containerd.Client, context.Context, context.CancelFunc, error) {
+	ctx := namespaces.WithNamespace(context.Background(), namespace)
+	client, err := containerd.New(address, opts...)
 	if err != nil {
+		return nil, nil, nil, err
+	}
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+	return client, ctx, cancel, nil
+}
+
+// ParseClient handle config and create some api
+func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientArgs) (err error) {
+	logrus.Infof("begin create container image client, runtime [%s] runtime endpoint [%s]", a.ContainerRuntime, a.RuntimeEndpoint, a.EtcdEndpoints)
+	containerImageCli, err := sources.NewContainerImageClient(a.ContainerRuntime, a.RuntimeEndpoint, time.Second*3)
+	if err != nil {
+		logrus.Errorf("new client failed %v", err)
 		return err
 	}
-	logrus.Infof("begin create etcd client: %s", a.EtcdEndpoints)
+	a.ContainerImageCli = containerImageCli
+	logrus.Infof("create container image client success\nbegin create etcd client: %s", a.EtcdEndpoints)
 	for {
 		a.EtcdCli, err = etcdutil.NewClient(ctx, etcdClientArgs)
 		if err != nil {
@@ -236,7 +261,7 @@ func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientA
 	return nil
 }
 
-//parse parse
+// parse parse
 func (a *Conf) parse() error {
 	if a.TTL <= 0 {
 		a.TTL = 10

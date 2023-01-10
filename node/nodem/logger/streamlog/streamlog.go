@@ -153,6 +153,7 @@ func New(ctx logger.Info) (logger.Logger, error) {
 	if serviceID == "" {
 		serviceID = "default"
 	}
+
 	address := getTCPConnConfig(serviceID, ctx.Config["stream-server"])
 	writer, err := NewClient(address)
 	if err != nil {

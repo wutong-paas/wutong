@@ -28,7 +28,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/docker/docker/client"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -59,7 +58,8 @@ type SourceCodeBuildItem struct {
 	EventID       string       `json:"event_id"`
 	CacheDir      string       `json:"cache_dir"`
 	TGZDir        string       `json:"tgz_dir"`
-	DockerClient  *client.Client
+	ImageClient   sources.ImageClient
+	KanikoImage   string
 	KubeClient    kubernetes.Interface
 	WtNamespace   string
 	WtRepoName    string
@@ -236,6 +236,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 		return nil, err
 	}
 	buildReq := &build.Request{
+		KanikoImage:   i.KanikoImage,
 		WtNamespace:   i.WtNamespace,
 		SourceDir:     i.RepoInfo.GetCodeBuildAbsPath(),
 		CacheDir:      i.CacheDir,
@@ -253,7 +254,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 		Lang:          code.Lang(i.Lang),
 		BuildEnvs:     i.BuildEnvs,
 		Logger:        i.Logger,
-		DockerClient:  i.DockerClient,
+		ImageClient:   i.ImageClient,
 		KubeClient:    i.KubeClient,
 		HostAlias:     hostAlias,
 		Ctx:           i.Ctx,

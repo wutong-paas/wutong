@@ -46,7 +46,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//Manager 存储管理器
+// Manager 存储管理器
 type Manager interface {
 	ReceiveMessageChan() chan []byte
 	SubMessageChan() chan [][]byte
@@ -65,7 +65,7 @@ type Manager interface {
 	HealthCheck() map[string]string
 }
 
-//NewManager 存储管理器
+// NewManager 存储管理器
 func NewManager(conf conf.EventStoreConf, log *logrus.Entry) (Manager, error) {
 	conf.DB.Type = "eventfile"
 	dbPlugin, err := db.NewManager(conf.DB, log)
@@ -138,10 +138,10 @@ func (s *storeManager) HealthCheck() map[string]string {
 	return map[string]string{"status": "health", "info": "eventlog service health"}
 }
 
-//Scrape prometheue monitor metrics
-//step1: docker log monitor
-//step2: event message monitor
-//step3: monitor message monitor
+// Scrape prometheue monitor metrics
+// step1: docker log monitor
+// step2: event message monitor
+// step3: monitor message monitor
 var healthStatus float64
 
 func (s *storeManager) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
@@ -266,7 +266,7 @@ func (s *storeManager) Run() error {
 	return nil
 }
 
-//cleanLog
+// cleanLog
 // clean service log that before 7 days in every 24h
 // clean event log that before 30 days message in every 24h
 func (s *storeManager) cleanLog() {
@@ -345,7 +345,7 @@ func (s *storeManager) parsingMessage(msg []byte, messageType string) (*db.Event
 	return nil, errors.New("unable to process configuration of message format type")
 }
 
-//handleNewMonitorMessage 处理新监控数据
+// handleNewMonitorMessage 处理新监控数据
 func (s *storeManager) handleNewMonitorMessage() {
 loop:
 	for {
@@ -469,6 +469,7 @@ loop:
 			containerID := m[0:12]        //0-12
 			serviceID := string(m[13:45]) //13-45
 			log := m[45:]
+			logrus.Debugf("containerID [%s] serviceID [%s] log [%s]", containerID, serviceID, string(log))
 			buffer := bytes.NewBuffer(containerID)
 			buffer.WriteString(":")
 			buffer.Write(log)
@@ -520,7 +521,7 @@ func (s *storeManager) Error() chan error {
 	return s.errChan
 }
 
-//GetDockerLogs get history docker log
+// GetDockerLogs get history docker log
 func (s *storeManager) GetDockerLogs(serviceID string, length int) []string {
 	return s.dockerLogStore.GetHistoryMessage(serviceID, length)
 }

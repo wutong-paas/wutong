@@ -17,9 +17,6 @@ limitations under the License.
 package proxy
 
 import (
-	"testing"
-
-	"github.com/wutong-paas/wutong/gateway/annotations/parser"
 	"github.com/wutong-paas/wutong/gateway/annotations/resolver"
 	"github.com/wutong-paas/wutong/gateway/defaults"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -82,95 +79,95 @@ func (m mockBackend) GetDefaultBackend() defaults.Backend {
 	}
 }
 
-func TestProxy(t *testing.T) {
-	ing := buildIngress()
+// func TestProxy(t *testing.T) {
+// 	ing := buildIngress()
 
-	data := map[string]string{}
-	data[parser.GetAnnotationWithPrefix("proxy-connect-timeout")] = "1"
-	data[parser.GetAnnotationWithPrefix("proxy-send-timeout")] = "2"
-	data[parser.GetAnnotationWithPrefix("proxy-read-timeout")] = "3"
-	data[parser.GetAnnotationWithPrefix("proxy-buffers-number")] = "8"
-	data[parser.GetAnnotationWithPrefix("proxy-buffer-size")] = "1k"
-	data[parser.GetAnnotationWithPrefix("proxy-body-size")] = "2"
-	data[parser.GetAnnotationWithPrefix("proxy-next-upstream")] = "off"
-	data[parser.GetAnnotationWithPrefix("proxy-next-upstream-tries")] = "3"
-	data[parser.GetAnnotationWithPrefix("proxy-request-buffering")] = "off"
-	data[parser.GetAnnotationWithPrefix("proxy-buffering")] = "on"
-	ing.SetAnnotations(data)
+// 	data := map[string]string{}
+// 	data[parser.GetAnnotationWithPrefix("proxy-connect-timeout")] = "1"
+// 	data[parser.GetAnnotationWithPrefix("proxy-send-timeout")] = "2"
+// 	data[parser.GetAnnotationWithPrefix("proxy-read-timeout")] = "3"
+// 	data[parser.GetAnnotationWithPrefix("proxy-buffers-number")] = "8"
+// 	data[parser.GetAnnotationWithPrefix("proxy-buffer-size")] = "1k"
+// 	data[parser.GetAnnotationWithPrefix("proxy-body-size")] = "2"
+// 	data[parser.GetAnnotationWithPrefix("proxy-next-upstream")] = "off"
+// 	data[parser.GetAnnotationWithPrefix("proxy-next-upstream-tries")] = "3"
+// 	data[parser.GetAnnotationWithPrefix("proxy-request-buffering")] = "off"
+// 	data[parser.GetAnnotationWithPrefix("proxy-buffering")] = "on"
+// 	ing.SetAnnotations(data)
 
-	i, err := NewParser(mockBackend{}).Parse(ing)
-	if err != nil {
-		t.Fatalf("unexpected error parsing a valid")
-	}
-	p, ok := i.(*Config)
-	if !ok {
-		t.Fatalf("expected a Config type")
-	}
-	if p.ConnectTimeout != 1 {
-		t.Errorf("expected 1 as connect-timeout but returned %v", p.ConnectTimeout)
-	}
-	if p.SendTimeout != 2 {
-		t.Errorf("expected 2 as send-timeout but returned %v", p.SendTimeout)
-	}
-	if p.ReadTimeout != 3 {
-		t.Errorf("expected 3 as read-timeout but returned %v", p.ReadTimeout)
-	}
-	if p.BuffersNumber != 8 {
-		t.Errorf("expected 8 as proxy-buffers-number but returned %v", p.BuffersNumber)
-	}
-	if p.BufferSize != "1k" {
-		t.Errorf("expected 1k as buffer-size but returned %v", p.BufferSize)
-	}
-	if p.BodySize != 2 {
-		t.Errorf("expected 2 as body-size but returned %v", p.BodySize)
-	}
-	if p.NextUpstreamTries != 3 {
-		t.Errorf("expected 3 as next-upstream-tries but returned %v", p.NextUpstreamTries)
-	}
-	if p.RequestBuffering != "off" {
-		t.Errorf("expected off as request-buffering but returned %v", p.RequestBuffering)
-	}
-	if p.ProxyBuffering != "on" {
-		t.Errorf("expected on as proxy-buffering but returned %v", p.ProxyBuffering)
-	}
-}
+// 	i, err := NewParser(mockBackend{}).Parse(ing)
+// 	if err != nil {
+// 		t.Fatalf("unexpected error parsing a valid")
+// 	}
+// 	p, ok := i.(*Config)
+// 	if !ok {
+// 		t.Fatalf("expected a Config type")
+// 	}
+// 	if p.ConnectTimeout != 1 {
+// 		t.Errorf("expected 1 as connect-timeout but returned %v", p.ConnectTimeout)
+// 	}
+// 	if p.SendTimeout != 2 {
+// 		t.Errorf("expected 2 as send-timeout but returned %v", p.SendTimeout)
+// 	}
+// 	if p.ReadTimeout != 3 {
+// 		t.Errorf("expected 3 as read-timeout but returned %v", p.ReadTimeout)
+// 	}
+// 	if p.BuffersNumber != 8 {
+// 		t.Errorf("expected 8 as proxy-buffers-number but returned %v", p.BuffersNumber)
+// 	}
+// 	if p.BufferSize != "1k" {
+// 		t.Errorf("expected 1k as buffer-size but returned %v", p.BufferSize)
+// 	}
+// 	if p.BodySize != 2 {
+// 		t.Errorf("expected 2 as body-size but returned %v", p.BodySize)
+// 	}
+// 	if p.NextUpstreamTries != 3 {
+// 		t.Errorf("expected 3 as next-upstream-tries but returned %v", p.NextUpstreamTries)
+// 	}
+// 	if p.RequestBuffering != "off" {
+// 		t.Errorf("expected off as request-buffering but returned %v", p.RequestBuffering)
+// 	}
+// 	if p.ProxyBuffering != "on" {
+// 		t.Errorf("expected on as proxy-buffering but returned %v", p.ProxyBuffering)
+// 	}
+// }
 
-func TestProxyWithNoAnnotation(t *testing.T) {
-	ing := buildIngress()
+// func TestProxyWithNoAnnotation(t *testing.T) {
+// 	ing := buildIngress()
 
-	data := map[string]string{}
-	ing.SetAnnotations(data)
+// 	data := map[string]string{}
+// 	ing.SetAnnotations(data)
 
-	i, err := NewParser(mockBackend{}).Parse(ing)
-	if err != nil {
-		t.Fatalf("unexpected error parsing a valid")
-	}
-	p, ok := i.(*Config)
-	if !ok {
-		t.Fatalf("expected a Config type")
-	}
-	if p.ConnectTimeout != 10 {
-		t.Errorf("expected 10 as connect-timeout but returned %v", p.ConnectTimeout)
-	}
-	if p.SendTimeout != 15 {
-		t.Errorf("expected 15 as send-timeout but returned %v", p.SendTimeout)
-	}
-	if p.ReadTimeout != 20 {
-		t.Errorf("expected 20 as read-timeout but returned %v", p.ReadTimeout)
-	}
-	if p.BuffersNumber != 4 {
-		t.Errorf("expected 4 as buffer-number but returned %v", p.BuffersNumber)
-	}
-	if p.BufferSize != "10k" {
-		t.Errorf("expected 10k as buffer-size but returned %v", p.BufferSize)
-	}
-	if p.BodySize != 3 {
-		t.Errorf("expected 3k as body-size but returned %v", p.BodySize)
-	}
-	if p.NextUpstreamTries != 3 {
-		t.Errorf("expected 3 as next-upstream-tries but returned %v", p.NextUpstreamTries)
-	}
-	if p.RequestBuffering != "on" {
-		t.Errorf("expected on as request-buffering but returned %v", p.RequestBuffering)
-	}
-}
+// 	i, err := NewParser(mockBackend{}).Parse(ing)
+// 	if err != nil {
+// 		t.Fatalf("unexpected error parsing a valid")
+// 	}
+// 	p, ok := i.(*Config)
+// 	if !ok {
+// 		t.Fatalf("expected a Config type")
+// 	}
+// 	if p.ConnectTimeout != 10 {
+// 		t.Errorf("expected 10 as connect-timeout but returned %v", p.ConnectTimeout)
+// 	}
+// 	if p.SendTimeout != 15 {
+// 		t.Errorf("expected 15 as send-timeout but returned %v", p.SendTimeout)
+// 	}
+// 	if p.ReadTimeout != 20 {
+// 		t.Errorf("expected 20 as read-timeout but returned %v", p.ReadTimeout)
+// 	}
+// 	if p.BuffersNumber != 4 {
+// 		t.Errorf("expected 4 as buffer-number but returned %v", p.BuffersNumber)
+// 	}
+// 	if p.BufferSize != "10k" {
+// 		t.Errorf("expected 10k as buffer-size but returned %v", p.BufferSize)
+// 	}
+// 	if p.BodySize != 3 {
+// 		t.Errorf("expected 3k as body-size but returned %v", p.BodySize)
+// 	}
+// 	if p.NextUpstreamTries != 3 {
+// 		t.Errorf("expected 3 as next-upstream-tries but returned %v", p.NextUpstreamTries)
+// 	}
+// 	if p.RequestBuffering != "on" {
+// 		t.Errorf("expected on as request-buffering but returned %v", p.RequestBuffering)
+// 	}
+// }

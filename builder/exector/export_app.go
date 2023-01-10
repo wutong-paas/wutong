@@ -28,7 +28,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -36,6 +35,7 @@ import (
 	"github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
 	ramv1alpha1 "github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
 	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/event"
 )
@@ -49,7 +49,7 @@ type ExportApp struct {
 	SourceDir     string `json:"source_dir"`
 	WithImageData bool   `json:"with_image_data"`
 	Logger        event.Logger
-	DockerClient  *client.Client
+	ImageClient   sources.ImageClient
 }
 
 func init() {
@@ -61,12 +61,11 @@ func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
 	logger := event.GetManager().GetLogger(eventID)
 	return &ExportApp{
-		Format:        gjson.GetBytes(in, "format").String(),
-		SourceDir:     gjson.GetBytes(in, "source_dir").String(),
-		WithImageData: gjson.GetBytes(in, "with_image_data").Bool(),
-		Logger:        logger,
-		EventID:       eventID,
-		DockerClient:  m.DockerClient,
+		Format:      gjson.GetBytes(in, "format").String(),
+		SourceDir:   gjson.GetBytes(in, "source_dir").String(),
+		Logger:      logger,
+		EventID:     eventID,
+		ImageClient: m.imageClient,
 	}, nil
 }
 
@@ -147,14 +146,29 @@ func (i *ExportApp) cacheMd5() {
 
 // exportWutongAPP export offline wutong app
 func (i *ExportApp) exportWutongAPP(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
-	ramExporter := export.New(export.RAM, i.SourceDir, ram, i.DockerClient, logrus.StandardLogger())
+	ramExporter, err := export.New(export.RAM, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
 	return ramExporter.Export()
 }
 
 // exportDockerCompose export app to docker compose app
 func (i *ExportApp) exportDockerCompose(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
-	ramExporter := export.New(export.DC, i.SourceDir, ram, i.DockerClient, logrus.StandardLogger())
+	ramExporter, err := export.New(export.DC, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
 	return ramExporter.Export()
+}
+
+// exportDockerCompose export app to docker compose app
+func (i *ExportApp) exportSlug(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
+	slugExporter, err := export.New(export.SLG, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
+	return slugExporter.Export()
 }
 
 // Stop stop

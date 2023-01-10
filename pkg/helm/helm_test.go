@@ -9,7 +9,7 @@ import (
 )
 
 func TestResources(t *testing.T) {
-	resources, err := Resources("rainbond-operator", "wt-system")
+	resources, err := Resources("wutong-operator", "wt-system")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -24,7 +24,7 @@ func TestAllResources(t *testing.T) {
 		t.Error(err)
 	}
 	kubeConfig = c
-	resources, err := AllResources("rainbond", "wt-system")
+	resources, err := AllResources("wutong", "wt-system")
 	if err != nil {
 		fmt.Println(err.Error())
 	}

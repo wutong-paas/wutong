@@ -32,6 +32,7 @@ import (
 	"github.com/wutong-paas/wutong/gateway/annotations/parser"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
@@ -196,10 +197,12 @@ func TestApplyTcpRule(t *testing.T) {
 		t.Errorf("Unexpected occurred while creating AppServiceBuild: %v", err)
 	}
 
-	ing, err := build.applyTCPRule(tcpRule, service, testCase["namespace"])
+	ing1, err := build.applyTCPRule(tcpRule, service, testCase["namespace"])
 	if err != nil {
 		t.Errorf("Unexpected error occurred while applying stream rule: %v", err)
 	}
+
+	ing := ing1.(*v1beta1.Ingress)
 
 	if ing.Namespace != testCase["namespace"] {
 		t.Errorf("Expected %s for namespace but returned %s", testCase["namespace"], ing.Namespace)
@@ -347,13 +350,14 @@ func TestAppServiceBuild_ApplyHttpRule(t *testing.T) {
 		},
 	}
 
-	ing, sec, err := build.applyHTTPRule(httpRule, containerPort, 0, service)
+	ing1, sec, err := build.applyHTTPRule(httpRule, containerPort, 0, service)
 	if err != nil {
 		t.Errorf("Unexpected error occurred whiling applying http rule: %v", err)
 	}
 	if sec != nil {
 		t.Errorf("Expected nil for sec, but returned %v", sec)
 	}
+	ing := ing1.(*v1beta1.Ingress)
 	if ing.ObjectMeta.Namespace != testCase["namespace"] {
 		t.Errorf("Expected %s for namespace, but returned %s", testCase["namespace"], ing.ObjectMeta.Namespace)
 	}
@@ -498,10 +502,11 @@ func TestAppServiceBuild_ApplyHttpRuleWithCertificate(t *testing.T) {
 		},
 	}
 
-	ing, sec, err := build.applyHTTPRule(httpRule, containerPort, 0, service)
+	ing1, sec, err := build.applyHTTPRule(httpRule, containerPort, 0, service)
 	if err != nil {
 		t.Errorf("Unexpected error occurred whiling applying http rule: %v", err)
 	}
+	ing := ing1.(*v1beta1.Ingress)
 
 	// create k8s resources
 	c, err := clientcmd.BuildConfigFromFlags("", "/Users/abe/go/src/github.com/wutong-paas/wutong/test/admin.kubeconfig")

@@ -18,64 +18,64 @@
 
 package option
 
-import (
-	"fmt"
-	"os"
-	"path"
+// import (
+// 	"fmt"
+// 	"os"
+// 	"path"
 
-	"github.com/wutong-paas/wutong/util"
+// 	"github.com/wutong-paas/wutong/util"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
-	"github.com/wutong-paas/wutong/util/windows"
-)
+// 	"github.com/sirupsen/logrus"
+// 	"github.com/spf13/pflag"
+// 	"github.com/wutong-paas/wutong/util/windows"
+// )
 
-//Config config
-type Config struct {
-	Debug        bool
-	RunShell     string
-	ServiceName  string
-	RunAsService bool
-	LogFile      string
-}
+// //Config config
+// type Config struct {
+// 	Debug        bool
+// 	RunShell     string
+// 	ServiceName  string
+// 	RunAsService bool
+// 	LogFile      string
+// }
 
-var removeService bool
+// var removeService bool
 
-//AddFlags config
-func (c *Config) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.RunShell, "run", "", "Specify startup command")
-	fs.StringVar(&c.ServiceName, "service-name", "", "Specify windows service name")
-	fs.StringVar(&c.LogFile, "log-file", "c:\\windwosutil.log", "service log outputfile")
-	fs.BoolVar(&c.RunAsService, "run-as-service", true, "run as windows service")
-	fs.BoolVar(&c.Debug, "debug", false, "debug mode run ")
-	fs.BoolVar(&removeService, "remove-service", false, "remove windows service")
-}
+// //AddFlags config
+// func (c *Config) AddFlags(fs *pflag.FlagSet) {
+// 	fs.StringVar(&c.RunShell, "run", "", "Specify startup command")
+// 	fs.StringVar(&c.ServiceName, "service-name", "", "Specify windows service name")
+// 	fs.StringVar(&c.LogFile, "log-file", "c:\\windwosutil.log", "service log outputfile")
+// 	fs.BoolVar(&c.RunAsService, "run-as-service", true, "run as windows service")
+// 	fs.BoolVar(&c.Debug, "debug", false, "debug mode run ")
+// 	fs.BoolVar(&removeService, "remove-service", false, "remove windows service")
+// }
 
-//Check check config
-func (c *Config) Check() bool {
-	if c.ServiceName == "" {
-		logrus.Errorf("service name can not be empty")
-		return false
-	}
-	if c.RunShell == "" && !removeService {
-		logrus.Errorf("run shell can not be empty")
-		return false
-	}
-	if err := util.CheckAndCreateDir(path.Dir(c.LogFile)); err != nil {
-		logrus.Errorf("create node log file dir failure %s", err.Error())
-		os.Exit(1)
-	}
-	logfile, err := os.OpenFile(c.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
-	if err != nil {
-		logrus.Fatalf("open log file %s failure %s", c.LogFile, err.Error())
-	}
-	logrus.SetOutput(logfile)
-	if removeService {
-		if err := windows.UnRegisterService(c.ServiceName); err != nil {
-			fmt.Printf("remove service %s failure %s", c.ServiceName, err.Error())
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}
-	return true
-}
+// //Check check config
+// func (c *Config) Check() bool {
+// 	if c.ServiceName == "" {
+// 		logrus.Errorf("service name can not be empty")
+// 		return false
+// 	}
+// 	if c.RunShell == "" && !removeService {
+// 		logrus.Errorf("run shell can not be empty")
+// 		return false
+// 	}
+// 	if err := util.CheckAndCreateDir(path.Dir(c.LogFile)); err != nil {
+// 		logrus.Errorf("create node log file dir failure %s", err.Error())
+// 		os.Exit(1)
+// 	}
+// 	logfile, err := os.OpenFile(c.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0777)
+// 	if err != nil {
+// 		logrus.Fatalf("open log file %s failure %s", c.LogFile, err.Error())
+// 	}
+// 	logrus.SetOutput(logfile)
+// 	if removeService {
+// 		if err := windows.UnRegisterService(c.ServiceName); err != nil {
+// 			fmt.Printf("remove service %s failure %s", c.ServiceName, err.Error())
+// 			os.Exit(1)
+// 		}
+// 		os.Exit(0)
+// 	}
+// 	return true
+// }

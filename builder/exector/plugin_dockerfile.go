@@ -24,14 +24,12 @@ import (
 	"strings"
 
 	"github.com/wutong-paas/wutong/builder"
-	"github.com/wutong-paas/wutong/builder/build"
 	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/util"
 
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/event"
 
-	"github.com/docker/docker/api/types"
 	"github.com/pquerna/ffjson/ffjson"
 
 	"github.com/wutong-paas/wutong/builder/model"
@@ -106,31 +104,16 @@ func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger)
 	mm := strings.Split(t.GitURL, "/")
 	n1 := strings.Split(mm[len(mm)-1], ".")[0]
 	buildImageName := fmt.Sprintf(builder.REGISTRYDOMAIN+"/plugin_%s_%s:%s", n1, t.PluginID, t.DeployVersion)
-	buildOptions := types.ImageBuildOptions{
-		Tags:        []string{buildImageName},
-		Remove:      true,
-		NetworkMode: build.ImageBuildHostNetworkMode,
-		AuthConfigs: build.GetTenantRegistryAuthSecrets(e.KubeClient, e.ctx, t.TenantID),
-	}
-	if noCache := os.Getenv("NO_CACHE"); noCache != "" {
-		buildOptions.NoCache = true
-	} else {
-		buildOptions.NoCache = false
-	}
+
 	logger.Info("start build image", map[string]string{"step": "builder-exector"})
-	err := sources.ImageBuild(e.DockerClient, sourceDir, buildOptions, logger, 5)
+	err := sources.ImageBuild(sourceDir, "wt-system", t.PluginID, t.DeployVersion, logger, "plug-build", "", e.KanikoImage)
 	if err != nil {
 		logger.Error(fmt.Sprintf("build image %s failure,find log in wt-chaos", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("[plugin]build image error: %s", err.Error())
 		return err
 	}
 	logger.Info("build image success, start to push image to local image registry", map[string]string{"step": "builder-exector"})
-	err = sources.ImagePush(e.DockerClient, buildImageName, builder.REGISTRYUSER, builder.REGISTRYPASS, logger, 2)
-	if err != nil {
-		logger.Error("push image failure, find log in wt-chaos", map[string]string{"step": "builder-exector"})
-		logrus.Errorf("push image error: %s", err.Error())
-		return err
-	}
+
 	logger.Info("push image success", map[string]string{"step": "build-exector"})
 	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
 	if err != nil {

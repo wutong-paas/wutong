@@ -25,14 +25,13 @@ import (
 	"github.com/wutong-paas/wutong/builder"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/docker/docker/client"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/event"
 )
 
-//ImageShareItem ImageShareItem
+// ImageShareItem ImageShareItem
 type ImageShareItem struct {
 	Namespace          string `json:"namespace"`
 	TenantName         string `json:"tenant_name"`
@@ -58,12 +57,12 @@ type ImageShareItem struct {
 			IsTrust     bool   `json:"is_trust,omitempty"`
 		} `json:"image_info,omitempty"`
 	} `json:"share_info"`
-	DockerClient *client.Client
-	EtcdCli      *clientv3.Client
+	ImageClient sources.ImageClient
+	EtcdCli     *clientv3.Client
 }
 
-//NewImageShareItem 创建实体
-func NewImageShareItem(in []byte, DockerClient *client.Client, EtcdCli *clientv3.Client) (*ImageShareItem, error) {
+// NewImageShareItem 创建实体
+func NewImageShareItem(in []byte, imageClient sources.ImageClient, EtcdCli *clientv3.Client) (*ImageShareItem, error) {
 	var isi ImageShareItem
 	if err := ffjson.Unmarshal(in, &isi); err != nil {
 		return nil, err
@@ -72,30 +71,30 @@ func NewImageShareItem(in []byte, DockerClient *client.Client, EtcdCli *clientv3
 	isi.LocalImagePassword = builder.REGISTRYPASS
 	eventID := isi.ShareInfo.EventID
 	isi.Logger = event.GetManager().GetLogger(eventID)
-	isi.DockerClient = DockerClient
+	isi.ImageClient = imageClient
 	isi.EtcdCli = EtcdCli
 	return &isi, nil
 }
 
-//ShareService ShareService
+// ShareService ShareService
 func (i *ImageShareItem) ShareService() error {
 	hubuser, hubpass := builder.GetImageUserInfoV2(i.LocalImageName, i.LocalImageUsername, i.LocalImagePassword)
-	_, err := sources.ImagePull(i.DockerClient, i.LocalImageName, hubuser, hubpass, i.Logger, 20)
+	_, err := i.ImageClient.ImagePull(i.LocalImageName, hubuser, hubpass, i.Logger, 20)
 	if err != nil {
 		logrus.Errorf("pull image %s error: %s", i.LocalImageName, err.Error())
 		i.Logger.Error(fmt.Sprintf("拉取应用镜像: %s失败", i.LocalImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
-	if err := sources.ImageTag(i.DockerClient, i.LocalImageName, i.ImageName, i.Logger, 1); err != nil {
+	if err := i.ImageClient.ImageTag(i.LocalImageName, i.ImageName, i.Logger, 1); err != nil {
 		logrus.Errorf("change image tag error: %s", err.Error())
 		i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.LocalImageName, i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
 	user, pass := builder.GetImageUserInfoV2(i.ImageName, i.ShareInfo.ImageInfo.HubUser, i.ShareInfo.ImageInfo.HubPassword)
 	if i.ShareInfo.ImageInfo.IsTrust {
-		err = sources.TrustedImagePush(i.DockerClient, i.ImageName, user, pass, i.Logger, 30)
+		err = i.ImageClient.TrustedImagePush(i.ImageName, user, pass, i.Logger, 30)
 	} else {
-		err = sources.ImagePush(i.DockerClient, i.ImageName, user, pass, i.Logger, 30)
+		err = i.ImageClient.ImagePush(i.ImageName, user, pass, i.Logger, 30)
 	}
 	if err != nil {
 		if err.Error() == "authentication required" {
@@ -109,8 +108,8 @@ func (i *ImageShareItem) ShareService() error {
 	return nil
 }
 
-//ShareStatus share status result
-//ShareStatus share status result
+// ShareStatus share status result
+// ShareStatus share status result
 type ShareStatus struct {
 	ShareID string `json:"share_id,omitempty"`
 	Status  string `json:"status,omitempty"`
@@ -121,7 +120,7 @@ func (s ShareStatus) String() string {
 	return string(b)
 }
 
-//UpdateShareStatus 更新任务执行结果
+// UpdateShareStatus 更新任务执行结果
 func (i *ImageShareItem) UpdateShareStatus(status string) error {
 	var ss = ShareStatus{
 		ShareID: i.ShareID,

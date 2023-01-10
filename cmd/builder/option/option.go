@@ -24,10 +24,11 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/mq/client"
 )
 
-//Config config server
+// Config config server
 type Config struct {
 	EtcdEndPoints        []string
 	EtcdCaFile           string
@@ -37,6 +38,7 @@ type Config struct {
 	EtcdPrefix           string
 	ClusterName          string
 	MysqlConnectionInfo  string
+	KanikoImage          string
 	DBType               string
 	PrometheusMetricPath string
 	EventLogServers      []string
@@ -55,21 +57,23 @@ type Config struct {
 	CachePVCName         string
 	CacheMode            string
 	CachePath            string
+	ContainerRuntime     string
+	RuntimeEndpoint      string
 }
 
-//Builder  builder server
+// Builder  builder server
 type Builder struct {
 	Config
 	LogLevel string
 	RunMode  string //default,sync
 }
 
-//NewBuilder new server
+// NewBuilder new server
 func NewBuilder() *Builder {
 	return &Builder{}
 }
 
-//AddFlags config
+// AddFlags config
 func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the builder log level")
 	fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://127.0.0.1:2379"}, "etcd v3 cluster endpoints.")
@@ -79,6 +83,7 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&a.EtcdTimeout, "etcd-timeout", 5, "etcd http timeout seconds")
 	fs.StringVar(&a.EtcdPrefix, "etcd-prefix", "/store", "the etcd data save key prefix ")
 	fs.StringVar(&a.PrometheusMetricPath, "metric", "/metrics", "prometheus metrics path")
+	fs.StringVar(&a.KanikoImage, "kaniko-image", "swr.cn-southwest-2.myhuaweicloud.com/wutong/kaniko-executor:latest", "kaniko image version")
 	fs.StringVar(&a.DBType, "db-type", "mysql", "db type mysql or etcd")
 	fs.StringVar(&a.MysqlConnectionInfo, "mysql", "root:admin@tcp(127.0.0.1:3306)/region", "mysql db connection info")
 	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
@@ -98,9 +103,11 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.CachePVCName, "pvc-cache-name", "cache", "pvc name of cache")
 	fs.StringVar(&a.CacheMode, "cache-mode", "sharefile", "volume cache mount type, can be hostpath and sharefile, default is sharefile, which mount using pvc")
 	fs.StringVar(&a.CachePath, "cache-path", "/cache", "volume cache mount path, when cache-mode using hostpath, default path is /cache")
+	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
+	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.RuntimeEndpointDocker, "container runtime endpoint")
 }
 
-//SetLog 设置log
+// SetLog 设置log
 func (a *Builder) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
@@ -110,7 +117,7 @@ func (a *Builder) SetLog() {
 	logrus.SetLevel(level)
 }
 
-//CheckConfig check config
+// CheckConfig check config
 func (a *Builder) CheckConfig() error {
 	if a.Topic != client.BuilderTopic && a.Topic != client.WindowsBuilderTopic {
 		return fmt.Errorf("Topic is only suppory `%s` and `%s`", client.BuilderTopic, client.WindowsBuilderTopic)

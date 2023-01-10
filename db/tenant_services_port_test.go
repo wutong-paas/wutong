@@ -32,7 +32,7 @@ import (
 
 func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 	dbname := "region"
-	rootpw := "wutong
+	rootpw := "wutong"
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
@@ -135,7 +135,7 @@ func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 
 func TestListInnerPorts(t *testing.T) {
 	dbname := "region"
-	rootpw := "wutong
+	rootpw := "wutong"
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{

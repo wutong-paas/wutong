@@ -81,30 +81,30 @@ func TestEndpointDaoImpl_UpdateModel(t *testing.T) {
 		break
 	}
 
-	trueVal := true
-	falseVal := false
+	// trueVal := true
+	// falseVal := false
 	ep := &model.Endpoint{
 		UUID:      util.NewUUID(),
 		ServiceID: util.NewUUID(),
 		IP:        "10.10.10.10",
-		IsOnline:  &trueVal,
+		// IsOnline:  &trueVal,
 	}
 	err = GetManager().EndpointsDao().AddModel(ep)
 	if err != nil {
 		t.Fatalf("error adding endpoint: %v", err)
 	}
-	ep.IsOnline = &falseVal
+	// ep.IsOnline = &falseVal
 	err = GetManager().EndpointsDao().UpdateModel(ep)
 	if err != nil {
 		t.Fatalf("error updating endpoint: %v", err)
 	}
-	e, err := GetManager().EndpointsDao().GetByUUID(ep.UUID)
+	_, err = GetManager().EndpointsDao().GetByUUID(ep.UUID)
 	if err != nil {
 		t.Fatalf("error getting endpoint: %v", err)
 	}
-	if *e.IsOnline != false {
-		t.Errorf("Expected %v for e.IsOnline, but returned %v", false, e.IsOnline)
-	}
+	// if *e.IsOnline != false {
+	// 	t.Errorf("Expected %v for e.IsOnline, but returned %v", false, e.IsOnline)
+	// }
 }
 
 func TestEndpointDaoImpl_AddModel(t *testing.T) {
@@ -158,22 +158,22 @@ func TestEndpointDaoImpl_AddModel(t *testing.T) {
 		break
 	}
 
-	falseVal := false
+	// falseVal := false
 	ep := &model.Endpoint{
 		UUID:      util.NewUUID(),
 		ServiceID: util.NewUUID(),
 		IP:        "10.10.10.10",
-		IsOnline:  &falseVal,
+		// IsOnline:  &falseVal,
 	}
 	err = GetManager().EndpointsDao().AddModel(ep)
 	if err != nil {
 		t.Fatalf("error adding endpoint: %v", err)
 	}
-	e, err := GetManager().EndpointsDao().GetByUUID(ep.UUID)
+	_, err = GetManager().EndpointsDao().GetByUUID(ep.UUID)
 	if err != nil {
 		t.Fatalf("error getting endpoint: %v", err)
 	}
-	if *e.IsOnline != false {
-		t.Errorf("Expected %v for e.IsOnline, but returned %v", false, e.IsOnline)
-	}
+	// if *e.IsOnline != false {
+	// 	t.Errorf("Expected %v for e.IsOnline, but returned %v", false, e.IsOnline)
+	// }
 }

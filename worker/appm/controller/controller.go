@@ -23,36 +23,36 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/oam-dev/kubevela/pkg/utils/apply"
 	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/apply"
 	"github.com/wutong-paas/wutong/worker/appm/store"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//Controller service operating controller interface
+// Controller service operating controller interface
 type Controller interface {
 	Begin()
 	Stop() error
 }
 
-//TypeController controller type
+// TypeController controller type
 type TypeController string
 
-//TypeStartController start service type
+// TypeStartController start service type
 var TypeStartController TypeController = "start"
 
-//TypeStopController start service type
+// TypeStopController start service type
 var TypeStopController TypeController = "stop"
 
-//TypeRestartController restart service type
+// TypeRestartController restart service type
 var TypeRestartController TypeController = "restart"
 
-//TypeUpgradeController start service type
+// TypeUpgradeController start service type
 var TypeUpgradeController TypeController = "upgrade"
 
-//TypeScalingController start service type
+// TypeScalingController start service type
 var TypeScalingController TypeController = "scaling"
 
 // TypeApplyRuleController -
@@ -64,7 +64,7 @@ var TypeApplyConfigController TypeController = "apply_config"
 // TypeControllerRefreshHPA -
 var TypeControllerRefreshHPA TypeController = "refreshhpa"
 
-//Manager controller manager
+// Manager controller manager
 type Manager struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -76,7 +76,7 @@ type Manager struct {
 	lock          sync.Mutex
 }
 
-//NewManager new manager
+// NewManager new manager
 func NewManager(store store.Storer, client kubernetes.Interface, runtimeClient client.Client) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Manager{
@@ -90,20 +90,20 @@ func NewManager(store store.Storer, client kubernetes.Interface, runtimeClient c
 	}
 }
 
-//Stop stop all controller
+// Stop stop all controller
 func (m *Manager) Stop() error {
 	m.cancel()
 	return nil
 }
 
-//GetControllerSize get running controller number
+// GetControllerSize get running controller number
 func (m *Manager) GetControllerSize() int {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	return len(m.controllers)
 }
 
-//StartController create and start service controller
+// StartController create and start service controller
 func (m *Manager) StartController(controllerType TypeController, apps ...v1.AppService) error {
 	var controller Controller
 	controllerID := util.NewUUID()

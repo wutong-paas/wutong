@@ -21,7 +21,6 @@ package build
 import (
 	"testing"
 
-	"github.com/docker/docker/client"
 	"github.com/wutong-paas/wutong/builder/parser/code"
 	"github.com/wutong-paas/wutong/event"
 )
@@ -31,7 +30,7 @@ func TestBuildNetCore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dockerCli, _ := client.NewEnvClient()
+	// dockerCli, _ := client.NewEnvClient()
 	req := &Request{
 		SourceDir:     "/Users/qingguo/wutong/dotnet-docker/samples/aspnetapp/test",
 		CacheDir:      "/Users/qingguo/wutong/dotnet-docker/samples/aspnetapp/test/cache",
@@ -41,7 +40,7 @@ func TestBuildNetCore(t *testing.T) {
 		Commit:        Commit{User: "barnett"},
 		Lang:          code.NetCore,
 		Logger:        event.GetTestLogger(),
-		DockerClient:  dockerCli,
+		// DockerClient:  dockerCli,
 	}
 	res, err := build.Build(req)
 	if err != nil {
