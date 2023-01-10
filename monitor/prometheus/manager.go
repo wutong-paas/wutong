@@ -128,10 +128,8 @@ func (p *Manager) StartDaemon(errchan chan error) {
 	}
 	process, err := os.StartProcess("/bin/prometheus", p.Opt.StartArgs, procAttr)
 	if err != nil {
-		if err != nil {
-			logrus.Error("Can not start prometheus daemon: ", err)
-			os.Exit(11)
-		}
+		logrus.Error("Can not start prometheus daemon: ", err)
+		os.Exit(11)
 	}
 	p.Process = process
 
