@@ -18,84 +18,84 @@
 
 package main
 
-import (
-	"errors"
-	"fmt"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
+// import (
+// 	"errors"
+// 	"fmt"
+// 	"os"
+// 	"os/signal"
+// 	"sync"
+// 	"syscall"
+// 	"time"
 
-	"github.com/pebbe/zmq4"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
-	"github.com/twinj/uuid"
-)
+// 	"github.com/pebbe/zmq4"
+// 	"github.com/sirupsen/logrus"
+// 	"github.com/spf13/pflag"
+// 	"github.com/twinj/uuid"
+// )
 
-const (
-	REQUEST_TIMEOUT = 1000 * time.Millisecond
-	MAX_RETRIES     = 3 //  Before we abandon
-)
+// const (
+// 	REQUEST_TIMEOUT = 1000 * time.Millisecond
+// 	MAX_RETRIES     = 3 //  Before we abandon
+// )
 
-var endpoint string
-var coreNum int
-var t string
+// var endpoint string
+// var coreNum int
+// var t string
 
-func AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&endpoint, "endpoint", "tcp://127.0.0.1:6366", "event server url")
-	fs.IntVar(&coreNum, "core", 10, "core number")
-	fs.StringVar(&t, "t", "1s", "时间间隔")
-}
+// func AddFlags(fs *pflag.FlagSet) {
+// 	fs.StringVar(&endpoint, "endpoint", "tcp://127.0.0.1:6366", "event server url")
+// 	fs.IntVar(&coreNum, "core", 10, "core number")
+// 	fs.StringVar(&t, "t", "1s", "时间间隔")
+// }
 
-func main() {
-	AddFlags(pflag.CommandLine)
-	pflag.Parse()
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-	var wait sync.WaitGroup
-	d, _ := time.ParseDuration(t)
-	for i := 0; i < coreNum; i++ {
-		wait.Add(1)
-		go func(en string) {
-			client, _ := zmq4.NewSocket(zmq4.REQ)
-			client.Connect(en)
-			defer client.Close()
-			id := uuid.NewV4()
-		Continuous:
-			for {
-				request := []string{fmt.Sprintf(`{"event_id":"%s","message":"hello word2","time":"%s"}`, id, time.Now().Format(time.RFC3339))}
-				_, err := client.SendMessage(request)
-				if err != nil {
-					logrus.Error("Send:", err)
-				}
-				poller := zmq4.NewPoller()
-				poller.Add(client, zmq4.POLLIN)
-				polled, err := poller.Poll(REQUEST_TIMEOUT)
-				if err != nil {
-					logrus.Error("Red:", err)
-				}
-				reply := []string{}
-				if len(polled) > 0 {
-					reply, err = client.RecvMessage(0)
-				} else {
-					err = errors.New("Time out")
-				}
-				if len(reply) > 0 {
-					logrus.Info(en, ":", reply[0])
-				}
-				if err != nil {
-					logrus.Error(err)
-					break Continuous
-				}
-				select {
-				case <-interrupt:
-					break Continuous
-				case <-time.Tick(d):
-				}
-			}
-			wait.Done()
-		}(endpoint)
-	}
-	wait.Wait()
-}
+// func main() {
+// 	AddFlags(pflag.CommandLine)
+// 	pflag.Parse()
+// 	interrupt := make(chan os.Signal, 1)
+// 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+// 	var wait sync.WaitGroup
+// 	d, _ := time.ParseDuration(t)
+// 	for i := 0; i < coreNum; i++ {
+// 		wait.Add(1)
+// 		go func(en string) {
+// 			client, _ := zmq4.NewSocket(zmq4.REQ)
+// 			client.Connect(en)
+// 			defer client.Close()
+// 			id := uuid.NewV4()
+// 		Continuous:
+// 			for {
+// 				request := []string{fmt.Sprintf(`{"event_id":"%s","message":"hello word2","time":"%s"}`, id, time.Now().Format(time.RFC3339))}
+// 				_, err := client.SendMessage(request)
+// 				if err != nil {
+// 					logrus.Error("Send:", err)
+// 				}
+// 				poller := zmq4.NewPoller()
+// 				poller.Add(client, zmq4.POLLIN)
+// 				polled, err := poller.Poll(REQUEST_TIMEOUT)
+// 				if err != nil {
+// 					logrus.Error("Red:", err)
+// 				}
+// 				reply := []string{}
+// 				if len(polled) > 0 {
+// 					reply, err = client.RecvMessage(0)
+// 				} else {
+// 					err = errors.New("Time out")
+// 				}
+// 				if len(reply) > 0 {
+// 					logrus.Info(en, ":", reply[0])
+// 				}
+// 				if err != nil {
+// 					logrus.Error(err)
+// 					break Continuous
+// 				}
+// 				select {
+// 				case <-interrupt:
+// 					break Continuous
+// 				case <-time.Tick(d):
+// 				}
+// 			}
+// 			wait.Done()
+// 		}(endpoint)
+// 	}
+// 	wait.Wait()
+// }

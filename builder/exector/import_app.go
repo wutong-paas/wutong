@@ -30,12 +30,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong-oam/pkg/localimport"
 	"github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/event"
 )
@@ -44,7 +44,7 @@ func init() {
 	RegisterWorker("import_app", NewImportApp)
 }
 
-//ImportApp Export app to specified format(wutong-app or dockercompose)
+// ImportApp Export app to specified format(wutong-app or dockercompose)
 type ImportApp struct {
 	EventID       string             `json:"event_id"`
 	Format        string             `json:"format"`
@@ -52,12 +52,13 @@ type ImportApp struct {
 	Apps          []string           `json:"apps"`
 	ServiceImage  model.ServiceImage `json:"service_image"`
 	Logger        event.Logger
-	DockerClient  *client.Client
 	oldAPPPath    map[string]string
 	oldPluginPath map[string]string
+	// ContainerdCli export.ContainerdAPI
+	ImageClient sources.ImageClient
 }
 
-//NewImportApp create
+// NewImportApp create
 func NewImportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	var importApp ImportApp
 	if err := json.Unmarshal(in, &importApp); err != nil {
@@ -70,33 +71,34 @@ func NewImportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	}
 	logrus.Infof("load app image to hub %s", importApp.ServiceImage.HubURL)
 	importApp.Logger = event.GetManager().GetLogger(importApp.EventID)
-	importApp.DockerClient = m.DockerClient
+	// importApp.ContainerdCli = m.ContainerdCli
+	importApp.ImageClient = m.imageClient
 	importApp.oldAPPPath = make(map[string]string)
 	importApp.oldPluginPath = make(map[string]string)
 	return &importApp, nil
 }
 
-//Stop stop
+// Stop stop
 func (i *ImportApp) Stop() error {
 	return nil
 }
 
-//Name return worker name
+// Name return worker name
 func (i *ImportApp) Name() string {
 	return "import_app"
 }
 
-//GetLogger GetLogger
+// GetLogger GetLogger
 func (i *ImportApp) GetLogger() event.Logger {
 	return i.Logger
 }
 
-//ErrorCallBack if run error will callback
+// ErrorCallBack if run error will callback
 func (i *ImportApp) ErrorCallBack(err error) {
 	i.updateStatus("failed")
 }
 
-//Run Run
+// Run Run
 func (i *ImportApp) Run(timeout time.Duration) error {
 	if i.Format == "wutong-app" {
 		err := i.importApp()
@@ -121,7 +123,11 @@ func (i *ImportApp) importApp() error {
 			defer wait.Done()
 			appFile := filepath.Join(oldSourceDir, app)
 			tmpDir := path.Join(oldSourceDir, app+"-cache")
-			li := localimport.New(logrus.StandardLogger(), i.DockerClient, tmpDir)
+			li, err := localimport.New(logrus.StandardLogger(), i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), tmpDir)
+			if err != nil {
+				logrus.Errorf("create localimport failure %s", err.Error())
+				return
+			}
 			if err := i.updateStatusForApp(app, "importing"); err != nil {
 				logrus.Errorf("Failed to update status to importing for app %s: %v", app, err)
 			}

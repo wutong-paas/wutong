@@ -46,14 +46,14 @@ func TestCreateJob(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dockerClient, err := client.NewEnvClient()
-	if err != nil {
-		t.Fatal("new docker error: ", err.Error())
-	}
+	// dockerClient, err := client.NewEnvClient()
+	// if err != nil {
+	// 	t.Fatal("new docker error: ", err.Error())
+	// }
 	logger := event.GetManager().GetLogger("0000")
 	req := Request{
-		ServerType:    "git",
-		DockerClient:  dockerClient,
+		ServerType: "git",
+		// DockerClient:  dockerClient,
 		KubeClient:    clientset,
 		ServiceID:     "d9b8d718510dc53118af1e1219e36d3a",
 		DeployVersion: "123",

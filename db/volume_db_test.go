@@ -33,7 +33,7 @@ import (
 
 func TestManager_TenantServiceConfigFileDaoImpl_UpdateModel(t *testing.T) {
 	dbname := "region"
-	rootpw := "wutong
+	rootpw := "wutong"
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{

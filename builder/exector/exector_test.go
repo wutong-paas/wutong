@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/docker/docker/client"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/wutong-paas/wutong/builder/parser/code"
@@ -58,7 +57,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 		t.Fatal(err)
 	}
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
-	dockerClient, err := client.NewEnvClient()
+	// dockerClient, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +77,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	e := &exectorManager{
-		DockerClient:      dockerClient,
+		// DockerClient:      dockerClient,
 		KubeClient:        kubeClient,
 		EtcdCli:           etcdCli,
 		tasks:             make(chan *pb.TaskMessage, maxConcurrentTask),

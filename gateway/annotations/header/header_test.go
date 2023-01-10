@@ -18,44 +18,44 @@
 
 package header
 
-import (
-	api "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
-)
+// import (
+// 	api "k8s.io/api/core/v1"
+// 	networkingv1 "k8s.io/api/networking/v1"
+// 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+// 	"k8s.io/apimachinery/pkg/util/intstr"
+// )
 
-func buildIngress() *networkingv1.Ingress {
-	defaultBackend := extensions.IngressBackend{
-		ServiceName: "default-backend",
-		ServicePort: intstr.FromInt(80),
-	}
+// func buildIngress() *networkingv1.Ingress {
+// 	defaultBackend := extensions.IngressBackend{
+// 		ServiceName: "default-backend",
+// 		ServicePort: intstr.FromInt(80),
+// 	}
 
-	return &networkingv1.Ingress{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "foo",
-			Namespace: api.NamespaceDefault,
-		},
-		Spec: extensions.IngressSpec{
-			Backend: &extensions.IngressBackend{
-				ServiceName: "default-backend",
-				ServicePort: intstr.FromInt(80),
-			},
-			Rules: []extensions.IngressRule{
-				{
-					Host: "foo.bar.com",
-					IngressRuleValue: extensions.IngressRuleValue{
-						HTTP: &extensions.HTTPIngressRuleValue{
-							Paths: []extensions.HTTPIngressPath{
-								{
-									Path:    "/foo",
-									Backend: defaultBackend,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-}
+// 	return &networkingv1.Ingress{
+// 		ObjectMeta: meta_v1.ObjectMeta{
+// 			Name:      "foo",
+// 			Namespace: api.NamespaceDefault,
+// 		},
+// 		Spec: extensions.IngressSpec{
+// 			Backend: &extensions.IngressBackend{
+// 				ServiceName: "default-backend",
+// 				ServicePort: intstr.FromInt(80),
+// 			},
+// 			Rules: []extensions.IngressRule{
+// 				{
+// 					Host: "foo.bar.com",
+// 					IngressRuleValue: extensions.IngressRuleValue{
+// 						HTTP: &extensions.HTTPIngressRuleValue{
+// 							Paths: []extensions.HTTPIngressPath{
+// 								{
+// 									Path:    "/foo",
+// 									Backend: defaultBackend,
+// 								},
+// 							},
+// 						},
+// 					},
+// 				},
+// 			},
+// 		},
+// 	}
+// }

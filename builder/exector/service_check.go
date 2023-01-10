@@ -32,7 +32,7 @@ import (
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 )
 
-//ServiceCheckInput 任务输入数据
+// ServiceCheckInput 任务输入数据
 type ServiceCheckInput struct {
 	CheckUUID string `json:"uuid"`
 	//检测来源类型
@@ -49,7 +49,7 @@ type ServiceCheckInput struct {
 	EventID    string `json:"event_id"`
 }
 
-//ServiceCheckResult 应用检测结果
+// ServiceCheckResult 应用检测结果
 type ServiceCheckResult struct {
 	//检测状态 Success Failure
 	CheckStatus string                `json:"check_status"`
@@ -57,7 +57,7 @@ type ServiceCheckResult struct {
 	ServiceInfo []parser.ServiceInfo  `json:"service_info"`
 }
 
-//CreateResult 创建检测结果
+// CreateResult 创建检测结果
 func CreateResult(ErrorInfos parser.ParseErrorList, ServiceInfo []parser.ServiceInfo) (ServiceCheckResult, error) {
 	var sr ServiceCheckResult
 	if ErrorInfos != nil && ErrorInfos.IsFatalError() {
@@ -77,7 +77,7 @@ func CreateResult(ErrorInfos parser.ParseErrorList, ServiceInfo []parser.Service
 	return sr, nil
 }
 
-//serviceCheck 应用创建源检测
+// serviceCheck 应用创建源检测
 func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 	//step1 判断应用源类型
 	//step2 获取应用源介质，镜像Or源码
@@ -102,7 +102,7 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 	var pr parser.Parser
 	switch input.SourceType {
 	case "docker-run":
-		pr = parser.CreateDockerRunOrImageParse(input.Username, input.Password, input.SourceBody, e.DockerClient, logger)
+		pr = parser.CreateDockerRunOrImageParse(input.Username, input.Password, input.SourceBody, e.imageClient, logger)
 	case "docker-compose":
 		var yamlbody = input.SourceBody
 		if input.SourceBody[0] == '{' {
@@ -114,7 +114,7 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 			}
 			yamlbody = string(yamlbyte)
 		}
-		pr = parser.CreateDockerComposeParse(yamlbody, e.DockerClient, input.Username, input.Password, logger)
+		pr = parser.CreateDockerComposeParse(yamlbody, input.Username, input.Password, logger)
 	case "sourcecode":
 		pr = parser.CreateSourceCodeParse(input.SourceBody, logger)
 	case "third-party-service":

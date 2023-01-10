@@ -47,7 +47,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-//Controller app runtime master controller
+// Controller app runtime master controller
 type Controller struct {
 	ctx                 context.Context
 	cancel              context.CancelFunc
@@ -80,7 +80,7 @@ type Controller struct {
 	mgr        ctrl.Manager
 }
 
-//NewMasterController new master controller
+// NewMasterController new master controller
 func NewMasterController(conf option.Config, store store.Storer, kubeClient kubernetes.Interface, wutongClient versioned.Interface, restConfig *rest.Config) (*Controller, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -165,12 +165,12 @@ func NewMasterController(conf option.Config, store store.Storer, kubeClient kube
 	}, nil
 }
 
-//IsLeader is leader
+// IsLeader is leader
 func (m *Controller) IsLeader() bool {
 	return m.isLeader
 }
 
-//Start start
+// Start start
 func (m *Controller) Start() error {
 	logrus.Debug("master controller starting")
 	start := func(ctx context.Context) {
@@ -215,7 +215,7 @@ func (m *Controller) Start() error {
 		m.mgr = mgr
 		m.controllers = append(m.controllers, thirdComponentController)
 		stopchan := make(chan struct{})
-		go m.mgr.Start(stopchan)
+		go m.mgr.Start(ctx)
 
 		defer func() { stopchan <- struct{}{} }()
 
@@ -262,12 +262,12 @@ func (m *Controller) Start() error {
 	return nil
 }
 
-//Stop stop
+// Stop stop
 func (m *Controller) Stop() {
 	close(m.stopCh)
 }
 
-//Scrape scrape app runtime
+// Scrape scrape app runtime
 func (m *Controller) Scrape(ch chan<- prometheus.Metric, scrapeDurationDesc *prometheus.Desc) {
 	if !m.isLeader {
 		return

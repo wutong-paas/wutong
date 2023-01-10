@@ -22,14 +22,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/builder"
@@ -111,8 +110,9 @@ func (s *slugBuild) writeRunDockerfile(sourceDir, packageName string, envs map[s
 	 ENV CODE_COMMIT_MESSAGE=${CODE_COMMIT_MESSAGE}
 	 ENV VERSION=%s
 	`
+	logrus.Debugf("cacheDir:%v, from:%v, packageName:%v, Dir(slugPackage):%v", sourceDir, builder.RUNNERIMAGENAME, packageName, path.Dir(packageName))
 	result := util.ParseVariable(fmt.Sprintf(runDockerfile, builder.RUNNERIMAGENAME, packageName, s.re.DeployVersion), envs)
-	return ioutil.WriteFile(path.Join(sourceDir, "Dockerfile"), []byte(result), 0755)
+	return os.WriteFile(path.Join(sourceDir, "Dockerfile"), []byte(result), 0755)
 }
 
 // buildRunnerImage Wrap slug in the runner image
@@ -137,50 +137,15 @@ func (s *slugBuild) buildRunnerImage(slugPackage string) (string, error) {
 		return "", fmt.Errorf("write default runtime dockerfile error:%s", err.Error())
 	}
 	//build runtime image
-	runbuildOptions := types.ImageBuildOptions{
-		BuildArgs: map[string]*string{
-			"CODE_COMMIT_HASH":    &s.re.Commit.Hash,
-			"CODE_COMMIT_USER":    &s.re.Commit.User,
-			"CODE_COMMIT_MESSAGE": &s.re.Commit.Message,
-		},
-		Tags:        []string{imageName},
-		Remove:      true,
-		NetworkMode: ImageBuildHostNetworkMode,
-		AuthConfigs: GetTenantRegistryAuthSecrets(s.re.KubeClient, s.re.Ctx, s.re.TenantID),
-	}
-	if _, ok := s.re.BuildEnvs["NO_CACHE"]; ok {
-		runbuildOptions.NoCache = true
-	} else {
-		runbuildOptions.NoCache = false
-	}
-	// pull image runner
-	if err := sources.ImagesPullAndPush(builder.RUNNERIMAGENAME, builder.ONLINERUNNERIMAGENAME, "", "", s.re.Logger); err != nil {
+	if err := s.re.ImageClient.ImagesPullAndPush(builder.RUNNERIMAGENAME, builder.ONLINERUNNERIMAGENAME, "", "", s.re.Logger); err != nil {
 		return "", fmt.Errorf("pull image %s: %v", builder.RUNNERIMAGENAME, err)
 	}
 	logrus.Infof("pull image %s successfully.", builder.RUNNERIMAGENAME)
-	err := sources.ImageBuild(s.re.DockerClient, cacheDir, runbuildOptions, s.re.Logger, 30)
+	err := sources.ImageBuild(cacheDir, s.re.WtNamespace, s.re.ServiceID, s.re.DeployVersion, s.re.Logger, "run-build", "", s.re.KanikoImage)
 	if err != nil {
 		s.re.Logger.Error(fmt.Sprintf("build image %s of new version failure", imageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("build image error: %s", err.Error())
 		return "", err
-	}
-	// check build image exist
-	_, err = sources.ImageInspectWithRaw(s.re.DockerClient, imageName)
-	if err != nil {
-		s.re.Logger.Error(fmt.Sprintf("build image %s of service version failure", imageName), map[string]string{"step": "builder-exector", "status": "failure"})
-		logrus.Errorf("get image inspect error: %s", err.Error())
-		return "", err
-	}
-	s.re.Logger.Info("build image of new version success, will push to local registry", map[string]string{"step": "builder-exector"})
-	err = sources.ImagePush(s.re.DockerClient, imageName, builder.REGISTRYUSER, builder.REGISTRYPASS, s.re.Logger, 10)
-	if err != nil {
-		s.re.Logger.Error("push image failure", map[string]string{"step": "builder-exector"})
-		logrus.Errorf("push image error: %s", err.Error())
-		return "", err
-	}
-	s.re.Logger.Info("push image of new version success", map[string]string{"step": "builder-exector"})
-	if err := sources.ImageRemove(s.re.DockerClient, imageName); err != nil {
-		logrus.Errorf("remove image %s failure %s", imageName, err.Error())
 	}
 	return imageName, nil
 }
@@ -322,8 +287,13 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	re.Logger.Info(util.Translation("Start make code package"), map[string]string{"step": "build-exector"})
 	start := time.Now()
 	var sourceTarFileName string
-	if re.ServerType != "oss" {
+	if re.ServerType != "oss" && re.ServerType != "pkg" {
 		var err error
+		// handle nodejs or static dir
+		if err := s.HandleNodeJsDir(re); err != nil {
+			logrus.Error("handle nodejs code error:", err)
+			return err
+		}
 		sourceTarFileName, err = s.getSourceCodeTarFile(re)
 		if err != nil {
 			return fmt.Errorf("create source code tar file error:%s", err.Error())
@@ -467,7 +437,7 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	defer cancel()
 
 	// Get builder image at build time
-	if err := sources.ImagesPullAndPush(builder.BUILDERIMAGENAME, builder.ONLINEBUILDERIMAGENAME, "", "", re.Logger); err != nil {
+	if err := s.re.ImageClient.ImagesPullAndPush(builder.BUILDERIMAGENAME, builder.ONLINEBUILDERIMAGENAME, "", "", re.Logger); err != nil {
 		return err
 	}
 
@@ -542,4 +512,55 @@ type ErrorBuild struct {
 
 func (e *ErrorBuild) Error() string {
 	return fmt.Sprintf("Run build return %d", e.Code)
+}
+
+func (s *slugBuild) HandleNodeJsDir(re *Request) error {
+	if re.Lang == code.NodeJSStatic {
+		if ok, _ := util.FileExists(path.Join(re.SourceDir, "nodestatic.json")); !ok {
+			filePtr, err := os.Create(path.Join(re.SourceDir, "nodestatic.json"))
+			if err != nil {
+				logrus.Error("create nodestatic json error:", err)
+				return err
+			}
+			defer filePtr.Close()
+			_, err = io.WriteString(filePtr, "{\"path\":\"dist\"}")
+			if err != nil {
+				logrus.Error("write nodestatic json error:", err)
+				return err
+			}
+		}
+	}
+	if re.BuildEnvs["PACKAGE_TOOL"] == "yarn" {
+		if ok, _ := util.FileExists(path.Join(re.SourceDir, "yarn.lock")); !ok {
+			filePtr, err := os.Create(path.Join(re.SourceDir, "yarn.lock"))
+			if err != nil {
+				logrus.Error("create nodestatic json error:", err)
+				return err
+			}
+			defer filePtr.Close()
+		}
+		if ok, _ := util.FileExists(path.Join(re.SourceDir, "package-lock.json")); ok {
+			if err := os.RemoveAll(path.Join(re.SourceDir, "package-lock.json")); err != nil {
+				logrus.Error("remove package-lock json error:", err)
+				return err
+			}
+		}
+	}
+	if re.BuildEnvs["PACKAGE_TOOL"] == "npm" {
+		if ok, _ := util.FileExists(path.Join(re.SourceDir, "package-lock.json")); !ok {
+			filePtr, err := os.Create(path.Join(re.SourceDir, "package-lock.json"))
+			if err != nil {
+				logrus.Error("create package-lock json error:", err)
+				return err
+			}
+			defer filePtr.Close()
+		}
+		if ok, _ := util.FileExists(path.Join(re.SourceDir, "yarn.lock")); ok {
+			if err := os.RemoveAll(path.Join(re.SourceDir, "yarn.lock")); err != nil {
+				logrus.Error("remove yarn.lock error:", err)
+				return err
+			}
+		}
+	}
+	return nil
 }

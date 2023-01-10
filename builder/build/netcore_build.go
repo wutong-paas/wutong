@@ -24,10 +24,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/util"
@@ -51,7 +48,7 @@ type netcoreBuild struct {
 	imageName      string
 	buildImageName string
 	sourceDir      string
-	dockercli      *client.Client
+	imageClient    sources.ImageClient
 	logger         event.Logger
 	serviceID      string
 }
@@ -62,11 +59,11 @@ func netcoreBuilder() (Build, error) {
 
 func (d *netcoreBuild) Build(re *Request) (*Response, error) {
 	defer d.clear()
-	d.dockercli = re.DockerClient
 	d.logger = re.Logger
 	d.serviceID = re.ServiceID
 	d.sourceDir = re.SourceDir
 	d.imageName = CreateImageName(re.ServiceID, re.DeployVersion)
+	d.imageClient = re.ImageClient
 
 	re.Logger.Info("start compiling the source code", map[string]string{"step": "builder-exector"})
 	// write dockerfile
@@ -74,39 +71,14 @@ func (d *netcoreBuild) Build(re *Request) (*Response, error) {
 		return nil, fmt.Errorf("write default dockerfile error:%s", err.Error())
 	}
 	// build image
-	runbuildOptions := types.ImageBuildOptions{
-		Tags:        []string{d.imageName},
-		Remove:      true,
-		NetworkMode: ImageBuildHostNetworkMode,
-		AuthConfigs: GetTenantRegistryAuthSecrets(re.KubeClient, re.Ctx, re.TenantID),
-	}
-	if _, ok := re.BuildEnvs["NO_CACHE"]; ok {
-		runbuildOptions.NoCache = true
-	} else {
-		runbuildOptions.NoCache = false
-	}
-	err := sources.ImageBuild(re.DockerClient, d.sourceDir, runbuildOptions, re.Logger, 60)
+	err := sources.ImageBuild(d.sourceDir, re.WtNamespace, re.ServiceID, re.DeployVersion, re.Logger, "run-build", "", re.KanikoImage)
 	if err != nil {
 		re.Logger.Error(fmt.Sprintf("build image %s failure, find log in wt-chaos", d.buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("build image error: %s", err.Error())
 		return nil, err
 	}
-	// check build image exist
-	_, err = sources.ImageInspectWithRaw(re.DockerClient, d.imageName)
-	if err != nil {
-		re.Logger.Error(fmt.Sprintf("build image %s failure, find log in wt-chaos", d.buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
-		logrus.Errorf("get image inspect error: %s", err.Error())
-		return nil, err
-	}
-	re.Logger.Info("build image success, start to push local image registry", map[string]string{"step": "builder-exector"})
-	err = sources.ImagePush(re.DockerClient, d.imageName, builder.REGISTRYUSER, builder.REGISTRYPASS, re.Logger, 5)
-	if err != nil {
-		re.Logger.Error("push image to local image registry faliure, find log in wt-chaos", map[string]string{"step": "builder-exector"})
-		logrus.Errorf("push image error: %s", err.Error())
-		return nil, err
-	}
 	re.Logger.Info("push image to push local image registry success", map[string]string{"step": "builder-exector"})
-	if err := sources.ImageRemove(re.DockerClient, d.imageName); err != nil {
+	if err := d.imageClient.ImageRemove(d.imageName); err != nil {
 		logrus.Errorf("remove image %s failure %s", d.imageName, err.Error())
 	}
 	return d.createResponse(), nil

@@ -23,12 +23,12 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/oam-dev/kubevela/pkg/utils/apply"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	wutonglistersv1alpha1 "github.com/wutong-paas/wutong/pkg/generated/listers/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/util/apply"
 	validation "github.com/wutong-paas/wutong/util/endpoint"
 	dis "github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/discover"
 	corev1 "k8s.io/api/core/v1"
@@ -68,7 +68,7 @@ type Reconciler struct {
 }
 
 // Reconcile is the main logic of appDeployment controller
-func (r *Reconciler) Reconcile(req ctrl.Request) (res reconcile.Result, retErr error) {
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (res reconcile.Result, retErr error) {
 	log := logrus.WithField("thirdcomponent", req)
 	commonResult := ctrl.Result{RequeueAfter: time.Second * 5}
 	component := &v1alpha1.ThirdComponent{}

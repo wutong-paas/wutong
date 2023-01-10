@@ -7,7 +7,7 @@ BASE_NAME=wutong
 IMAGE_REPO=${IMAGE_REPO:-'wutongpaas'}
 GOARCH=${BUILD_ARCH:-'amd64'}
 
-GO_VERSION=1.15
+GO_VERSION=1.17
 
 GOPROXY=${GOPROXY:-'https://goproxy.io'}
 
@@ -62,7 +62,7 @@ build::binary() {
 	elif [ "$1" = "chaos" ]; then
 		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
-		build_image="golang:1.15-alpine"
+		build_image="golang:${GO_VERSION}-alpine"
 	elif [ "$1" = "monitor" ]; then
 		CGO_ENABLED=0
 	fi
@@ -115,8 +115,8 @@ build::image() {
 		docker tag wt-$1:${VERSION} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 		docker push swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 
-		docker tag wt-$1:${VERSION} wutongpaas/wt-$1:${VERSION}
-		docker push wutongpaas/wt-$1:${VERSION}
+		# docker tag wt-$1:${VERSION} wutongpaas/wt-$1:${VERSION}
+		# docker push wutongpaas/wt-$1:${VERSION}
 	fi
 	popd
 	rm -rf "${build_image_dir}"

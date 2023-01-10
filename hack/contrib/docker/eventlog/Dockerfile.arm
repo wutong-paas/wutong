@@ -1,9 +1,13 @@
-FROM debian:buster
+# FROM debian:buster
+ARG BASE_IMAGE_VERSION
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:${BASE_IMAGE_VERSION}
 ARG RELEASE_DESC
       
-RUN apt-get update && apt-get install -y ca-certificates openssl libssl-dev libsodium-dev libpgm-dev libnorm-dev libgssapi-krb5-2 wget
+# RUN apt-get update && apt-get install -y ca-certificates openssl libssl-dev libsodium-dev libpgm-dev libnorm-dev libgssapi-krb5-2 wget
     
-RUN wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/libzmq.so.5 -O /usr/lib/libzmq.so.5
+# RUN wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/libzmq.so.5 -O /usr/lib/libzmq.so.5
+
+RUN apk add --no-cache libstdc++ ca-certificates openssl openssl-dev zeromq-dev
     
 COPY wutong-eventlog /run/wutong-eventlog
 ADD entrypoint.sh /run/entrypoint.sh

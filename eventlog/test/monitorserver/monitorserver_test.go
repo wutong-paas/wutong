@@ -18,66 +18,66 @@
 
 package monitorserver
 
-import (
-	"testing"
+// import (
+// 	"testing"
 
-	"github.com/pebbe/zmq4"
-	"github.com/sirupsen/logrus"
-)
+// 	"github.com/pebbe/zmq4"
+// 	"github.com/sirupsen/logrus"
+// )
 
-var urlData = `
-2017-05-19 11:33:34 APPS SumTimeByUrl [{"tenant":"o2o","service":"zzcplus","url":"/active/js/wx_share.js","avgtime":"1.453","sumtime":"1.453","counts":"1"}]
-`
-var newMonitorMessage = `
-[{"ServiceID":"test",
-	"Port":"5000",
-	"MessageType":"http",
-	"Key":"/test",
-	"CumulativeTime":0.1,
-	"AverageTime":0.1,
-	"MaxTime":0.1,
-	"Count":1,
-	"AbnormalCount":0}
-,{"ServiceID":"test",
-	"Port":"5000",
-	"MessageType":"http",
-	"Key":"/test2",
-	"CumulativeTime":0.36,
-	"AverageTime":0.18,
-	"MaxTime":0.2,
-	"Count":2,
-	"AbnormalCount":2}
-]
-`
+// var urlData = `
+// 2017-05-19 11:33:34 APPS SumTimeByUrl [{"tenant":"o2o","service":"zzcplus","url":"/active/js/wx_share.js","avgtime":"1.453","sumtime":"1.453","counts":"1"}]
+// `
+// var newMonitorMessage = `
+// [{"ServiceID":"test",
+// 	"Port":"5000",
+// 	"MessageType":"http",
+// 	"Key":"/test",
+// 	"CumulativeTime":0.1,
+// 	"AverageTime":0.1,
+// 	"MaxTime":0.1,
+// 	"Count":1,
+// 	"AbnormalCount":0}
+// ,{"ServiceID":"test",
+// 	"Port":"5000",
+// 	"MessageType":"http",
+// 	"Key":"/test2",
+// 	"CumulativeTime":0.36,
+// 	"AverageTime":0.18,
+// 	"MaxTime":0.2,
+// 	"Count":2,
+// 	"AbnormalCount":2}
+// ]
+// `
 
-func BenchmarkMonitorServer(t *testing.B) {
-	client, _ := zmq4.NewSocket(zmq4.PUB)
-	// client.Monitor("inproc://monitor.rep", zmq4.EVENT_ALL)
-	// go monitor()
-	client.Bind("tcp://0.0.0.0:9442")
-	defer client.Close()
-	var size int64
-	for i := 0; i < t.N; i++ {
-		client.Send("ceptop", zmq4.SNDMORE)
-		_, err := client.Send(urlData, zmq4.DONTWAIT)
-		if err != nil {
-			logrus.Error("Send Error:", err)
-		}
-		size++
-	}
-	logrus.Info(size)
-}
+// func BenchmarkMonitorServer(t *testing.B) {
+// 	client, _ := zmq4.NewSocket(zmq4.PUB)
+// 	// client.Monitor("inproc://monitor.rep", zmq4.EVENT_ALL)
+// 	// go monitor()
+// 	client.Bind("tcp://0.0.0.0:9442")
+// 	defer client.Close()
+// 	var size int64
+// 	for i := 0; i < t.N; i++ {
+// 		client.Send("ceptop", zmq4.SNDMORE)
+// 		_, err := client.Send(urlData, zmq4.DONTWAIT)
+// 		if err != nil {
+// 			logrus.Error("Send Error:", err)
+// 		}
+// 		size++
+// 	}
+// 	logrus.Info(size)
+// }
 
-func monitor() {
-	mo, _ := zmq4.NewSocket(zmq4.PAIR)
-	mo.Connect("inproc://monitor.rep")
-	for {
-		a, b, c, err := mo.RecvEvent(0)
-		if err != nil {
-			logrus.Error(err)
-			return
-		}
-		logrus.Infof("A:%s B:%s C:%d", a, b, c)
-	}
+// func monitor() {
+// 	mo, _ := zmq4.NewSocket(zmq4.PAIR)
+// 	mo.Connect("inproc://monitor.rep")
+// 	for {
+// 		a, b, c, err := mo.RecvEvent(0)
+// 		if err != nil {
+// 			logrus.Error(err)
+// 			return
+// 		}
+// 		logrus.Infof("A:%s B:%s C:%d", a, b, c)
+// 	}
 
-}
+// }

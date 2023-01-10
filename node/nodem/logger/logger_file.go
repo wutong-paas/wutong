@@ -573,9 +573,10 @@ type LogFile struct {
 	createDecoder   makeDecoderFunc
 	getTailReader   GetTailReaderFunc
 	perms           os.FileMode
+	logPath         string
 }
 
-//Close file close
+// Close file close
 func (w *LogFile) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -589,7 +590,7 @@ func (w *LogFile) Close() error {
 	return nil
 }
 
-//ReadConfig read log config
+// ReadConfig read log config
 type ReadConfig struct {
 	Since  time.Time
 	Until  time.Time
@@ -626,5 +627,6 @@ func NewLogFile(logPath string, maxFiles int, compress bool, decodeFunc makeDeco
 		createDecoder:   decodeFunc,
 		perms:           perms,
 		getTailReader:   getTailReader,
+		logPath:         logPath,
 	}, nil
 }

@@ -23,11 +23,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oam-dev/kubevela/pkg/utils/apply"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/gateway/annotations/parser"
+	"github.com/wutong-paas/wutong/util/apply"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"

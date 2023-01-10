@@ -34,7 +34,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 )
 
 func init() {
@@ -54,34 +53,35 @@ func init() {
 
 var buildcreaters map[code.Lang]CreaterBuild
 
-//Build app build pack
+// Build app build pack
 type Build interface {
 	Build(*Request) (*Response, error)
 }
 
-//CreaterBuild CreaterBuild
+// CreaterBuild CreaterBuild
 type CreaterBuild func() (Build, error)
 
-//MediumType Build output medium type
+// MediumType Build output medium type
 type MediumType string
 
-//ImageMediumType image type
+// ImageMediumType image type
 var ImageMediumType MediumType = "image"
 
-//SlugMediumType slug type
+// SlugMediumType slug type
 var SlugMediumType MediumType = "slug"
 
 // ImageBuildHostNetworkMode image build host network mode
 var ImageBuildHostNetworkMode = "host"
 
-//Response build result
+// Response build result
 type Response struct {
 	MediumPath string
 	MediumType MediumType
 }
 
-//Request build input
+// Request build input
 type Request struct {
+	KanikoImage   string
 	WtNamespace   string
 	WTDataPVCName string
 	CachePVCName  string
@@ -103,7 +103,7 @@ type Request struct {
 	Lang          code.Lang
 	BuildEnvs     map[string]string
 	Logger        event.Logger
-	DockerClient  *client.Client
+	ImageClient   sources.ImageClient
 	KubeClient    kubernetes.Interface
 	ExtraHosts    []string
 	HostAlias     []HostAlias
@@ -119,14 +119,14 @@ type HostAlias struct {
 	Hostnames []string `json:"hostnames,omitempty" protobuf:"bytes,2,rep,name=hostnames"`
 }
 
-//Commit Commit
+// Commit Commit
 type Commit struct {
 	User    string
 	Message string
 	Hash    string
 }
 
-//GetBuild GetBuild
+// GetBuild GetBuild
 func GetBuild(lang code.Lang) (Build, error) {
 	if fun, ok := buildcreaters[lang]; ok {
 		return fun()
@@ -134,7 +134,7 @@ func GetBuild(lang code.Lang) (Build, error) {
 	return slugBuilder()
 }
 
-//CreateImageName create image name
+// CreateImageName create image name
 func CreateImageName(serviceID, deployversion string) string {
 	imageName := strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, serviceID, deployversion))
 	component, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
