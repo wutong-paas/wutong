@@ -2252,7 +2252,7 @@ func (s *ServiceAction) GetPodContainerMemory(podNames []string) (map[string]map
 func (s *ServiceAction) GetPodContainerCPU(podNames []string) (map[string]map[string]string, error) {
 	cpuUsageMap := make(map[string]map[string]string, 10)
 	queryName := strings.Join(podNames, "|")
-	query := fmt.Sprintf(`container_cpu_usage_seconds_total{pod=~"%s"}`, queryName)
+	query := fmt.Sprintf(`rate(container_cpu_usage_seconds_total{pod=~"%s"}[5m])`, queryName)
 	metric := s.prometheusCli.GetMetric(query, time.Now())
 
 	for _, re := range metric.MetricData.MetricValues {
@@ -2260,7 +2260,7 @@ func (s *ServiceAction) GetPodContainerCPU(podNames []string) (map[string]map[st
 		var podName = re.Metadata["pod"]
 		var valuesBytes string
 		if re.Sample != nil {
-			valuesBytes = fmt.Sprintf("%d", int(re.Sample.Value()))
+			valuesBytes = fmt.Sprintf("%f", re.Sample.Value()*1000)
 		}
 		if _, ok := cpuUsageMap[podName]; ok {
 			cpuUsageMap[podName][containerName] = valuesBytes
