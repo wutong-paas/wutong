@@ -2142,6 +2142,8 @@ func (s *ServiceAction) GetPods(serviceID string) (*K8sPodInfos, error) {
 				containerInfos[container.ContainerName] = map[string]string{
 					"memory_limit": fmt.Sprintf("%d", container.MemoryLimit),
 					"memory_usage": "0",
+					"cpu_limit":    fmt.Sprintf("%d", container.CpuRequest), // TODO: should use cpu limit
+					"cpu_usage":    "0",
 				}
 			}
 			podInfo.Container = containerInfos
@@ -2153,6 +2155,14 @@ func (s *ServiceAction) GetPods(serviceID string) (*K8sPodInfos, error) {
 			for k := range c.Container {
 				if info, exist := containerMemInfo[c.PodName][k]; exist {
 					c.Container[k]["memory_usage"] = info
+				}
+			}
+		}
+		containerCpuInfo, _ := s.GetPodContainerCPU(podNames)
+		for _, c := range podsInfoList {
+			for k := range c.Container {
+				if info, exist := containerCpuInfo[c.PodName][k]; exist {
+					c.Container[k]["cpu_usage"] = info
 				}
 			}
 		}
@@ -2236,6 +2246,31 @@ func (s *ServiceAction) GetPodContainerMemory(podNames []string) (map[string]map
 		}
 	}
 	return memoryUsageMap, nil
+}
+
+// GetPodContainerCPU Use Prometheus to query cpu resources
+func (s *ServiceAction) GetPodContainerCPU(podNames []string) (map[string]map[string]string, error) {
+	cpuUsageMap := make(map[string]map[string]string, 10)
+	queryName := strings.Join(podNames, "|")
+	query := fmt.Sprintf(`rate(container_cpu_usage_seconds_total{pod=~"%s"}[5m])`, queryName)
+	metric := s.prometheusCli.GetMetric(query, time.Now())
+
+	for _, re := range metric.MetricData.MetricValues {
+		var containerName = re.Metadata["container"]
+		var podName = re.Metadata["pod"]
+		var valuesBytes string
+		if re.Sample != nil {
+			valuesBytes = fmt.Sprintf("%f", re.Sample.Value()*1000)
+		}
+		if _, ok := cpuUsageMap[podName]; ok {
+			cpuUsageMap[podName][containerName] = valuesBytes
+		} else {
+			cpuUsageMap[podName] = map[string]string{
+				containerName: valuesBytes,
+			}
+		}
+	}
+	return cpuUsageMap, nil
 }
 
 // TransServieToDelete trans service info to delete table
