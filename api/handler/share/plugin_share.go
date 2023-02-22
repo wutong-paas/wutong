@@ -33,20 +33,20 @@ import (
 	"github.com/wutong-paas/wutong/db"
 )
 
-//PluginShareHandle plugin share
+// PluginShareHandle plugin share
 type PluginShareHandle struct {
 	MQClient client.MQClient
 	EtcdCli  *clientv3.Client
 }
 
-//PluginResult share plugin api return
+// PluginResult share plugin api return
 type PluginResult struct {
 	EventID   string `json:"event_id"`
 	ShareID   string `json:"share_id"`
 	ImageName string `json:"image_name"`
 }
 
-//PluginShare PluginShare
+// PluginShare PluginShare
 type PluginShare struct {
 	// in: path
 	// required: true
@@ -74,30 +74,38 @@ type PluginShare struct {
 	}
 }
 
-//Share share app
+// Share share app
 func (s *PluginShareHandle) Share(ss PluginShare) (*PluginResult, *util.APIHandleError) {
-	_, err := db.GetManager().TenantPluginDao().GetPluginByID(ss.PluginID, ss.TenantID)
+	plugin, err := db.GetManager().TenantPluginDao().GetPluginByID(ss.PluginID, ss.TenantID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("query plugin error", err)
 	}
+
+	var shareImageName, localImageName string
 	//query new build version
 	version, err := db.GetManager().TenantPluginBuildVersionDao().GetLastBuildVersionByVersionID(ss.PluginID, ss.Body.PluginVersion)
+
 	if err != nil {
 		logrus.Error("query service deploy version error", err.Error())
-		return nil, util.CreateAPIHandleErrorFromDBError("query plugin version error", err)
+		shareImageName = plugin.ImageURL
+		localImageName = plugin.ImageURL
+		// return nil, util.CreateAPIHandleErrorFromDBError("query plugin version error", err)
+	} else {
+		localImageName = version.BuildLocalImage
+		shareImageName, err = version.CreateShareImage(ss.Body.ImageInfo.HubURL, ss.Body.ImageInfo.Namespace)
+		if err != nil {
+			return nil, util.CreateAPIHandleErrorf(500, "create share image name error:%s", err.Error())
+		}
 	}
 	shareID := uuid.NewV4().String()
-	shareImageName, err := version.CreateShareImage(ss.Body.ImageInfo.HubURL, ss.Body.ImageInfo.Namespace)
-	if err != nil {
-		return nil, util.CreateAPIHandleErrorf(500, "create share image name error:%s", err.Error())
-	}
+
 	info := map[string]interface{}{
 		"image_info":       ss.Body.ImageInfo,
 		"event_id":         ss.Body.EventID,
 		"tenant_name":      ss.TenantName,
 		"image_name":       shareImageName,
 		"share_id":         shareID,
-		"local_image_name": version.BuildLocalImage,
+		"local_image_name": localImageName,
 	}
 	err = s.MQClient.SendBuilderTopic(client.TaskStruct{
 		TaskType: "share-plugin",
@@ -111,7 +119,7 @@ func (s *PluginShareHandle) Share(ss PluginShare) (*PluginResult, *util.APIHandl
 	return &PluginResult{EventID: ss.Body.EventID, ShareID: shareID, ImageName: shareImageName}, nil
 }
 
-//ShareResult 分享应用结果查询
+// ShareResult 分享应用结果查询
 func (s *PluginShareHandle) ShareResult(shareID string) (i exector.ShareStatus, e *util.APIHandleError) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
