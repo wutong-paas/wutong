@@ -210,13 +210,14 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 					return err
 				}
 			}
-			// TODO: restore image
-			// if version.DeliveredType == "image" && version.FinalStatus == "success" {
-			// 	if err := b.downloadImage(backup, app, version); err != nil {
-			// 		logrus.Errorf("download app image error.%s", err.Error())
-			// 		return err
-			// 	}
-			// }
+			if backup.WithImageData {
+				if version.DeliveredType == "image" && version.FinalStatus == "success" {
+					if err := b.downloadImage(backup, app, version); err != nil {
+						logrus.Errorf("download app image error.%s", err.Error())
+						return err
+					}
+				}
+			}
 		}
 		b.Logger.Info(fmt.Sprintf("完成恢复应用(%s)运行环境", app.Service.ServiceAlias), map[string]string{"step": "restore_builder", "status": "running"})
 
@@ -333,25 +334,26 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 		return nil
 	}
 
-	// TODO: restore plugin image
-	// restore plugin image
-	// for _, pb := range appSnapshot.PluginBuildVersions {
-	// 	dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.cacheDir, pb.PluginID, pb.DeployVersion)
-	// 	if err := b.ImageClient.ImageLoad(dstDir, b.Logger); err != nil {
-	// 		b.Logger.Error(util.Translation("load image to local hub error"), map[string]string{"step": "restore_builder", "status": "failure"})
-	// 		logrus.Errorf("dst: %s; failed to load plugin image: %v", dstDir, err)
-	// 		return err
-	// 	}
-	// 	imageName := getNewImageName(pb.BuildLocalImage)
-	// 	if imageName != "" {
-	// 		if err := b.ImageClient.ImagePush(imageName, builder.REGISTRYUSER, builder.REGISTRYPASS, b.Logger, 30); err != nil {
-	// 			b.Logger.Error("push plugin image failure", map[string]string{"step": "restore_builder", "status": "failure"})
-	// 			logrus.Errorf("failure push image %s: %v", imageName, err)
-	// 			return err
-	// 		}
-	// 	}
-	// }
-	// b.Logger.Info("完成恢复插件镜像", map[string]string{"step": "restore_builder", "status": "running"})
+	if backup.WithImageData {
+		// restore plugin image
+		for _, pb := range appSnapshot.PluginBuildVersions {
+			dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.cacheDir, pb.PluginID, pb.DeployVersion)
+			if err := b.ImageClient.ImageLoad(dstDir, b.Logger); err != nil {
+				b.Logger.Error(util.Translation("load image to local hub error"), map[string]string{"step": "restore_builder", "status": "failure"})
+				logrus.Errorf("dst: %s; failed to load plugin image: %v", dstDir, err)
+				return err
+			}
+			imageName := getNewImageName(pb.BuildLocalImage)
+			if imageName != "" {
+				if err := b.ImageClient.ImagePush(imageName, builder.REGISTRYUSER, builder.REGISTRYPASS, b.Logger, 30); err != nil {
+					b.Logger.Error("push plugin image failure", map[string]string{"step": "restore_builder", "status": "failure"})
+					logrus.Errorf("failure push image %s: %v", imageName, err)
+					return err
+				}
+			}
+		}
+		b.Logger.Info("完成恢复插件镜像", map[string]string{"step": "restore_builder", "status": "running"})
+	}
 
 	return nil
 }

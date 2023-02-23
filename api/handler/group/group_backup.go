@@ -92,6 +92,7 @@ func (h *BackupHandle) NewBackup(b Backup) (*dbmodel.AppBackup, *util.APIHandleE
 		Status:     "starting",
 		Version:    b.Body.Version,
 		BackupMode: b.Body.Mode,
+		WithImageData: b.Body.WithImageData,
 	}
 	//check last backup task whether complete or version whether exist
 	if db.GetManager().AppBackupDao().CheckHistory(b.Body.GroupID, b.Body.Version) {
