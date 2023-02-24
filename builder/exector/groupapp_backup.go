@@ -55,16 +55,17 @@ var maxBackupVersionSize = 3
 
 // BackupAPPNew backup group app new version
 type BackupAPPNew struct {
-	GroupID     string   `json:"group_id" `
-	ServiceIDs  []string `json:"service_ids" `
-	Version     string   `json:"version"`
-	EventID     string
-	SourceDir   string `json:"source_dir"`
-	SourceType  string `json:"source_type"`
-	BackupID    string `json:"backup_id"`
-	BackupSize  int64
-	Logger      event.Logger
-	ImageClient sources.ImageClient
+	WithImageData bool     `json:"with_image_data"`
+	GroupID       string   `json:"group_id" `
+	ServiceIDs    []string `json:"service_ids" `
+	Version       string   `json:"version"`
+	EventID       string
+	SourceDir     string `json:"source_dir"`
+	SourceType    string `json:"source_type"`
+	BackupID      string `json:"backup_id"`
+	BackupSize    int64
+	Logger        event.Logger
+	ImageClient   sources.ImageClient
 
 	//full-online,full-offline
 	Mode     string `json:"mode"`
@@ -256,22 +257,28 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 						backupVersionSize++
 					}
 				}
-				if version.DeliveredType == "image" && version.FinalStatus == "success" {
-					if ok, _ := b.checkVersionExist(version); !ok {
-						version.FinalStatus = "lost"
-						continue
-					}
-					if err := b.saveImagePkg(app, version); err != nil {
-						logrus.Errorf("upload app %s version %s image error.%s", app.Service.ServiceName, version.BuildVersion, err.Error())
-					} else {
-						backupVersionSize++
+				if b.WithImageData {
+					if version.DeliveredType == "image" && version.FinalStatus == "success" {
+						if ok, _ := b.checkVersionExist(version); !ok {
+							version.FinalStatus = "lost"
+							continue
+						}
+						if err := b.saveImagePkg(app, version); err != nil {
+							logrus.Errorf("upload app %s version %s image error.%s", app.Service.ServiceName, version.BuildVersion, err.Error())
+						} else {
+							backupVersionSize++
+						}
 					}
 				}
+
 			}
-			if backupVersionSize == 0 {
-				b.Logger.Error(fmt.Sprintf("Application(%s) Backup build version failure.", app.Service.ServiceAlias), map[string]string{"step": "backup_builder", "status": "success"})
-				return fmt.Errorf("Application(%s) Backup build version failure", app.Service.ServiceAlias)
+			if b.WithImageData {
+				if backupVersionSize == 0 {
+					b.Logger.Error(fmt.Sprintf("Application(%s) Backup build version failure.", app.Service.ServiceAlias), map[string]string{"step": "backup_builder", "status": "success"})
+					return fmt.Errorf("Application(%s) Backup build version failure", app.Service.ServiceAlias)
+				}
 			}
+
 			logrus.Infof("backup app %s %d version", app.Service.ServiceName, backupVersionSize)
 			b.Logger.Info(fmt.Sprintf("Complete backup application (%s) runtime %d version", app.Service.ServiceAlias, backupVersionSize), map[string]string{"step": "backup_builder", "status": "success"})
 		}
@@ -305,19 +312,21 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 }
 
 func (b *BackupAPPNew) backupPluginInfo(appSnapshot *AppSnapshot) error {
-	b.Logger.Info("Start backup plugin", map[string]string{"step": "backup_builder", "status": "starting"})
-	for _, pv := range appSnapshot.PluginBuildVersions {
-		dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.SourceDir, pv.PluginID, pv.DeployVersion)
-		util.CheckAndCreateDir(filepath.Dir(dstDir))
-		if _, err := b.ImageClient.ImagePull(pv.BuildLocalImage, builder.REGISTRYUSER, builder.REGISTRYPASS, b.Logger, 20); err != nil {
-			b.Logger.Error(fmt.Sprintf("plugin image: %s; failed to pull image", pv.BuildLocalImage), map[string]string{"step": "backup_builder", "status": "failure"})
-			logrus.Errorf("plugin image: %s; failed to pull image: %v", pv.BuildLocalImage, err)
-			return err
-		}
-		if err := b.ImageClient.ImageSave(pv.BuildLocalImage, dstDir); err != nil {
-			b.Logger.Error(util.Translation("save image to local dir error"), map[string]string{"step": "backup_builder", "status": "failure"})
-			logrus.Errorf("plugin image: %s; failed to save image: %v", pv.BuildLocalImage, err)
-			return err
+	if b.WithImageData {
+		b.Logger.Info("Start backup plugin", map[string]string{"step": "backup_builder", "status": "starting"})
+		for _, pv := range appSnapshot.PluginBuildVersions {
+			dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.SourceDir, pv.PluginID, pv.DeployVersion)
+			util.CheckAndCreateDir(filepath.Dir(dstDir))
+			if _, err := b.ImageClient.ImagePull(pv.BuildLocalImage, builder.REGISTRYUSER, builder.REGISTRYPASS, b.Logger, 20); err != nil {
+				b.Logger.Error(fmt.Sprintf("plugin image: %s; failed to pull image", pv.BuildLocalImage), map[string]string{"step": "backup_builder", "status": "failure"})
+				logrus.Errorf("plugin image: %s; failed to pull image: %v", pv.BuildLocalImage, err)
+				return err
+			}
+			if err := b.ImageClient.ImageSave(pv.BuildLocalImage, dstDir); err != nil {
+				b.Logger.Error(util.Translation("save image to local dir error"), map[string]string{"step": "backup_builder", "status": "failure"})
+				logrus.Errorf("plugin image: %s; failed to save image: %v", pv.BuildLocalImage, err)
+				return err
+			}
 		}
 	}
 	return nil

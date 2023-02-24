@@ -49,13 +49,14 @@ type Backup struct {
 	// required: true
 	TenantName string `json:"tenant_name"`
 	Body       struct {
-		EventID    string   `json:"event_id" validate:"event_id|required"`
-		GroupID    string   `json:"group_id" validate:"group_name|required"`
-		Metadata   string   `json:"metadata,omitempty" validate:"metadata|required"`
-		ServiceIDs []string `json:"service_ids" validate:"service_ids|required"`
-		Version    string   `json:"version" validate:"version|required"`
-		SourceDir  string   `json:"source_dir"`
-		BackupID   string   `json:"backup_id,omitempty"`
+		EventID       string   `json:"event_id" validate:"event_id|required"`
+		GroupID       string   `json:"group_id" validate:"group_name|required"`
+		Metadata      string   `json:"metadata,omitempty" validate:"metadata|required"`
+		ServiceIDs    []string `json:"service_ids" validate:"service_ids|required"`
+		Version       string   `json:"version" validate:"version|required"`
+		SourceDir     string   `json:"source_dir"`
+		BackupID      string   `json:"backup_id,omitempty"`
+		WithImageData bool     `json:"with_image_data"`
 
 		Mode     string `json:"mode" validate:"mode|required|in:full-online,full-offline"`
 		Force    bool   `json:"force"`
@@ -91,6 +92,7 @@ func (h *BackupHandle) NewBackup(b Backup) (*dbmodel.AppBackup, *util.APIHandleE
 		Status:     "starting",
 		Version:    b.Body.Version,
 		BackupMode: b.Body.Mode,
+		WithImageData: b.Body.WithImageData,
 	}
 	//check last backup task whether complete or version whether exist
 	if db.GetManager().AppBackupDao().CheckHistory(b.Body.GroupID, b.Body.Version) {
