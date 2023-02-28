@@ -419,7 +419,7 @@ func (s *k8sStore) ListPool() ([]*v1.Pool, []*v1.Pool) {
 						Nodes: []*v1.Node{},
 					}
 					pool.Name = backend.name
-					// TODO: The tenant isolation
+					// TODO: The tenant env isolation
 					pool.Namespace = "default"
 					pool.UpstreamHashBy = backend.hashBy
 					pool.LoadBalancingType = v1.GetLoadBalancingType(backend.loadBalancingType)
@@ -447,7 +447,7 @@ func (s *k8sStore) ListPool() ([]*v1.Pool, []*v1.Pool) {
 					pool = &v1.Pool{
 						Nodes: []*v1.Node{},
 					}
-					// TODO: The tenant isolation
+					// TODO: The tenant env isolation
 					pool.Namespace = "default"
 					pool.Name = backend.name
 					l4Pools[backend.name] = pool

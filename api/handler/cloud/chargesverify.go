@@ -35,7 +35,7 @@ import (
 )
 
 // PubChargeSverify service Charge Sverify
-func PubChargeSverify(tenant *model.Tenants, quantity int, reason string) *util.APIHandleError {
+func PubChargeSverify(tenantEnv *model.TenantEnvs, quantity int, reason string) *util.APIHandleError {
 	cloudAPI := os.Getenv("CLOUD_API")
 	if cloudAPI == "" {
 		cloudAPI = "http://api.wutong-paas.com"
@@ -45,7 +45,7 @@ func PubChargeSverify(tenant *model.Tenants, quantity int, reason string) *util.
 		return util.CreateAPIHandleError(500, fmt.Errorf("region name must define in api by env REGION_NAME"))
 	}
 	reason = strings.Replace(reason, " ", "%20", -1)
-	api := fmt.Sprintf("%s/openapi/console/v1/enterprises/%s/memory-apply?quantity=%d&tid=%s&reason=%s&region=%s", cloudAPI, tenant.EID, quantity, tenant.UUID, reason, regionName)
+	api := fmt.Sprintf("%s/openapi/console/v1/enterprises/%s/memory-apply?quantity=%d&tid=%s&reason=%s&region=%s", cloudAPI, tenantEnv.EID, quantity, tenantEnv.UUID, reason, regionName)
 	req, err := http.NewRequest("GET", api, nil)
 	if err != nil {
 		logrus.Error("create request cloud api error", err.Error())
@@ -71,14 +71,14 @@ func PubChargeSverify(tenant *model.Tenants, quantity int, reason string) *util.
 }
 
 // PriChargeSverify verifies that the resources requested in the private cloud are legal
-func PriChargeSverify(ctx context.Context, tenant *model.Tenants, quantity int) *util.APIHandleError {
-	t, err := db.GetManager().TenantDao().GetTenantByUUID(tenant.UUID)
+func PriChargeSverify(ctx context.Context, tenantEnv *model.TenantEnvs, quantity int) *util.APIHandleError {
+	t, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnv.UUID)
 	if err != nil {
-		logrus.Errorf("error getting tenant: %v", err)
-		return util.CreateAPIHandleError(500, fmt.Errorf("error getting tenant: %v", err))
+		logrus.Errorf("error getting tenantEnv: %v", err)
+		return util.CreateAPIHandleError(500, fmt.Errorf("error getting tenantEnv: %v", err))
 	}
 	if t.LimitMemory == 0 {
-		clusterStats, err := handler.GetTenantManager().GetAllocatableResources(ctx)
+		clusterStats, err := handler.GetTenantEnvManager().GetAllocatableResources(ctx)
 		if err != nil {
 			logrus.Errorf("error getting allocatable resources: %v", err)
 			return util.CreateAPIHandleError(500, fmt.Errorf("error getting allocatable resources: %v", err))
@@ -89,9 +89,9 @@ func PriChargeSverify(ctx context.Context, tenant *model.Tenants, quantity int) 
 		}
 		return util.CreateAPIHandleError(200, fmt.Errorf("cluster_lack_of_memory"))
 	}
-	tenantStas, _ := handler.GetTenantManager().GetTenantResource(tenant.UUID)
+	tenantEnvStas, _ := handler.GetTenantEnvManager().GetTenantEnvResource(tenantEnv.UUID)
 	// TODO: it should be limit, not request
-	availMem := int64(t.LimitMemory) - (tenantStas.MemoryRequest + tenantStas.UnscdMemoryReq)
+	availMem := int64(t.LimitMemory) - (tenantEnvStas.MemoryRequest + tenantEnvStas.UnscdMemoryReq)
 	if availMem >= int64(quantity) {
 		return util.CreateAPIHandleError(200, fmt.Errorf("success"))
 	}

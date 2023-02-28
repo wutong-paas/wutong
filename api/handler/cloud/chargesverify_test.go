@@ -26,10 +26,10 @@ import (
 )
 
 func TestChargeSverify(t *testing.T) {
-	tenant := &model.Tenants{EID: "daa5ed8b1e9747518f1c531bf3c12aca", UUID: "ddddd_DDD"}
+	tenantEnv := &model.TenantEnvs{EID: "daa5ed8b1e9747518f1c531bf3c12aca", UUID: "ddddd_DDD"}
 	os.Setenv("REGION_NAME", "ali-hz")
 	os.Setenv("CLOUD_API", "http://apitest.wutong-paas.com")
-	err := PubChargeSverify(tenant, 522, "sss")
+	err := PubChargeSverify(tenantEnv, 522, "sss")
 	if err != nil {
 		t.Fatal(err.Code, err.String())
 	}

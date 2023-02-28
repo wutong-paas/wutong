@@ -24,11 +24,11 @@ import (
 )
 
 // CreateEndpointsName creates name for third-party endpoints
-//the names of Kubernetes resources should be up to maximum length of 253
+// the names of Kubernetes resources should be up to maximum length of 253
 // characters and consist of lower case alphanumeric characters, -, and .,
 // but certain resources have more specific restrictions.
-func CreateEndpointsName(tenantName, serviceName, uuid string) string {
-	str := fmt.Sprintf("%s-%s-%s", tenantName, serviceName, uuid)
+func CreateEndpointsName(tenantEnvName, serviceName, uuid string) string {
+	str := fmt.Sprintf("%s-%s-%s", tenantEnvName, serviceName, uuid)
 	str = strings.ToLower(str)
 	// TODO: - and .
 	return str

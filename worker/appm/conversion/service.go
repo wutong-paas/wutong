@@ -36,7 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//ServiceSource conv ServiceSource
+// ServiceSource conv ServiceSource
 func ServiceSource(as *v1.AppService, dbmanager db.Manager) error {
 	sscs, err := dbmanager.ServiceSourceDao().GetServiceSource(as.ServiceID)
 	if err != nil {
@@ -80,92 +80,92 @@ func int32Ptr(i int) *int32 {
 	return &j
 }
 
-//TenantServiceBase conv tenant service base info
-func TenantServiceBase(as *v1.AppService, dbmanager db.Manager) error {
-	tenantService, err := dbmanager.TenantServiceDao().GetServiceByID(as.ServiceID)
+// TenantEnvServiceBase conv tenant env service base info
+func TenantEnvServiceBase(as *v1.AppService, dbmanager db.Manager) error {
+	tenantEnvService, err := dbmanager.TenantEnvServiceDao().GetServiceByID(as.ServiceID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return ErrServiceNotFound
 		}
 		return fmt.Errorf("error getting service base info by serviceID(%s) %s", as.ServiceID, err.Error())
 	}
-	as.ServiceKind = dbmodel.ServiceKind(tenantService.Kind)
-	tenant, err := dbmanager.TenantDao().GetTenantByUUID(tenantService.TenantID)
+	as.ServiceKind = dbmodel.ServiceKind(tenantEnvService.Kind)
+	tenantEnv, err := dbmanager.TenantEnvDao().GetTenantEnvByUUID(tenantEnvService.TenantEnvID)
 	if err != nil {
-		return fmt.Errorf("get tenant info failure %s", err.Error())
+		return fmt.Errorf("get tenant env info failure %s", err.Error())
 	}
-	as.TenantID = tenantService.TenantID
+	as.TenantEnvID = tenantEnvService.TenantEnvID
 	if as.DeployVersion == "" {
-		as.DeployVersion = tenantService.DeployVersion
+		as.DeployVersion = tenantEnvService.DeployVersion
 	}
-	as.AppID = tenantService.AppID
-	as.ServiceAlias = tenantService.ServiceAlias
-	as.UpgradeMethod = v1.TypeUpgradeMethod(tenantService.UpgradeMethod)
-	if tenantService.K8sComponentName == "" {
-		tenantService.K8sComponentName = tenantService.ServiceAlias
+	as.AppID = tenantEnvService.AppID
+	as.ServiceAlias = tenantEnvService.ServiceAlias
+	as.UpgradeMethod = v1.TypeUpgradeMethod(tenantEnvService.UpgradeMethod)
+	if tenantEnvService.K8sComponentName == "" {
+		tenantEnvService.K8sComponentName = tenantEnvService.ServiceAlias
 	}
-	as.K8sComponentName = tenantService.K8sComponentName
+	as.K8sComponentName = tenantEnvService.K8sComponentName
 	if as.CreaterID == "" {
 		as.CreaterID = string(util.NewTimeVersion())
 	}
-	as.TenantName = tenant.Name
-	if err := initTenant(as, tenant); err != nil {
-		return fmt.Errorf("conversion tenant info failure %s", err.Error())
+	as.TenantEnvName = tenantEnv.Name
+	if err := initTenantEnv(as, tenantEnv); err != nil {
+		return fmt.Errorf("conversion tenant env info failure %s", err.Error())
 	}
-	if tenantService.Kind == dbmodel.ServiceKindThirdParty.String() {
+	if tenantEnvService.Kind == dbmodel.ServiceKindThirdParty.String() {
 		disCfg, _ := dbmanager.ThirdPartySvcDiscoveryCfgDao().GetByServiceID(as.ServiceID)
 		as.SetDiscoveryCfg(disCfg)
 		return nil
 	}
 
-	if tenantService.Kind == dbmodel.ServiceKindCustom.String() {
+	if tenantEnvService.Kind == dbmodel.ServiceKindCustom.String() {
 		return nil
 	}
-	label, _ := dbmanager.TenantServiceLabelDao().GetLabelByNodeSelectorKey(as.ServiceID, "windows")
+	label, _ := dbmanager.TenantEnvServiceLabelDao().GetLabelByNodeSelectorKey(as.ServiceID, "windows")
 	if label != nil {
 		as.IsWindowsService = true
 	}
 
 	// component resource config
-	as.ContainerCPU = tenantService.ContainerCPU
-	as.ContainerGPUType = tenantService.ContainerGPUType
-	as.ContainerGPU = tenantService.ContainerGPU
-	as.ContainerMemory = tenantService.ContainerMemory
-	as.Replicas = tenantService.Replicas
-	if !tenantService.IsState() {
-		initBaseDeployment(as, tenantService)
+	as.ContainerCPU = tenantEnvService.ContainerCPU
+	as.ContainerGPUType = tenantEnvService.ContainerGPUType
+	as.ContainerGPU = tenantEnvService.ContainerGPU
+	as.ContainerMemory = tenantEnvService.ContainerMemory
+	as.Replicas = tenantEnvService.Replicas
+	if !tenantEnvService.IsState() {
+		initBaseDeployment(as, tenantEnvService)
 		return nil
 	}
-	if tenantService.IsState() {
-		initBaseStatefulSet(as, tenantService)
+	if tenantEnvService.IsState() {
+		initBaseStatefulSet(as, tenantEnvService)
 		return nil
 	}
-	return fmt.Errorf("kind: %s; do not decision build type for service %s", tenantService.Kind, as.ServiceAlias)
+	return fmt.Errorf("kind: %s; do not decision build type for service %s", tenantEnvService.Kind, as.ServiceAlias)
 }
 
-func initTenant(as *v1.AppService, tenant *dbmodel.Tenants) error {
-	if tenant == nil || tenant.Namespace == "" {
-		return fmt.Errorf("tenant is invalid")
+func initTenantEnv(as *v1.AppService, tenantEnv *dbmodel.TenantEnvs) error {
+	if tenantEnv == nil || tenantEnv.Namespace == "" {
+		return fmt.Errorf("tenant env is invalid")
 	}
 	namespace := &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   tenant.Namespace,
+			Name:   tenantEnv.Namespace,
 			Labels: map[string]string{"creator": "Wutong"},
 		},
 	}
-	as.SetTenant(namespace)
+	as.SetTenantEnv(namespace)
 	return nil
 }
-func initSelector(selector *metav1.LabelSelector, service *dbmodel.TenantServices) {
+func initSelector(selector *metav1.LabelSelector, service *dbmodel.TenantEnvServices) {
 	if selector.MatchLabels == nil {
 		selector.MatchLabels = make(map[string]string)
 	}
 	selector.MatchLabels["name"] = service.ServiceAlias
-	selector.MatchLabels["tenant_id"] = service.TenantID
+	selector.MatchLabels["tenant_env_id"] = service.TenantEnvID
 	selector.MatchLabels["service_id"] = service.ServiceID
 	//selector.MatchLabels["version"] = service.DeployVersion
 }
-func initBaseStatefulSet(as *v1.AppService, service *dbmodel.TenantServices) {
+func initBaseStatefulSet(as *v1.AppService, service *dbmodel.TenantEnvServices) {
 	as.ServiceType = v1.TypeStatefulSet
 	stateful := as.GetStatefulSet()
 	if stateful == nil {
@@ -192,7 +192,7 @@ func initBaseStatefulSet(as *v1.AppService, service *dbmodel.TenantServices) {
 	as.SetStatefulSet(stateful)
 }
 
-func initBaseDeployment(as *v1.AppService, service *dbmodel.TenantServices) {
+func initBaseDeployment(as *v1.AppService, service *dbmodel.TenantEnvServices) {
 	as.ServiceType = v1.TypeDeployment
 	deployment := as.GetDeployment()
 	if deployment == nil {

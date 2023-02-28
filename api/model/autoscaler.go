@@ -63,8 +63,8 @@ type AutoScalerRule struct {
 }
 
 // DbModel return database model
-func (a AutoScalerRule) DbModel(componentID string) *dbmodel.TenantServiceAutoscalerRules {
-	return &dbmodel.TenantServiceAutoscalerRules{
+func (a AutoScalerRule) DbModel(componentID string) *dbmodel.TenantEnvServiceAutoscalerRules {
+	return &dbmodel.TenantEnvServiceAutoscalerRules{
 		RuleID:      a.RuleID,
 		ServiceID:   componentID,
 		MinReplicas: a.MinReplicas,
@@ -83,8 +83,8 @@ type RuleMetric struct {
 }
 
 // DbModel return database model
-func (r RuleMetric) DbModel(ruleID string) *dbmodel.TenantServiceAutoscalerRuleMetrics {
-	return &dbmodel.TenantServiceAutoscalerRuleMetrics{
+func (r RuleMetric) DbModel(ruleID string) *dbmodel.TenantEnvServiceAutoscalerRuleMetrics {
+	return &dbmodel.TenantEnvServiceAutoscalerRuleMetrics{
 		RuleID:            ruleID,
 		MetricsType:       r.MetricsType,
 		MetricsName:       r.MetricsName,

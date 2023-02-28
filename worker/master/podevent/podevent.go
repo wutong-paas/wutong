@@ -113,7 +113,7 @@ func recordUpdateEvent(clientset kubernetes.Interface, pod *corev1.Pod, f determ
 	}
 	podstatus := new(pb.PodStatus)
 	wutil.DescribePodStatus(clientset, pod, podstatus, k8sutil.DefListEventsByPod)
-	tenantID, serviceID, _, _ := k8sutil.ExtractLabels(pod.GetLabels())
+	tenantEnvID, serviceID, _, _ := k8sutil.ExtractLabels(pod.GetLabels())
 	// the pod in the pending status has no start time and container statuses
 	if podstatus.Type == pb.PodStatus_ABNORMAL || podstatus.Type == pb.PodStatus_NOTREADY || podstatus.Type == pb.PodStatus_UNHEALTHY {
 		var eventID string
@@ -124,7 +124,7 @@ func recordUpdateEvent(clientset kubernetes.Interface, pod *corev1.Pod, f determ
 		}
 
 		if evt == nil { // create event
-			eventID, err = createSystemEvent(tenantID, serviceID, pod.GetName(), optType.eventType.String(), model.EventStatusFailure.String())
+			eventID, err = createSystemEvent(tenantEnvID, serviceID, pod.GetName(), optType.eventType.String(), model.EventStatusFailure.String())
 			if err != nil {
 				logrus.Warningf("pod: %s; type: %s; error creating event: %v", pod.GetName(), optType.eventType.String(), err)
 				return
@@ -165,7 +165,7 @@ func recordUpdateEvent(clientset kubernetes.Interface, pod *corev1.Pod, f determ
 				logrus.Warningf("event id: %s; failed to update service event: %v", evt.EventID, err)
 			} else {
 				loggerOpt = event.GetCallbackLoggerOption()
-				_, err := createSystemEvent(tenantID, serviceID, pod.GetName(), EventTypeAbnormalRecovery.String(), model.EventStatusSuccess.String())
+				_, err := createSystemEvent(tenantEnvID, serviceID, pod.GetName(), EventTypeAbnormalRecovery.String(), model.EventStatusSuccess.String())
 				if err != nil {
 					logrus.Warningf("pod: %s; type: %s; error creating event: %v", pod.GetName(), EventTypeAbnormalRecovery.String(), err)
 					return
@@ -234,11 +234,11 @@ func defDetermineOptType(clientset kubernetes.Interface, pod *corev1.Pod, f k8su
 	return optTypeMap[keys[0]]
 }
 
-func createSystemEvent(tenantID, serviceID, targetID, optType, status string) (eventID string, err error) {
+func createSystemEvent(tenantEnvID, serviceID, targetID, optType, status string) (eventID string, err error) {
 	eventID = util.NewUUID()
 	et := &model.ServiceEvent{
 		EventID:     eventID,
-		TenantID:    tenantID,
+		TenantEnvID: tenantEnvID,
 		ServiceID:   serviceID,
 		Target:      model.TargetTypePod,
 		TargetID:    targetID,

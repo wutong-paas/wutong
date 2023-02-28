@@ -41,7 +41,7 @@ import (
 )
 
 // StartService StartService
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/start  v2 startService
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/start  v2 startService
 //
 // 启动应用
 //
@@ -62,25 +62,25 @@ import (
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) StartService(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) StartService(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	if service.Kind != "third_party" {
-		if err := handler.CheckTenantResource(r.Context(), tenant, service.Replicas*service.ContainerMemory); err != nil {
+		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 			httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
 			return
 		}
 	}
 
 	startStopStruct := &api_model.StartStopStruct{
-		TenantID:  tenantID,
-		ServiceID: serviceID,
-		EventID:   sEvent.EventID,
-		TaskType:  "start",
+		TenantEnvID: tenantEnvID,
+		ServiceID:   serviceID,
+		EventID:     sEvent.EventID,
+		TaskType:    "start",
 	}
 	if err := handler.GetServiceManager().StartStopService(startStopStruct); err != nil {
 		httputil.ReturnError(r, w, 500, "get service info error.")
@@ -90,7 +90,7 @@ func (t *TenantStruct) StartService(w http.ResponseWriter, r *http.Request) {
 }
 
 // StopService StopService
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/stop v2 stopService
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/stop v2 stopService
 //
 // 关闭应用
 //
@@ -111,17 +111,17 @@ func (t *TenantStruct) StartService(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) StopService(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) StopService(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	//save event
 	defer event.CloseManager()
 	startStopStruct := &api_model.StartStopStruct{
-		TenantID:  tenantID,
-		ServiceID: serviceID,
-		EventID:   sEvent.EventID,
-		TaskType:  "stop",
+		TenantEnvID: tenantEnvID,
+		ServiceID:   serviceID,
+		EventID:     sEvent.EventID,
+		TaskType:    "stop",
 	}
 	if err := handler.GetServiceManager().StartStopService(startStopStruct); err != nil {
 		httputil.ReturnError(r, w, 500, "get service info error.")
@@ -131,7 +131,7 @@ func (t *TenantStruct) StopService(w http.ResponseWriter, r *http.Request) {
 }
 
 // RestartService RestartService
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/restart v2 restartService
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/restart v2 restartService
 //
 // 重启应用
 //
@@ -152,16 +152,16 @@ func (t *TenantStruct) StopService(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) RestartService(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) RestartService(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	defer event.CloseManager()
 	startStopStruct := &api_model.StartStopStruct{
-		TenantID:  tenantID,
-		ServiceID: serviceID,
-		EventID:   sEvent.EventID,
-		TaskType:  "restart",
+		TenantEnvID: tenantEnvID,
+		ServiceID:   serviceID,
+		EventID:     sEvent.EventID,
+		TaskType:    "restart",
 	}
 
 	curStatus := t.StatusCli.GetStatus(serviceID)
@@ -169,9 +169,9 @@ func (t *TenantStruct) RestartService(w http.ResponseWriter, r *http.Request) {
 		startStopStruct.TaskType = "start"
 	}
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
-	if err := handler.CheckTenantResource(r.Context(), tenant, service.Replicas*service.ContainerMemory); err != nil {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
+	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 		httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
 		return
 	}
@@ -184,7 +184,7 @@ func (t *TenantStruct) RestartService(w http.ResponseWriter, r *http.Request) {
 }
 
 // VerticalService VerticalService
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/vertical v2 verticalService
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/vertical v2 verticalService
 //
 // 应用垂直伸缩
 //
@@ -205,7 +205,7 @@ func (t *TenantStruct) RestartService(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 	rules := validator.MapData{
 		"container_cpu":    []string{"required"},
 		"container_memory": []string{"required"},
@@ -214,7 +214,7 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	var cpuSet, gpuSet, memorySet *int
@@ -234,16 +234,16 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 		gpuInt := int(gpu)
 		gpuSet = &gpuInt
 	}
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if memorySet != nil {
-		if err := handler.CheckTenantResource(r.Context(), tenant, service.Replicas*(*memorySet)); err != nil {
+		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*(*memorySet)); err != nil {
 			httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
 			return
 		}
 	}
 	verticalTask := &model.VerticalScalingTaskBody{
-		TenantID:         tenantID,
+		TenantEnvID:      tenantEnvID,
 		ServiceID:        serviceID,
 		EventID:          sEvent.EventID,
 		ContainerCPU:     cpuSet,
@@ -259,7 +259,7 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 }
 
 // HorizontalService HorizontalService
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/horizontal v2 horizontalService
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/horizontal v2 horizontalService
 //
 // 应用水平伸缩
 //
@@ -280,7 +280,7 @@ func (t *TenantStruct) VerticalService(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) HorizontalService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) HorizontalService(w http.ResponseWriter, r *http.Request) {
 	rules := validator.MapData{
 		"node_num": []string{"required"},
 	}
@@ -288,24 +288,24 @@ func (t *TenantStruct) HorizontalService(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	replicas := int32(data["node_num"].(float64))
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
-	if err := handler.CheckTenantResource(r.Context(), tenant, service.ContainerMemory*int(replicas)); err != nil {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
+	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.ContainerMemory*int(replicas)); err != nil {
 		httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
 		return
 	}
 
 	horizontalTask := &model.HorizontalScalingTaskBody{
-		TenantID:  tenantID,
-		ServiceID: serviceID,
-		EventID:   sEvent.EventID,
-		Username:  sEvent.UserName,
-		Replicas:  replicas,
+		TenantEnvID: tenantEnvID,
+		ServiceID:   serviceID,
+		EventID:     sEvent.EventID,
+		Username:    sEvent.UserName,
+		Replicas:    replicas,
 	}
 
 	if err := handler.GetServiceManager().ServiceHorizontal(horizontalTask); err != nil {
@@ -316,7 +316,7 @@ func (t *TenantStruct) HorizontalService(w http.ResponseWriter, r *http.Request)
 }
 
 // BuildService BuildService
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/build v2 serviceBuild
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/build v2 serviceBuild
 //
 // 应用构建
 //
@@ -337,24 +337,24 @@ func (t *TenantStruct) HorizontalService(w http.ResponseWriter, r *http.Request)
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) BuildService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) BuildService(w http.ResponseWriter, r *http.Request) {
 	var build api_model.ComponentBuildReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build, nil)
 	if !ok {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
-	build.TenantName = tenantName
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
+	build.TenantEnvName = tenantEnvName
 	build.EventID = r.Context().Value(ctxutil.ContextKey("event_id")).(string)
 	if build.ServiceID != serviceID {
 		httputil.ReturnError(r, w, 400, "build service id is failure")
 		return
 	}
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
-	if err := handler.CheckTenantResource(r.Context(), tenant, service.Replicas*service.ContainerMemory); err != nil {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
+	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 		httputil.ReturnResNotEnough(r, w, build.EventID, err.Error())
 		return
 	}
@@ -368,7 +368,7 @@ func (t *TenantStruct) BuildService(w http.ResponseWriter, r *http.Request) {
 }
 
 // BuildList BuildList
-func (t *TenantStruct) BuildList(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) BuildList(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
 	resp, err := handler.GetServiceManager().ListVersionInfo(serviceID)
@@ -382,7 +382,7 @@ func (t *TenantStruct) BuildList(w http.ResponseWriter, r *http.Request) {
 }
 
 // BuildVersionIsExist -
-func (t *TenantStruct) BuildVersionIsExist(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) BuildVersionIsExist(w http.ResponseWriter, r *http.Request) {
 	statusMap := make(map[string]bool)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	buildVersion := chi.URLParam(r, "build_version")
@@ -401,7 +401,7 @@ func (t *TenantStruct) BuildVersionIsExist(w http.ResponseWriter, r *http.Reques
 }
 
 // DeleteBuildVersion -
-func (t *TenantStruct) DeleteBuildVersion(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) DeleteBuildVersion(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	buildVersion := chi.URLParam(r, "build_version")
 	val, err := db.GetManager().VersionInfoDao().GetVersionByDeployVersion(buildVersion, serviceID)
@@ -442,7 +442,7 @@ func (t *TenantStruct) DeleteBuildVersion(w http.ResponseWriter, r *http.Request
 }
 
 // UpdateBuildVersion -
-func (t *TenantStruct) UpdateBuildVersion(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) UpdateBuildVersion(w http.ResponseWriter, r *http.Request) {
 	var build api_model.UpdateBuildVersionReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build, nil)
 	if !ok {
@@ -465,7 +465,7 @@ func (t *TenantStruct) UpdateBuildVersion(w http.ResponseWriter, r *http.Request
 }
 
 // BuildVersionInfo -
-func (t *TenantStruct) BuildVersionInfo(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) BuildVersionInfo(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
 		t.DeleteBuildVersion(w, r)
@@ -478,8 +478,8 @@ func (t *TenantStruct) BuildVersionInfo(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetDeployVersion GetDeployVersion by service
-func (t *TenantStruct) GetDeployVersion(w http.ResponseWriter, r *http.Request) {
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
+func (t *TenantEnvStruct) GetDeployVersion(w http.ResponseWriter, r *http.Request) {
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	version, err := db.GetManager().VersionInfoDao().GetVersionByDeployVersion(service.DeployVersion, service.ServiceID)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get build version status erro, %v", err))
@@ -493,7 +493,7 @@ func (t *TenantStruct) GetDeployVersion(w http.ResponseWriter, r *http.Request) 
 }
 
 // GetManyDeployVersion GetDeployVersion by some service id
-func (t *TenantStruct) GetManyDeployVersion(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) GetManyDeployVersion(w http.ResponseWriter, r *http.Request) {
 	rules := validator.MapData{
 		"service_ids": []string{"required"},
 	}
@@ -510,7 +510,7 @@ func (t *TenantStruct) GetManyDeployVersion(w http.ResponseWriter, r *http.Reque
 	for _, s := range serviceIDs {
 		list = append(list, s.(string))
 	}
-	services, err := db.GetManager().TenantServiceDao().GetServiceByIDs(list)
+	services, err := db.GetManager().TenantEnvServiceDao().GetServiceByIDs(list)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -528,13 +528,13 @@ func (t *TenantStruct) GetManyDeployVersion(w http.ResponseWriter, r *http.Reque
 }
 
 // DeployService DeployService
-func (t *TenantStruct) DeployService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) DeployService(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("trans deploy service")
 	w.Write([]byte("deploy service"))
 }
 
 // UpgradeService UpgradeService
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/upgrade v2 upgradeService
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/upgrade v2 upgradeService
 //
 // 升级应用
 //
@@ -555,7 +555,7 @@ func (t *TenantStruct) DeployService(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) UpgradeService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) UpgradeService(w http.ResponseWriter, r *http.Request) {
 	var upgradeRequest api_model.ComponentUpgradeReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &upgradeRequest, nil)
 	if !ok {
@@ -569,10 +569,10 @@ func (t *TenantStruct) UpgradeService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if service.Kind != "third_party" {
-		if err := handler.CheckTenantResource(r.Context(), tenant, service.Replicas*service.ContainerMemory); err != nil {
+		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 			httputil.ReturnResNotEnough(r, w, upgradeRequest.EventID, err.Error())
 			return
 		}
@@ -587,7 +587,7 @@ func (t *TenantStruct) UpgradeService(w http.ResponseWriter, r *http.Request) {
 }
 
 // CheckCode CheckCode
-// swagger:operation POST /v2/tenants/{tenant_name}/code-check v2 checkCode
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/code-check v2 checkCode
 //
 // 应用代码检测
 //
@@ -608,16 +608,16 @@ func (t *TenantStruct) UpgradeService(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) CheckCode(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) CheckCode(w http.ResponseWriter, r *http.Request) {
 
 	var ccs api_model.CheckCodeStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ccs.Body, nil)
 	if !ok {
 		return
 	}
-	if ccs.Body.TenantID == "" {
-		tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-		ccs.Body.TenantID = tenantID
+	if ccs.Body.TenantEnvID == "" {
+		tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+		ccs.Body.TenantEnvID = tenantEnvID
 	}
 	ccs.Body.Action = "code_check"
 	if err := handler.GetServiceManager().CodeCheck(&ccs); err != nil {
@@ -628,7 +628,7 @@ func (t *TenantStruct) CheckCode(w http.ResponseWriter, r *http.Request) {
 }
 
 // RollBack RollBack
-// swagger:operation Post /v2/tenants/{tenant_name}/services/{service_alias}/rollback v2 rollback
+// swagger:operation Post /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/rollback v2 rollback
 //
 // 应用版本回滚
 //
@@ -649,7 +649,7 @@ func (t *TenantStruct) CheckCode(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) RollBack(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) RollBack(w http.ResponseWriter, r *http.Request) {
 	var rollbackRequest api_model.RollbackInfoRequestStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &rollbackRequest, nil)
 	if !ok {
@@ -663,9 +663,9 @@ func (t *TenantStruct) RollBack(w http.ResponseWriter, r *http.Request) {
 	}
 	rollbackRequest.EventID = r.Context().Value(ctxutil.ContextKey("event_id")).(string)
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
-	if err := handler.CheckTenantResource(r.Context(), tenant, service.Replicas*service.ContainerMemory); err != nil {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
+	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 		httputil.ReturnResNotEnough(r, w, rollbackRequest.EventID, err.Error())
 		return
 	}
@@ -678,8 +678,8 @@ type limitMemory struct {
 	LimitMemory int `json:"limit_memory"`
 }
 
-// LimitTenantMemory -
-func (t *TenantStruct) LimitTenantMemory(w http.ResponseWriter, r *http.Request) {
+// LimitTenantEnvMemory -
+func (t *TenantEnvStruct) LimitTenantEnvMemory(w http.ResponseWriter, r *http.Request) {
 	var lm limitMemory
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -693,14 +693,14 @@ func (t *TenantStruct) LimitTenantMemory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return
 	}
-	tenant.LimitMemory = lm.LimitMemory
-	if err := db.GetManager().TenantDao().UpdateModel(tenant); err != nil {
+	tenantEnv.LimitMemory = lm.LimitMemory
+	if err := db.GetManager().TenantEnvDao().UpdateModel(tenantEnv); err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 	}
 	httputil.ReturnSuccess(r, w, "success!")
@@ -709,7 +709,7 @@ func (t *TenantStruct) LimitTenantMemory(w http.ResponseWriter, r *http.Request)
 
 // SourcesInfo -
 type SourcesInfo struct {
-	TenantID        string `json:"tenant_id"`
+	TenantEnvID     string `json:"tenant_env_id"`
 	AvailableMemory int    `json:"available_memory"`
 	Status          bool   `json:"status"`
 	MemTotal        int    `json:"mem_total"`
@@ -718,17 +718,17 @@ type SourcesInfo struct {
 	CPUUsed         int    `json:"cpu_used"`
 }
 
-// TenantResourcesStatus tenant resources status
-func (t *TenantStruct) TenantResourcesStatus(w http.ResponseWriter, r *http.Request) {
+// TenantEnvResourcesStatus tenant env resources status
+func (t *TenantEnvStruct) TenantEnvResourcesStatus(w http.ResponseWriter, r *http.Request) {
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return
 	}
 	//11ms
-	services, err := handler.GetServiceManager().GetService(tenant.UUID)
+	services, err := handler.GetServiceManager().GetService(tenantEnv.UUID)
 	if err != nil {
 		msg := httputil.ResponseBody{
 			Msg: fmt.Sprintf("get service error, %v", err),
@@ -737,14 +737,14 @@ func (t *TenantStruct) TenantResourcesStatus(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	statsInfo, _ := handler.GetTenantManager().StatsMemCPU(services)
+	statsInfo, _ := handler.GetTenantEnvManager().StatsMemCPU(services)
 
-	if tenant.LimitMemory == 0 {
+	if tenantEnv.LimitMemory == 0 {
 		sourcesInfo := SourcesInfo{
-			TenantID:        tenantID,
+			TenantEnvID:     tenantEnvID,
 			AvailableMemory: 0,
 			Status:          true,
-			MemTotal:        tenant.LimitMemory,
+			MemTotal:        tenantEnv.LimitMemory,
 			MemUsed:         statsInfo.MEM,
 			CPUTotal:        0,
 			CPUUsed:         statsInfo.CPU,
@@ -752,25 +752,25 @@ func (t *TenantStruct) TenantResourcesStatus(w http.ResponseWriter, r *http.Requ
 		httputil.ReturnSuccess(r, w, sourcesInfo)
 		return
 	}
-	if statsInfo.MEM >= tenant.LimitMemory {
+	if statsInfo.MEM >= tenantEnv.LimitMemory {
 		sourcesInfo := SourcesInfo{
-			TenantID:        tenantID,
-			AvailableMemory: tenant.LimitMemory - statsInfo.MEM,
+			TenantEnvID:     tenantEnvID,
+			AvailableMemory: tenantEnv.LimitMemory - statsInfo.MEM,
 			Status:          false,
-			MemTotal:        tenant.LimitMemory,
+			MemTotal:        tenantEnv.LimitMemory,
 			MemUsed:         statsInfo.MEM,
-			CPUTotal:        tenant.LimitMemory / 4,
+			CPUTotal:        tenantEnv.LimitMemory / 4,
 			CPUUsed:         statsInfo.CPU,
 		}
 		httputil.ReturnSuccess(r, w, sourcesInfo)
 	} else {
 		sourcesInfo := SourcesInfo{
-			TenantID:        tenantID,
-			AvailableMemory: tenant.LimitMemory - statsInfo.MEM,
+			TenantEnvID:     tenantEnvID,
+			AvailableMemory: tenantEnv.LimitMemory - statsInfo.MEM,
 			Status:          true,
-			MemTotal:        tenant.LimitMemory,
+			MemTotal:        tenantEnv.LimitMemory,
 			MemUsed:         statsInfo.MEM,
-			CPUTotal:        tenant.LimitMemory / 4,
+			CPUTotal:        tenantEnv.LimitMemory / 4,
 			CPUUsed:         statsInfo.CPU,
 		}
 		httputil.ReturnSuccess(r, w, sourcesInfo)
@@ -779,9 +779,9 @@ func (t *TenantStruct) TenantResourcesStatus(w http.ResponseWriter, r *http.Requ
 
 // GetServiceDeployInfo get service deploy info
 func GetServiceDeployInfo(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	info, err := handler.GetServiceManager().GetServiceDeployInfo(tenantID, serviceID)
+	info, err := handler.GetServiceManager().GetServiceDeployInfo(tenantEnvID, serviceID)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -790,8 +790,8 @@ func GetServiceDeployInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 // Log -
-func (t *TenantStruct) Log(w http.ResponseWriter, r *http.Request) {
-	component := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
+func (t *TenantEnvStruct) Log(w http.ResponseWriter, r *http.Request) {
+	component := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	podName := r.URL.Query().Get("podName")
 	containerName := r.URL.Query().Get("containerName")
 	follow, _ := strconv.ParseBool(r.URL.Query().Get("follow"))
@@ -804,14 +804,14 @@ func (t *TenantStruct) Log(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetKubeConfig get kube config for developer
-func (t *TenantStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+func (t *TenantEnvStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return
 	}
-	kubeConfig, err := handler.GetTenantManager().GetKubeConfig(tenant.Namespace)
+	kubeConfig, err := handler.GetTenantEnvManager().GetKubeConfig(tenantEnv.Namespace)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return
@@ -819,21 +819,21 @@ func (t *TenantStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, kubeConfig)
 }
 
-// GetTenantKubeResources get kube resources for tenant
-func (t *TenantStruct) GetTenantKubeResources(w http.ResponseWriter, r *http.Request) {
+// GetTenantEnvKubeResources get kube resources for tenantEnv
+func (t *TenantEnvStruct) GetTenantEnvKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting api_model.KubeResourceCustomSetting
 	customSetting.Namespace = r.URL.Query().Get("namespace")
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	resources := handler.GetTenantManager().GetKubeResources(tenant.Namespace, tenant.UUID, customSetting)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	resources := handler.GetTenantEnvManager().GetKubeResources(tenantEnv.Namespace, tenantEnv.UUID, customSetting)
 	httputil.ReturnSuccess(r, w, resources)
 }
 
 // GetServiceKubeResources get kube resources for component
-func (t *TenantStruct) GetServiceKubeResources(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) GetServiceKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting api_model.KubeResourceCustomSetting
 	customSetting.Namespace = r.URL.Query().Get("namespace")
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	resources := handler.GetServiceManager().GetKubeResources(tenant.Namespace, serviceID, customSetting)
+	resources := handler.GetServiceManager().GetKubeResources(tenantEnv.Namespace, serviceID, customSetting)
 	httputil.ReturnSuccess(r, w, resources)
 }

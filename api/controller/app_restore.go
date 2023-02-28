@@ -26,9 +26,9 @@ func (a *AppRestoreController) RestoreEnvs(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	err := handler.GetAppRestoreHandler().RestoreEnvs(tenantID, serviceID, &req)
+	err := handler.GetAppRestoreHandler().RestoreEnvs(tenantEnvID, serviceID, &req)
 	if err != nil {
 		format := "Service ID: %s; failed to restore envs: %v"
 		logrus.Errorf(format, serviceID, err)
@@ -47,9 +47,9 @@ func (a *AppRestoreController) RestorePorts(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	err := handler.GetAppRestoreHandler().RestorePorts(tenantID, serviceID, &req)
+	err := handler.GetAppRestoreHandler().RestorePorts(tenantEnvID, serviceID, &req)
 	if err != nil {
 		format := "Service ID: %s; failed to restore ports: %v"
 		logrus.Errorf(format, serviceID, err)
@@ -68,9 +68,9 @@ func (a *AppRestoreController) RestoreVolumes(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	err := handler.GetAppRestoreHandler().RestoreVolumes(tenantID, serviceID, &req)
+	err := handler.GetAppRestoreHandler().RestoreVolumes(tenantEnvID, serviceID, &req)
 	if err != nil {
 		format := "Service ID: %s; failed to restore volumes: %v"
 		logrus.Errorf(format, serviceID, err)
@@ -123,8 +123,8 @@ func (a *AppRestoreController) RestoreDeps(w http.ResponseWriter, r *http.Reques
 	}
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	err := handler.GetAppRestoreHandler().RestoreDeps(tenantID, serviceID, &req)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	err := handler.GetAppRestoreHandler().RestoreDeps(tenantEnvID, serviceID, &req)
 	if err != nil {
 		format := "Service ID: %s; failed to restore service dependencies: %v"
 		logrus.Errorf(format, serviceID, err)
@@ -144,8 +144,8 @@ func (a *AppRestoreController) RestoreDepVols(w http.ResponseWriter, r *http.Req
 	}
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	err := handler.GetAppRestoreHandler().RestoreDepVols(tenantID, serviceID, &req)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	err := handler.GetAppRestoreHandler().RestoreDepVols(tenantEnvID, serviceID, &req)
 	if err != nil {
 		format := "Service ID: %s; failed to restore volume dependencies: %v"
 		logrus.Errorf(format, serviceID, err)
@@ -164,9 +164,9 @@ func (a *AppRestoreController) RestorePlugins(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	if err := handler.GetAppRestoreHandler().RestorePlugins(tenantID, serviceID, &req); err != nil {
+	if err := handler.GetAppRestoreHandler().RestorePlugins(tenantEnvID, serviceID, &req); err != nil {
 		format := "Service ID: %s; failed to restore plugins: %v"
 		logrus.Errorf(format, serviceID, err)
 		httputil.ReturnError(r, w, 500, fmt.Sprintf(format, serviceID, err))

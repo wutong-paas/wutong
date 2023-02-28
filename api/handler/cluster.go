@@ -91,7 +91,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	var nodeResources []*model.NodeResource
 	var totalCapacityPods, totalUsedPods int64
 	var totalCapacityStorage, totalUsedStorage float32
-	tenantPods := make(map[string]int)
+	tenantEnvPods := make(map[string]int)
 
 	for i := range usedNodeList {
 		node := usedNodeList[i]
@@ -132,8 +132,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 						wtMemR += c.Resources.Requests.Memory().Value()
 						wtCPUR += c.Resources.Requests.Cpu().MilliValue()
 					}
-					if pod.Labels["tenant_id"] != "" {
-						tenantPods[pod.Labels["tenant_id"]]++
+					if pod.Labels["tenant_env_id"] != "" {
+						tenantEnvPods[pod.Labels["tenant_env_id"]]++
 					}
 				}
 			}
@@ -166,7 +166,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		TotalCapacityStorage: util.DecimalFromFloat32(totalCapacityStorage),
 		TotalUsedStorage:     util.DecimalFromFloat32(totalUsedStorage),
 		NodeResources:        nodeResources,
-		TenantPods:           tenantPods,
+		TenantEnvPods:        tenantEnvPods,
 	}
 
 	result.AllNode = len(nodes)
@@ -241,7 +241,7 @@ func (c *clusterAction) listPods(ctx context.Context, nodeName string) (pods []c
 	return podList.Items, nil
 }
 
-//MavenSetting maven setting
+// MavenSetting maven setting
 type MavenSetting struct {
 	Name       string `json:"name" validate:"required"`
 	CreateTime string `json:"create_time"`
@@ -250,7 +250,7 @@ type MavenSetting struct {
 	IsDefault  bool   `json:"is_default"`
 }
 
-//MavenSettingList maven setting list
+// MavenSettingList maven setting list
 func (c *clusterAction) MavenSettingList(ctx context.Context) (re []MavenSetting) {
 	cms, err := c.clientset.CoreV1().ConfigMaps(c.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "configtype=mavensetting",
@@ -274,7 +274,7 @@ func (c *clusterAction) MavenSettingList(ctx context.Context) (re []MavenSetting
 	return
 }
 
-//MavenSettingAdd maven setting add
+// MavenSettingAdd maven setting add
 func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *util.APIHandleError {
 	config := &corev1.ConfigMap{}
 	config.Name = ms.Name
@@ -302,7 +302,7 @@ func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *
 	return nil
 }
 
-//MavenSettingUpdate maven setting file update
+// MavenSettingUpdate maven setting file update
 func (c *clusterAction) MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *util.APIHandleError {
 	sm, err := c.clientset.CoreV1().ConfigMaps(c.namespace).Get(ctx, ms.Name, metav1.GetOptions{})
 	if err != nil {
@@ -329,7 +329,7 @@ func (c *clusterAction) MavenSettingUpdate(ctx context.Context, ms *MavenSetting
 	return nil
 }
 
-//MavenSettingDelete maven setting file delete
+// MavenSettingDelete maven setting file delete
 func (c *clusterAction) MavenSettingDelete(ctx context.Context, name string) *util.APIHandleError {
 	err := c.clientset.CoreV1().ConfigMaps(c.namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
@@ -342,7 +342,7 @@ func (c *clusterAction) MavenSettingDelete(ctx context.Context, name string) *ut
 	return nil
 }
 
-//MavenSettingDetail maven setting file delete
+// MavenSettingDetail maven setting file delete
 func (c *clusterAction) MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *util.APIHandleError) {
 	sm, err := c.clientset.CoreV1().ConfigMaps(c.namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {

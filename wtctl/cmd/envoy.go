@@ -32,7 +32,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-//NewCmdEnvoy envoy cmd
+// NewCmdEnvoy envoy cmd
 func NewCmdEnvoy() cli.Command {
 	c := cli.Command{
 		Name:  "envoy",
@@ -49,7 +49,7 @@ func NewCmdEnvoy() cli.Command {
 			},
 		},
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name:  "endpoints",
 				Usage: "list envoy node endpoints",
 				Action: func(c *cli.Context) error {

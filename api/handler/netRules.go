@@ -31,24 +31,24 @@ import (
 	"github.com/wutong-paas/wutong/api/util"
 )
 
-//NetRulesAction  rules action struct
+// NetRulesAction  rules action struct
 type NetRulesAction struct {
 	etcdCli *clientv3.Client
 }
 
-//CreateNetRulesManager get net rules manager
+// CreateNetRulesManager get net rules manager
 func CreateNetRulesManager(etcdCli *clientv3.Client) *NetRulesAction {
 	return &NetRulesAction{
 		etcdCli: etcdCli,
 	}
 }
 
-//CreateDownStreamNetRules CreateDownStreamNetRules
+// CreateDownStreamNetRules CreateDownStreamNetRules
 func (n *NetRulesAction) CreateDownStreamNetRules(
-	tenantID string,
+	tenantEnvID string,
 	rs *api_model.SetNetDownStreamRuleStruct) *util.APIHandleError {
 	k := fmt.Sprintf("/netRules/%s/%s/downstream/%s/%v",
-		tenantID, rs.ServiceAlias, rs.Body.DestServiceAlias, rs.Body.Port)
+		tenantEnvID, rs.ServiceAlias, rs.Body.DestServiceAlias, rs.Body.Port)
 	sb := &api_model.NetRulesDownStreamBody{
 		DestService:      rs.Body.DestService,
 		DestServiceAlias: rs.Body.DestServiceAlias,
@@ -70,15 +70,15 @@ func (n *NetRulesAction) CreateDownStreamNetRules(
 	return nil
 }
 
-//GetDownStreamNetRule GetDownStreamNetRule
+// GetDownStreamNetRule GetDownStreamNetRule
 func (n *NetRulesAction) GetDownStreamNetRule(
-	tenantID,
+	tenantEnvID,
 	serviceAlias,
 	destServiceAlias,
 	port string) (*api_model.NetRulesDownStreamBody, *util.APIHandleError) {
 	k := fmt.Sprintf(
 		"/netRules/%s/%s/downstream/%s/%v",
-		tenantID,
+		tenantEnvID,
 		serviceAlias,
 		destServiceAlias,
 		port)
@@ -103,14 +103,14 @@ func (n *NetRulesAction) GetDownStreamNetRule(
 	return nil, nil
 }
 
-//UpdateDownStreamNetRule UpdateDownStreamNetRule
+// UpdateDownStreamNetRule UpdateDownStreamNetRule
 func (n *NetRulesAction) UpdateDownStreamNetRule(
-	tenantID string,
+	tenantEnvID string,
 	urs *api_model.UpdateNetDownStreamRuleStruct) *util.APIHandleError {
 
 	srs := &api_model.SetNetDownStreamRuleStruct{
-		TenantName:   urs.TenantName,
-		ServiceAlias: urs.ServiceAlias,
+		TenantEnvName: urs.TenantEnvName,
+		ServiceAlias:  urs.ServiceAlias,
 	}
 	srs.Body.DestService = urs.Body.DestService
 	srs.Body.DestServiceAlias = urs.DestServiceAlias
@@ -119,7 +119,7 @@ func (n *NetRulesAction) UpdateDownStreamNetRule(
 	srs.Body.Rules = urs.Body.Rules
 
 	//TODO: update mysql transaction
-	if err := n.CreateDownStreamNetRules(tenantID, srs); err != nil {
+	if err := n.CreateDownStreamNetRules(tenantEnvID, srs); err != nil {
 		return err
 	}
 	return nil

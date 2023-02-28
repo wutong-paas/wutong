@@ -27,12 +27,12 @@ func (i *Ingresses) Migrate(namespace string, seletcor labels.Selector) {
 func (i *Ingresses) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for n := 0; n < len(i.Ingresses); n++ {
 		labels := map[string]string{
-			"app":           i.Ingresses[n].Labels["app"],
-			"app_id":        i.Ingresses[n].Labels["app_id"],
-			"service_alias": i.Ingresses[n].Labels["service_alias"],
-			"service_id":    i.Ingresses[n].Labels["service_id"],
-			"tenant_id":     i.Ingresses[n].Labels["tenant_id"],
-			"tenant_name":   i.Ingresses[n].Labels["tenant_name"],
+			"app":             i.Ingresses[n].Labels["app"],
+			"app_id":          i.Ingresses[n].Labels["app_id"],
+			"service_alias":   i.Ingresses[n].Labels["service_alias"],
+			"service_id":      i.Ingresses[n].Labels["service_id"],
+			"tenant_env_id":   i.Ingresses[n].Labels["tenant_env_id"],
+			"tenant_env_name": i.Ingresses[n].Labels["tenant_env_name"],
 		}
 		if i.Ingresses[n] != nil {
 			i.Ingresses[n].APIVersion = "networking.k8s.io/v1"

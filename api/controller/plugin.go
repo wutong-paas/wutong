@@ -32,8 +32,8 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//PluginAction plugin action
-func (t *TenantStruct) PluginAction(w http.ResponseWriter, r *http.Request) {
+// PluginAction plugin action
+func (t *TenantEnvStruct) PluginAction(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
 		t.UpdatePlugin(w, r)
@@ -46,9 +46,9 @@ func (t *TenantStruct) PluginAction(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//CreatePlugin add plugin
-func (t *TenantStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/plugin v2 createPlugin
+// CreatePlugin add plugin
+func (t *TenantEnvStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin v2 createPlugin
 	//
 	// 创建插件
 	//
@@ -68,14 +68,14 @@ func (t *TenantStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	var cps api_model.CreatePluginStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &cps.Body, nil); !ok {
 		return
 	}
-	cps.Body.TenantID = tenantID
-	cps.TenantName = tenantName
+	cps.Body.TenantEnvID = tenantEnvID
+	cps.TenantEnvName = tenantEnvName
 	if err := handler.GetPluginManager().CreatePluginAct(&cps); err != nil {
 		err.Handle(r, w)
 		return
@@ -83,9 +83,9 @@ func (t *TenantStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//UpdatePlugin UpdatePlugin
-func (t *TenantStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation PUT /v2/tenants/{tenant_name}/plugin/{plugin_id} v2 updatePlugin
+// UpdatePlugin UpdatePlugin
+func (t *TenantEnvStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id} v2 updatePlugin
 	//
 	// 插件更新 全量更新，但pluginID和所在租户不提供修改
 	//
@@ -107,21 +107,21 @@ func (t *TenantStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var ups api_model.UpdatePluginStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ups.Body, nil); !ok {
 		return
 	}
-	if err := handler.GetPluginManager().UpdatePluginAct(pluginID, tenantID, &ups); err != nil {
+	if err := handler.GetPluginManager().UpdatePluginAct(pluginID, tenantEnvID, &ups); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//DeletePlugin DeletePlugin
-func (t *TenantStruct) DeletePlugin(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation DELETE /v2/tenants/{tenant_name}/plugin/{plugin_id} v2 deletePlugin
+// DeletePlugin DeletePlugin
+func (t *TenantEnvStruct) DeletePlugin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id} v2 deletePlugin
 	//
 	// 插件删除
 	//
@@ -142,17 +142,17 @@ func (t *TenantStruct) DeletePlugin(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	if err := handler.GetPluginManager().DeletePluginAct(pluginID, tenantID); err != nil {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	if err := handler.GetPluginManager().DeletePluginAct(pluginID, tenantEnvID); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GetPlugins GetPlugins
-func (t *TenantStruct) GetPlugins(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/plugin v2 getPlugins
+// GetPlugins GetPlugins
+func (t *TenantEnvStruct) GetPlugins(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin v2 getPlugins
 	//
 	// 获取当前租户下所有的可用插件
 	//
@@ -172,8 +172,8 @@ func (t *TenantStruct) GetPlugins(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	plugins, err := handler.GetPluginManager().GetPlugins(tenantID)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	plugins, err := handler.GetPluginManager().GetPlugins(tenantEnvID)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -181,8 +181,8 @@ func (t *TenantStruct) GetPlugins(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, plugins)
 }
 
-//PluginDefaultENV PluginDefaultENV
-func (t *TenantStruct) PluginDefaultENV(w http.ResponseWriter, r *http.Request) {
+// PluginDefaultENV PluginDefaultENV
+func (t *TenantEnvStruct) PluginDefaultENV(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		t.AddDefatultENV(w, r)
@@ -193,8 +193,8 @@ func (t *TenantStruct) PluginDefaultENV(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-//AddDefatultENV AddDefatultENV
-func (t *TenantStruct) AddDefatultENV(w http.ResponseWriter, r *http.Request) {
+// AddDefatultENV AddDefatultENV
+func (t *TenantEnvStruct) AddDefatultENV(w http.ResponseWriter, r *http.Request) {
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	var est api_model.ENVStruct
@@ -209,8 +209,8 @@ func (t *TenantStruct) AddDefatultENV(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//DeleteDefaultENV DeleteDefaultENV
-func (t *TenantStruct) DeleteDefaultENV(w http.ResponseWriter, r *http.Request) {
+// DeleteDefaultENV DeleteDefaultENV
+func (t *TenantEnvStruct) DeleteDefaultENV(w http.ResponseWriter, r *http.Request) {
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	envName := chi.URLParam(r, "env_name")
 	versionID := chi.URLParam(r, "version_id")
@@ -220,8 +220,8 @@ func (t *TenantStruct) DeleteDefaultENV(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-//UpdateDefaultENV UpdateDefaultENV
-func (t *TenantStruct) UpdateDefaultENV(w http.ResponseWriter, r *http.Request) {
+// UpdateDefaultENV UpdateDefaultENV
+func (t *TenantEnvStruct) UpdateDefaultENV(w http.ResponseWriter, r *http.Request) {
 
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
@@ -237,8 +237,8 @@ func (t *TenantStruct) UpdateDefaultENV(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-//GetPluginDefaultEnvs GetPluginDefaultEnvs
-func (t *TenantStruct) GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Request) {
+// GetPluginDefaultEnvs GetPluginDefaultEnvs
+func (t *TenantEnvStruct) GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Request) {
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	envs, err := handler.GetPluginManager().GetDefaultEnv(pluginID, versionID)
@@ -249,8 +249,8 @@ func (t *TenantStruct) GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Reque
 	httputil.ReturnSuccess(r, w, envs)
 }
 
-//PluginBuild PluginBuild
-// swagger:operation POST /v2/tenants/{tenant_name}/plugin/{plugin_id}/build v2 buildPlugin
+// PluginBuild PluginBuild
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build v2 buildPlugin
 //
 // 构建plugin
 //
@@ -266,22 +266,23 @@ func (t *TenantStruct) GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Reque
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 	var build api_model.BuildPluginStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build.Body, nil)
 	if !ok {
 		return
 	}
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
-	build.TenantName = tenantName
+	build.TenantEnvName = tenantEnvName
 	build.PluginID = pluginID
-	build.Body.TenantID = tenantID
+	build.Body.TenantEnvID = tenantEnvID
 	pbv, err := handler.GetPluginManager().BuildPluginManual(&build)
 	if err != nil {
 		err.Handle(r, w)
@@ -290,8 +291,8 @@ func (t *TenantStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, pbv)
 }
 
-//GetAllPluginBuildVersions 获取该插件所有的构建版本
-// swagger:operation GET /v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version v2 allPluginVersions
+// GetAllPluginBuildVersions 获取该插件所有的构建版本
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build-version v2 allPluginVersions
 //
 // 获取所有的构建版本信息
 //
@@ -307,11 +308,12 @@ func (t *TenantStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.Request) {
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versions, err := handler.GetPluginManager().GetAllPluginBuildVersions(pluginID)
 	if err != nil {
@@ -321,8 +323,8 @@ func (t *TenantStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.
 	httputil.ReturnSuccess(r, w, versions)
 }
 
-//GetPluginBuildVersion 获取某构建版本信息
-// swagger:operation GET /v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version/{version_id} v2 pluginVersion
+// GetPluginBuildVersion 获取某构建版本信息
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build-version/{version_id} v2 pluginVersion
 //
 // 获取某个构建版本信息
 //
@@ -338,11 +340,12 @@ func (t *TenantStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Request) {
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	version, err := handler.GetPluginManager().GetPluginBuildVersion(pluginID, versionID)
@@ -353,8 +356,8 @@ func (t *TenantStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Requ
 	httputil.ReturnSuccess(r, w, version)
 }
 
-//DeletePluginBuildVersion DeletePluginBuildVersion
-// swagger:operation DELETE /v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version/{version_id} v2 deletePluginVersion
+// DeletePluginBuildVersion DeletePluginBuildVersion
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build-version/{version_id} v2 deletePluginVersion
 //
 // 删除某个构建版本信息
 //
@@ -370,11 +373,12 @@ func (t *TenantStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Requ
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) DeletePluginBuildVersion(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) DeletePluginBuildVersion(w http.ResponseWriter, r *http.Request) {
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	err := handler.GetPluginManager().DeletePluginBuildVersion(pluginID, versionID)
@@ -385,8 +389,8 @@ func (t *TenantStruct) DeletePluginBuildVersion(w http.ResponseWriter, r *http.R
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//PluginSet PluginSet
-func (t *TenantStruct) PluginSet(w http.ResponseWriter, r *http.Request) {
+// PluginSet PluginSet
+func (t *TenantEnvStruct) PluginSet(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
 		t.updatePluginSet(w, r)
@@ -397,7 +401,7 @@ func (t *TenantStruct) PluginSet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/plugin v2 updatePluginSet
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin v2 updatePluginSet
 //
 // 更新插件设定
 //
@@ -413,18 +417,19 @@ func (t *TenantStruct) PluginSet(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) updatePluginSet(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) updatePluginSet(w http.ResponseWriter, r *http.Request) {
 	var pss api_model.PluginSetStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &pss.Body, nil)
 	if !ok {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	relation, err := handler.GetServiceManager().UpdateTenantServicePluginRelation(serviceID, &pss)
+	relation, err := handler.GetServiceManager().UpdateTenantEnvServicePluginRelation(serviceID, &pss)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -432,7 +437,7 @@ func (t *TenantStruct) updatePluginSet(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, relation)
 }
 
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/plugin v2 addPluginSet
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin v2 addPluginSet
 //
 // 添加插件设定
 //
@@ -448,23 +453,24 @@ func (t *TenantStruct) updatePluginSet(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
 	var pss api_model.PluginSetStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &pss.Body, nil)
 	if !ok {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	pss.ServiceAlias = serviceAlias
-	pss.TenantName = tenantName
-	re, err := handler.GetServiceManager().SetTenantServicePluginRelation(tenantID, serviceID, &pss)
+	pss.TenantEnvName = tenantEnvName
+	re, err := handler.GetServiceManager().SetTenantEnvServicePluginRelation(tenantEnvID, serviceID, &pss)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -472,7 +478,7 @@ func (t *TenantStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, re)
 }
 
-// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/plugin v2 getPluginSet
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin v2 getPluginSet
 //
 // 获取插件设定
 //
@@ -488,13 +494,14 @@ func (t *TenantStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) getPluginSet(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) getPluginSet(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	gps, err := handler.GetServiceManager().GetTenantServicePluginRelation(serviceID)
+	gps, err := handler.GetServiceManager().GetTenantEnvServicePluginRelation(serviceID)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -503,8 +510,8 @@ func (t *TenantStruct) getPluginSet(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//DeletePluginRelation DeletePluginRelation
-// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/plugin/{plugin_id} v2 deletePluginRelation
+// DeletePluginRelation DeletePluginRelation
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin/{plugin_id} v2 deletePluginRelation
 //
 // 删除插件依赖
 //
@@ -520,23 +527,24 @@ func (t *TenantStruct) getPluginSet(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) DeletePluginRelation(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) DeletePluginRelation(w http.ResponseWriter, r *http.Request) {
 	pluginID := chi.URLParam(r, "plugin_id")
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	if err := handler.GetServiceManager().TenantServiceDeletePluginRelation(tenantID, serviceID, pluginID); err != nil {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	if err := handler.GetServiceManager().TenantEnvServiceDeletePluginRelation(tenantEnvID, serviceID, pluginID); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GePluginEnvWhichCanBeSet GePluginEnvWhichCanBeSet
-// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/plugin/{plugin_id}/envs v2 getVersionEnvs
+// GePluginEnvWhichCanBeSet GePluginEnvWhichCanBeSet
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin/{plugin_id}/envs v2 getVersionEnvs
 //
 // 获取可配置的env; 从service plugin对应中取, 若不存在则返回默认可修改的变量
 //
@@ -552,11 +560,12 @@ func (t *TenantStruct) DeletePluginRelation(w http.ResponseWriter, r *http.Reque
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	pluginID := chi.URLParam(r, "plugin_id")
 	envs, err := handler.GetPluginManager().GetEnvsWhichCanBeSet(serviceID, pluginID)
@@ -567,8 +576,8 @@ func (t *TenantStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.R
 	httputil.ReturnSuccess(r, w, envs)
 }
 
-//UpdateVersionEnv UpdateVersionEnv
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/plugin/{plugin_id}/upenv v2 updateVersionEnv
+// UpdateVersionEnv UpdateVersionEnv
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin/{plugin_id}/upenv v2 updateVersionEnv
 //
 // modify the app plugin config info. it will Thermal effect
 //
@@ -584,11 +593,12 @@ func (t *TenantStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.R
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) UpdateVersionEnv(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) UpdateVersionEnv(w http.ResponseWriter, r *http.Request) {
 	var uve api_model.SetVersionEnv
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &uve.Body, nil)
 	if !ok {
@@ -596,10 +606,10 @@ func (t *TenantStruct) UpdateVersionEnv(w http.ResponseWriter, r *http.Request) 
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	pluginID := chi.URLParam(r, "plugin_id")
 	uve.PluginID = pluginID
-	uve.Body.TenantID = tenantID
+	uve.Body.TenantEnvID = tenantEnvID
 	uve.ServiceAlias = serviceAlias
 	uve.Body.ServiceID = serviceID
 	if err := handler.GetServiceManager().UpdateVersionEnv(&uve); err != nil {
@@ -609,15 +619,15 @@ func (t *TenantStruct) UpdateVersionEnv(w http.ResponseWriter, r *http.Request) 
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//SharePlugin share tenants plugin
-func (t *TenantStruct) SharePlugin(w http.ResponseWriter, r *http.Request) {
+// SharePlugin share tenantEnvs plugin
+func (t *TenantEnvStruct) SharePlugin(w http.ResponseWriter, r *http.Request) {
 	var sp share.PluginShare
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &sp.Body, nil)
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	sp.TenantID = tenantID
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	sp.TenantEnvID = tenantEnvID
 	sp.PluginID = chi.URLParam(r, "plugin_id")
 	if sp.Body.EventID == "" {
 		sp.Body.EventID = util.NewUUID()
@@ -630,8 +640,8 @@ func (t *TenantStruct) SharePlugin(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, res)
 }
 
-//SharePluginResult SharePluginResult
-func (t *TenantStruct) SharePluginResult(w http.ResponseWriter, r *http.Request) {
+// SharePluginResult SharePluginResult
+func (t *TenantEnvStruct) SharePluginResult(w http.ResponseWriter, r *http.Request) {
 	shareID := chi.URLParam(r, "share_id")
 	res, errS := handler.GetPluginShareHandle().ShareResult(shareID)
 	if errS != nil {
@@ -641,14 +651,14 @@ func (t *TenantStruct) SharePluginResult(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, res)
 }
 
-//BatchInstallPlugins -
-func (t *TenantStruct) BatchInstallPlugins(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+// BatchInstallPlugins -
+func (t *TenantEnvStruct) BatchInstallPlugins(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var req api_model.BatchCreatePlugins
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
 		return
 	}
-	if err := handler.GetPluginManager().BatchCreatePlugins(tenantID, req.Plugins); err != nil {
+	if err := handler.GetPluginManager().BatchCreatePlugins(tenantEnvID, req.Plugins); err != nil {
 		err.Handle(r, w)
 		return
 	}
@@ -656,14 +666,14 @@ func (t *TenantStruct) BatchInstallPlugins(w http.ResponseWriter, r *http.Reques
 }
 
 // BatchBuildPlugins -
-func (t *TenantStruct) BatchBuildPlugins(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) BatchBuildPlugins(w http.ResponseWriter, r *http.Request) {
 	var builds api_model.BatchBuildPlugins
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &builds, nil)
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	err := handler.GetPluginManager().BatchBuildPlugins(&builds, tenantID)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	err := handler.GetPluginManager().BatchBuildPlugins(&builds, tenantEnvID)
 	if err != nil {
 		err.Handle(r, w)
 		return

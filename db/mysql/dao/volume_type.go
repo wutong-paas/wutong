@@ -27,13 +27,13 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-//VolumeTypeDaoImpl license model 管理
+// VolumeTypeDaoImpl license model 管理
 type VolumeTypeDaoImpl struct {
 	DB *gorm.DB
 }
 
 // CreateOrUpdateVolumeType find or create volumeType, !!! attention：just for store sync storageclass from k8s
-func (vtd *VolumeTypeDaoImpl) CreateOrUpdateVolumeType(vt *model.TenantServiceVolumeType) (*model.TenantServiceVolumeType, error) {
+func (vtd *VolumeTypeDaoImpl) CreateOrUpdateVolumeType(vt *model.TenantEnvServiceVolumeType) (*model.TenantEnvServiceVolumeType, error) {
 	if vt.VolumeType == model.ShareFileVolumeType.String() || vt.VolumeType == model.LocalVolumeType.String() || vt.VolumeType == model.MemoryFSVolumeType.String() {
 		return vt, nil
 	}
@@ -54,10 +54,10 @@ func (vtd *VolumeTypeDaoImpl) CreateOrUpdateVolumeType(vt *model.TenantServiceVo
 	return volumeType, err
 }
 
-//AddModel AddModel
+// AddModel AddModel
 func (vtd *VolumeTypeDaoImpl) AddModel(mo model.Interface) error {
-	volumeType := mo.(*model.TenantServiceVolumeType)
-	var oldVolumeType model.TenantServiceVolumeType
+	volumeType := mo.(*model.TenantEnvServiceVolumeType)
+	var oldVolumeType model.TenantEnvServiceVolumeType
 	if ok := vtd.DB.Where("volume_type=?", volumeType.VolumeType).Find(&oldVolumeType).RecordNotFound(); ok {
 		if err := vtd.DB.Create(volumeType).Error; err != nil {
 			return err
@@ -70,7 +70,7 @@ func (vtd *VolumeTypeDaoImpl) AddModel(mo model.Interface) error {
 
 // UpdateModel update model
 func (vtd *VolumeTypeDaoImpl) UpdateModel(mo model.Interface) error {
-	volumeType := mo.(*model.TenantServiceVolumeType)
+	volumeType := mo.(*model.TenantEnvServiceVolumeType)
 	if err := vtd.DB.Save(volumeType).Error; err != nil {
 		return err
 	}
@@ -78,8 +78,8 @@ func (vtd *VolumeTypeDaoImpl) UpdateModel(mo model.Interface) error {
 }
 
 // GetAllVolumeTypes get all volumeTypes
-func (vtd *VolumeTypeDaoImpl) GetAllVolumeTypes() ([]*model.TenantServiceVolumeType, error) {
-	var volumeTypes []*model.TenantServiceVolumeType
+func (vtd *VolumeTypeDaoImpl) GetAllVolumeTypes() ([]*model.TenantEnvServiceVolumeType, error) {
+	var volumeTypes []*model.TenantEnvServiceVolumeType
 	if err := vtd.DB.Find(&volumeTypes).Error; err != nil {
 		return nil, err
 	}
@@ -87,8 +87,8 @@ func (vtd *VolumeTypeDaoImpl) GetAllVolumeTypes() ([]*model.TenantServiceVolumeT
 }
 
 // GetAllVolumeTypesByPage get all volumeTypes by page
-func (vtd *VolumeTypeDaoImpl) GetAllVolumeTypesByPage(page int, pageSize int) ([]*model.TenantServiceVolumeType, error) {
-	var volumeTypes []*model.TenantServiceVolumeType
+func (vtd *VolumeTypeDaoImpl) GetAllVolumeTypesByPage(page int, pageSize int) ([]*model.TenantEnvServiceVolumeType, error) {
+	var volumeTypes []*model.TenantEnvServiceVolumeType
 	if err := vtd.DB.Limit(pageSize).Offset((page - 1) * pageSize).Find(&volumeTypes).Error; err != nil {
 		return nil, err
 	}
@@ -96,8 +96,8 @@ func (vtd *VolumeTypeDaoImpl) GetAllVolumeTypesByPage(page int, pageSize int) ([
 }
 
 // GetVolumeTypeByType get volume type by type
-func (vtd *VolumeTypeDaoImpl) GetVolumeTypeByType(vt string) (*model.TenantServiceVolumeType, error) {
-	var volumeType model.TenantServiceVolumeType
+func (vtd *VolumeTypeDaoImpl) GetVolumeTypeByType(vt string) (*model.TenantEnvServiceVolumeType, error) {
+	var volumeType model.TenantEnvServiceVolumeType
 	if err := vtd.DB.Where("volume_type=?", vt).Find(&volumeType).Error; err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (vtd *VolumeTypeDaoImpl) GetVolumeTypeByType(vt string) (*model.TenantServi
 
 // DeleteModelByVolumeTypes delete volume by type
 func (vtd *VolumeTypeDaoImpl) DeleteModelByVolumeTypes(volumeType string) error {
-	if err := vtd.DB.Where("volume_type=?", volumeType).Delete(&model.TenantServiceVolumeType{}).Error; err != nil {
+	if err := vtd.DB.Where("volume_type=?", volumeType).Delete(&model.TenantEnvServiceVolumeType{}).Error; err != nil {
 		return err
 	}
 	return nil

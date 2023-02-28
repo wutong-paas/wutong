@@ -32,8 +32,8 @@ const TargetTypeService = "service"
 // TargetTypePod -
 const TargetTypePod = "pod"
 
-// TargetTypeTenant tenant target
-const TargetTypeTenant = "tenant"
+// TargetTypeTenantEnv tenant env target
+const TargetTypeTenantEnv = "tenantEnv"
 
 // UsernameSystem -
 const UsernameSystem = "system"
@@ -75,11 +75,11 @@ var EventStatusSuccess EventStatus = "success"
 // EventStatusFailure -
 var EventStatusFailure EventStatus = "failure"
 
-//ServiceEvent event struct
+// ServiceEvent event struct
 type ServiceEvent struct {
 	Model
 	EventID     string `gorm:"column:event_id;size:40"`
-	TenantID    string `gorm:"column:tenant_id;size:40;index:tenant_id"`
+	TenantEnvID string `gorm:"column:tenant_env_id;size:40;index:tenant_env_id"`
 	ServiceID   string `gorm:"column:service_id;size:40;index:service_id"`
 	Target      string `gorm:"column:target;size:40"`
 	TargetID    string `gorm:"column:target_id;size:255;index:target_id"`
@@ -95,17 +95,17 @@ type ServiceEvent struct {
 	Reason      string `gorm:"column:reason"`
 }
 
-//TableName 表名
+// TableName 表名
 func (t *ServiceEvent) TableName() string {
-	return "tenant_services_event"
+	return "tenant_env_services_event"
 }
 
-//NotificationEvent NotificationEvent
+// NotificationEvent NotificationEvent
 type NotificationEvent struct {
 	Model
-	//Kind could be service, tenant, cluster, node
+	//Kind could be service, tenantEnv, cluster, node
 	Kind string `gorm:"column:kind;size:40"`
-	//KindID could be service_id,tenant_id,cluster_id,node_id
+	//KindID could be service_id,tenant_env_id,cluster_id,node_id
 	KindID string `gorm:"column:kind_id;size:40"`
 	Hash   string `gorm:"column:hash;size:100"`
 	//Type could be Normal UnNormal Notification
@@ -118,10 +118,10 @@ type NotificationEvent struct {
 	IsHandle      bool      `gorm:"column:is_handle;"`
 	HandleMessage string    `gorm:"column:handle_message;"`
 	ServiceName   string    `gorm:"column:service_name;size:40"`
-	TenantName    string    `gorm:"column:tenant_name;size:40"`
+	TenantEnvName string    `gorm:"column:tenant_env_name;size:40"`
 }
 
-//TableName table name
+// TableName table name
 func (n *NotificationEvent) TableName() string {
 	return "region_notification_event"
 }

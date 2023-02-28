@@ -18,12 +18,13 @@
 
 package model
 
-//SetDefineSourcesStruct SetDefineSourcesStruct
+// SetDefineSourcesStruct SetDefineSourcesStruct
+//
 //swagger:parameters setDefineSource
 type SetDefineSourcesStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	SourceAlias string `json:"source_alias" validate:"source_alias"`
@@ -35,12 +36,13 @@ type SetDefineSourcesStruct struct {
 	}
 }
 
-//DeleteDefineSourcesStruct DeleteDefineSourcesStruct
+// DeleteDefineSourcesStruct DeleteDefineSourcesStruct
+//
 //swagger:parameters deleteDefineSource getDefineSource
 type DeleteDefineSourcesStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	SourceAlias string `json:"source_alias" validate:"source_alias"`
@@ -49,12 +51,13 @@ type DeleteDefineSourcesStruct struct {
 	EnvName string `json:"env_name" validate:"env_name"`
 }
 
-//UpdateDefineSourcesStruct UpdateDefineSourcesStruct
+// UpdateDefineSourcesStruct UpdateDefineSourcesStruct
+//
 //swagger:parameters deleteDefineSource updateDefineSource
 type UpdateDefineSourcesStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	SourceAlias string `json:"source_alias" validate:"source_alias"`
@@ -69,7 +72,7 @@ type UpdateDefineSourcesStruct struct {
 	}
 }
 
-//SourceSpec SourceSpec
+// SourceSpec SourceSpec
 type SourceSpec struct {
 	Alias      string               `json:"source_alias" validate:"source_alias"`
 	Info       string               `json:"source_info" validate:"source_info"`
@@ -79,21 +82,21 @@ type SourceSpec struct {
 	Additions  map[string]*Addition `json:"additons" validate:"additions"`
 }
 
-//SoureBody SoureBody
+// SoureBody SoureBody
 type SoureBody struct {
 	EnvName string      `json:"env_name" validate:"env_name"`
 	EnvVal  interface{} `json:"env_value" validate:"env_value"`
 	//json format
 }
 
-//ResourceSpec 资源结构体
+// ResourceSpec 资源结构体
 type ResourceSpec struct {
 	BasePorts    []*BasePort    `json:"base_ports"`
 	BaseServices []*BaseService `json:"base_services"`
 	BaseNormal   BaseEnv        `json:"base_normal"`
 }
 
-//BasePort base of current app ports
+// BasePort base of current app ports
 type BasePort struct {
 	ServiceAlias string `json:"service_alias"`
 	ServiceID    string `json:"service_id"`
@@ -105,7 +108,7 @@ type BasePort struct {
 	Options    map[string]interface{} `json:"options"`
 }
 
-//BaseService 基于依赖应用及端口结构
+// BaseService 基于依赖应用及端口结构
 type BaseService struct {
 	ServiceAlias       string                 `json:"service_alias"`
 	ServiceID          string                 `json:"service_id"`
@@ -116,18 +119,18 @@ type BaseService struct {
 	Options            map[string]interface{} `json:"options"`
 }
 
-//BaseEnv 无平台定义类型，普通kv
+// BaseEnv 无平台定义类型，普通kv
 type BaseEnv struct {
 	Options map[string]interface{} `json:"options"`
 }
 
-//Item source值,键值对形式
+// Item source值,键值对形式
 type Item struct {
 	Key   string      `json:"key" validate:"key"`
 	Value interface{} `json:"value" validate:"value"`
 }
 
-//Addition 存储附加信息
+// Addition 存储附加信息
 type Addition struct {
 	Desc  string  `json:"desc" validate:"desc"`
 	Items []*Item `json:"items" validate:"items"`

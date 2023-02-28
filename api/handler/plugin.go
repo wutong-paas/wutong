@@ -49,25 +49,25 @@ func CreatePluginManager(mqClient client.MQClient) *PluginAction {
 }
 
 // BatchCreatePlugins -
-func (p *PluginAction) BatchCreatePlugins(tenantID string, plugins []*api_model.Plugin) *util.APIHandleError {
-	var dbPlugins []*dbmodel.TenantPlugin
+func (p *PluginAction) BatchCreatePlugins(tenantEnvID string, plugins []*api_model.Plugin) *util.APIHandleError {
+	var dbPlugins []*dbmodel.TenantEnvPlugin
 	for _, plugin := range plugins {
-		dbPlugins = append(dbPlugins, plugin.DbModel(tenantID))
+		dbPlugins = append(dbPlugins, plugin.DbModel(tenantEnvID))
 	}
-	if err := db.GetManager().TenantPluginDao().CreateOrUpdatePluginsInBatch(dbPlugins); err != nil {
+	if err := db.GetManager().TenantEnvPluginDao().CreateOrUpdatePluginsInBatch(dbPlugins); err != nil {
 		return util.CreateAPIHandleErrorFromDBError("batch create plugins", err)
 	}
 	return nil
 }
 
 // BatchBuildPlugins -
-func (p *PluginAction) BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenantID string) *util.APIHandleError {
+func (p *PluginAction) BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenantEnvID string) *util.APIHandleError {
 	var pluginIDs []string
 	for _, buildReq := range req.Plugins {
-		buildReq.TenantID = tenantID
+		buildReq.TenantEnvID = tenantEnvID
 		pluginIDs = append(pluginIDs, buildReq.PluginID)
 	}
-	plugins, err := db.GetManager().TenantPluginDao().ListByIDs(pluginIDs)
+	plugins, err := db.GetManager().TenantEnvPluginDao().ListByIDs(pluginIDs)
 	if err != nil {
 		return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", pluginIDs), err)
 	}
@@ -79,8 +79,8 @@ func (p *PluginAction) BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenan
 
 // CreatePluginAct PluginAct
 func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.APIHandleError {
-	tp := &dbmodel.TenantPlugin{
-		TenantID:    cps.Body.TenantID,
+	tp := &dbmodel.TenantEnvPlugin{
+		TenantEnvID: cps.Body.TenantEnvID,
 		PluginID:    cps.Body.PluginID,
 		PluginInfo:  cps.Body.PluginInfo,
 		PluginModel: cps.Body.PluginModel,
@@ -88,22 +88,22 @@ func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.
 		ImageURL:    cps.Body.ImageURL,
 		GitURL:      cps.Body.GitURL,
 		BuildModel:  cps.Body.BuildModel,
-		Domain:      cps.TenantName,
+		Domain:      cps.TenantEnvName,
 		PluginType:  cps.Body.PluginType,
 	}
 	if cps.Body.PluginType == "sys" {
-		tp.TenantID = ""
+		tp.TenantEnvID = ""
 		tp.Domain = ""
 	}
-	if err := db.GetManager().TenantPluginDao().AddModel(tp); err != nil {
+	if err := db.GetManager().TenantEnvPluginDao().AddModel(tp); err != nil {
 		return util.CreateAPIHandleErrorFromDBError("create plugin", err)
 	}
 	return nil
 }
 
 // UpdatePluginAct UpdatePluginAct
-func (p *PluginAction) UpdatePluginAct(pluginID, tenantID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError {
-	tp, err := db.GetManager().TenantPluginDao().GetPluginByID(pluginID, tenantID)
+func (p *PluginAction) UpdatePluginAct(pluginID, tenantEnvID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError {
+	tp, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, tenantEnvID)
 	if err != nil {
 		return util.CreateAPIHandleErrorFromDBError("get old plugin info", err)
 	}
@@ -113,7 +113,7 @@ func (p *PluginAction) UpdatePluginAct(pluginID, tenantID string, cps *api_model
 	tp.ImageURL = cps.Body.ImageURL
 	tp.GitURL = cps.Body.GitURL
 	tp.BuildModel = cps.Body.BuildModel
-	err = db.GetManager().TenantPluginDao().UpdateModel(tp)
+	err = db.GetManager().TenantEnvPluginDao().UpdateModel(tp)
 	if err != nil {
 		return util.CreateAPIHandleErrorFromDBError("update plugin", err)
 	}
@@ -121,7 +121,7 @@ func (p *PluginAction) UpdatePluginAct(pluginID, tenantID string, cps *api_model
 }
 
 // DeletePluginAct DeletePluginAct
-func (p *PluginAction) DeletePluginAct(pluginID, tenantID string) *util.APIHandleError {
+func (p *PluginAction) DeletePluginAct(pluginID, tenantEnvID string) *util.APIHandleError {
 	tx := db.GetManager().Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -130,19 +130,19 @@ func (p *PluginAction) DeletePluginAct(pluginID, tenantID string) *util.APIHandl
 		}
 	}()
 	//step1: delete service plugin relation
-	err := db.GetManager().TenantServicePluginRelationDaoTransactions(tx).DeleteALLRelationByPluginID(pluginID)
+	err := db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).DeleteALLRelationByPluginID(pluginID)
 	if err != nil {
 		tx.Rollback()
 		return util.CreateAPIHandleErrorFromDBError("delete plugin relation", err)
 	}
 	//step2: delete plugin build version
-	err = db.GetManager().TenantPluginBuildVersionDaoTransactions(tx).DeleteBuildVersionByPluginID(pluginID)
+	err = db.GetManager().TenantEnvPluginBuildVersionDaoTransactions(tx).DeleteBuildVersionByPluginID(pluginID)
 	if err != nil {
 		tx.Rollback()
 		return util.CreateAPIHandleErrorFromDBError("delete plugin build version", err)
 	}
 	//step3: delete plugin
-	err = db.GetManager().TenantPluginDaoTransactions(tx).DeletePluginByID(pluginID, tenantID)
+	err = db.GetManager().TenantEnvPluginDaoTransactions(tx).DeletePluginByID(pluginID, tenantEnvID)
 	if err != nil {
 		tx.Rollback()
 		return util.CreateAPIHandleErrorFromDBError("delete plugin", err)
@@ -154,11 +154,11 @@ func (p *PluginAction) DeletePluginAct(pluginID, tenantID string) *util.APIHandl
 	return nil
 }
 
-// GetPlugins get all plugins by tenantID
-func (p *PluginAction) GetPlugins(tenantID string) ([]*dbmodel.TenantPlugin, *util.APIHandleError) {
-	plugins, err := db.GetManager().TenantPluginDao().GetPluginsByTenantID(tenantID)
+// GetPlugins get all plugins by tenantEnvID
+func (p *PluginAction) GetPlugins(tenantEnvID string) ([]*dbmodel.TenantEnvPlugin, *util.APIHandleError) {
+	plugins, err := db.GetManager().TenantEnvPluginDao().GetPluginsByTenantEnvID(tenantEnvID)
 	if err != nil {
-		return nil, util.CreateAPIHandleErrorFromDBError("get plugins by tenant id", err)
+		return nil, util.CreateAPIHandleErrorFromDBError("get plugins by tenant env id", err)
 	}
 	return plugins, nil
 }
@@ -173,14 +173,14 @@ func (p *PluginAction) AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleEr
 		}
 	}()
 	for _, env := range est.Body.EVNInfo {
-		vis := &dbmodel.TenantPluginDefaultENV{
+		vis := &dbmodel.TenantEnvPluginDefaultENV{
 			PluginID:  est.PluginID,
 			ENVName:   env.ENVName,
 			ENVValue:  env.ENVValue,
 			IsChange:  env.IsChange,
 			VersionID: env.VersionID,
 		}
-		err := db.GetManager().TenantPluginDefaultENVDaoTransactions(tx).AddModel(vis)
+		err := db.GetManager().TenantEnvPluginDefaultENVDaoTransactions(tx).AddModel(vis)
 		if err != nil {
 			tx.Rollback()
 			return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("add default env %s", env.ENVName), err)
@@ -196,13 +196,13 @@ func (p *PluginAction) AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleEr
 // UpdateDefaultEnv UpdateDefaultEnv
 func (p *PluginAction) UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError {
 	for _, env := range est.Body.EVNInfo {
-		vis := &dbmodel.TenantPluginDefaultENV{
+		vis := &dbmodel.TenantEnvPluginDefaultENV{
 			ENVName:   env.ENVName,
 			ENVValue:  env.ENVValue,
 			IsChange:  env.IsChange,
 			VersionID: env.VersionID,
 		}
-		err := db.GetManager().TenantPluginDefaultENVDao().UpdateModel(vis)
+		err := db.GetManager().TenantEnvPluginDefaultENVDao().UpdateModel(vis)
 		if err != nil {
 			return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("update default env %s", env.ENVName), err)
 		}
@@ -212,15 +212,15 @@ func (p *PluginAction) UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandl
 
 // DeleteDefaultEnv DeleteDefaultEnv
 func (p *PluginAction) DeleteDefaultEnv(pluginID, versionID, name string) *util.APIHandleError {
-	if err := db.GetManager().TenantPluginDefaultENVDao().DeleteDefaultENVByName(pluginID, name, versionID); err != nil {
+	if err := db.GetManager().TenantEnvPluginDefaultENVDao().DeleteDefaultENVByName(pluginID, name, versionID); err != nil {
 		return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("delete default env %s", name), err)
 	}
 	return nil
 }
 
 // GetDefaultEnv GetDefaultEnv
-func (p *PluginAction) GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.TenantPluginDefaultENV, *util.APIHandleError) {
-	envs, err := db.GetManager().TenantPluginDefaultENVDao().GetDefaultENVSByPluginID(pluginID, versionID)
+func (p *PluginAction) GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.TenantEnvPluginDefaultENV, *util.APIHandleError) {
+	envs, err := db.GetManager().TenantEnvPluginDefaultENVDao().GetDefaultENVSByPluginID(pluginID, versionID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get default env", err)
 	}
@@ -229,18 +229,18 @@ func (p *PluginAction) GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.Ten
 
 // GetEnvsWhichCanBeSet GetEnvsWhichCanBeSet
 func (p *PluginAction) GetEnvsWhichCanBeSet(serviceID, pluginID string) (interface{}, *util.APIHandleError) {
-	relation, err := db.GetManager().TenantServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(serviceID, pluginID)
+	relation, err := db.GetManager().TenantEnvServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(serviceID, pluginID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get relation", err)
 	}
-	envs, err := db.GetManager().TenantPluginVersionENVDao().GetVersionEnvByServiceID(serviceID, pluginID)
+	envs, err := db.GetManager().TenantEnvPluginVersionENVDao().GetVersionEnvByServiceID(serviceID, pluginID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get envs which can be set", err)
 	}
 	if len(envs) > 0 {
 		return envs, nil
 	}
-	envD, errD := db.GetManager().TenantPluginDefaultENVDao().GetDefaultEnvWhichCanBeSetByPluginID(pluginID, relation.VersionID)
+	envD, errD := db.GetManager().TenantEnvPluginDefaultENVDao().GetDefaultEnvWhichCanBeSetByPluginID(pluginID, relation.VersionID)
 	if errD != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get envs which can be set", errD)
 	}
@@ -248,11 +248,11 @@ func (p *PluginAction) GetEnvsWhichCanBeSet(serviceID, pluginID string) (interfa
 }
 
 // BuildPluginManual BuildPluginManual
-func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantPluginBuildVersion, *util.APIHandleError) {
+func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError) {
 	eventID := bps.Body.EventID
 	logger := event.GetManager().GetLogger(eventID)
 	defer event.CloseManager()
-	plugin, err := db.GetManager().TenantPluginDao().GetPluginByID(bps.PluginID, bps.Body.TenantID)
+	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(bps.PluginID, bps.Body.TenantEnvID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", bps.PluginID), err)
 	}
@@ -266,9 +266,9 @@ func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbm
 		}
 		logger.Info(fmt.Sprintf("从 %s 构建插件任务发送成功", plugin.BuildModel), map[string]string{"step": "image-plugin", "status": "starting"})
 		plugin.ImageURL = bps.Body.BuildImage
-		err = db.GetManager().TenantPluginDao().UpdateModel(plugin)
+		err = db.GetManager().TenantEnvPluginDao().UpdateModel(plugin)
 		if err != nil {
-			logrus.Error("update tenant plugin image url error ", err.Error())
+			logrus.Error("update tenant env plugin image url error ", err.Error())
 		}
 		return pbv, nil
 	default:
@@ -276,7 +276,7 @@ func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbm
 	}
 }
 
-func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.TenantPlugin) error {
+func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.TenantEnvPlugin) error {
 	if plugin.ImageURL == "" && plugin.BuildModel == "image" {
 		return fmt.Errorf("need image url")
 	}
@@ -309,12 +309,12 @@ func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.Te
 }
 
 // buildPlugin buildPlugin
-func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmodel.TenantPlugin) (
-	*dbmodel.TenantPluginBuildVersion, error) {
+func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmodel.TenantEnvPlugin) (
+	*dbmodel.TenantEnvPluginBuildVersion, error) {
 	if err := p.checkBuildPluginParam(b, plugin); err != nil {
 		return nil, err
 	}
-	pbv := &dbmodel.TenantPluginBuildVersion{
+	pbv := &dbmodel.TenantEnvPluginBuildVersion{
 		VersionID:       b.Body.BuildVersion,
 		DeployVersion:   b.Body.DeployVersion,
 		PluginID:        b.PluginID,
@@ -341,7 +341,7 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 	if b.Body.PluginMemory < 0 {
 		pbv.ContainerMemory = 64
 	}
-	if err := db.GetManager().TenantPluginBuildVersionDao().AddModel(pbv); err != nil {
+	if err := db.GetManager().TenantEnvPluginBuildVersionDao().AddModel(pbv); err != nil {
 		if !strings.Contains(err.Error(), "exist") {
 			logrus.Errorf("build plugin error: %s", err.Error())
 			return nil, err
@@ -349,10 +349,10 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 	}
 	var updateVersion = func() {
 		pbv.Status = "failure"
-		db.GetManager().TenantPluginBuildVersionDao().UpdateModel(pbv)
+		db.GetManager().TenantEnvPluginBuildVersionDao().UpdateModel(pbv)
 	}
 	taskBody := &builder_model.BuildPluginTaskBody{
-		TenantID:      b.Body.TenantID,
+		TenantEnvID:   b.Body.TenantEnvID,
 		PluginID:      b.PluginID,
 		Operator:      b.Body.Operator,
 		DeployVersion: b.Body.DeployVersion,
@@ -390,13 +390,13 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 }
 
 // buildPlugin buildPlugin
-func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugins []*dbmodel.TenantPlugin) error {
-	reqPluginRel := make(map[string]*dbmodel.TenantPlugin)
+func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugins []*dbmodel.TenantEnvPlugin) error {
+	reqPluginRel := make(map[string]*dbmodel.TenantEnvPlugin)
 	for _, plugin := range plugins {
 		reqPluginRel[plugin.PluginID] = plugin
 	}
 	var errPluginIDs []string
-	var pluginBuildVersions []*dbmodel.TenantPluginBuildVersion
+	var pluginBuildVersions []*dbmodel.TenantEnvPluginBuildVersion
 	for _, buildReq := range req.Plugins {
 		if _, ok := reqPluginRel[buildReq.PluginID]; !ok {
 			continue
@@ -406,7 +406,7 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 		}
 		logger := event.GetManager().GetLogger(buildReq.EventID)
 		taskBody := &builder_model.BuildPluginTaskBody{
-			TenantID:      buildReq.TenantID,
+			TenantEnvID:   buildReq.TenantEnvID,
 			PluginID:      buildReq.PluginID,
 			Operator:      buildReq.Operator,
 			DeployVersion: buildReq.DeployVersion,
@@ -449,7 +449,7 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 		event.CloseManager()
 	}
 
-	if err := db.GetManager().TenantPluginBuildVersionDao().CreateOrUpdatePluginBuildVersionsInBatch(pluginBuildVersions); err != nil {
+	if err := db.GetManager().TenantEnvPluginBuildVersionDao().CreateOrUpdatePluginBuildVersionsInBatch(pluginBuildVersions); err != nil {
 		return err
 	}
 	if len(errPluginIDs) > 0 {
@@ -459,8 +459,8 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 }
 
 // GetAllPluginBuildVersions GetAllPluginBuildVersions
-func (p *PluginAction) GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.TenantPluginBuildVersion, *util.APIHandleError) {
-	versions, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByPluginID(pluginID)
+func (p *PluginAction) GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError) {
+	versions, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByPluginID(pluginID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get all plugin build version", err)
 	}
@@ -468,8 +468,8 @@ func (p *PluginAction) GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.Te
 }
 
 // GetPluginBuildVersion GetPluginBuildVersion
-func (p *PluginAction) GetPluginBuildVersion(pluginID, versionID string) (*dbmodel.TenantPluginBuildVersion, *util.APIHandleError) {
-	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByVersionID(pluginID, versionID)
+func (p *PluginAction) GetPluginBuildVersion(pluginID, versionID string) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError) {
+	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByVersionID(pluginID, versionID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin build version by id %v", versionID), err)
 	}
@@ -494,7 +494,7 @@ func (p *PluginAction) DeletePluginBuildVersion(pluginID, versionID string) *uti
 			tx.Rollback()
 		}
 	}()
-	err := db.GetManager().TenantPluginBuildVersionDaoTransactions(tx).DeleteBuildVersionByVersionID(versionID)
+	err := db.GetManager().TenantEnvPluginBuildVersionDaoTransactions(tx).DeleteBuildVersionByVersionID(versionID)
 	if err != nil {
 		tx.Rollback()
 		return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("delete plugin build version by id %v", versionID), err)

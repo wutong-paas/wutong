@@ -12,8 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// TenantServiceMonitor tenant service monitor
-func TenantServiceMonitor(as *v1.AppService, dbmanager db.Manager) error {
+// TenantEnvServiceMonitor tenant env service monitor
+func TenantEnvServiceMonitor(as *v1.AppService, dbmanager db.Manager) error {
 	sms := createServiceMonitor(as, dbmanager)
 	for i := range sms {
 		as.SetServiceMonitor(sms[i])
@@ -22,7 +22,7 @@ func TenantServiceMonitor(as *v1.AppService, dbmanager db.Manager) error {
 }
 
 func createServiceMonitor(as *v1.AppService, dbmanager db.Manager) []*mv1.ServiceMonitor {
-	tsms, err := dbmanager.TenantServiceMonitorDao().GetByServiceID(as.ServiceID)
+	tsms, err := dbmanager.TenantEnvServiceMonitorDao().GetByServiceID(as.ServiceID)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		logrus.Errorf("get service %s monitor config failure %s", as.ServiceID, err.Error())
 		return nil
@@ -88,7 +88,7 @@ func createServiceMonitor(as *v1.AppService, dbmanager db.Manager) []*mv1.Servic
 					Interval: tsm.Interval,
 				},
 			},
-			TargetLabels: []string{"service_id", "tenant_id", "app_id"},
+			TargetLabels: []string{"service_id", "tenant_env_id", "app_id"},
 		}
 		re = append(re, &sm)
 	}

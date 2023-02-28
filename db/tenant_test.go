@@ -30,7 +30,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-func TestTenantServicesDao_ListThirdPartyServices(t *testing.T) {
+func TestTenantEnvServicesDao_ListThirdPartyServices(t *testing.T) {
 	dbname := "region"
 	rootpw := "wutong"
 
@@ -81,7 +81,7 @@ func TestTenantServicesDao_ListThirdPartyServices(t *testing.T) {
 		break
 	}
 
-	svcs, err := GetManager().TenantServiceDao().ListThirdPartyServices()
+	svcs, err := GetManager().TenantEnvServiceDao().ListThirdPartyServices()
 	if err != nil {
 		t.Fatalf("error listing third-party service: %v", err)
 	}
@@ -90,16 +90,16 @@ func TestTenantServicesDao_ListThirdPartyServices(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		item1 := &model.TenantServices{
-			TenantID:  util.NewUUID(),
-			ServiceID: util.NewUUID(),
-			Kind:      model.ServiceKindThirdParty.String(),
+		item1 := &model.TenantEnvServices{
+			TenantEnvID: util.NewUUID(),
+			ServiceID:   util.NewUUID(),
+			Kind:        model.ServiceKindThirdParty.String(),
 		}
-		if err = GetManager().TenantServiceDao().AddModel(item1); err != nil {
+		if err = GetManager().TenantEnvServiceDao().AddModel(item1); err != nil {
 			t.Fatalf("error create third-party service: %v", err)
 		}
 	}
-	svcs, err = GetManager().TenantServiceDao().ListThirdPartyServices()
+	svcs, err = GetManager().TenantEnvServiceDao().ListThirdPartyServices()
 	if err != nil {
 		t.Fatalf("error listing third-party service: %v", err)
 	}
@@ -108,7 +108,7 @@ func TestTenantServicesDao_ListThirdPartyServices(t *testing.T) {
 	}
 }
 
-func TestTenantServicesPortDao_HasOpenPort(t *testing.T) {
+func TestTenantEnvServicesPortDao_HasOpenPort(t *testing.T) {
 	dbname := "region"
 	rootpw := "wutong"
 
@@ -160,7 +160,7 @@ func TestTenantServicesPortDao_HasOpenPort(t *testing.T) {
 	}
 
 	t.Run("service doesn't exist", func(t *testing.T) {
-		hasOpenPort := GetManager().TenantServicesPortDao().HasOpenPort("foobar")
+		hasOpenPort := GetManager().TenantEnvServicesPortDao().HasOpenPort("foobar")
 		if hasOpenPort {
 			t.Error("Expected false for hasOpenPort, but returned true")
 		}
@@ -168,41 +168,41 @@ func TestTenantServicesPortDao_HasOpenPort(t *testing.T) {
 	trueVal := true
 	falseVal := true
 	t.Run("outer service", func(t *testing.T) {
-		port := &model.TenantServicesPort{
+		port := &model.TenantEnvServicesPort{
 			ServiceID:      util.NewUUID(),
 			IsOuterService: &trueVal,
 		}
-		if err := GetManager().TenantServicesPortDao().AddModel(port); err != nil {
-			t.Fatalf("error creating TenantServicesPort: %v", err)
+		if err := GetManager().TenantEnvServicesPortDao().AddModel(port); err != nil {
+			t.Fatalf("error creating TenantEnvServicesPort: %v", err)
 		}
-		hasOpenPort := GetManager().TenantServicesPortDao().HasOpenPort(port.ServiceID)
+		hasOpenPort := GetManager().TenantEnvServicesPortDao().HasOpenPort(port.ServiceID)
 		if !hasOpenPort {
 			t.Errorf("Expected true for hasOpenPort, but returned %v", hasOpenPort)
 		}
 	})
 	t.Run("inner service", func(t *testing.T) {
-		port := &model.TenantServicesPort{
+		port := &model.TenantEnvServicesPort{
 			ServiceID:      util.NewUUID(),
 			IsInnerService: &trueVal,
 		}
-		if err := GetManager().TenantServicesPortDao().AddModel(port); err != nil {
-			t.Fatalf("error creating TenantServicesPort: %v", err)
+		if err := GetManager().TenantEnvServicesPortDao().AddModel(port); err != nil {
+			t.Fatalf("error creating TenantEnvServicesPort: %v", err)
 		}
-		hasOpenPort := GetManager().TenantServicesPortDao().HasOpenPort(port.ServiceID)
+		hasOpenPort := GetManager().TenantEnvServicesPortDao().HasOpenPort(port.ServiceID)
 		if !hasOpenPort {
 			t.Errorf("Expected true for hasOpenPort, but returned %v", hasOpenPort)
 		}
 	})
 	t.Run("not inner or outer service", func(t *testing.T) {
-		port := &model.TenantServicesPort{
+		port := &model.TenantEnvServicesPort{
 			ServiceID:      util.NewUUID(),
 			IsInnerService: &falseVal,
 			IsOuterService: &falseVal,
 		}
-		if err := GetManager().TenantServicesPortDao().AddModel(port); err != nil {
-			t.Fatalf("error creating TenantServicesPort: %v", err)
+		if err := GetManager().TenantEnvServicesPortDao().AddModel(port); err != nil {
+			t.Fatalf("error creating TenantEnvServicesPort: %v", err)
 		}
-		hasOpenPort := GetManager().TenantServicesPortDao().HasOpenPort(port.ServiceID)
+		hasOpenPort := GetManager().TenantEnvServicesPortDao().HasOpenPort(port.ServiceID)
 		if hasOpenPort {
 			t.Errorf("Expected false for hasOpenPort, but returned %v", hasOpenPort)
 		}

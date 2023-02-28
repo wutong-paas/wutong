@@ -19,8 +19,8 @@
                     "pod-template-hash": "4133404392",
                     "service_alias": "wtbded7e",
                     "service_id": "88d8c4c55657217522f3bb86cfbded7e",
-                    "tenant_id": "c1a29fe4d7b0413993dc859430cf743d",
-                    "tenant_name": "bjlaezp3",
+                    "tenant_env_id": "c1a29fe4d7b0413993dc859430cf743d",
+                    "tenant_env_name": "bjlaezp3",
                     "version": "20190815145229"
                 },
                 "name": "88d8c4c55657217522f3bb86cfbded7e-deployment-85778487f6",
@@ -46,7 +46,7 @@
                         "name": "wtbded7e",
                         "pod-template-hash": "4133404392",
                         "service_id": "88d8c4c55657217522f3bb86cfbded7e",
-                        "tenant_id": "c1a29fe4d7b0413993dc859430cf743d"
+                        "tenant_env_id": "c1a29fe4d7b0413993dc859430cf743d"
                     }
                 },
                 "template": {
@@ -62,8 +62,8 @@
                             "pod-template-hash": "4133404392",
                             "service_alias": "wtbded7e",
                             "service_id": "88d8c4c55657217522f3bb86cfbded7e",
-                            "tenant_id": "c1a29fe4d7b0413993dc859430cf743d",
-                            "tenant_name": "bjlaezp3",
+                            "tenant_env_id": "c1a29fe4d7b0413993dc859430cf743d",
+                            "tenant_env_name": "bjlaezp3",
                             "version": "20190815145229"
                         },
                         "name": "88d8c4c55657217522f3bb86cfbded7e-pod-spec"

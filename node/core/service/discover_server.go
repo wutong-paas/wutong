@@ -35,14 +35,14 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
-//DiscoverAction DiscoverAction
+// DiscoverAction DiscoverAction
 type DiscoverAction struct {
 	conf    *option.Conf
 	etcdCli *store.Client
 	kubecli kubecache.KubeClient
 }
 
-//CreateDiscoverActionManager CreateDiscoverActionManager
+// CreateDiscoverActionManager CreateDiscoverActionManager
 func CreateDiscoverActionManager(conf *option.Conf, kubecli kubecache.KubeClient) *DiscoverAction {
 	return &DiscoverAction{
 		conf:    conf,
@@ -51,7 +51,7 @@ func CreateDiscoverActionManager(conf *option.Conf, kubecli kubecache.KubeClient
 	}
 }
 
-//DiscoverService sds
+// DiscoverService sds
 func (d *DiscoverAction) DiscoverService(serviceInfo string) (*envoyv1.SDSHost, *util.APIHandleError) {
 	mm := strings.Split(serviceInfo, "_")
 	if len(mm) < 4 {
@@ -130,12 +130,12 @@ func (d *DiscoverAction) DiscoverService(serviceInfo string) (*envoyv1.SDSHost, 
 	return sds, nil
 }
 
-//DiscoverClusters cds discover
-//create cluster by get depend app endpoints from plugin config
+// DiscoverClusters cds discover
+// create cluster by get depend app endpoints from plugin config
 func (d *DiscoverAction) DiscoverClusters(
-	tenantService,
+	tenantEnvService,
 	serviceCluster string) (*envoyv1.CDSCluter, *util.APIHandleError) {
-	nn := strings.Split(tenantService, "_")
+	nn := strings.Split(tenantEnvService, "_")
 	if len(nn) != 3 {
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("namesapces and service_alias not in good format"))
 	}
@@ -172,7 +172,7 @@ func (d *DiscoverAction) DiscoverClusters(
 	return cds, nil
 }
 
-//upstreamClusters handle upstream app cluster
+// upstreamClusters handle upstream app cluster
 // handle kubernetes inner service
 func (d *DiscoverAction) upstreamClusters(serviceAlias, namespace string, dependsServices []*api_model.BaseService) (cdsClusters envoyv1.Clusters, err *util.APIHandleError) {
 	var portMap = make(map[int32]int)
@@ -229,8 +229,8 @@ func (d *DiscoverAction) upstreamClusters(serviceAlias, namespace string, depend
 	return
 }
 
-//downstreamClusters handle app self cluster
-//only local port
+// downstreamClusters handle app self cluster
+// only local port
 func (d *DiscoverAction) downstreamClusters(serviceAlias, namespace string, ports []*api_model.BasePort) (cdsClusters envoyv1.Clusters, err *util.APIHandleError) {
 	for i := range ports {
 		port := ports[i]
@@ -252,8 +252,8 @@ func (d *DiscoverAction) downstreamClusters(serviceAlias, namespace string, port
 // DiscoverListeners lds
 // create listens by get depend app endpoints from plugin config
 func (d *DiscoverAction) DiscoverListeners(
-	tenantService, serviceCluster string) (*envoyv1.LDSListener, *util.APIHandleError) {
-	nn := strings.Split(tenantService, "_")
+	tenantEnvService, serviceCluster string) (*envoyv1.LDSListener, *util.APIHandleError) {
+	nn := strings.Split(tenantEnvService, "_")
 	if len(nn) != 3 {
 		return nil, util.CreateAPIHandleError(400,
 			fmt.Errorf("namesapces and service_alias not in good format"))
@@ -292,7 +292,7 @@ func (d *DiscoverAction) DiscoverListeners(
 	return lds, nil
 }
 
-//upstreamListener handle upstream app listener
+// upstreamListener handle upstream app listener
 // handle kubernetes inner service
 func (d *DiscoverAction) upstreamListener(serviceAlias, namespace string, dependsServices []*api_model.BaseService, createHTTPListen bool) (envoyv1.Listeners, *util.APIHandleError) {
 	var vhL []*envoyv1.VirtualHost
@@ -376,7 +376,7 @@ func (d *DiscoverAction) upstreamListener(serviceAlias, namespace string, depend
 	return ldsL, nil
 }
 
-//downstreamListener handle app self port listener
+// downstreamListener handle app self port listener
 func (d *DiscoverAction) downstreamListener(serviceAlias, namespace string, ports []*api_model.BasePort) (envoyv1.Listeners, *util.APIHandleError) {
 	var ldsL envoyv1.Listeners
 	var portMap = make(map[int32]int, 0)
@@ -393,7 +393,7 @@ func (d *DiscoverAction) downstreamListener(serviceAlias, namespace string, port
 	return ldsL, nil
 }
 
-//Duplicate Duplicate
+// Duplicate Duplicate
 func Duplicate(a interface{}) (ret []interface{}) {
 	va := reflect.ValueOf(a)
 	for i := 0; i < va.Len(); i++ {
@@ -405,8 +405,8 @@ func Duplicate(a interface{}) (ret []interface{}) {
 	return ret
 }
 
-//GetPluginConfigs get plugin configs
-//if not exist return error
+// GetPluginConfigs get plugin configs
+// if not exist return error
 func (d *DiscoverAction) GetPluginConfigs(namespace, sourceAlias, pluginID string) (*api_model.ResourceSpec, error) {
 	labelname := fmt.Sprintf("plugin_id=%s,service_alias=%s", pluginID, sourceAlias)
 	selector, err := labels.Parse(labelname)
@@ -428,8 +428,8 @@ func (d *DiscoverAction) GetPluginConfigs(namespace, sourceAlias, pluginID strin
 	return &rs, nil
 }
 
-//GetPluginConfigAndType get plugin configs and plugin type (default mesh or custom mesh)
-//if not exist return error
+// GetPluginConfigAndType get plugin configs and plugin type (default mesh or custom mesh)
+// if not exist return error
 func (d *DiscoverAction) GetPluginConfigAndType(namespace, sourceAlias, pluginID string) (*api_model.ResourceSpec, bool, error) {
 	labelname := fmt.Sprintf("plugin_id=%s,service_alias=%s", pluginID, sourceAlias)
 	selector, err := labels.Parse(labelname)

@@ -32,8 +32,8 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//VolumeDependency VolumeDependency
-func (t *TenantStruct) VolumeDependency(w http.ResponseWriter, r *http.Request) {
+// VolumeDependency VolumeDependency
+func (t *TenantEnvStruct) VolumeDependency(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
 		t.DeleteVolumeDependency(w, r)
@@ -42,9 +42,9 @@ func (t *TenantStruct) VolumeDependency(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-//AddVolumeDependency add volume dependency
-func (t *TenantStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/volume-dependency v2 addVolumeDependency
+// AddVolumeDependency add volume dependency
+func (t *TenantEnvStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volume-dependency v2 addVolumeDependency
 	//
 	// 增加应用持久化依赖
 	//
@@ -67,13 +67,13 @@ func (t *TenantStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Reques
 
 	logrus.Debugf("trans add volumn dependency service ")
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var tsr api_model.V2AddVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
 	}
-	vd := &dbmodel.TenantServiceMountRelation{
-		TenantID:        tenantID,
+	vd := &dbmodel.TenantEnvServiceMountRelation{
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       serviceID,
 		DependServiceID: tsr.Body.DependServiceID,
 		HostPath:        tsr.Body.MntDir,
@@ -86,9 +86,9 @@ func (t *TenantStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Reques
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//DeleteVolumeDependency delete volume dependency
-func (t *TenantStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/volume-dependency v2 deleteVolumeDependency
+// DeleteVolumeDependency delete volume dependency
+func (t *TenantEnvStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volume-dependency v2 deleteVolumeDependency
 	//
 	// 删除应用持久化依赖
 	//
@@ -110,13 +110,13 @@ func (t *TenantStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Req
 	//     description: 统一返回格式
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var tsr api_model.V2DelVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
 	}
-	vd := &dbmodel.TenantServiceMountRelation{
-		TenantID:        tenantID,
+	vd := &dbmodel.TenantEnvServiceMountRelation{
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       serviceID,
 		DependServiceID: tsr.Body.DependServiceID,
 	}
@@ -127,9 +127,9 @@ func (t *TenantStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Req
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//AddVolume AddVolume
-func (t *TenantStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/volume v2 addVolume
+// AddVolume AddVolume
+func (t *TenantEnvStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volume v2 addVolume
 	//
 	// 增加应用持久化信息
 	//
@@ -151,12 +151,12 @@ func (t *TenantStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	avs := &api_model.V2AddVolumeStruct{}
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &avs.Body, nil); !ok {
 		return
 	}
-	tsv := &dbmodel.TenantServiceVolume{
+	tsv := &dbmodel.TenantEnvServiceVolume{
 		ServiceID:          serviceID,
 		VolumePath:         avs.Body.VolumePath,
 		HostPath:           avs.Body.HostPath,
@@ -173,7 +173,7 @@ func (t *TenantStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
 		httputil.ReturnError(r, w, 400, "volume path is invalid,must begin with /")
 		return
 	}
-	if err := handler.GetServiceManager().VolumnVar(tsv, tenantID, "", "add"); err != nil {
+	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, "", "add"); err != nil {
 		err.Handle(r, w)
 		return
 	}
@@ -181,7 +181,7 @@ func (t *TenantStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdVolume updates service volume.
-func (t *TenantStruct) UpdVolume(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) UpdVolume(w http.ResponseWriter, r *http.Request) {
 	var req api_model.UpdVolumeReq
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
 		return
@@ -199,9 +199,9 @@ func (t *TenantStruct) UpdVolume(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, "success")
 }
 
-//DeleteVolume DeleteVolume
-func (t *TenantStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/volume v2 deleteVolume
+// DeleteVolume DeleteVolume
+func (t *TenantEnvStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volume v2 deleteVolume
 	//
 	// 删除应用持久化信息
 	//
@@ -223,17 +223,17 @@ func (t *TenantStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	avs := &api_model.V2DelVolumeStruct{}
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &avs.Body, nil); !ok {
 		return
 	}
-	tsv := &dbmodel.TenantServiceVolume{
+	tsv := &dbmodel.TenantEnvServiceVolume{
 		ServiceID:  serviceID,
 		VolumePath: avs.Body.VolumePath,
 		Category:   avs.Body.Category,
 	}
-	if err := handler.GetServiceManager().VolumnVar(tsv, tenantID, "", "delete"); err != nil {
+	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, "", "delete"); err != nil {
 		err.Handle(r, w)
 		return
 	}
@@ -242,9 +242,9 @@ func (t *TenantStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 
 //以下为V2.1版本持久化API,支持多种持久化模式
 
-//AddVolumeDependency add volume dependency
+// AddVolumeDependency add volume dependency
 func AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/depvolumes v2 addDepVolume
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/depvolumes v2 addDepVolume
 	//
 	// 增加应用持久化依赖(V2.1支持多种类型存储)
 	//
@@ -267,14 +267,14 @@ func AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
 
 	logrus.Debugf("trans add volumn dependency service ")
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var tsr api_model.AddVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
 	}
 
-	vd := &dbmodel.TenantServiceMountRelation{
-		TenantID:        tenantID,
+	vd := &dbmodel.TenantEnvServiceMountRelation{
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       serviceID,
 		DependServiceID: tsr.Body.DependServiceID,
 		VolumeName:      tsr.Body.VolumeName,
@@ -288,9 +288,9 @@ func AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//DeleteVolumeDependency delete volume dependency
+// DeleteVolumeDependency delete volume dependency
 func DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/depvolumes v2 delDepVolume
+	// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/depvolumes v2 delDepVolume
 	//
 	// 删除应用持久化依赖(V2.1支持多种类型存储)
 	//
@@ -312,13 +312,13 @@ func DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var tsr api_model.DeleteVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
 	}
-	vd := &dbmodel.TenantServiceMountRelation{
-		TenantID:        tenantID,
+	vd := &dbmodel.TenantEnvServiceMountRelation{
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       serviceID,
 		DependServiceID: tsr.Body.DependServiceID,
 		VolumeName:      tsr.Body.VolumeName,
@@ -330,9 +330,9 @@ func DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//AddVolume AddVolume
+// AddVolume AddVolume
 func AddVolume(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/volumes v2 addVolumes
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volumes v2 addVolumes
 	//
 	// 增加应用持久化信息(V2.1支持多种类型存储)
 	//
@@ -354,7 +354,7 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	avs := &api_model.AddVolumeStruct{}
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &avs.Body, nil); !ok {
 		return
@@ -365,7 +365,7 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tsv := &dbmodel.TenantServiceVolume{
+	tsv := &dbmodel.TenantEnvServiceVolume{
 		ServiceID:          serviceID,
 		VolumeName:         avs.Body.VolumeName,
 		VolumePath:         avs.Body.VolumePath,
@@ -388,16 +388,16 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 		httputil.ReturnError(r, w, 400, "volume path is invalid,must begin with /")
 		return
 	}
-	if err := handler.GetServiceManager().VolumnVar(tsv, tenantID, avs.Body.FileContent, "add"); err != nil {
+	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, avs.Body.FileContent, "add"); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//DeleteVolume DeleteVolume
+// DeleteVolume DeleteVolume
 func DeleteVolume(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/volumes/{volume_name} v2 deleteVolumes
+	// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volumes/{volume_name} v2 deleteVolumes
 	//
 	// 删除应用持久化信息(V2.1支持多种类型存储)
 	//
@@ -419,20 +419,20 @@ func DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tsv := &dbmodel.TenantServiceVolume{}
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tsv := &dbmodel.TenantEnvServiceVolume{}
 	tsv.ServiceID = serviceID
 	tsv.VolumeName = chi.URLParam(r, "volume_name")
-	if err := handler.GetServiceManager().VolumnVar(tsv, tenantID, "", "delete"); err != nil {
+	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, "", "delete"); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GetVolume 获取应用全部存储，包括依赖的存储
+// GetVolume 获取应用全部存储，包括依赖的存储
 func GetVolume(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/volumes v2 getVolumes
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volumes v2 getVolumes
 	//
 	// 获取应用全部存储，包括依赖的存储(V2.1支持多种类型存储)
 	//
@@ -461,9 +461,9 @@ func GetVolume(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, volumes)
 }
 
-//GetDepVolume 获取应用所有依赖的存储
+// GetDepVolume 获取应用所有依赖的存储
 func GetDepVolume(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/depvolumes v2 getDepVolumes
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/depvolumes v2 getDepVolumes
 	//
 	// 获取应用依赖的存储(V2.1支持多种类型存储)
 	//

@@ -39,13 +39,13 @@ import (
 type Volume interface {
 	CreateVolume(define *Define) error       // use serviceVolume
 	CreateDependVolume(define *Define) error // use serviceMountR
-	setBaseInfo(as *v1.AppService, serviceVolume *model.TenantServiceVolume, serviceMountR *model.TenantServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager)
+	setBaseInfo(as *v1.AppService, serviceVolume *model.TenantEnvServiceVolume, serviceMountR *model.TenantEnvServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager)
 }
 
 // NewVolumeManager create volume
 func NewVolumeManager(as *v1.AppService,
-	serviceVolume *model.TenantServiceVolume,
-	serviceMountR *model.TenantServiceMountRelation,
+	serviceVolume *model.TenantEnvServiceVolume,
+	serviceMountR *model.TenantEnvServiceMountRelation,
 	version *dbmodel.VersionInfo,
 	envs []corev1.EnvVar,
 	envVarSecrets []*corev1.Secret,
@@ -82,13 +82,13 @@ func NewVolumeManager(as *v1.AppService,
 // Base volume base
 type Base struct {
 	as        *v1.AppService
-	svm       *model.TenantServiceVolume
-	smr       *model.TenantServiceMountRelation
+	svm       *model.TenantEnvServiceVolume
+	smr       *model.TenantEnvServiceMountRelation
 	version   *dbmodel.VersionInfo
 	dbmanager db.Manager
 }
 
-func (b *Base) setBaseInfo(as *v1.AppService, serviceVolume *model.TenantServiceVolume, serviceMountR *model.TenantServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager) {
+func (b *Base) setBaseInfo(as *v1.AppService, serviceVolume *model.TenantEnvServiceVolume, serviceMountR *model.TenantEnvServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager) {
 	b.as = as
 	b.svm = serviceVolume
 	b.smr = serviceMountR
@@ -246,8 +246,8 @@ func (v *Define) SetVolumeCMap(cmap *corev1.ConfigMap, k, p string, isReadOnly b
 	v.volumes = append(v.volumes, vo)
 }
 
-func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmodel.TenantServicesPort) (re []corev1.EnvVar) {
-	defDomain := fmt.Sprintf(".%s.%s.", as.ServiceAlias, as.TenantName)
+func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmodel.TenantEnvServicesPort) (re []corev1.EnvVar) {
+	defDomain := fmt.Sprintf(".%s.%s.", as.ServiceAlias, as.TenantEnvName)
 	httpRules, _ := dbmanager.HTTPRuleDao().ListByServiceID(as.ServiceID)
 	portDomainEnv := make(map[int][]corev1.EnvVar)
 	portProtocolEnv := make(map[int][]corev1.EnvVar)

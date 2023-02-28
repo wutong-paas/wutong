@@ -26,14 +26,14 @@ import (
 	ansibleUtil "github.com/wutong-paas/wutong/util/ansible"
 )
 
-//NewCmdAnsible ansible config cmd
+// NewCmdAnsible ansible config cmd
 func NewCmdAnsible() cli.Command {
 	c := cli.Command{
 		Name:   "ansible",
 		Usage:  "Manage the ansible environment",
 		Hidden: true,
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name:  "hosts",
 				Usage: "Manage the ansible hosts config environment",
 				Flags: []cli.Flag{
@@ -60,7 +60,7 @@ func NewCmdAnsible() cli.Command {
 	return c
 }
 
-//WriteHostsFile write hosts file
+// WriteHostsFile write hosts file
 func WriteHostsFile(filePath, installConfPath string, hosts []*client.HostNode) error {
 	//get node list from api without condition list.
 	//so will get condition

@@ -22,31 +22,32 @@ import (
 	eventdb "github.com/wutong-paas/wutong/eventlog/db"
 )
 
-//LogData log data
+// LogData log data
 type LogData struct {
 	num int
 	msg string
 }
 
-//MessageData message data 获取指定操作的操作日志
+// MessageData message data 获取指定操作的操作日志
 type MessageData struct {
 	Message  string `json:"message"`
 	Time     string `json:"time"`
 	Unixtime int64  `json:"utime"`
 }
 
-//DataLog 获取指定操作的操作日志
+// DataLog 获取指定操作的操作日志
 type DataLog struct {
 	Status string
 	Data   eventdb.MessageDataList
 }
 
-//LogByLevelStruct GetLogByLevelStruct
+// LogByLevelStruct GetLogByLevelStruct
+//
 //swagger:parameters logByAction
 type LogByLevelStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`
@@ -63,12 +64,13 @@ type LogByLevelStruct struct {
 	}
 }
 
-//TenantLogByLevelStruct GetTenantLogByLevelStruct
-//swagger:parameters tenantLogByAction
-type TenantLogByLevelStruct struct {
+// TenantEnvLogByLevelStruct GetTenantEnvLogByLevelStruct
+//
+//swagger:parameters tenantEnvLogByAction
+type TenantEnvLogByLevelStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: body
 	Body struct {
 		// 日志级别info/debug/error
@@ -82,23 +84,25 @@ type TenantLogByLevelStruct struct {
 	}
 }
 
-//LogSocketStruct LogSocketStruct
+// LogSocketStruct LogSocketStruct
+//
 //swagger:parameters logSocket logList
 type LogSocketStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`
 }
 
-//LogFileStruct LogFileStruct
+// LogFileStruct LogFileStruct
+//
 //swagger:parameters logFile
 type LogFileStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`
@@ -107,7 +111,7 @@ type LogFileStruct struct {
 	FileName string `json:"file_name" validate:"file_name"`
 }
 
-//MsgStruct msg struct in eventlog_message
+// MsgStruct msg struct in eventlog_message
 type MsgStruct struct {
 	EventID string `json:"event_id"`
 	Step    string `json:"step"`
@@ -116,12 +120,13 @@ type MsgStruct struct {
 	Time    string `json:"time"`
 }
 
-//LastLinesStruct LastLinesStruct
+// LastLinesStruct LastLinesStruct
+//
 //swagger:parameters lastLinesLogs
 type LastLinesStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`

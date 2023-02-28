@@ -26,7 +26,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-//PluginRouter plugin router
+// PluginRouter plugin router
 func (v2 *V2) pluginRouter() chi.Router {
 	r := chi.NewRouter()
 	//初始化应用信息
@@ -46,7 +46,7 @@ func (v2 *V2) pluginRouter() chi.Router {
 func (v2 *V2) serviceRelatePluginRouter() chi.Router {
 	r := chi.NewRouter()
 	//service relate plugin
-	// v2/tenant/tenant_name/services/service_alias/plugin/xxx
+	// v2/tenantEnv/tenant_env_name/services/service_alias/plugin/xxx
 	r.Post("/", middleware.WrapEL(controller.GetManager().PluginSet, dbmodel.TargetTypeService, "create-service-plugin", dbmodel.SYNEVENTTYPE))
 	r.Put("/", middleware.WrapEL(controller.GetManager().PluginSet, dbmodel.TargetTypeService, "update-service-plugin", dbmodel.SYNEVENTTYPE))
 	r.Get("/", controller.GetManager().PluginSet)

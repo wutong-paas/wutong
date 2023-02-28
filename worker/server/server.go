@@ -53,7 +53,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//RuntimeServer app runtime grpc server
+// RuntimeServer app runtime grpc server
 type RuntimeServer struct {
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -69,7 +69,7 @@ type RuntimeServer struct {
 	updateCh  *channels.RingChannel
 }
 
-//CreaterRuntimeServer create a runtime grpc server
+// CreaterRuntimeServer create a runtime grpc server
 func CreaterRuntimeServer(conf option.Config,
 	store store.Storer,
 	clientset kubernetes.Interface,
@@ -92,7 +92,7 @@ func CreaterRuntimeServer(conf option.Config,
 	return rs
 }
 
-//Start start runtime server
+// Start start runtime server
 func (r *RuntimeServer) Start(errchan chan error) {
 	go func() {
 		lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", r.conf.HostIP, r.conf.ServerPort))
@@ -160,11 +160,11 @@ func (r *RuntimeServer) getWutongAppStatus(app *model.Application) (*pb.AppStatu
 
 func (r *RuntimeServer) getHelmAppStatus(app *model.Application) (*pb.AppStatus, error) {
 	// TODO: Query only once in the upper layer and pass in the namespace
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(app.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(app.TenantEnvID)
 	if err != nil {
 		return nil, err
 	}
-	helmApp, err := r.store.GetHelmApp(tenant.Namespace, app.AppName)
+	helmApp, err := r.store.GetHelmApp(tenantEnv.Namespace, app.AppName)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (r *RuntimeServer) getHelmAppStatus(app *model.Application) (*pb.AppStatus,
 	selector = selector.Add(*instanceReq)
 	managedReq, _ := labels.NewRequirement(constants.ResourceManagedByLabel, selection.Equals, []string{"Helm"})
 	selector = selector.Add(*managedReq)
-	pods, err := r.store.ListPods(tenant.Namespace, selector)
+	pods, err := r.store.ListPods(tenantEnv.Namespace, selector)
 	if err != nil {
 		return nil, err
 	}
@@ -217,16 +217,16 @@ func (r *RuntimeServer) getHelmAppStatus(app *model.Application) (*pb.AppStatus,
 	}, nil
 }
 
-//GetTenantResource get tenant resource
-//if TenantId is "" will return the sum of the all tenant
-func (r *RuntimeServer) GetTenantResource(ctx context.Context, re *pb.TenantRequest) (*pb.TenantResource, error) {
-	var tr pb.TenantResource
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(re.TenantId)
+// GetTenantEnvResource get tenant env resource
+// if TenantEnvId is "" will return the sum of the all tenantEnv
+func (r *RuntimeServer) GetTenantEnvResource(ctx context.Context, re *pb.TenantEnvRequest) (*pb.TenantEnvResource, error) {
+	var tr pb.TenantEnvResource
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(re.TenantEnvId)
 	if err != nil {
 		return nil, err
 	}
-	res := r.store.GetTenantResource(tenant.Namespace)
-	runningApps := r.store.GetTenantRunningApp(re.TenantId)
+	res := r.store.GetTenantEnvResource(tenantEnv.Namespace)
+	runningApps := r.store.GetTenantEnvRunningApp(re.TenantEnvId)
 	for _, app := range runningApps {
 		if app.ServiceKind == model.ServiceKindThirdParty {
 			tr.RunningAppThirdNum++
@@ -242,13 +242,13 @@ func (r *RuntimeServer) GetTenantResource(ctx context.Context, re *pb.TenantRequ
 	return &tr, nil
 }
 
-//GetTenantResources get tenant resources
-func (r *RuntimeServer) GetTenantResources(context.Context, *pb.Empty) (*pb.TenantResourceList, error) {
-	res := r.store.GetTenantResourceList()
-	var trs = make(map[string]*pb.TenantResource)
+// GetTenantEnvResources get tenant env resources
+func (r *RuntimeServer) GetTenantEnvResources(context.Context, *pb.Empty) (*pb.TenantEnvResourceList, error) {
+	res := r.store.GetTenantEnvResourceList()
+	var trs = make(map[string]*pb.TenantEnvResource)
 	for _, re := range res {
-		var tr pb.TenantResource
-		runningApps := r.store.GetTenantRunningApp(re.Namespace)
+		var tr pb.TenantEnvResource
+		runningApps := r.store.GetTenantEnvRunningApp(re.Namespace)
 		for _, app := range runningApps {
 			if app.ServiceKind == model.ServiceKindThirdParty {
 				tr.RunningAppThirdNum++
@@ -263,10 +263,10 @@ func (r *RuntimeServer) GetTenantResources(context.Context, *pb.Empty) (*pb.Tena
 		tr.MemoryRequest = re.MemoryRequest / 1024 / 1024
 		trs[re.Namespace] = &tr
 	}
-	return &pb.TenantResourceList{Resources: trs}, nil
+	return &pb.TenantEnvResourceList{Resources: trs}, nil
 }
 
-//GetAppPods get app pod list
+// GetAppPods get app pod list
 func (r *RuntimeServer) GetAppPods(ctx context.Context, re *pb.ServiceRequest) (*pb.ServiceAppPodList, error) {
 	app := r.store.GetAppService(re.ServiceId)
 	if app == nil {
@@ -319,7 +319,7 @@ func (r *RuntimeServer) GetAppPods(ctx context.Context, re *pb.ServiceRequest) (
 	}, nil
 }
 
-//GetMultiAppPods get multi app pods
+// GetMultiAppPods get multi app pods
 func (r *RuntimeServer) GetMultiAppPods(ctx context.Context, re *pb.ServicesRequest) (*pb.MultiServiceAppPodList, error) {
 	serviceIDs := strings.Split(re.ServiceIds, ",")
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
@@ -398,12 +398,12 @@ func DescribeEvents(el *corev1.EventList) []*pb.PodEvent {
 	return podEvents
 }
 
-//GetDeployInfo get deploy info
+// GetDeployInfo get deploy info
 func (r *RuntimeServer) GetDeployInfo(ctx context.Context, re *pb.ServiceRequest) (*pb.DeployInfo, error) {
 	var deployinfo pb.DeployInfo
 	appService := r.store.GetAppService(re.ServiceId)
 	if appService != nil {
-		deployinfo.Namespace = appService.TenantID
+		deployinfo.Namespace = appService.TenantEnvID
 		if appService.GetStatefulSet() != nil {
 			deployinfo.Statefuleset = appService.GetStatefulSet().Name
 			if !appService.GetStatefulSet().ObjectMeta.CreationTimestamp.IsZero() {
@@ -472,8 +472,8 @@ func (r *RuntimeServer) GetDeployInfo(ctx context.Context, re *pb.ServiceRequest
 	return &deployinfo, nil
 }
 
-//registServer
-//regist sync server to etcd
+// registServer
+// regist sync server to etcd
 func (r *RuntimeServer) registServer() error {
 	if !r.store.Ready() {
 		util.Exec(r.ctx, func() error {
@@ -679,7 +679,7 @@ func (r *RuntimeServer) GetAppVolumeStatus(ctx context.Context, re *pb.ServiceRe
 
 		for _, volume := range pod.Spec.Volumes {
 			volumeName := volume.Name
-			prefix := "manual" // all volume name start with manual but config file, volume name style: fmt.Sprintf("manual%d", TenantServiceVolume.ID)
+			prefix := "manual" // all volume name start with manual but config file, volume name style: fmt.Sprintf("manual%d", TenantEnvServiceVolume.ID)
 			if strings.HasPrefix(volumeName, prefix) {
 				volumeName = strings.TrimPrefix(volumeName, prefix)
 				switch podStatus.Type {
@@ -712,7 +712,7 @@ func (r *RuntimeServer) ListAppServices(ctx context.Context, in *pb.AppReq) (*pb
 	if err != nil {
 		return nil, err
 	}
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(app.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(app.TenantEnvID)
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +721,7 @@ func (r *RuntimeServer) ListAppServices(ctx context.Context, in *pb.AppReq) (*pb
 	selector = selector.Add(*instanceReq)
 	managedReq, _ := labels.NewRequirement(constants.ResourceManagedByLabel, selection.Equals, []string{"Helm"})
 	selector = selector.Add(*managedReq)
-	services, err := r.store.ListServices(tenant.Namespace, selector)
+	services, err := r.store.ListServices(tenantEnv.Namespace, selector)
 	if err != nil {
 		return nil, err
 	}
@@ -802,11 +802,11 @@ func (r *RuntimeServer) ListHelmAppRelease(ctx context.Context, req *pb.AppReq) 
 	if err != nil {
 		return nil, err
 	}
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(app.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(app.TenantEnvID)
 	if err != nil {
 		return nil, err
 	}
-	h, err := helm.NewHelm(tenant.Namespace, r.conf.Helm.RepoFile, r.conf.Helm.RepoCache)
+	h, err := helm.NewHelm(tenantEnv.Namespace, r.conf.Helm.RepoFile, r.conf.Helm.RepoCache)
 	if err != nil {
 		return nil, err
 	}
@@ -828,7 +828,7 @@ func (r *RuntimeServer) ListHelmAppRelease(ctx context.Context, req *pb.AppReq) 
 		})
 	}
 
-	logrus.Debugf("%d releases were found for app %s", len(releases), app.AppName+"/"+app.TenantID)
+	logrus.Debugf("%d releases were found for app %s", len(releases), app.AppName+"/"+app.TenantEnvID)
 
 	return &pb.HelmAppReleases{
 		HelmAppRelease: releases,

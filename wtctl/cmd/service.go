@@ -41,37 +41,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//NewCmdService application service command
+// NewCmdService application service command
 func NewCmdService() cli.Command {
 	c := cli.Command{
 		Name:  "service",
 		Usage: "about  application service operation，wtctl service -h",
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name: "list",
 				Flags: []cli.Flag{
 					cli.StringFlag{
-						Name:     "tenantAlias,t",
+						Name:     "tenantEnvAlias,t",
 						Value:    "",
-						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						Usage:    "Specify the tenant env alias",
+						FilePath: GetTenantEnvNamePath(),
 					},
 				},
 				Usage: "list show application services runtime detail info。For example <wtctl service list -t wutong>",
 				Action: func(c *cli.Context) error {
-					//logrus.Warn(conf.TenantNamePath)
+					//logrus.Warn(conf.TenantEnvNamePath)
 					Common(c)
-					return showTenantServices(c)
+					return showTenantEnvServices(c)
 				},
 			},
-			cli.Command{
+			{
 				Name: "get",
 				Flags: []cli.Flag{
 					cli.StringFlag{
-						Name:     "tenantAlias,t",
+						Name:     "tenantEnvAlias,t",
 						Value:    "",
-						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						Usage:    "Specify the tenant env alias",
+						FilePath: GetTenantEnvNamePath(),
 					},
 				},
 				Usage: "Get application service runtime detail info。For example <wtctl service get <service_alias> -t wutong>",
@@ -80,7 +80,7 @@ func NewCmdService() cli.Command {
 					return showServiceDeployInfo(c)
 				},
 			},
-			cli.Command{
+			{
 				Name:  "start",
 				Usage: "Start an application service, For example <wtctl service start wutong/wta564a1>",
 				Flags: []cli.Flag{
@@ -89,10 +89,10 @@ func NewCmdService() cli.Command {
 						Usage: "Blocks the output operation log",
 					},
 					cli.StringFlag{
-						Name:     "tenantAlias,t",
+						Name:     "tenantEnvAlias,t",
 						Value:    "",
-						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						Usage:    "Specify the tenant env alias",
+						FilePath: GetTenantEnvNamePath(),
 					},
 					cli.StringFlag{
 						Name:  "event_log_server",
@@ -104,7 +104,7 @@ func NewCmdService() cli.Command {
 					return startService(c)
 				},
 			},
-			cli.Command{
+			{
 				Name:  "stop",
 				Usage: "Stop an application service, For example <wtctl service stop wutong/wta564a1>",
 				Flags: []cli.Flag{
@@ -113,10 +113,10 @@ func NewCmdService() cli.Command {
 						Usage: "Blocks the output operation log",
 					},
 					cli.StringFlag{
-						Name:     "tenantAlias,t",
+						Name:     "tenantEnvAlias,t",
 						Value:    "",
-						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						Usage:    "Specify the tenant env alias",
+						FilePath: GetTenantEnvNamePath(),
 					},
 					cli.StringFlag{
 						Name:  "event_log_server",
@@ -128,7 +128,7 @@ func NewCmdService() cli.Command {
 					return stopService(c)
 				},
 			},
-			cli.Command{
+			{
 				Name: "event",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
@@ -136,10 +136,10 @@ func NewCmdService() cli.Command {
 						Usage: "Blocks the output operation log",
 					},
 					cli.StringFlag{
-						Name:     "tenantAlias,t",
+						Name:     "tenantEnvAlias,t",
 						Value:    "",
-						Usage:    "Specify the tenant short id",
-						FilePath: GetTenantNamePath(),
+						Usage:    "Specify the tenant env short id",
+						FilePath: GetTenantEnvNamePath(),
 					},
 					cli.StringFlag{
 						Name:  "event_log_server",
@@ -157,7 +157,7 @@ func NewCmdService() cli.Command {
 	return c
 }
 
-//GetEventLogf get event log from websocket
+// GetEventLogf get event log from websocket
 func GetEventLogf(eventID, server string) error {
 	//if c.String("event_log_server") != "" {
 	//	server = c.String("event_log_server")
@@ -232,18 +232,18 @@ func getEventLog(c *cli.Context) error {
 	return nil
 }
 
-func stopTenantService(c *cli.Context) error {
-	tenantName := c.Args().First()
-	if tenantName == "" {
-		fmt.Println("Please provide tenant name")
+func stopTenantEnvService(c *cli.Context) error {
+	tenantEnvName := c.Args().First()
+	if tenantEnvName == "" {
+		fmt.Println("Please provide tenant env name")
 		os.Exit(1)
 	}
 	eventID := coreutil.NewUUID()
-	services, err := clients.RegionClient.Tenants(tenantName).Services("").List()
+	services, err := clients.RegionClient.TenantEnvs(tenantEnvName).Services("").List()
 	handleErr(err)
 	for _, service := range services {
 		if service.CurStatus != "closed" && service.CurStatus != "closing" {
-			_, err := clients.RegionClient.Tenants(tenantName).Services(service.ServiceAlias).Stop(eventID)
+			_, err := clients.RegionClient.TenantEnvs(tenantEnvName).Services(service.ServiceAlias).Stop(eventID)
 			if c.Bool("f") {
 				server := "127.0.0.1:6363"
 				if c.String("event_log_server") != "" {
@@ -262,30 +262,30 @@ func stopTenantService(c *cli.Context) error {
 }
 
 func startService(c *cli.Context) error {
-	//GET /v2/tenants/{tenant_name}/services/{service_alias}
-	//POST /v2/tenants/{tenant_name}/services/{service_alias}/stop
+	//GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}
+	//POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/stop
 
 	// wutong/wta564a1
 	serviceAlias := c.Args().First()
-	tenantName := c.String("tenantAlias")
+	tenantEnvName := c.String("tenantEnvAlias")
 	info := strings.Split(serviceAlias, "/")
 	if len(info) >= 2 {
-		tenantName = info[0]
+		tenantEnvName = info[0]
 		serviceAlias = info[1]
 	}
 	if serviceAlias == "" {
-		showError("tenant alias can not be empty")
+		showError("tenant env alias can not be empty")
 	}
 	if serviceAlias == "" {
 		showError("service alias can not be empty")
 	}
 	eventID := coreutil.NewUUID()
-	service, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Get()
+	service, err := clients.RegionClient.TenantEnvs(tenantEnvName).Services(serviceAlias).Get()
 	handleErr(err)
 	if service == nil {
 		return errors.New("Service not exist:" + serviceAlias)
 	}
-	_, err = clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Start(eventID)
+	_, err = clients.RegionClient.TenantEnvs(tenantEnvName).Services(serviceAlias).Start(eventID)
 	handleErr(err)
 	if c.Bool("f") {
 		server := "127.0.0.1:6363"
@@ -305,25 +305,25 @@ func startService(c *cli.Context) error {
 
 func stopService(c *cli.Context) error {
 	serviceAlias := c.Args().First()
-	tenantName := c.String("tenantAlias")
+	tenantEnvName := c.String("tenantEnvAlias")
 	info := strings.Split(serviceAlias, "/")
 	if len(info) >= 2 {
-		tenantName = info[0]
+		tenantEnvName = info[0]
 		serviceAlias = info[1]
 	}
 	if serviceAlias == "" {
-		showError("tenant alias can not be empty")
+		showError("tenant env alias can not be empty")
 	}
 	if serviceAlias == "" {
 		showError("service alias can not be empty")
 	}
 	eventID := coreutil.NewUUID()
-	service, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Get()
+	service, err := clients.RegionClient.TenantEnvs(tenantEnvName).Services(serviceAlias).Get()
 	handleErr(err)
 	if service == nil {
 		return errors.New("Service not exist:" + serviceAlias)
 	}
-	_, err = clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Stop(eventID)
+	_, err = clients.RegionClient.TenantEnvs(tenantEnvName).Services(serviceAlias).Stop(eventID)
 	handleErr(err)
 	if c.Bool("f") {
 		server := "127.0.0.1:6363"
@@ -337,34 +337,34 @@ func stopService(c *cli.Context) error {
 }
 func showServiceDeployInfo(c *cli.Context) error {
 	serviceAlias := c.Args().First()
-	tenantName := c.String("tenantAlias")
+	tenantEnvName := c.String("tenantEnvAlias")
 	info := strings.Split(serviceAlias, "/")
 	if len(info) >= 2 {
-		tenantName = info[0]
+		tenantEnvName = info[0]
 		serviceAlias = info[1]
 	}
-	if tenantName == "" {
-		showError("tenant alias can not be empty")
+	if tenantEnvName == "" {
+		showError("tenant env alias can not be empty")
 	}
 	if serviceAlias == "" {
 		showError("service alias can not be empty")
 	}
-	service, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Get()
+	service, err := clients.RegionClient.TenantEnvs(tenantEnvName).Services(serviceAlias).Get()
 	handleErr(err)
 	if service == nil {
 		return errors.New("Service not exist:" + serviceAlias)
 	}
-	deployInfo, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).GetDeployInfo()
+	deployInfo, err := clients.RegionClient.TenantEnvs(tenantEnvName).Services(serviceAlias).GetDeployInfo()
 	handleErr(err)
-	tenant, err := clients.RegionClient.Tenants(tenantName).Get()
+	tenantEnv, err := clients.RegionClient.TenantEnvs(tenantEnvName).Get()
 	handleErr(err)
-	if tenant == nil {
-		return errors.New("Tenant not exist:" + tenantName)
+	if tenantEnv == nil {
+		return errors.New("TenantEnv not exist:" + tenantEnvName)
 	}
 	table := uitable.New()
 	table.Wrap = true // wrap columns
 	serviceID := service.ServiceID
-	table.AddRow("Namespace:", tenant.Namespace)
+	table.AddRow("Namespace:", tenantEnv.Namespace)
 	table.AddRow("ServiceID:", serviceID)
 	if deployInfo.Deployment != "" {
 		table.AddRow("ReplicationType:", "deployment")
@@ -380,7 +380,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	serviceTable.AddHeaders("Name", "IP", "Port")
 	for serviceID := range deployInfo.Services {
 		if clients.K8SClient != nil {
-			service, _ := clients.K8SClient.CoreV1().Services(tenant.Namespace).Get(context.Background(), serviceID, metav1.GetOptions{})
+			service, _ := clients.K8SClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), serviceID, metav1.GetOptions{})
 			if service != nil {
 				var ports string
 				if service.Spec.Ports != nil && len(service.Spec.Ports) > 0 {
@@ -402,7 +402,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 		epTable.AddHeaders("Name", "IP", "Port", "Protocol")
 		for epname := range deployInfo.Endpoints {
 			if clients.K8SClient != nil {
-				ep, _ := clients.K8SClient.CoreV1().Endpoints(tenant.Namespace).Get(context.Background(), epname, metav1.GetOptions{})
+				ep, _ := clients.K8SClient.CoreV1().Endpoints(tenantEnv.Namespace).Get(context.Background(), epname, metav1.GetOptions{})
 				if ep != nil {
 					for i := range ep.Subsets {
 						ss := &ep.Subsets[i]
@@ -431,7 +431,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	ingressTable.AddHeaders("Name", "Host")
 	for ingressID := range deployInfo.Ingresses {
 		if clients.K8SClient != nil {
-			ingress, _ := clients.K8SClient.ExtensionsV1beta1().Ingresses(tenant.Namespace).Get(context.Background(), ingressID, metav1.GetOptions{})
+			ingress, _ := clients.K8SClient.ExtensionsV1beta1().Ingresses(tenantEnv.Namespace).Get(context.Background(), ingressID, metav1.GetOptions{})
 			if ingress != nil {
 				for _, rule := range ingress.Spec.Rules {
 					ingressTable.AddRow(ingress.Name, rule.Host)
@@ -448,7 +448,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	for podID := range deployInfo.Pods {
 		i++
 		if clients.K8SClient != nil {
-			pod, err := clients.K8SClient.CoreV1().Pods(tenant.Namespace).Get(context.Background(), podID, metav1.GetOptions{})
+			pod, err := clients.K8SClient.CoreV1().Pods(tenantEnv.Namespace).Get(context.Background(), podID, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -488,7 +488,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 				}
 
 				claimName := vol.PersistentVolumeClaim.ClaimName
-				pvc, _ := clients.K8SClient.CoreV1().PersistentVolumeClaims(tenant.Namespace).Get(context.Background(), claimName, metav1.GetOptions{})
+				pvc, _ := clients.K8SClient.CoreV1().PersistentVolumeClaims(tenantEnv.Namespace).Get(context.Background(), claimName, metav1.GetOptions{})
 				if pvc != nil {
 					pvn := pvc.Spec.VolumeName
 					volumeMount := name2Path[vol.Name]
@@ -559,12 +559,12 @@ func getContainerIDAndState(status corev1.ContainerStatus) (cid, s string) {
 	return
 }
 
-func showTenantServices(ctx *cli.Context) error {
-	tenantAlias := ctx.String("tenantAlias")
-	if tenantAlias == "" {
-		showError("tenant alias can not be empty")
+func showTenantEnvServices(ctx *cli.Context) error {
+	tenantEnvAlias := ctx.String("tenantEnvAlias")
+	if tenantEnvAlias == "" {
+		showError("tenant env alias can not be empty")
 	}
-	services, err := clients.RegionClient.Tenants(tenantAlias).Services("").List()
+	services, err := clients.RegionClient.TenantEnvs(tenantEnvAlias).Services("").List()
 	handleErr(err)
 	if services != nil {
 		runtable := termtables.CreateTable()

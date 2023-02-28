@@ -17,7 +17,7 @@ type AppRestoreAction struct {
 }
 
 // RestoreEnvs restores environment variables.
-func (a *AppRestoreAction) RestoreEnvs(tenantID, serviceID string, req *apimodel.RestoreEnvsReq) error {
+func (a *AppRestoreAction) RestoreEnvs(tenantEnvID, serviceID string, req *apimodel.RestoreEnvsReq) error {
 	// delete existing env
 	tx := db.GetManager().Begin()
 	defer func() {
@@ -26,15 +26,15 @@ func (a *AppRestoreAction) RestoreEnvs(tenantID, serviceID string, req *apimodel
 			tx.Rollback()
 		}
 	}()
-	if err := db.GetManager().TenantServiceEnvVarDaoTransactions(tx).DelByServiceIDAndScope(serviceID, req.Scope); err != nil {
+	if err := db.GetManager().TenantEnvServiceEnvVarDaoTransactions(tx).DelByServiceIDAndScope(serviceID, req.Scope); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	// batch create inner envs
 	for _, item := range req.Envs {
-		env := &model.TenantServiceEnvVar{
-			TenantID:      tenantID,
+		env := &model.TenantEnvServiceEnvVar{
+			TenantEnvID:   tenantEnvID,
 			ServiceID:     serviceID,
 			Name:          item.Name,
 			AttrName:      item.AttrName,
@@ -43,7 +43,7 @@ func (a *AppRestoreAction) RestoreEnvs(tenantID, serviceID string, req *apimodel
 			IsChange:      item.IsChange,
 			Scope:         item.Scope,
 		}
-		if err := db.GetManager().TenantServiceEnvVarDaoTransactions(tx).AddModel(env); err != nil {
+		if err := db.GetManager().TenantEnvServiceEnvVarDaoTransactions(tx).AddModel(env); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				// ignore record already exist
 				logrus.Warningf("Service ID: %s; Attr Name: %s: failed to create env: %v", serviceID, item.AttrName, err)
@@ -58,7 +58,7 @@ func (a *AppRestoreAction) RestoreEnvs(tenantID, serviceID string, req *apimodel
 }
 
 // RestorePorts restores service ports.
-func (a *AppRestoreAction) RestorePorts(tenantID, serviceID string, req *apimodel.RestorePortsReq) error {
+func (a *AppRestoreAction) RestorePorts(tenantEnvID, serviceID string, req *apimodel.RestorePortsReq) error {
 	// delete existing ports
 	tx := db.GetManager().Begin()
 	defer func() {
@@ -67,15 +67,15 @@ func (a *AppRestoreAction) RestorePorts(tenantID, serviceID string, req *apimode
 			tx.Rollback()
 		}
 	}()
-	if err := db.GetManager().TenantServicesPortDaoTransactions(tx).DelByServiceID(serviceID); err != nil {
+	if err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).DelByServiceID(serviceID); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	// batch create inner ports
 	for _, item := range req.Ports {
-		port := &model.TenantServicesPort{}
-		port.TenantID = tenantID
+		port := &model.TenantEnvServicesPort{}
+		port.TenantEnvID = tenantEnvID
 		port.ServiceID = serviceID
 		port.MappingPort = item.MappingPort
 		port.ContainerPort = item.ContainerPort
@@ -83,7 +83,7 @@ func (a *AppRestoreAction) RestorePorts(tenantID, serviceID string, req *apimode
 		port.PortAlias = item.PortAlias
 		port.IsInnerService = &item.IsInnerService
 		port.IsOuterService = &item.IsOuterService
-		if err := db.GetManager().TenantServicesPortDaoTransactions(tx).AddModel(port); err != nil {
+		if err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).AddModel(port); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				// ignore record already exist
 				logrus.Warningf("Service ID: %s; Container Port: %d: failed to create env: %v", serviceID, item.ContainerPort, err)
@@ -98,7 +98,7 @@ func (a *AppRestoreAction) RestorePorts(tenantID, serviceID string, req *apimode
 }
 
 // RestoreVolumes restores service volumes.
-func (a *AppRestoreAction) RestoreVolumes(tenantID, serviceID string, req *apimodel.RestoreVolumesReq) error {
+func (a *AppRestoreAction) RestoreVolumes(tenantEnvID, serviceID string, req *apimodel.RestoreVolumesReq) error {
 	// delete existing volumes
 	tx := db.GetManager().Begin()
 	defer func() {
@@ -107,11 +107,11 @@ func (a *AppRestoreAction) RestoreVolumes(tenantID, serviceID string, req *apimo
 			tx.Rollback()
 		}
 	}()
-	if err := db.GetManager().TenantServiceVolumeDaoTransactions(tx).DelShareableBySID(serviceID); err != nil {
+	if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).DelShareableBySID(serviceID); err != nil {
 		tx.Rollback()
 		return err
 	}
-	if err := db.GetManager().TenantServiceConfigFileDaoTransactions(tx).DelByServiceID(serviceID); err != nil {
+	if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DelByServiceID(serviceID); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -122,26 +122,26 @@ func (a *AppRestoreAction) RestoreVolumes(tenantID, serviceID string, req *apimo
 	}
 	for k := range req.Volumes {
 		item := req.Volumes[k]
-		v := &model.TenantServiceVolume{}
+		v := &model.TenantEnvServiceVolume{}
 		if item.HostPath == "" && item.VolumeType == model.ShareFileVolumeType.String() {
-			v.HostPath = fmt.Sprintf("%s/tenant/%s/service/%s%s", sharePath, tenantID, serviceID, item.VolumePath)
+			v.HostPath = fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", sharePath, tenantEnvID, serviceID, item.VolumePath)
 		}
 		if item.VolumeName == "" {
 			item.VolumeName = util.NewUUID()
 		}
-		if err := db.GetManager().TenantServiceVolumeDaoTransactions(tx).AddModel(v); err != nil {
+		if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).AddModel(v); err != nil {
 			tx.Rollback()
 			return err
 		}
 		if item.FileContent == "" {
 			continue
 		}
-		cfg := &model.TenantServiceConfigFile{
+		cfg := &model.TenantEnvServiceConfigFile{
 			ServiceID:   serviceID,
 			VolumeName:  item.VolumeName,
 			FileContent: item.FileContent,
 		}
-		if err := db.GetManager().TenantServiceConfigFileDaoTransactions(tx).AddModel(cfg); err != nil {
+		if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).AddModel(cfg); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -165,7 +165,7 @@ func (a *AppRestoreAction) RestoreProbe(serviceID string, req *apimodel.ServiceP
 	}
 
 	if req != nil {
-		probe := &model.TenantServiceProbe{}
+		probe := &model.TenantEnvServiceProbe{}
 		probe.ServiceID = serviceID
 		probe.Cmd = req.Cmd
 		probe.FailureThreshold = req.FailureThreshold
@@ -190,23 +190,23 @@ func (a *AppRestoreAction) RestoreProbe(serviceID string, req *apimodel.ServiceP
 }
 
 // RestoreDeps restores service dependencies.
-func (a *AppRestoreAction) RestoreDeps(tenantID, serviceID string, req *apimodel.RestoreDepsReq) error {
+func (a *AppRestoreAction) RestoreDeps(tenantEnvID, serviceID string, req *apimodel.RestoreDepsReq) error {
 	tx := db.GetManager().Begin()
-	if err := db.GetManager().TenantServiceRelationDaoTransactions(tx).DELRelationsByServiceID(serviceID); err != nil {
+	if err := db.GetManager().TenantEnvServiceRelationDaoTransactions(tx).DELRelationsByServiceID(serviceID); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	for idx := range req.Deps {
 		item := req.Deps[idx]
-		tsr := &model.TenantServiceRelation{
-			TenantID:          tenantID,
+		tsr := &model.TenantEnvServiceRelation{
+			TenantEnvID:       tenantEnvID,
 			ServiceID:         serviceID,
 			DependServiceID:   item.DepServiceID,
 			DependServiceType: item.DepServiceType,
 			DependOrder:       1,
 		}
-		if err := db.GetManager().TenantServiceRelationDaoTransactions(tx).AddModel(tsr); err != nil {
+		if err := db.GetManager().TenantEnvServiceRelationDaoTransactions(tx).AddModel(tsr); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				logrus.Warningf("Service id: %s; Dep service id: %s; failed to create service dependecy: %s",
 					serviceID, item.DepServiceID, err)
@@ -221,7 +221,7 @@ func (a *AppRestoreAction) RestoreDeps(tenantID, serviceID string, req *apimodel
 }
 
 // RestoreDepVols restores service dependent volumes.
-func (a *AppRestoreAction) RestoreDepVols(tenantID, serviceID string, req *apimodel.RestoreDepVolsReq) error {
+func (a *AppRestoreAction) RestoreDepVols(tenantEnvID, serviceID string, req *apimodel.RestoreDepVolsReq) error {
 	tx := db.GetManager().Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -229,22 +229,22 @@ func (a *AppRestoreAction) RestoreDepVols(tenantID, serviceID string, req *apimo
 			tx.Rollback()
 		}
 	}()
-	if err := db.GetManager().TenantServiceMountRelationDaoTransactions(tx).DELTenantServiceMountRelationByServiceID(serviceID); err != nil {
+	if err := db.GetManager().TenantEnvServiceMountRelationDaoTransactions(tx).DELTenantEnvServiceMountRelationByServiceID(serviceID); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	for idx := range req.DepVols {
 		item := req.DepVols[idx]
-		dv, err := db.GetManager().TenantServiceVolumeDaoTransactions(tx).GetVolumeByServiceIDAndName(item.DepServiceID, item.VolumeName)
+		dv, err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).GetVolumeByServiceIDAndName(item.DepServiceID, item.VolumeName)
 		if err != nil {
 			// err contains gorm.ErrRecordNotFound
 			tx.Rollback()
 			return fmt.Errorf("dep service id: %s; error getting dep volume: %s", item.DepServiceID, err)
 		}
 
-		mr := &model.TenantServiceMountRelation{
-			TenantID:        tenantID,
+		mr := &model.TenantEnvServiceMountRelation{
+			TenantEnvID:     tenantEnvID,
 			ServiceID:       serviceID,
 			DependServiceID: item.DepServiceID,
 			VolumePath:      item.VolumePath,
@@ -252,7 +252,7 @@ func (a *AppRestoreAction) RestoreDepVols(tenantID, serviceID string, req *apimo
 			VolumeName:      item.VolumeName,
 			VolumeType:      dv.VolumeType,
 		}
-		if err := db.GetManager().TenantServiceMountRelationDaoTransactions(tx).AddModel(mr); err != nil {
+		if err := db.GetManager().TenantEnvServiceMountRelationDaoTransactions(tx).AddModel(mr); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				logrus.Warningf("Service id: %s; Dep service id: %s; failed to create dep volume: %s",
 					serviceID, item.DepServiceID, err)
@@ -267,27 +267,27 @@ func (a *AppRestoreAction) RestoreDepVols(tenantID, serviceID string, req *apimo
 }
 
 // RestorePlugins restores service plugins.
-func (a *AppRestoreAction) RestorePlugins(tenantID, serviceID string, req *apimodel.RestorePluginsReq) error {
+func (a *AppRestoreAction) RestorePlugins(tenantEnvID, serviceID string, req *apimodel.RestorePluginsReq) error {
 	tx := db.GetManager().Begin()
-	if err := db.GetManager().TenantServicePluginRelationDaoTransactions(tx).DeleteALLRelationByServiceID(serviceID); err != nil {
+	if err := db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).DeleteALLRelationByServiceID(serviceID); err != nil {
 		tx.Rollback()
 		return err
 	}
 
 	for idx := range req.Plugins {
 		item := req.Plugins[idx]
-		plugin, err := db.GetManager().TenantPluginDaoTransactions(tx).GetPluginByID(item.PluginID, tenantID)
+		plugin, err := db.GetManager().TenantEnvPluginDaoTransactions(tx).GetPluginByID(item.PluginID, tenantEnvID)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("plugin id: %s; failed to get plugin: %v", item.PluginID, err)
 		}
-		pluginversion, err := db.GetManager().TenantPluginBuildVersionDaoTransactions(tx).GetBuildVersionByVersionID(item.PluginID, item.VersionID)
+		pluginversion, err := db.GetManager().TenantEnvPluginBuildVersionDaoTransactions(tx).GetBuildVersionByVersionID(item.PluginID, item.VersionID)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("plugin id: %s; version id: %s; failed to get plugin version: %v", item.PluginID, item.VersionID, err)
 		}
 
-		relation := &model.TenantServicePluginRelation{
+		relation := &model.TenantEnvServicePluginRelation{
 			VersionID:       item.VersionID,
 			ServiceID:       serviceID,
 			PluginID:        item.PluginID,
@@ -296,7 +296,7 @@ func (a *AppRestoreAction) RestorePlugins(tenantID, serviceID string, req *apimo
 			ContainerCPU:    pluginversion.ContainerCPU,
 			ContainerMemory: pluginversion.ContainerMemory,
 		}
-		if err := db.GetManager().TenantServicePluginRelationDaoTransactions(tx).AddModel(relation); err != nil {
+		if err := db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).AddModel(relation); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				logrus.Warningf("failed to create plugin relation: %v", err)
 				continue

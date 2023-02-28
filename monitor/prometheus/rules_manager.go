@@ -331,13 +331,13 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 							},
 						},
 						&RulesConfig{
-							Alert:  "InsufficientTenantResources",
-							Expr:   "sum(wt_api_exporter_tenant_memory_limit) by(namespace) - sum(namespace_resource_memory_request)by (namespace) < sum(wt_api_exporter_tenant_memory_limit) by(namespace) *0.2 and sum(wt_api_exporter_tenant_memory_limit) by(namespace) > 0",
+							Alert:  "InsufficientTenantEnvResources",
+							Expr:   "sum(wt_api_exporter_tenant_env_memory_limit) by(namespace) - sum(namespace_resource_memory_request)by (namespace) < sum(wt_api_exporter_tenant_env_memory_limit) by(namespace) *0.2 and sum(wt_api_exporter_tenant_env_memory_limit) by(namespace) > 0",
 							For:    "2m",
 							Labels: commonLables,
 							Annotations: map[string]string{
-								"description": "Tenant available memory capacity {{ humanize $value }} MB, less than 20% of the limit",
-								"summary":     "Insufficient Tenant memory Resources",
+								"description": "TenantEnv available memory capacity {{ humanize $value }} MB, less than 20% of the limit",
+								"summary":     "Insufficient TenantEnv memory Resources",
 							},
 						},
 					},

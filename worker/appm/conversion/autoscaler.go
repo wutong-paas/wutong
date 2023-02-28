@@ -39,8 +39,8 @@ var str2ResourceName = map[string]corev1.ResourceName{
 	"memory": corev1.ResourceMemory,
 }
 
-// TenantServiceAutoscaler -
-func TenantServiceAutoscaler(as *v1.AppService, dbmanager db.Manager) error {
+// TenantEnvServiceAutoscaler -
+func TenantEnvServiceAutoscaler(as *v1.AppService, dbmanager db.Manager) error {
 	hpas, err := newHPAs(as, dbmanager)
 	if err != nil {
 		return fmt.Errorf("create HPAs: %v", err)
@@ -53,14 +53,14 @@ func TenantServiceAutoscaler(as *v1.AppService, dbmanager db.Manager) error {
 }
 
 func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv2.HorizontalPodAutoscaler, error) {
-	xpaRules, err := dbmanager.TenantServceAutoscalerRulesDao().ListEnableOnesByServiceID(as.ServiceID)
+	xpaRules, err := dbmanager.TenantEnvServceAutoscalerRulesDao().ListEnableOnesByServiceID(as.ServiceID)
 	if err != nil {
 		return nil, err
 	}
 
 	var hpas []*autoscalingv2.HorizontalPodAutoscaler
 	for _, rule := range xpaRules {
-		metrics, err := dbmanager.TenantServceAutoscalerRuleMetricsDao().ListByRuleID(rule.RuleID)
+		metrics, err := dbmanager.TenantEnvServceAutoscalerRuleMetricsDao().ListByRuleID(rule.RuleID)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +85,7 @@ func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv2.Horizont
 	return hpas, nil
 }
 
-func createResourceMetrics(metric *model.TenantServiceAutoscalerRuleMetrics) autoscalingv2.MetricSpec {
+func createResourceMetrics(metric *model.TenantEnvServiceAutoscalerRuleMetrics) autoscalingv2.MetricSpec {
 	ms := autoscalingv2.MetricSpec{
 		Type: autoscalingv2.ResourceMetricSourceType,
 		Resource: &autoscalingv2.ResourceMetricSource{
@@ -113,7 +113,7 @@ func createResourceMetrics(metric *model.TenantServiceAutoscalerRuleMetrics) aut
 	return ms
 }
 
-func newHPA(namespace, kind, name string, labels map[string]string, rule *model.TenantServiceAutoscalerRules, metrics []*model.TenantServiceAutoscalerRuleMetrics) *autoscalingv2.HorizontalPodAutoscaler {
+func newHPA(namespace, kind, name string, labels map[string]string, rule *model.TenantEnvServiceAutoscalerRules, metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) *autoscalingv2.HorizontalPodAutoscaler {
 	hpa := &autoscalingv2.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rule.RuleID,

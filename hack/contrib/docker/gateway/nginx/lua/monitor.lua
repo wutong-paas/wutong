@@ -23,7 +23,7 @@ end
 local function metrics()
   return {
     host = ngx.var.host or "-",
-    namespace = ngx.var.tenant_id or "-",
+    namespace = ngx.var.tenant_env_id or "-",
     service_id = ngx.var.service_id or "-",
     path = ngx.var.location_path or "-",
     method = ngx.var.request_method or "-",

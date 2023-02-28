@@ -27,13 +27,13 @@ func (s *Statefulsets) Migrate(namespace string, seletcor labels.Selector) {
 func (s *Statefulsets) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for i := 0; i < len(s.StatefulSets); i++ {
 		labels := map[string]string{
-			"app":           s.StatefulSets[i].Labels["app"],
-			"app_id":        s.StatefulSets[i].Labels["app_id"],
-			"name":          s.StatefulSets[i].Labels["name"],
-			"service_alias": s.StatefulSets[i].Labels["service_alias"],
-			"service_id":    s.StatefulSets[i].Labels["service_id"],
-			"tenant_id":     s.StatefulSets[i].Labels["tenant_id"],
-			"tenant_name":   s.StatefulSets[i].Labels["tenant_name"],
+			"app":             s.StatefulSets[i].Labels["app"],
+			"app_id":          s.StatefulSets[i].Labels["app_id"],
+			"name":            s.StatefulSets[i].Labels["name"],
+			"service_alias":   s.StatefulSets[i].Labels["service_alias"],
+			"service_id":      s.StatefulSets[i].Labels["service_id"],
+			"tenant_env_id":   s.StatefulSets[i].Labels["tenant_env_id"],
+			"tenant_env_name": s.StatefulSets[i].Labels["tenant_env_name"],
 		}
 		if s.StatefulSets[i] != nil {
 			s.StatefulSets[i].APIVersion = "apps/v1"

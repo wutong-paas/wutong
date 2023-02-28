@@ -146,32 +146,32 @@ func (mr *MockStorerMockRecorder) GetAppServicesStatus(serviceIDs interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAppServicesStatus", reflect.TypeOf((*MockStorer)(nil).GetAppServicesStatus), serviceIDs)
 }
 
-// GetTenantResource mocks base method
-func (m *MockStorer) GetTenantResource(tenantID string) *v1.TenantResource {
+// GetTenantEnvResource mocks base method
+func (m *MockStorer) GetTenantEnvResource(tenantEnvID string) *v1.TenantEnvResource {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTenantResource", tenantID)
-	ret0, _ := ret[0].(*v1.TenantResource)
+	ret := m.ctrl.Call(m, "GetTenantEnvResource", tenantEnvID)
+	ret0, _ := ret[0].(*v1.TenantEnvResource)
 	return ret0
 }
 
-// GetTenantResource indicates an expected call of GetTenantResource
-func (mr *MockStorerMockRecorder) GetTenantResource(tenantID interface{}) *gomock.Call {
+// GetTenantEnvResource indicates an expected call of GetTenantEnvResource
+func (mr *MockStorerMockRecorder) GetTenantEnvResource(tenantEnvID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantResource", reflect.TypeOf((*MockStorer)(nil).GetTenantResource), tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantEnvResource", reflect.TypeOf((*MockStorer)(nil).GetTenantEnvResource), tenantEnvID)
 }
 
-// GetTenantRunningApp mocks base method
-func (m *MockStorer) GetTenantRunningApp(tenantID string) []*v1.AppService {
+// GetTenantEnvRunningApp mocks base method
+func (m *MockStorer) GetTenantEnvRunningApp(tenantEnvID string) []*v1.AppService {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTenantRunningApp", tenantID)
+	ret := m.ctrl.Call(m, "GetTenantEnvRunningApp", tenantEnvID)
 	ret0, _ := ret[0].([]*v1.AppService)
 	return ret0
 }
 
-// GetTenantRunningApp indicates an expected call of GetTenantRunningApp
-func (mr *MockStorerMockRecorder) GetTenantRunningApp(tenantID interface{}) *gomock.Call {
+// GetTenantEnvRunningApp indicates an expected call of GetTenantEnvRunningApp
+func (mr *MockStorerMockRecorder) GetTenantEnvRunningApp(tenantEnvID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantRunningApp", reflect.TypeOf((*MockStorer)(nil).GetTenantRunningApp), tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantEnvRunningApp", reflect.TypeOf((*MockStorer)(nil).GetTenantEnvRunningApp), tenantEnvID)
 }
 
 // GetNeedBillingStatus mocks base method
@@ -243,7 +243,7 @@ func (mr *MockStorerMockRecorder) UnRegistPodUpdateListener(arg0 interface{}) *g
 }
 
 // RegisterVolumeTypeListener mocks base method
-func (m *MockStorer) RegisterVolumeTypeListener(arg0 string, arg1 chan<- *model.TenantServiceVolumeType) {
+func (m *MockStorer) RegisterVolumeTypeListener(arg0 string, arg1 chan<- *model.TenantEnvServiceVolumeType) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RegisterVolumeTypeListener", arg0, arg1)
 }
@@ -267,7 +267,7 @@ func (mr *MockStorerMockRecorder) UnRegisterVolumeTypeListener(arg0 interface{})
 }
 
 // InitOneThirdPartService mocks base method
-func (m *MockStorer) InitOneThirdPartService(service *model.TenantServices) error {
+func (m *MockStorer) InitOneThirdPartService(service *model.TenantEnvServices) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitOneThirdPartService", service)
 	ret0, _ := ret[0].(error)

@@ -28,35 +28,35 @@ import (
 	utilhttp "github.com/wutong-paas/wutong/util/http"
 )
 
-type tenant struct {
+type tenantEnv struct {
 	regionImpl
-	tenantName string
-	prefix     string
+	tenantEnvName string
+	prefix        string
 }
 
-//TenantInterface TenantInterface
-type TenantInterface interface {
-	Get() (*dbmodel.Tenants, *util.APIHandleError)
-	List() ([]*dbmodel.Tenants, *util.APIHandleError)
+// TenantEnvInterface TenantEnvInterface
+type TenantEnvInterface interface {
+	Get() (*dbmodel.TenantEnvs, *util.APIHandleError)
+	List() ([]*dbmodel.TenantEnvs, *util.APIHandleError)
 	Delete() *util.APIHandleError
 	Services(serviceAlias string) ServiceInterface
 	// DefineSources(ss *api_model.SourceSpec) DefineSourcesInterface
 	// DefineCloudAuth(gt *api_model.GetUserToken) DefineCloudAuthInterface
 }
 
-func (t *tenant) Get() (*dbmodel.Tenants, *util.APIHandleError) {
+func (t *tenantEnv) Get() (*dbmodel.TenantEnvs, *util.APIHandleError) {
 	var decode utilhttp.ResponseBody
-	var tenant dbmodel.Tenants
-	decode.Bean = &tenant
+	var tenantEnv dbmodel.TenantEnvs
+	decode.Bean = &tenantEnv
 	code, err := t.DoRequest(t.prefix, "GET", nil, &decode)
 	if err != nil {
 		return nil, util.CreateAPIHandleError(code, err)
 	}
-	return &tenant, nil
+	return &tenantEnv, nil
 }
-func (t *tenant) List() ([]*dbmodel.Tenants, *util.APIHandleError) {
-	if t.tenantName != "" {
-		return nil, util.CreateAPIHandleErrorf(400, "tenant name must be empty in this api")
+func (t *tenantEnv) List() ([]*dbmodel.TenantEnvs, *util.APIHandleError) {
+	if t.tenantEnvName != "" {
+		return nil, util.CreateAPIHandleErrorf(400, "tenant env name must be empty in this api")
 	}
 	var decode utilhttp.ResponseBody
 	code, err := t.DoRequest(t.prefix, "GET", nil, &decode)
@@ -68,26 +68,26 @@ func (t *tenant) List() ([]*dbmodel.Tenants, *util.APIHandleError) {
 	}
 	bean, ok := decode.Bean.(map[string]interface{})
 	if !ok {
-		logrus.Warningf("list tenants; wrong data: %v", decode.Bean)
+		logrus.Warningf("list tenantEnvs; wrong data: %v", decode.Bean)
 		return nil, nil
 	}
 	list, ok := bean["list"]
 	if !ok {
 		return nil, nil
 	}
-	var tenants []*dbmodel.Tenants
-	if err := mapstructure.Decode(list, &tenants); err != nil {
-		logrus.Errorf("map: %+v; error decoding to map to []*dbmodel.Tenants: %v", list, err)
+	var tenantEnvs []*dbmodel.TenantEnvs
+	if err := mapstructure.Decode(list, &tenantEnvs); err != nil {
+		logrus.Errorf("map: %+v; error decoding to map to []*dbmodel.TenantEnvs: %v", list, err)
 		return nil, util.CreateAPIHandleError(500, err)
 	}
-	return tenants, nil
+	return tenantEnvs, nil
 }
-func (t *tenant) Delete() *util.APIHandleError {
+func (t *tenantEnv) Delete() *util.APIHandleError {
 	return nil
 }
-func (t *tenant) Services(serviceAlias string) ServiceInterface {
+func (t *tenantEnv) Services(serviceAlias string) ServiceInterface {
 	return &services{
-		prefix: path.Join(t.prefix, "services", serviceAlias),
-		tenant: *t,
+		prefix:    path.Join(t.prefix, "services", serviceAlias),
+		tenantEnv: *t,
 	}
 }

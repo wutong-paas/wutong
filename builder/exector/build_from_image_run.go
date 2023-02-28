@@ -35,14 +35,14 @@ import (
 // ImageBuildItem ImageBuildItem
 type ImageBuildItem struct {
 	Namespace     string       `json:"namespace"`
-	TenantName    string       `json:"tenant_name"`
+	TenantEnvName string       `json:"tenant_env_name"`
 	ServiceAlias  string       `json:"service_alias"`
 	Image         string       `json:"image"`
 	DestImage     string       `json:"dest_image"`
 	Logger        event.Logger `json:"logger"`
 	EventID       string       `json:"event_id"`
 	ImageClient   sources.ImageClient
-	TenantID      string
+	TenantEnvID   string
 	ServiceID     string
 	DeployVersion string
 	HubUser       string
@@ -57,7 +57,7 @@ func NewImageBuildItem(in []byte) *ImageBuildItem {
 	logger := event.GetManager().GetLogger(eventID)
 	return &ImageBuildItem{
 		Namespace:     gjson.GetBytes(in, "namespace").String(),
-		TenantName:    gjson.GetBytes(in, "tenant_name").String(),
+		TenantEnvName: gjson.GetBytes(in, "tenant_env_name").String(),
 		ServiceAlias:  gjson.GetBytes(in, "service_alias").String(),
 		ServiceID:     gjson.GetBytes(in, "service_id").String(),
 		Image:         gjson.GetBytes(in, "image").String(),

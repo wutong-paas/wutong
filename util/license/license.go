@@ -39,7 +39,7 @@ type LicInfo struct {
 	Node       int64    `json:"node"`
 	CPU        int64    `json:"cpu"`
 	Memory     int64    `json:"memory"`
-	Tenant     int64    `json:"tenant"`
+	TenantEnv  int64    `json:"tenantEnv"`
 	EndTime    string   `json:"end_time"`
 	StartTime  string   `json:"start_time"`
 	DataCenter int64    `json:"data_center"`

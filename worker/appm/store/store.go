@@ -71,7 +71,7 @@ var rc2RecordType = map[string]string{
 	"HorizontalPodAutoscaler": "hpa",
 }
 
-//Storer app runtime store interface
+// Storer app runtime store interface
 type Storer interface {
 	Start() error
 	Ready() bool
@@ -83,14 +83,14 @@ type Storer interface {
 	GetAppServiceStatus(serviceID string) string
 	GetAppServiceStatuses(serviceIDs []string) map[string]string
 	GetAppServicesStatus(serviceIDs []string) map[string]string
-	GetTenantResource(tenantID string) TenantResource
-	GetTenantResourceList() []TenantResource
-	GetTenantRunningApp(tenantID string) []*v1.AppService
+	GetTenantEnvResource(tenantEnvID string) TenantEnvResource
+	GetTenantEnvResourceList() []TenantEnvResource
+	GetTenantEnvRunningApp(tenantEnvID string) []*v1.AppService
 	GetNeedBillingStatus(serviceIDs []string) map[string]string
 	OnDeletes(obj ...interface{})
 	RegistPodUpdateListener(string, chan<- *corev1.Pod)
 	UnRegistPodUpdateListener(string)
-	RegisterVolumeTypeListener(string, chan<- *model.TenantServiceVolumeType)
+	RegisterVolumeTypeListener(string, chan<- *model.TenantEnvServiceVolumeType)
 	UnRegisterVolumeTypeListener(string)
 	GetCrds() ([]*apiextensions.CustomResourceDefinition, error)
 	GetCrd(name string) (*apiextensions.CustomResourceDefinition, error)
@@ -124,8 +124,8 @@ type Event struct {
 	Obj  interface{}
 }
 
-//appRuntimeStore app runtime store
-//cache all kubernetes object and appservice
+// appRuntimeStore app runtime store
+// cache all kubernetes object and appservice
 type appRuntimeStore struct {
 	kubeconfig             *rest.Config
 	clientset              kubernetes.Interface
@@ -144,12 +144,12 @@ type appRuntimeStore struct {
 	stopch                 chan struct{}
 	podUpdateListeners     map[string]chan<- *corev1.Pod
 	podUpdateListenerLock  sync.Mutex
-	volumeTypeListeners    map[string]chan<- *model.TenantServiceVolumeType
+	volumeTypeListeners    map[string]chan<- *model.TenantEnvServiceVolumeType
 	volumeTypeListenerLock sync.Mutex
 	resourceCache          *ResourceCache
 }
 
-//NewStore new app runtime store
+// NewStore new app runtime store
 func NewStore(
 	kubeconfig *rest.Config,
 	clientset kubernetes.Interface,
@@ -171,7 +171,7 @@ func NewStore(
 		crClients:           make(map[string]interface{}),
 		resourceCache:       NewResourceCache(),
 		podUpdateListeners:  make(map[string]chan<- *corev1.Pod, 1),
-		volumeTypeListeners: make(map[string]chan<- *model.TenantServiceVolumeType, 1),
+		volumeTypeListeners: make(map[string]chan<- *model.TenantEnvServiceVolumeType, 1),
 	}
 	crdClient, err := internalclientset.NewForConfig(kubeconfig)
 	if err != nil {
@@ -364,12 +364,12 @@ func (a *appRuntimeStore) Start() error {
 	return nil
 }
 
-//Ready if all kube informers is syncd, store is ready
+// Ready if all kube informers is syncd, store is ready
 func (a *appRuntimeStore) Ready() bool {
 	return a.informers.Ready()
 }
 
-//checkReplicasetWhetherDelete if rs is old version,if it is old version and it always delete all pod.
+// checkReplicasetWhetherDelete if rs is old version,if it is old version and it always delete all pod.
 // will delete it
 func (a *appRuntimeStore) checkReplicasetWhetherDelete(app *v1.AppService, rs *appsv1.ReplicaSet) {
 	current := app.GetCurrentReplicaSet()
@@ -584,7 +584,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 	}
 }
 
-//getAppService if  creator is true, will create new app service where not found in store
+// getAppService if  creator is true, will create new app service where not found in store
 func (a *appRuntimeStore) getAppService(serviceID, version, createrID string, creator bool) (*v1.AppService, error) {
 	var appservice *v1.AppService
 	appservice = a.GetAppService(serviceID)
@@ -805,7 +805,7 @@ func (a *appRuntimeStore) OnDeletes(objs ...interface{}) {
 	}
 }
 
-//RegistAppService regist a app model to store.
+// RegistAppService regist a app model to store.
 func (a *appRuntimeStore) RegistAppService(app *v1.AppService) {
 	a.appServices.Store(v1.GetCacheKeyOnlyServiceID(app.ServiceID), app)
 	a.appCount++
@@ -816,14 +816,14 @@ func (a *appRuntimeStore) GetPod(namespace, name string) (*corev1.Pod, error) {
 	return a.listers.Pod.Pods(namespace).Get(name)
 }
 
-//DeleteAppService delete cache app service
+// DeleteAppService delete cache app service
 func (a *appRuntimeStore) DeleteAppService(app *v1.AppService) {
 	//a.appServices.Delete(v1.GetCacheKeyOnlyServiceID(app.ServiceID))
 	//a.appCount--
 	//logrus.Debugf("current have %d app after delete \n", a.appCount)
 }
 
-//DeleteAppServiceByKey delete cache app service
+// DeleteAppServiceByKey delete cache app service
 func (a *appRuntimeStore) DeleteAppServiceByKey(key v1.CacheKey) {
 	a.appServices.Delete(key)
 	a.appCount--
@@ -936,7 +936,7 @@ func (a *appRuntimeStore) GetAllAppServices() (apps []*v1.AppService) {
 func (a *appRuntimeStore) GetAppServiceStatus(serviceID string) string {
 	app := a.GetAppService(serviceID)
 	if app == nil {
-		component, _ := a.dbmanager.TenantServiceDao().GetServiceByID(serviceID)
+		component, _ := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
 		if component == nil {
 			return v1.UNKNOW
 		}
@@ -986,7 +986,7 @@ func (a *appRuntimeStore) GetAppServiceStatuses(serviceIDs []string) map[string]
 		}
 		statusMap[serviceID] = status
 	}
-	components, err := a.dbmanager.TenantServiceDao().GetServiceByIDs(queryComponentIDs)
+	components, err := a.dbmanager.TenantEnvServiceDao().GetServiceByIDs(queryComponentIDs)
 	if err != nil {
 		logrus.Errorf("get components by serviceIDs failed: %s", err.Error())
 	}
@@ -994,7 +994,7 @@ func (a *appRuntimeStore) GetAppServiceStatuses(serviceIDs []string) map[string]
 	if err != nil {
 		logrus.Errorf("get component versions by serviceIDs failed: %s", err.Error())
 	}
-	existComponents := make(map[string]*model.TenantServices)
+	existComponents := make(map[string]*model.TenantEnvServices)
 	for _, component := range components {
 		existComponents[component.ServiceID] = component
 	}
@@ -1036,7 +1036,7 @@ func (a *appRuntimeStore) GetAppServicesStatus(serviceIDs []string) map[string]s
 }
 
 func (a *appRuntimeStore) GetAppStatus(appID string) (pb.AppStatus_Status, error) {
-	services, err := db.GetManager().TenantServiceDao().ListByAppID(appID)
+	services, err := db.GetManager().TenantEnvServiceDao().ListByAppID(appID)
 	if err != nil || len(services) == 0 {
 		return pb.AppStatus_NIL, err
 	}
@@ -1170,7 +1170,7 @@ func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
 		}
 	}
 	ai.PodName = pod.Name
-	ai.TenantID = pod.Namespace
+	ai.TenantEnvID = pod.Namespace
 	return ai
 }
 
@@ -1191,46 +1191,46 @@ func (a *appRuntimeStore) addAbnormalInfo(ai *v1.AbnormalInfo) {
 	switch ai.Reason {
 	case "OOMKilled":
 		a.dbmanager.NotificationEventDao().AddModel(&model.NotificationEvent{
-			Kind:        "service",
-			KindID:      ai.ServiceID,
-			Hash:        ai.Hash(),
-			Type:        "UnNormal",
-			Message:     fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
-			Reason:      "OOMKilled",
-			Count:       ai.Count,
-			ServiceName: ai.ServiceAlias,
-			TenantName:  ai.TenantID,
+			Kind:          "service",
+			KindID:        ai.ServiceID,
+			Hash:          ai.Hash(),
+			Type:          "UnNormal",
+			Message:       fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
+			Reason:        "OOMKilled",
+			Count:         ai.Count,
+			ServiceName:   ai.ServiceAlias,
+			TenantEnvName: ai.TenantEnvID,
 		})
 	default:
 		db.GetManager().NotificationEventDao().AddModel(&model.NotificationEvent{
-			Kind:        "service",
-			KindID:      ai.ServiceID,
-			Hash:        ai.Hash(),
-			Type:        "UnNormal",
-			Message:     fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
-			Reason:      ai.Reason,
-			Count:       ai.Count,
-			ServiceName: ai.ServiceAlias,
-			TenantName:  ai.TenantID,
+			Kind:          "service",
+			KindID:        ai.ServiceID,
+			Hash:          ai.Hash(),
+			Type:          "UnNormal",
+			Message:       fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
+			Reason:        ai.Reason,
+			Count:         ai.Count,
+			ServiceName:   ai.ServiceAlias,
+			TenantEnvName: ai.TenantEnvID,
 		})
 	}
 }
 
-//GetTenantResource get tenant resource
-func (a *appRuntimeStore) GetTenantResource(tenantID string) TenantResource {
-	return a.resourceCache.GetTenantResource(tenantID)
+// GetTenantEnvResource get tenant env resource
+func (a *appRuntimeStore) GetTenantEnvResource(tenantEnvID string) TenantEnvResource {
+	return a.resourceCache.GetTenantEnvResource(tenantEnvID)
 }
 
-//GetTenantResource get tenant resource
-func (a *appRuntimeStore) GetTenantResourceList() []TenantResource {
-	return a.resourceCache.GetAllTenantResource()
+// GetTenantEnvResource get tenant env resource
+func (a *appRuntimeStore) GetTenantEnvResourceList() []TenantEnvResource {
+	return a.resourceCache.GetAllTenantEnvResource()
 }
 
-//GetTenantRunningApp get running app by tenant
-func (a *appRuntimeStore) GetTenantRunningApp(tenantID string) (list []*v1.AppService) {
+// GetTenantEnvRunningApp get running app by tenantEnv
+func (a *appRuntimeStore) GetTenantEnvRunningApp(tenantEnvID string) (list []*v1.AppService) {
 	a.appServices.Range(func(k, v interface{}) bool {
 		appService, _ := v.(*v1.AppService)
-		if appService != nil && (appService.TenantID == tenantID || tenantID == corev1.NamespaceAll || appService.GetNamespace() == tenantID) && !appService.IsClosed() {
+		if appService != nil && (appService.TenantEnvID == tenantEnvID || tenantEnvID == corev1.NamespaceAll || appService.GetNamespace() == tenantEnvID) && !appService.IsClosed() {
 			list = append(list, appService)
 		}
 		return true
@@ -1304,7 +1304,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			if serviceID == "" || ruleID == "" {
 				return
 			}
-			record := &model.TenantServiceScalingRecords{
+			record := &model.TenantEnvServiceScalingRecords{
 				ServiceID:   serviceID,
 				RuleID:      ruleID,
 				EventName:   evt.GetName(),
@@ -1317,7 +1317,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			}
 			logrus.Debugf("received add record: %#v", record)
 
-			if err := db.GetManager().TenantServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
+			if err := db.GetManager().TenantEnvServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
 				logrus.Warningf("update or create scaling record: %v", err)
 			}
 		},
@@ -1337,7 +1337,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			if serviceID == "" || ruleID == "" {
 				return
 			}
-			record := &model.TenantServiceScalingRecords{
+			record := &model.TenantEnvServiceScalingRecords{
 				ServiceID:   serviceID,
 				RuleID:      ruleID,
 				EventName:   cevt.GetName(),
@@ -1349,7 +1349,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			}
 			logrus.Debugf("received update record: %#v", record)
 
-			if err := db.GetManager().TenantServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
+			if err := db.GetManager().TenantEnvServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
 				logrus.Warningf("update or create scaling record: %v", err)
 			}
 		},
@@ -1427,7 +1427,7 @@ func (a *appRuntimeStore) UnRegistPodUpdateListener(name string) {
 }
 
 // RegisterVolumeTypeListener -
-func (a *appRuntimeStore) RegisterVolumeTypeListener(name string, ch chan<- *model.TenantServiceVolumeType) {
+func (a *appRuntimeStore) RegisterVolumeTypeListener(name string, ch chan<- *model.TenantEnvServiceVolumeType) {
 	a.volumeTypeListenerLock.Lock()
 	defer a.volumeTypeListenerLock.Unlock()
 	a.volumeTypeListeners[name] = ch
@@ -1460,7 +1460,7 @@ func (a *appRuntimeStore) GetAppResources(appID string) (int64, int64, error) {
 // Compatible with the old version.
 // Versions prior to 5.3.0 have no app_id in the label, only service_id.
 func (a *appRuntimeStore) listPodsByAppIDLegacy(appID string) ([]*corev1.Pod, error) {
-	services, err := a.dbmanager.TenantServiceDao().ListByAppID(appID)
+	services, err := a.dbmanager.TenantEnvServiceDao().ListByAppID(appID)
 	if err != nil {
 		return nil, err
 	}

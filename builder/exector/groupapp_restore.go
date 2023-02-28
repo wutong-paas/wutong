@@ -47,12 +47,12 @@ import (
 // BackupAPPRestore restrore the  group app backup
 type BackupAPPRestore struct {
 	//full-online,full-offline
-	EventID  string
-	BackupID string `json:"backup_id"`
-	TenantID string `json:"tenant_id"`
-	Logger   event.Logger
-	//RestoreMode(cdct) current datacenter and current tenant
-	//RestoreMode(cdot) current datacenter and other tenant
+	EventID     string
+	BackupID    string `json:"backup_id"`
+	TenantEnvID string `json:"tenant_env_id"`
+	Logger      event.Logger
+	//RestoreMode(cdct) current datacenter and current tenantEnv
+	//RestoreMode(cdot) current datacenter and other tenantEnv
 	//RestoreMode(od)     other datacenter
 	RestoreMode string `json:"restore_mode"`
 	RestoreID   string `json:"restore_id"`
@@ -320,10 +320,10 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 		}
 
 		if allDataRestore {
-			dst := fmt.Sprintf("/wtdata/tenant/%s/service/%s", app.Service.TenantID, app.Service.ServiceID)
+			dst := fmt.Sprintf("/wtdata/tenantEnv/%s/service/%s", app.Service.TenantEnvID, app.Service.ServiceID)
 			err := util.Rename(path.Join(allTmpDir, b.getOldServiceID(app.ServiceID)), dst)
 			if err != nil {
-				logrus.Errorf("rename %s to %s failure %s", path.Join(allTmpDir, b.getOldServiceID(app.ServiceID)), fmt.Sprintf("/wtdata/tenant/%s/service/%s", app.Service.TenantID, app.Service.ServiceID), err.Error())
+				logrus.Errorf("rename %s to %s failure %s", path.Join(allTmpDir, b.getOldServiceID(app.ServiceID)), fmt.Sprintf("/wtdata/tenantEnv/%s/service/%s", app.Service.TenantEnvID, app.Service.ServiceID), err.Error())
 			}
 		}
 		b.Logger.Info(fmt.Sprintf("完成恢复应用(%s)持久化数据", app.Service.ServiceAlias), map[string]string{"step": "restore_builder", "status": "running"})
@@ -412,16 +412,16 @@ func (b *BackupAPPRestore) clear() {
 	manager := db.GetManager()
 	for _, v := range b.serviceChange {
 		serviceID := v.ServiceID
-		manager.TenantServiceDao().DeleteServiceByServiceID(serviceID)
-		manager.TenantServicesPortDao().DELPortsByServiceID(serviceID)
+		manager.TenantEnvServiceDao().DeleteServiceByServiceID(serviceID)
+		manager.TenantEnvServicesPortDao().DELPortsByServiceID(serviceID)
 		manager.ServiceProbeDao().DELServiceProbesByServiceID(serviceID)
-		manager.TenantServiceLBMappingPortDao().DELServiceLBMappingPortByServiceID(serviceID)
-		manager.TenantServiceEnvVarDao().DELServiceEnvsByServiceID(serviceID)
-		manager.TenantServiceLabelDao().DeleteLabelByServiceID(serviceID)
-		manager.TenantServiceMountRelationDao().DELTenantServiceMountRelationByServiceID(serviceID)
-		manager.TenantServicePluginRelationDao().DeleteALLRelationByServiceID(serviceID)
-		manager.TenantServiceRelationDao().DELRelationsByServiceID(serviceID)
-		manager.TenantServiceVolumeDao().DeleteTenantServiceVolumesByServiceID(serviceID)
+		manager.TenantEnvServiceLBMappingPortDao().DELServiceLBMappingPortByServiceID(serviceID)
+		manager.TenantEnvServiceEnvVarDao().DELServiceEnvsByServiceID(serviceID)
+		manager.TenantEnvServiceLabelDao().DeleteLabelByServiceID(serviceID)
+		manager.TenantEnvServiceMountRelationDao().DELTenantEnvServiceMountRelationByServiceID(serviceID)
+		manager.TenantEnvServicePluginRelationDao().DeleteALLRelationByServiceID(serviceID)
+		manager.TenantEnvServiceRelationDao().DELRelationsByServiceID(serviceID)
+		manager.TenantEnvServiceVolumeDao().DeleteTenantEnvServiceVolumesByServiceID(serviceID)
 		manager.VersionInfoDao().DeleteVersionByServiceID(serviceID)
 	}
 	//clear cache data
@@ -442,19 +442,19 @@ func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
 		case "stateless":
 			app.Service.ExtendMethod = dbmodel.ServiceTypeStatelessMultiple.String()
 		}
-		//change tenant
-		app.Service.TenantID = b.TenantID
+		//change tenantEnv
+		app.Service.TenantEnvID = b.TenantEnvID
 		for _, port := range app.ServicePort {
-			port.TenantID = b.TenantID
+			port.TenantEnvID = b.TenantEnvID
 		}
 		for _, relation := range app.ServiceRelation {
-			relation.TenantID = b.TenantID
+			relation.TenantEnvID = b.TenantEnvID
 		}
 		for _, env := range app.ServiceEnv {
-			env.TenantID = b.TenantID
+			env.TenantEnvID = b.TenantEnvID
 		}
 		for _, smr := range app.ServiceMntRelation {
-			smr.TenantID = b.TenantID
+			smr.TenantEnvID = b.TenantEnvID
 		}
 
 		//change service_id and service_alias
@@ -535,7 +535,7 @@ func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
 
 	// plugin
 	for _, p := range appSnapshot.Plugins {
-		p.TenantID = b.TenantID
+		p.TenantEnvID = b.TenantEnvID
 	}
 
 	return nil
@@ -550,7 +550,7 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 	}()
 	for _, app := range appSnapshot.Services {
 		app.Service.ID = 0
-		if err := db.GetManager().TenantServiceDaoTransactions(tx).AddModel(app.Service); err != nil {
+		if err := db.GetManager().TenantEnvServiceDaoTransactions(tx).AddModel(app.Service); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("create app when restore backup error. %s", err.Error())
 		}
@@ -563,28 +563,28 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 		}
 		for _, a := range app.ServiceEnv {
 			a.ID = 0
-			if err := db.GetManager().TenantServiceEnvVarDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServiceEnvVarDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app envs when restore backup error. %s", err.Error())
 			}
 		}
 		for _, a := range app.ServiceLabel {
 			a.ID = 0
-			if err := db.GetManager().TenantServiceLabelDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServiceLabelDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app labels when restore backup error. %s", err.Error())
 			}
 		}
 		for _, a := range app.ServiceMntRelation {
 			a.ID = 0
-			if err := db.GetManager().TenantServiceMountRelationDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServiceMountRelationDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app mount relation when restore backup error. %s", err.Error())
 			}
 		}
 		for _, a := range app.ServiceRelation {
 			a.ID = 0
-			if err := db.GetManager().TenantServiceRelationDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServiceRelationDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app relation when restore backup error. %s", err.Error())
 			}
@@ -596,10 +596,10 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 			switch a.VolumeType {
 			//nfs
 			case dbmodel.ShareFileVolumeType.String():
-				a.HostPath = fmt.Sprintf("%s/tenant/%s/service/%s%s", sharePath, b.TenantID, a.ServiceID, a.VolumePath)
+				a.HostPath = fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", sharePath, b.TenantEnvID, a.ServiceID, a.VolumePath)
 			//local
 			case dbmodel.LocalVolumeType.String():
-				a.HostPath = fmt.Sprintf("%s/tenant/%s/service/%s%s", localPath, b.TenantID, a.ServiceID, a.VolumePath)
+				a.HostPath = fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", localPath, b.TenantEnvID, a.ServiceID, a.VolumePath)
 			case dbmodel.MemoryFSVolumeType.String(), dbmodel.ConfigFileVolumeType.String():
 				logrus.Debugf("simple volume type: %s", a.VolumeType)
 			default:
@@ -611,10 +611,10 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 				if volumeType == nil {
 					logrus.Warnf("service[%s] volumeType[%s] do not exists, use default volumeType[%s]", a.ServiceID, a.VolumeType, dbmodel.ShareFileVolumeType.String())
 					a.VolumeType = dbmodel.ShareFileVolumeType.String()
-					a.HostPath = fmt.Sprintf("%s/tenant/%s/service/%s%s", sharePath, b.TenantID, a.ServiceID, a.VolumePath)
+					a.HostPath = fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", sharePath, b.TenantEnvID, a.ServiceID, a.VolumePath)
 				}
 			}
-			if err := db.GetManager().TenantServiceVolumeDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app volume when restore backup error. %s", err.Error())
 			}
@@ -622,14 +622,14 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 		}
 		for _, a := range app.ServiceConfigFile {
 			a.ID = 0
-			if err := db.GetManager().TenantServiceConfigFileDao().AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServiceConfigFileDao().AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app config file when restore backup errro. %s", err.Error())
 			}
 		}
 		for _, a := range app.ServicePort {
 			a.ID = 0
-			if err := db.GetManager().TenantServicesPortDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app ports when restore backup error. %s", err.Error())
 			}
@@ -644,28 +644,28 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 		// plugin info
 		for _, a := range app.PluginRelation {
 			a.ID = 0
-			if err := db.GetManager().TenantServicePluginRelationDaoTransactions(tx).AddModel(a); err != nil {
+			if err := db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("error creating plugin relation: %v", err)
 			}
 		}
 		for _, pc := range app.PluginConfigs {
 			pc.ID = 0
-			if err := db.GetManager().TenantPluginVersionConfigDaoTransactions(tx).AddModel(pc); err != nil {
+			if err := db.GetManager().TenantEnvPluginVersionConfigDaoTransactions(tx).AddModel(pc); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("error creating plugin config: %v", err)
 			}
 		}
 		for _, pe := range app.PluginEnvs {
 			pe.ID = 0
-			if err := db.GetManager().TenantPluginVersionENVDaoTransactions(tx).AddModel(pe); err != nil {
+			if err := db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).AddModel(pe); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("error creating plugin version env: %v", err)
 			}
 		}
 		for _, psp := range app.PluginStreamPorts {
 			psp.ID = 0
-			if err := db.GetManager().TenantServicesStreamPluginPortDaoTransactions(tx).AddModel(psp); err != nil {
+			if err := db.GetManager().TenantEnvServicesStreamPluginPortDaoTransactions(tx).AddModel(psp); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("error creating plugin stream port: %v", err)
 			}
@@ -674,7 +674,7 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 
 	for _, p := range appSnapshot.Plugins {
 		p.ID = 0
-		if err := db.GetManager().TenantPluginDaoTransactions(tx).AddModel(p); err != nil {
+		if err := db.GetManager().TenantEnvPluginDaoTransactions(tx).AddModel(p); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				continue
 			}
@@ -685,7 +685,7 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 	for _, p := range appSnapshot.PluginBuildVersions {
 		p.ID = 0
 		p.BuildLocalImage = getNewImageName(p.BuildLocalImage)
-		if err := db.GetManager().TenantPluginBuildVersionDaoTransactions(tx).AddModel(p); err != nil {
+		if err := db.GetManager().TenantEnvPluginBuildVersionDaoTransactions(tx).AddModel(p); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				continue
 			}

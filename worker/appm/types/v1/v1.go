@@ -84,8 +84,8 @@ var OnDelete TypeUpgradeMethod = "OnDelete"
 
 // AppServiceBase app service base info
 type AppServiceBase struct {
-	TenantID         string
-	TenantName       string
+	TenantEnvID      string
+	TenantEnvName    string
 	AppID            string
 	ServiceID        string
 	ServiceAlias     string
@@ -150,7 +150,7 @@ func (a *AppServiceBase) GetK8sWorkloadName() string {
 // AppService a service of wutong app state in kubernetes
 type AppService struct {
 	AppServiceBase
-	tenant           *corev1.Namespace
+	tenantEnv        *corev1.Namespace
 	statefulset      *v1.StatefulSet
 	deployment       *v1.Deployment
 	workload         client.Object
@@ -639,19 +639,19 @@ func (a *AppService) GetPodsByName(podname string) *corev1.Pod {
 	return nil
 }
 
-// SetTenant set tenant
-func (a *AppService) SetTenant(d *corev1.Namespace) {
-	a.tenant = d
+// SetTenantEnv set tenantEnv
+func (a *AppService) SetTenantEnv(d *corev1.Namespace) {
+	a.tenantEnv = d
 }
 
-// GetTenant get tenant namespace
-func (a *AppService) GetTenant() *corev1.Namespace {
-	return a.tenant
+// GetTenantEnv get tenant env namespace
+func (a *AppService) GetTenantEnv() *corev1.Namespace {
+	return a.tenantEnv
 }
 
-// GetNamespace get tenant namespace name
+// GetNamespace get tenant env namespace name
 func (a *AppService) GetNamespace() string {
-	return a.tenant.Name
+	return a.tenantEnv.Name
 }
 
 // SetDeletedResources sets the resources that need to be deleted
@@ -968,9 +968,9 @@ func (a *AppService) String() string {
 	)
 }
 
-// TenantResource tenant resource statistical models
-type TenantResource struct {
-	TenantID         string `json:"tenant_id,omitempty"`
+// TenantEnvResource tenant env resource statistical models
+type TenantEnvResource struct {
+	TenantEnvID      string `json:"tenant_env_id,omitempty"`
 	CPURequest       int64  `json:"cpu_request,omitempty"`
 	CPULimit         int64  `json:"cpu_limit,omitempty"`
 	MemoryRequest    int64  `json:"memory_request,omitempty"`

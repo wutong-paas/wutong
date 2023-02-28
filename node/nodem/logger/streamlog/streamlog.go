@@ -112,7 +112,7 @@ func init() {
 type StreamLog struct {
 	writer                         *Client
 	serviceID                      string
-	tenantID                       string
+	tenantEnvID                    string
 	containerID                    string
 	errorQueue                     [][]byte
 	reConnecting                   chan bool
@@ -132,9 +132,9 @@ type StreamLog struct {
 // New new logger
 func New(ctx logger.Info) (logger.Logger, error) {
 	var (
-		env       = make(map[string]string)
-		tenantID  string
-		serviceID string
+		env         = make(map[string]string)
+		tenantEnvID string
+		serviceID   string
 	)
 	for _, pair := range ctx.ContainerEnv {
 		p := strings.SplitN(pair, "=", 2)
@@ -145,10 +145,10 @@ func New(ctx logger.Info) (logger.Logger, error) {
 			env[key] = value
 		}
 	}
-	tenantID = env["TENANT_ID"]
+	tenantEnvID = env["TENANT_ID"]
 	serviceID = env["SERVICE_ID"]
-	if tenantID == "" {
-		tenantID = "default"
+	if tenantEnvID == "" {
+		tenantEnvID = "default"
 	}
 	if serviceID == "" {
 		serviceID = "default"
@@ -168,7 +168,7 @@ func New(ctx logger.Info) (logger.Logger, error) {
 	logger := &StreamLog{
 		writer:                         writer,
 		serviceID:                      serviceID,
-		tenantID:                       tenantID,
+		tenantEnvID:                    tenantEnvID,
 		containerID:                    ctx.ContainerID,
 		ctx:                            currentCtx,
 		cancel:                         cancel,

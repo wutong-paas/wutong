@@ -18,7 +18,7 @@
 
 package v1
 
-//GetCommonLabels get common labels
+// GetCommonLabels get common labels
 func (a *AppService) GetCommonLabels(labels ...map[string]string) map[string]string {
 	var resultLabel = make(map[string]string)
 	for _, l := range labels {
@@ -30,8 +30,8 @@ func (a *AppService) GetCommonLabels(labels ...map[string]string) map[string]str
 	resultLabel["creater_id"] = a.CreaterID
 	resultLabel["service_id"] = a.ServiceID
 	resultLabel["service_alias"] = a.ServiceAlias
-	resultLabel["tenant_name"] = a.TenantName
-	resultLabel["tenant_id"] = a.TenantID
+	resultLabel["tenant_env_name"] = a.TenantEnvName
+	resultLabel["tenant_env_id"] = a.TenantEnvID
 	resultLabel["app_id"] = a.AppID
 	resultLabel["app"] = a.K8sApp
 	return resultLabel

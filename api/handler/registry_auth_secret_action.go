@@ -34,7 +34,7 @@ type RegistryAuthSecretAction struct {
 	etcdCli   *clientv3.Client
 }
 
-//CreateRegistryAuthSecretManager creates registry auth secret manager
+// CreateRegistryAuthSecretManager creates registry auth secret manager
 func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *RegistryAuthSecretAction {
 	return &RegistryAuthSecretAction{
 		dbmanager: dbmanager,
@@ -43,11 +43,11 @@ func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQCli
 	}
 }
 
-//AddOrUpdateRegistryAuthSecret adds or updates registry auth secret
+// AddOrUpdateRegistryAuthSecret adds or updates registry auth secret
 func (g *RegistryAuthSecretAction) AddOrUpdateRegistryAuthSecret(req *apimodel.AddOrUpdateRegistryAuthSecretStruct) error {
 	body := make(map[string]interface{})
 	body["action"] = "apply"
-	body["tenant_id"] = req.TenantID
+	body["tenant_env_id"] = req.TenantEnvID
 	body["secret_id"] = req.SecretID
 	body["domain"] = req.Domain
 	body["username"] = req.Username
@@ -68,7 +68,7 @@ func (g *RegistryAuthSecretAction) AddOrUpdateRegistryAuthSecret(req *apimodel.A
 func (g *RegistryAuthSecretAction) DeleteRegistryAuthSecret(req *apimodel.DeleteRegistryAuthSecretStruct) error {
 	body := make(map[string]interface{})
 	body["action"] = "delete"
-	body["tenant_id"] = req.TenantID
+	body["tenant_env_id"] = req.TenantEnvID
 	body["secret_id"] = req.SecretID
 
 	err := g.mqclient.SendBuilderTopic(client.TaskStruct{

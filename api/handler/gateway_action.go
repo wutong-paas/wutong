@@ -508,7 +508,7 @@ func (g *GatewayAction) DeleteTCPRule(req *apimodel.DeleteTCPRuleStruct) error {
 		return err
 	}
 	// delete LBMappingPort
-	err = db.GetManager().TenantServiceLBMappingPortDaoTransactions(tx).DELServiceLBMappingPortByServiceIDAndPort(
+	err = db.GetManager().TenantEnvServiceLBMappingPortDaoTransactions(tx).DELServiceLBMappingPortByServiceIDAndPort(
 		tcpRule.ServiceID, tcpRule.Port)
 	if err != nil {
 		tx.Rollback()
@@ -663,7 +663,7 @@ func (g *GatewayAction) TCPIPPortExists(host string, port int) bool {
 // SendTaskDeprecated sends apply rules task
 func (g *GatewayAction) SendTaskDeprecated(in map[string]interface{}) error {
 	sid := in["service_id"].(string)
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(sid)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(sid)
 	if err != nil {
 		return fmt.Errorf("unexpected error occurred while getting Service by ServiceID(%s): %v", sid, err)
 	}

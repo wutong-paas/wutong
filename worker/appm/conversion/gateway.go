@@ -38,8 +38,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-//createDefaultDomain create default domain
-func createDefaultDomain(tenantName, serviceAlias string, servicePort int) string {
+// createDefaultDomain create default domain
+func createDefaultDomain(tenantEnvName, serviceAlias string, servicePort int) string {
 	exDomain := os.Getenv("EX_DOMAIN")
 	if exDomain == "" {
 		return ""
@@ -51,11 +51,11 @@ func createDefaultDomain(tenantName, serviceAlias string, servicePort int) strin
 		exDomain = exDomain[1:]
 	}
 	exDomain = strings.TrimSpace(exDomain)
-	return fmt.Sprintf("%d.%s.%s.%s", servicePort, serviceAlias, tenantName, exDomain)
+	return fmt.Sprintf("%d.%s.%s.%s", servicePort, serviceAlias, tenantEnvName, exDomain)
 }
 
-//TenantServiceRegist conv inner and outer service regist
-func TenantServiceRegist(as *v1.AppService, dbmanager db.Manager) error {
+// TenantEnvServiceRegist conv inner and outer service regist
+func TenantEnvServiceRegist(as *v1.AppService, dbmanager db.Manager) error {
 	builder, err := AppServiceBuilder(as.ServiceID, string(as.ServiceType), dbmanager, as)
 	if err != nil {
 		logrus.Error("create k8s service builder error.", err.Error())
@@ -82,47 +82,47 @@ func TenantServiceRegist(as *v1.AppService, dbmanager db.Manager) error {
 	return nil
 }
 
-//AppServiceBuild has the ability to build k8s service, ingress and secret
+// AppServiceBuild has the ability to build k8s service, ingress and secret
 type AppServiceBuild struct {
 	serviceID, eventID string
-	tenant             *model.Tenants
-	service            *model.TenantServices
+	tenantEnv          *model.TenantEnvs
+	service            *model.TenantEnvServices
 	appService         *v1.AppService
 	replicationType    string
 	dbmanager          db.Manager
 }
 
-//AppServiceBuilder returns a AppServiceBuild
+// AppServiceBuilder returns a AppServiceBuild
 func AppServiceBuilder(serviceID, replicationType string, dbmanager db.Manager, as *v1.AppService) (*AppServiceBuild, error) {
-	service, err := dbmanager.TenantServiceDao().GetServiceByID(serviceID)
+	service, err := dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
 	if err != nil {
 		return nil, fmt.Errorf("find service error. %v", err.Error())
 	}
 	if service == nil {
-		return nil, fmt.Errorf("did not find the TenantService corresponding to ServiceID(%s)", serviceID)
+		return nil, fmt.Errorf("did not find the TenantEnvService corresponding to ServiceID(%s)", serviceID)
 	}
 
-	tenant, err := dbmanager.TenantDao().GetTenantByUUID(service.TenantID)
+	tenantEnv, err := dbmanager.TenantEnvDao().GetTenantEnvByUUID(service.TenantEnvID)
 	if err != nil {
-		return nil, fmt.Errorf("find tenant error. %v", err.Error())
+		return nil, fmt.Errorf("find tenant env error. %v", err.Error())
 	}
-	if tenant == nil {
-		return nil, fmt.Errorf("did not find the Tenant corresponding to ServiceID(%s)", serviceID)
+	if tenantEnv == nil {
+		return nil, fmt.Errorf("did not find the TenantEnv corresponding to ServiceID(%s)", serviceID)
 	}
 
 	return &AppServiceBuild{
 		serviceID:       serviceID,
 		dbmanager:       dbmanager,
 		service:         service,
-		tenant:          tenant,
+		tenantEnv:       tenantEnv,
 		replicationType: replicationType,
 		appService:      as,
 	}, nil
 }
 
-//Build builds service, ingress and secret for each port
+// Build builds service, ingress and secret for each port
 func (a *AppServiceBuild) Build() (*v1.K8sResources, error) {
-	ports, err := a.dbmanager.TenantServicesPortDao().GetPortsByServiceID(a.serviceID)
+	ports, err := a.dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(a.serviceID)
 	if err != nil {
 		return nil, fmt.Errorf("find service port from db error %s", err.Error())
 	}
@@ -132,7 +132,7 @@ func (a *AppServiceBuild) Build() (*v1.K8sResources, error) {
 	}
 	pp := make(map[int32]int)
 	if crt {
-		pluginPorts, err := a.dbmanager.TenantServicesStreamPluginPortDao().GetPluginMappingPorts(
+		pluginPorts, err := a.dbmanager.TenantEnvServicesStreamPluginPortDao().GetPluginMappingPorts(
 			a.serviceID)
 		if err != nil {
 			return nil, fmt.Errorf("find upstream plugin mapping port error, %s", err.Error())
@@ -251,7 +251,7 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 	}
 	domain := strings.Replace(rule.Domain, " ", "", -1)
 	if domain == "" {
-		domain = createDefaultDomain(a.tenant.Name, a.service.ServiceAlias, containerPort)
+		domain = createDefaultDomain(a.tenantEnv.Name, a.service.ServiceAlias, containerPort)
 	}
 	// create ingress
 	labels := a.appService.GetCommonLabels()
@@ -355,12 +355,12 @@ func (a *AppServiceBuild) applyTCPRule(rule *model.TCPRule, service *corev1.Serv
 	return betaIngress, nil
 }
 
-//CreateUpstreamPluginMappingPort 检查是否存在upstream插件，接管入口网络
+// CreateUpstreamPluginMappingPort 检查是否存在upstream插件，接管入口网络
 func (a *AppServiceBuild) CreateUpstreamPluginMappingPort(
-	ports []*model.TenantServicesPort,
-	pluginPorts []*model.TenantServicesStreamPluginPort,
+	ports []*model.TenantEnvServicesPort,
+	pluginPorts []*model.TenantEnvServicesStreamPluginPort,
 ) (
-	[]*model.TenantServicesPort,
+	[]*model.TenantEnvServicesPort,
 	map[int32]int,
 	error) {
 	//start from 65301
@@ -378,7 +378,7 @@ func (a *AppServiceBuild) CreateUpstreamPluginMappingPort(
 	return ports, pp, nil
 }
 
-//CreateUpstreamPluginMappingService 增加service plugin mapport 标签
+// CreateUpstreamPluginMappingService 增加service plugin mapport 标签
 func (a *AppServiceBuild) CreateUpstreamPluginMappingService(services []*corev1.Service,
 	pp map[int32]int) ([]*corev1.Service, error) {
 	for _, service := range services {
@@ -391,9 +391,9 @@ func (a *AppServiceBuild) CreateUpstreamPluginMappingService(services []*corev1.
 	return services, nil
 }
 
-//BuildOnPort 指定端口创建Service
+// BuildOnPort 指定端口创建Service
 func (a *AppServiceBuild) BuildOnPort(p int, isOut bool) (*corev1.Service, error) {
-	port, err := a.dbmanager.TenantServicesPortDao().GetPort(a.serviceID, p)
+	port, err := a.dbmanager.TenantEnvServicesPortDao().GetPort(a.serviceID, p)
 	if err != nil {
 		return nil, fmt.Errorf("find service port from db error %s", err.Error())
 	}
@@ -405,10 +405,10 @@ func (a *AppServiceBuild) BuildOnPort(p int, isOut bool) (*corev1.Service, error
 			return a.createOuterService(port), nil
 		}
 	}
-	return nil, fmt.Errorf("tenant service port %d is not exist", p)
+	return nil, fmt.Errorf("tenant env service port %d is not exist", p)
 }
 
-//createServiceAnnotations create service annotation
+// createServiceAnnotations create service annotation
 func (a *AppServiceBuild) createServiceAnnotations() map[string]string {
 	var annotations = make(map[string]string)
 	if a.service.Replicas <= 1 {
@@ -417,7 +417,7 @@ func (a *AppServiceBuild) createServiceAnnotations() map[string]string {
 	return annotations
 }
 
-func (a *AppServiceBuild) createKubernetesNativeService(port *model.TenantServicesPort) *corev1.Service {
+func (a *AppServiceBuild) createKubernetesNativeService(port *model.TenantEnvServicesPort) *corev1.Service {
 	svc := a.createInnerService(port)
 	svc.Name = port.K8sServiceName
 	if svc.Name == "" {
@@ -426,7 +426,7 @@ func (a *AppServiceBuild) createKubernetesNativeService(port *model.TenantServic
 	return svc
 }
 
-func (a *AppServiceBuild) createInnerService(port *model.TenantServicesPort) *corev1.Service {
+func (a *AppServiceBuild) createInnerService(port *model.TenantEnvServicesPort) *corev1.Service {
 	var service corev1.Service
 	service.Name = port.K8sServiceName
 	if service.Name == "" {
@@ -467,19 +467,19 @@ func (a *AppServiceBuild) createInnerService(port *model.TenantServicesPort) *co
 	return &service
 }
 
-func (a *AppServiceBuild) createOuterService(port *model.TenantServicesPort) *corev1.Service {
+func (a *AppServiceBuild) createOuterService(port *model.TenantEnvServicesPort) *corev1.Service {
 	var service corev1.Service
 	service.Name = workerutil.KeepMaxLength(fmt.Sprintf("%s-%d-%dout", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort), 63)
 	service.Namespace = a.appService.GetNamespace()
 	service.Labels = a.appService.GetCommonLabels(map[string]string{
-		"service_type":  "outer",
-		"name":          a.service.ServiceAlias + "ServiceOUT",
-		"tenant_name":   a.tenant.Name,
-		"protocol":      port.Protocol,
-		"port_protocol": port.Protocol,
-		"service_port":  strconv.Itoa(port.ContainerPort),
-		"event_id":      a.eventID,
-		"version":       a.service.DeployVersion,
+		"service_type":    "outer",
+		"name":            a.service.ServiceAlias + "ServiceOUT",
+		"tenant_env_name": a.tenantEnv.Name,
+		"protocol":        port.Protocol,
+		"port_protocol":   port.Protocol,
+		"service_port":    strconv.Itoa(port.ContainerPort),
+		"event_id":        a.eventID,
+		"version":         a.service.DeployVersion,
 	})
 	if a.service.Replicas <= 1 {
 		service.Labels["wutong-paas.com/tolerate-unready-endpoints"] = "true"
@@ -502,7 +502,7 @@ func (a *AppServiceBuild) createOuterService(port *model.TenantServicesPort) *co
 	return &service
 }
 
-func (a *AppServiceBuild) createStatefulService(ports []*model.TenantServicesPort) *corev1.Service {
+func (a *AppServiceBuild) createStatefulService(ports []*model.TenantEnvServicesPort) *corev1.Service {
 	var service corev1.Service
 	service.Name = a.appService.GetK8sWorkloadName()
 	service.Namespace = a.appService.GetNamespace()

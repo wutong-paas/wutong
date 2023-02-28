@@ -845,9 +845,9 @@
         }
       }
     },
-    "/v2/resources/tenants": {
+    "/v2/resources/tenants/{tenant_name}/envs": {
       "post": {
-        "description": "get tenant resources",
+        "description": "get tenant env resources",
         "produces": [
           "application/json",
           "application/xml"
@@ -856,7 +856,7 @@
           "v2"
         ],
         "summary": "租户资源使用情况    ",
-        "operationId": "tenantResources",
+        "operationId": "tenantEnvResources",
         "parameters": [
           {
             "name": "Body",
@@ -864,16 +864,16 @@
             "schema": {
               "type": "object",
               "required": [
-                "tenant_name"
+                "tenant_env_name"
               ],
               "properties": {
-                "tenant_name": {
+                "tenant_env_name": {
                   "description": "in: body",
                   "type": "array",
                   "items": {
                     "type": "string"
                   },
-                  "x-go-name": "TenantName"
+                  "x-go-name": "TenantEnvName"
                 }
               }
             }
@@ -889,9 +889,9 @@
         }
       }
     },
-    "/v2/resources/tenants/sum": {
+    "/v2/resources/tenants/{tenant_name}/envs/sum": {
       "get": {
-        "description": "get tenant resources",
+        "description": "get tenant env resources",
         "produces": [
           "application/json",
           "application/xml"
@@ -900,7 +900,7 @@
           "v2"
         ],
         "summary": "获取租户数量    ",
-        "operationId": "sumTenants",
+        "operationId": "sumTenantEnvs",
         "responses": {
           "default": {
             "description": "统一返回格式",
@@ -933,9 +933,9 @@
         }
       }
     },
-    "/v2/tenants": {
+    "/v2/tenants/{tenant_name}/envs": {
       "post": {
-        "description": "add tenant",
+        "description": "add tenantEnv",
         "consumes": [
           "application/json",
           "application/x-protobuf"
@@ -947,8 +947,8 @@
         "tags": [
           "v2"
         ],
-        "summary": "添加租户信息    ",
-        "operationId": "addTenant",
+        "summary": "添加租户环境信息    ",
+        "operationId": "addTenantEnv",
         "parameters": [
           {
             "name": "Body",
@@ -961,15 +961,15 @@
                   "type": "string",
                   "x-go-name": "Eid"
                 },
-                "tenant_id": {
-                  "description": "the tenant id\nin: body",
+                "tenant_env_id": {
+                  "description": "the tenant env id\nin: body",
                   "type": "string",
-                  "x-go-name": "TenantID"
+                  "x-go-name": "TenantEnvID"
                 },
-                "tenant_name": {
-                  "description": "the tenant name\nin: body",
+                "tenant_env_name": {
+                  "description": "the tenant env name\nin: body",
                   "type": "string",
-                  "x-go-name": "TenantName"
+                  "x-go-name": "TenantEnvName"
                 },
                 "token": {
                   "type": "string",
@@ -989,7 +989,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/cloud-share": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/cloud-share": {
       "post": {
         "description": "share cloud    ",
         "consumes": [
@@ -1008,8 +1008,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1047,7 +1047,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/code-check": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/code-check": {
       "post": {
         "description": "check  code    ",
         "consumes": [
@@ -1066,8 +1066,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1121,10 +1121,10 @@
                   "type": "string",
                   "x-go-name": "ServiceID"
                 },
-                "tenant_id": {
+                "tenant_env_id": {
                   "description": "租户id\nin: body",
                   "type": "string",
-                  "x-go-name": "TenantID"
+                  "x-go-name": "TenantEnvID"
                 },
                 "url_repos": {
                   "description": "git地址\nin: body",
@@ -1145,7 +1145,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin": {
       "post": {
         "description": "create plugin",
         "consumes": [
@@ -1164,8 +1164,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1237,10 +1237,10 @@
                   "type": "string",
                   "x-go-name": "Repo"
                 },
-                "tenant_id": {
+                "tenant_env_id": {
                   "description": "in: body",
                   "type": "string",
-                  "x-go-name": "TenantID"
+                  "x-go-name": "TenantEnvID"
                 }
               }
             }
@@ -1256,7 +1256,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin/{plugin_id}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}": {
       "put": {
         "description": "update plugin",
         "consumes": [
@@ -1275,8 +1275,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1369,8 +1369,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1392,7 +1392,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/build": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build": {
       "post": {
         "description": "build plugin",
         "consumes": [
@@ -1411,8 +1411,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1475,10 +1475,10 @@
                   "type": "string",
                   "x-go-name": "RepoURL"
                 },
-                "tenant_id": {
+                "tenant_env_id": {
                   "description": "租户id\nin: body",
                   "type": "string",
-                  "x-go-name": "TenantID"
+                  "x-go-name": "TenantEnvID"
                 }
               }
             }
@@ -1494,7 +1494,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build-version": {
       "get": {
         "description": "all plugin versions",
         "consumes": [
@@ -1513,8 +1513,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1536,7 +1536,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version/{version_id}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/build-version/{version_id}": {
       "get": {
         "description": "plugin version",
         "consumes": [
@@ -1555,8 +1555,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1602,8 +1602,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1632,7 +1632,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/default-env": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/default-env": {
       "put": {
         "description": "update default env",
         "consumes": [
@@ -1651,8 +1651,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1710,8 +1710,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1752,7 +1752,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/default-env/{env_name}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id}/default-env/{env_name}": {
       "delete": {
         "description": "delete default env",
         "consumes": [
@@ -1771,8 +1771,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1802,9 +1802,9 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/resources": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/resources": {
       "get": {
-        "description": "get tenant resources",
+        "description": "get tenant env resources",
         "produces": [
           "application/json",
           "application/xml"
@@ -1813,12 +1813,12 @@
           "v2"
         ],
         "summary": "指定租户资源使用情况    ",
-        "operationId": "singletenantResources",
+        "operationId": "singletenantEnvResources",
         "parameters": [
           {
             "type": "string",
-            "description": "tenant name",
-            "name": "tenant_name",
+            "description": "tenant env name",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           }
@@ -1833,9 +1833,9 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services": {
       "get": {
-        "description": "get services info in tenant    ",
+        "description": "get services info in tenant env    ",
         "consumes": [
           "application/json",
           "application/x-protobuf"
@@ -1852,8 +1852,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           }
@@ -1885,8 +1885,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -1937,10 +1937,10 @@
                   "x-go-name": "ContainerMemory"
                 },
                 "depend_ids": {
-                  "description": "依赖id, 格式: []struct TenantServiceRelation\nin: body",
+                  "description": "依赖id, 格式: []struct TenantEnvServiceRelation\nin: body",
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/TenantServiceRelation"
+                    "$ref": "#/definitions/TenantEnvServiceRelation"
                   },
                   "x-go-name": "DependIDs"
                 },
@@ -1950,10 +1950,10 @@
                   "x-go-name": "DeployVersion"
                 },
                 "envs_info": {
-                  "description": "环境变量信息, 格式: []struct TenantServiceEnvVar\nin: body",
+                  "description": "环境变量信息, 格式: []struct TenantEnvServiceEnvVar\nin: body",
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/TenantServiceEnvVar"
+                    "$ref": "#/definitions/TenantEnvServiceEnvVar"
                   },
                   "x-go-name": "EnvsInfo"
                 },
@@ -1998,10 +1998,10 @@
                   "x-go-name": "PortType"
                 },
                 "ports_info": {
-                  "description": "端口信息, 格式: []struct TenantServicesPort\nin: body",
+                  "description": "端口信息, 格式: []struct TenantEnvServicesPort\nin: body",
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/TenantServicesPort"
+                    "$ref": "#/definitions/TenantEnvServicesPort"
                   },
                   "x-go-name": "PortsInfo"
                 },
@@ -2046,10 +2046,10 @@
                   "type": "string",
                   "x-go-name": "ServiceVersion"
                 },
-                "tenant_id": {
+                "tenant_env_id": {
                   "description": "租户id\nin: body",
                   "type": "string",
-                  "x-go-name": "TenantID"
+                  "x-go-name": "TenantEnvID"
                 },
                 "update_time": {
                   "description": "更新时间\nin: body",
@@ -2071,10 +2071,10 @@
                   "x-go-name": "VolumeType"
                 },
                 "volumes_info": {
-                  "description": "持久化目录信息, 格式: []struct TenantServiceVolume\nin: body",
+                  "description": "持久化目录信息, 格式: []struct TenantEnvServiceVolume\nin: body",
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/TenantServiceVolume"
+                    "$ref": "#/definitions/TenantEnvServiceVolume"
                   },
                   "x-go-name": "VolumesInfo"
                 }
@@ -2092,7 +2092,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}": {
       "get": {
         "description": "get service info    ",
         "consumes": [
@@ -2111,8 +2111,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2151,8 +2151,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2216,8 +2216,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2239,7 +2239,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/build": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/build": {
       "post": {
         "description": "service build    ",
         "consumes": [
@@ -2258,8 +2258,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2328,9 +2328,9 @@
                   "type": "string",
                   "x-go-name": "ServiceAlias"
                 },
-                "tenant_name": {
+                "tenant_env_name": {
                   "type": "string",
-                  "x-go-name": "TenantName"
+                  "x-go-name": "TenantEnvName"
                 }
               }
             }
@@ -2346,7 +2346,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/dependency": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/dependency": {
       "post": {
         "description": "add dependency    ",
         "consumes": [
@@ -2365,8 +2365,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2432,8 +2432,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2482,7 +2482,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/depvolumes": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/depvolumes": {
       "get": {
         "description": "get depvolumes",
         "consumes": [
@@ -2501,8 +2501,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2541,8 +2541,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2610,8 +2610,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2656,7 +2656,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/env": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/env": {
       "post": {
         "description": "add env var    ",
         "consumes": [
@@ -2675,8 +2675,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2758,8 +2758,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2824,7 +2824,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/event-log": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/event-log": {
       "post": {
         "description": "get log by level",
         "produces": [
@@ -2839,8 +2839,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2885,7 +2885,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/horizontal": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/horizontal": {
       "put": {
         "description": "service horizontal    ",
         "consumes": [
@@ -2904,8 +2904,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2950,7 +2950,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/language": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/language": {
       "post": {
         "description": "set language    ",
         "consumes": [
@@ -2969,8 +2969,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -2992,7 +2992,7 @@
               ],
               "properties": {
                 "event_id": {
-                  "description": "the tenant id\nin: body",
+                  "description": "the tenant env id\nin: body",
                   "type": "string",
                   "x-go-name": "EventID"
                 },
@@ -3015,7 +3015,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/log": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log": {
       "post": {
         "description": "get last x lines logs",
         "produces": [
@@ -3030,8 +3030,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3071,7 +3071,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/log-file": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log-file": {
       "get": {
         "description": "get log list",
         "produces": [
@@ -3086,8 +3086,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3109,7 +3109,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/log-file/{file_name}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log-file/{file_name}": {
       "get": {
         "description": "get log file",
         "produces": [
@@ -3124,8 +3124,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3154,7 +3154,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/log-instance": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log-instance": {
       "get": {
         "description": "get log socket",
         "produces": [
@@ -3169,8 +3169,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3192,7 +3192,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/node-label": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/node-label": {
       "post": {
         "description": "add node label    ",
         "consumes": [
@@ -3211,8 +3211,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3271,8 +3271,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3314,7 +3314,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/plugin": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin": {
       "put": {
         "description": "update plugin setting",
         "produces": [
@@ -3329,9 +3329,9 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "description": "tenant name",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "description": "tenant env name",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           }
@@ -3359,9 +3359,9 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "description": "tenant name",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "description": "tenant env name",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           }
@@ -3376,7 +3376,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/plugin/{plugin_id}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin/{plugin_id}": {
       "post": {
         "description": "delete plugin relation",
         "produces": [
@@ -3391,9 +3391,9 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "description": "tenant name",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "description": "tenant env name",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           }
@@ -3408,7 +3408,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/pods": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/pods": {
       "get": {
         "description": "get pods info      ",
         "consumes": [
@@ -3427,8 +3427,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3450,7 +3450,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/ports": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports": {
       "put": {
         "description": "update port    ",
         "consumes": [
@@ -3469,8 +3469,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3490,7 +3490,7 @@
                 "Port": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/TenantServicesPort"
+                    "$ref": "#/definitions/TenantEnvServicesPort"
                   }
                 }
               }
@@ -3524,8 +3524,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3545,7 +3545,7 @@
                 "Port": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/definitions/TenantServicesPort"
+                    "$ref": "#/definitions/TenantEnvServicesPort"
                   }
                 }
               }
@@ -3562,7 +3562,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port}": {
       "delete": {
         "description": "delete port    ",
         "consumes": [
@@ -3581,8 +3581,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3613,7 +3613,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/inner": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port}/inner": {
       "put": {
         "description": "add port    ",
         "consumes": [
@@ -3632,8 +3632,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3680,7 +3680,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/outer": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port}/outer": {
       "put": {
         "description": "add port    ",
         "consumes": [
@@ -3699,8 +3699,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3747,7 +3747,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/probe": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/probe": {
       "put": {
         "description": "update probe    ",
         "consumes": [
@@ -3766,8 +3766,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -3890,8 +3890,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4014,8 +4014,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4054,7 +4054,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/restart": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/restart": {
       "post": {
         "description": "restart service    ",
         "consumes": [
@@ -4073,8 +4073,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4095,7 +4095,7 @@
               ],
               "properties": {
                 "event_id": {
-                  "description": "the tenant id\nin: body",
+                  "description": "the tenant env id\nin: body",
                   "type": "string",
                   "x-go-name": "EventID"
                 }
@@ -4113,7 +4113,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/rollback": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/rollback": {
       "post": {
         "description": "service rollback    ",
         "consumes": [
@@ -4132,8 +4132,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4183,7 +4183,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/service-label": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/service-label": {
       "put": {
         "description": "delete service label    ",
         "consumes": [
@@ -4202,8 +4202,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4259,8 +4259,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4299,7 +4299,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/start": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/start": {
       "post": {
         "description": "start service    ",
         "consumes": [
@@ -4318,8 +4318,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4340,7 +4340,7 @@
               ],
               "properties": {
                 "event_id": {
-                  "description": "the tenant id\nin: body",
+                  "description": "the tenant env id\nin: body",
                   "type": "string",
                   "x-go-name": "EventID"
                 }
@@ -4358,7 +4358,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/status": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/status": {
       "get": {
         "description": "get service status",
         "consumes": [
@@ -4377,8 +4377,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4400,7 +4400,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/stop": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/stop": {
       "post": {
         "description": "stop service    ",
         "consumes": [
@@ -4419,8 +4419,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4441,7 +4441,7 @@
               ],
               "properties": {
                 "event_id": {
-                  "description": "the tenant id\nin: body",
+                  "description": "the tenant env id\nin: body",
                   "type": "string",
                   "x-go-name": "EventID"
                 }
@@ -4459,7 +4459,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/upgrade": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/upgrade": {
       "post": {
         "description": "upgrade service    ",
         "consumes": [
@@ -4478,8 +4478,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4531,7 +4531,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/vertical": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/vertical": {
       "put": {
         "description": "service vertical    ",
         "consumes": [
@@ -4550,8 +4550,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4602,7 +4602,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/volume": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volume": {
       "post": {
         "description": "add volume    ",
         "consumes": [
@@ -4621,8 +4621,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4690,8 +4690,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4736,7 +4736,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/volume-dependency": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volume-dependency": {
       "post": {
         "description": "add volume dependency      ",
         "consumes": [
@@ -4755,8 +4755,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4824,8 +4824,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4864,7 +4864,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/volumes": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volumes": {
       "get": {
         "description": "get volumes",
         "consumes": [
@@ -4883,8 +4883,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4923,8 +4923,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -4981,7 +4981,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services/{service_alias}/volumes/{volume_name}": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/volumes/{volume_name}": {
       "delete": {
         "description": "delete volume    ",
         "consumes": [
@@ -5000,8 +5000,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -5031,7 +5031,7 @@
         }
       }
     },
-    "/v2/tenants/{tenant_name}/services_status": {
+    "/v2/tenants/{tenant_name}/envs/{tenant_env_name}/services_status": {
       "post": {
         "description": "get service statuslist",
         "consumes": [
@@ -5050,8 +5050,8 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "TenantName",
-            "name": "tenant_name",
+            "x-go-name": "TenantEnvName",
+            "name": "tenant_env_name",
             "in": "path",
             "required": true
           },
@@ -5194,15 +5194,15 @@
           "type": "string",
           "x-go-name": "ShareID"
         },
-        "tenant_id": {
+        "tenant_env_id": {
           "type": "string",
-          "x-go-name": "TenantID"
+          "x-go-name": "TenantEnvID"
         }
       },
       "x-go-package": "github.com/wutong-paas/wutong/pkg/api/model"
     },
-    "TenantServiceEnvVar": {
-      "description": "TenantServiceEnvVar  应用环境变量",
+    "TenantEnvServiceEnvVar": {
+      "description": "TenantEnvServiceEnvVar  应用环境变量",
       "type": "object",
       "properties": {
         "CreatedAt": {},
@@ -5239,15 +5239,15 @@
           "type": "string",
           "x-go-name": "ServiceID"
         },
-        "tenant_id": {
+        "tenant_env_id": {
           "type": "string",
-          "x-go-name": "TenantID"
+          "x-go-name": "TenantEnvID"
         }
       },
       "x-go-package": "github.com/wutong-paas/wutong/pkg/db/model"
     },
-    "TenantServiceRelation": {
-      "description": "TenantServiceRelation 应用依赖关系",
+    "TenantEnvServiceRelation": {
+      "description": "TenantEnvServiceRelation 应用依赖关系",
       "type": "object",
       "properties": {
         "CreatedAt": {},
@@ -5272,15 +5272,15 @@
           "type": "string",
           "x-go-name": "ServiceID"
         },
-        "tenant_id": {
+        "tenant_env_id": {
           "type": "string",
-          "x-go-name": "TenantID"
+          "x-go-name": "TenantEnvID"
         }
       },
       "x-go-package": "github.com/wutong-paas/wutong/pkg/db/model"
     },
-    "TenantServiceVolume": {
-      "description": "TenantServiceVolume 应用持久化纪录",
+    "TenantEnvServiceVolume": {
+      "description": "TenantEnvServiceVolume 应用持久化纪录",
       "type": "object",
       "properties": {
         "CreatedAt": {},
@@ -5325,8 +5325,8 @@
       },
       "x-go-package": "github.com/wutong-paas/wutong/pkg/db/model"
     },
-    "TenantServicesPort": {
-      "description": "TenantServicesPort 应用端口信息",
+    "TenantEnvServicesPort": {
+      "description": "TenantEnvServicesPort 应用端口信息",
       "type": "object",
       "properties": {
         "ID": {
@@ -5363,9 +5363,9 @@
           "type": "string",
           "x-go-name": "ServiceID"
         },
-        "tenant_id": {
+        "tenant_env_id": {
           "type": "string",
-          "x-go-name": "TenantID"
+          "x-go-name": "TenantEnvID"
         }
       },
       "x-go-package": "github.com/wutong-paas/wutong/pkg/api/model"

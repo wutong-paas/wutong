@@ -33,7 +33,7 @@ import (
 )
 
 // AutoscalerRules -
-func (t *TenantStruct) AutoscalerRules(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) AutoscalerRules(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		t.addAutoscalerRule(w, r)
@@ -42,7 +42,7 @@ func (t *TenantStruct) AutoscalerRules(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *TenantStruct) addAutoscalerRule(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) addAutoscalerRule(w http.ResponseWriter, r *http.Request) {
 	var req model.AutoscalerRuleReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
 	if !ok {
@@ -64,7 +64,7 @@ func (t *TenantStruct) addAutoscalerRule(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-func (t *TenantStruct) updAutoscalerRule(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) updAutoscalerRule(w http.ResponseWriter, r *http.Request) {
 	var req model.AutoscalerRuleReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
 	if !ok {
@@ -89,14 +89,14 @@ func (t *TenantStruct) updAutoscalerRule(w http.ResponseWriter, r *http.Request)
 }
 
 // ScalingRecords -
-func (t *TenantStruct) ScalingRecords(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) ScalingRecords(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		t.listScalingRecords(w, r)
 	}
 }
 
-func (t *TenantStruct) listScalingRecords(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) listScalingRecords(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {

@@ -18,10 +18,10 @@
 
 package model
 
-//BuildPluginTaskBody BuildPluginTaskBody
+// BuildPluginTaskBody BuildPluginTaskBody
 type BuildPluginTaskBody struct {
 	VersionID     string `json:"version_id"`
-	TenantID      string `json:"tenant_id"`
+	TenantEnvID   string `json:"tenant_env_id"`
 	PluginID      string `json:"plugin_id"`
 	Operator      string `json:"operator"`
 	Repo          string `json:"repo"`
@@ -44,7 +44,7 @@ type BuildPluginTaskBody struct {
 	} `json:"image_info,omitempty"`
 }
 
-//BuildPluginVersion BuildPluginVersion
+// BuildPluginVersion BuildPluginVersion
 type BuildPluginVersion struct {
 	SourceImage string `json:"source_image"`
 	InnerImage  string `json:"inner_image"`
@@ -52,7 +52,7 @@ type BuildPluginVersion struct {
 	Repo        string `json:"repo"`
 }
 
-//CodeCheckResult CodeCheckResult
+// CodeCheckResult CodeCheckResult
 type CodeCheckResult struct {
 	ServiceID    string `json:"service_id"`
 	Condition    string `json:"condition"`
@@ -73,7 +73,7 @@ type CodeCheckResult struct {
 	//DFR          *DockerFileResult `json:"dockerfile,omitempty"`
 }
 
-//ImageName ImageName
+// ImageName ImageName
 type ImageName struct {
 	Host      string `json:"host"`
 	Name      string `json:"name"`

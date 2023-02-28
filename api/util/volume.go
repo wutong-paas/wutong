@@ -15,7 +15,7 @@ import (
 )
 
 // SetVolumeDefaultValue set volume default value
-func SetVolumeDefaultValue(info *dbmodel.TenantServiceVolume) {
+func SetVolumeDefaultValue(info *dbmodel.TenantEnvServiceVolume) {
 	if info.VolumeName == "" {
 		info.VolumeName = uuid.NewV4().String()
 	}
@@ -81,7 +81,7 @@ func transferCustomVolumeOptionName2Kind(opts ...interface{}) *dbmodel.VolumeTyp
 }
 
 // HackVolumeOptionDetailFromDB hack volumeOptionDetail from db
-func HackVolumeOptionDetailFromDB(detail *api_model.VolumeTypeStruct, data *dbmodel.TenantServiceVolumeType) {
+func HackVolumeOptionDetailFromDB(detail *api_model.VolumeTypeStruct, data *dbmodel.TenantEnvServiceVolumeType) {
 	if data != nil {
 		detail.Description = data.Description
 		detail.NameShow = data.NameShow
@@ -168,7 +168,6 @@ func hackVolumeOptionCapacityValidation(volumeType string) map[string]interface{
 }
 
 /*
-
 ## volume accessMode
 ---
 
@@ -194,7 +193,6 @@ VsphereVolume		| ✓					   | -						  | - (works when Pods are collocated)
 PortworxVolume		| ✓					   | -						  | ✓
 ScaleIO				| ✓					   | ✓						  | -
 StorageOS			| ✓					   | -						  | -
-
 */
 func hackVolumeOptionAccessMode(vt string) []string {
 	volumeType := dbmodel.VolumeType(vt)

@@ -43,7 +43,7 @@ func NewFreeComponent(reg *registry.Registry) *FreeComponent {
 // List return a list of free images belong to free components.
 func (f *FreeComponent) List() ([]*FreeImage, error) {
 	// list free components
-	components, err := db.GetManager().TenantServiceDeleteDao().List()
+	components, err := db.GetManager().TenantEnvServiceDeleteDao().List()
 	if err != nil {
 		return nil, err
 	}

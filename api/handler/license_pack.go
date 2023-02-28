@@ -29,14 +29,14 @@ import (
 	"time"
 )
 
-//Info license 信息
+// Info license 信息
 type Info struct {
 	Code       string   `json:"code"`
 	Company    string   `json:"company"`
 	Node       int64    `json:"node"`
 	CPU        int64    `json:"cpu"`
 	Memory     int64    `json:"memory"`
-	Tenant     int64    `json:"tenant"`
+	TenantEnv  int64    `json:"tenantEnv"`
 	EndTime    string   `json:"end_time"`
 	StartTime  string   `json:"start_time"`
 	DataCenter int64    `json:"data_center"`
@@ -45,12 +45,12 @@ type Info struct {
 
 var key = []byte("qa123zxswe3532crfvtg123bnhymjuki")
 
-//decrypt 解密算法
+// decrypt 解密算法
 func decrypt(key []byte, encrypted string) ([]byte, error) {
 	return []byte{}, nil
 }
 
-//ReadLicenseFromFile 从文件获取license
+// ReadLicenseFromFile 从文件获取license
 func ReadLicenseFromFile(licenseFile string) (Info, error) {
 
 	info := Info{}
@@ -76,7 +76,7 @@ func ReadLicenseFromFile(licenseFile string) (Info, error) {
 	return info, nil
 }
 
-//BasePack base pack
+// BasePack base pack
 func BasePack(text []byte) (string, error) {
 	token := ""
 	encodeStr := base64.StdEncoding.EncodeToString(text)

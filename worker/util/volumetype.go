@@ -41,17 +41,17 @@ func init() {
 }
 
 // TransStorageClass2RBDVolumeType transfer k8s storageclass 2 wt volumeType
-func TransStorageClass2RBDVolumeType(sc *storagev1.StorageClass) *dbmodel.TenantServiceVolumeType {
+func TransStorageClass2RBDVolumeType(sc *storagev1.StorageClass) *dbmodel.TenantEnvServiceVolumeType {
 	if sc.GetName() == v1.WutongStatefuleShareStorageClass {
-		return &dbmodel.TenantServiceVolumeType{VolumeType: dbmodel.ShareFileVolumeType.String()}
+		return &dbmodel.TenantEnvServiceVolumeType{VolumeType: dbmodel.ShareFileVolumeType.String()}
 	}
 	if sc.GetName() == v1.WutongStatefuleLocalStorageClass {
-		return &dbmodel.TenantServiceVolumeType{VolumeType: dbmodel.LocalVolumeType.String()}
+		return &dbmodel.TenantEnvServiceVolumeType{VolumeType: dbmodel.LocalVolumeType.String()}
 	}
 	scbs, _ := json.Marshal(sc)
 	cvbs, _ := json.Marshal(defaultcapacityValidation)
 
-	volumeType := &dbmodel.TenantServiceVolumeType{
+	volumeType := &dbmodel.TenantEnvServiceVolumeType{
 		VolumeType:         sc.GetName(),
 		NameShow:           sc.GetName(),
 		CapacityValidation: string(cvbs),

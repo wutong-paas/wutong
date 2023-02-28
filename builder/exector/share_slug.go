@@ -36,7 +36,7 @@ import (
 // SlugShareItem SlugShareItem
 type SlugShareItem struct {
 	Namespace     string `json:"namespace"`
-	TenantName    string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	ServiceID     string `json:"service_id"`
 	ServiceAlias  string `json:"service_alias"`
 	SlugPath      string `json:"slug_path"`

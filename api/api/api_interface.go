@@ -33,33 +33,33 @@ type ClusterInterface interface {
 	MavenSettingDetail(w http.ResponseWriter, r *http.Request)
 }
 
-//TenantInterface interface
-type TenantInterface interface {
-	TenantInterfaceWithV1
-	AllTenantResources(w http.ResponseWriter, r *http.Request)
-	TenantResources(w http.ResponseWriter, r *http.Request)
+// TenantEnvInterface interface
+type TenantEnvInterface interface {
+	TenantEnvInterfaceWithV1
+	AllTenantEnvResources(w http.ResponseWriter, r *http.Request)
+	TenantEnvResources(w http.ResponseWriter, r *http.Request)
 	ServiceResources(w http.ResponseWriter, r *http.Request)
-	Tenant(w http.ResponseWriter, r *http.Request)
-	Tenants(w http.ResponseWriter, r *http.Request)
+	TenantEnv(w http.ResponseWriter, r *http.Request)
+	TenantEnvs(w http.ResponseWriter, r *http.Request)
 	ServicesInfo(w http.ResponseWriter, r *http.Request)
-	TenantsWithResource(w http.ResponseWriter, r *http.Request)
-	TenantsQuery(w http.ResponseWriter, r *http.Request)
-	TenantsGetByName(w http.ResponseWriter, r *http.Request)
-	SumTenants(w http.ResponseWriter, r *http.Request)
-	SingleTenantResources(w http.ResponseWriter, r *http.Request)
+	TenantEnvsWithResource(w http.ResponseWriter, r *http.Request)
+	TenantEnvsQuery(w http.ResponseWriter, r *http.Request)
+	TenantEnvsGetByName(w http.ResponseWriter, r *http.Request)
+	SumTenantEnvs(w http.ResponseWriter, r *http.Request)
+	SingleTenantEnvResources(w http.ResponseWriter, r *http.Request)
 	GetSupportProtocols(w http.ResponseWriter, r *http.Request)
 	TransPlugins(w http.ResponseWriter, r *http.Request)
 	ServicesCount(w http.ResponseWriter, r *http.Request)
 	GetManyDeployVersion(w http.ResponseWriter, r *http.Request)
-	LimitTenantMemory(w http.ResponseWriter, r *http.Request)
-	TenantResourcesStatus(w http.ResponseWriter, r *http.Request)
+	LimitTenantEnvMemory(w http.ResponseWriter, r *http.Request)
+	TenantEnvResourcesStatus(w http.ResponseWriter, r *http.Request)
 	CheckResourceName(w http.ResponseWriter, r *http.Request)
 	Log(w http.ResponseWriter, r *http.Request)
 	GetKubeConfig(w http.ResponseWriter, r *http.Request)
-	GetTenantKubeResources(w http.ResponseWriter, r *http.Request)
+	GetTenantEnvKubeResources(w http.ResponseWriter, r *http.Request)
 }
 
-//ServiceInterface ServiceInterface
+// ServiceInterface ServiceInterface
 type ServiceInterface interface {
 	SetLanguage(w http.ResponseWriter, r *http.Request)
 	SingleServiceInfo(w http.ResponseWriter, r *http.Request)
@@ -94,8 +94,8 @@ type ServiceInterface interface {
 	GetServiceKubeResources(w http.ResponseWriter, r *http.Request)
 }
 
-//TenantInterfaceWithV1 funcs for both v2 and v1
-type TenantInterfaceWithV1 interface {
+// TenantEnvInterfaceWithV1 funcs for both v2 and v1
+type TenantEnvInterfaceWithV1 interface {
 	StartService(w http.ResponseWriter, r *http.Request)
 	StopService(w http.ResponseWriter, r *http.Request)
 	RestartService(w http.ResponseWriter, r *http.Request)
@@ -109,19 +109,19 @@ type TenantInterfaceWithV1 interface {
 	StatusContainerID(w http.ResponseWriter, r *http.Request)
 }
 
-//LogInterface log interface
+// LogInterface log interface
 type LogInterface interface {
 	HistoryLogs(w http.ResponseWriter, r *http.Request)
 	LogList(w http.ResponseWriter, r *http.Request)
 	LogFile(w http.ResponseWriter, r *http.Request)
 	LogSocket(w http.ResponseWriter, r *http.Request)
 	LogByAction(w http.ResponseWriter, r *http.Request)
-	TenantLogByAction(w http.ResponseWriter, r *http.Request)
+	TenantEnvLogByAction(w http.ResponseWriter, r *http.Request)
 	Events(w http.ResponseWriter, r *http.Request)
 	EventLog(w http.ResponseWriter, r *http.Request)
 }
 
-//PluginInterface plugin interface
+// PluginInterface plugin interface
 type PluginInterface interface {
 	PluginAction(w http.ResponseWriter, r *http.Request)
 	PluginDefaultENV(w http.ResponseWriter, r *http.Request)
@@ -141,7 +141,7 @@ type PluginInterface interface {
 	BatchBuildPlugins(w http.ResponseWriter, r *http.Request)
 }
 
-//RulesInterface RulesInterface
+// RulesInterface RulesInterface
 type RulesInterface interface {
 	SetDownStreamRule(w http.ResponseWriter, r *http.Request)
 	GetDownStreamRule(w http.ResponseWriter, r *http.Request)
@@ -149,7 +149,7 @@ type RulesInterface interface {
 	UpdateDownStreamRule(w http.ResponseWriter, r *http.Request)
 }
 
-//AppInterface app handle interface
+// AppInterface app handle interface
 type AppInterface interface {
 	ExportApp(w http.ResponseWriter, r *http.Request)
 	Download(w http.ResponseWriter, r *http.Request)
@@ -159,7 +159,7 @@ type AppInterface interface {
 	ImportApp(w http.ResponseWriter, r *http.Request)
 }
 
-// ApplicationInterface tenant application interface
+// ApplicationInterface tenant envapplication interface
 type ApplicationInterface interface {
 	CreateApp(w http.ResponseWriter, r *http.Request)
 	BatchCreateApp(w http.ResponseWriter, r *http.Request)
@@ -188,7 +188,7 @@ type ApplicationInterface interface {
 	GetApplicationKubeResources(w http.ResponseWriter, r *http.Request)
 }
 
-//Gatewayer gateway api interface
+// Gatewayer gateway api interface
 type Gatewayer interface {
 	HTTPRule(w http.ResponseWriter, r *http.Request)
 	TCPRule(w http.ResponseWriter, r *http.Request)
@@ -231,7 +231,7 @@ type HelmAppsInterface interface {
 	ListHelmApps(w http.ResponseWriter, r *http.Request)
 }
 
-//RegistryAuthSecretInterface registry auth secret interface
+// RegistryAuthSecretInterface registry auth secret interface
 type RegistryAuthSecretInterface interface {
 	RegistryAuthSecret(w http.ResponseWriter, r *http.Request)
 }

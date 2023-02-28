@@ -22,17 +22,17 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//TenantResList TenantResList
-type TenantResList []*TenantResource
+// TenantEnvResList TenantEnvResList
+type TenantEnvResList []*TenantEnvResource
 
-//PagedTenantResList PagedTenantResList
-type PagedTenantResList struct {
-	List   []*TenantResource `json:"list"`
-	Length int               `json:"length"`
+// PagedTenantEnvResList PagedTenantEnvResList
+type PagedTenantEnvResList struct {
+	List   []*TenantEnvResource `json:"list"`
+	Length int                  `json:"length"`
 }
 
-//TenantResource abandoned
-type TenantResource struct {
+// TenantEnvResource abandoned
+type TenantEnvResource struct {
 	//without plugin
 	AllocatedCPU int `json:"alloc_cpu"`
 	//without plugin
@@ -47,11 +47,11 @@ type TenantResource struct {
 	EID      string  `json:"eid"`
 }
 
-func (list TenantResList) Len() int {
+func (list TenantEnvResList) Len() int {
 	return len(list)
 }
 
-func (list TenantResList) Less(i, j int) bool {
+func (list TenantEnvResList) Less(i, j int) bool {
 	if list[i].UsedMEM > list[j].UsedMEM {
 		return true
 	} else if list[i].UsedMEM < list[j].UsedMEM {
@@ -61,15 +61,15 @@ func (list TenantResList) Less(i, j int) bool {
 	}
 }
 
-func (list TenantResList) Swap(i, j int) {
+func (list TenantEnvResList) Swap(i, j int) {
 	temp := list[i]
 	list[i] = list[j]
 	list[j] = temp
 }
 
-//TenantAndResource tenant and resource strcut
-type TenantAndResource struct {
-	dbmodel.Tenants
+// TenantEnvAndResource tenant env and resource strcut
+type TenantEnvAndResource struct {
+	dbmodel.TenantEnvs
 	CPURequest            int64 `json:"cpu_request"`
 	CPULimit              int64 `json:"cpu_limit"`
 	MemoryRequest         int64 `json:"memory_request"`
@@ -79,18 +79,18 @@ type TenantAndResource struct {
 	RunningAppThirdNum    int64 `json:"running_app_third_num"`
 }
 
-//TenantList Tenant list struct
-type TenantList []*TenantAndResource
+// TenantEnvList TenantEnv list struct
+type TenantEnvList []*TenantEnvAndResource
 
-//Add add
-func (list *TenantList) Add(tr *TenantAndResource) {
+// Add add
+func (list *TenantEnvList) Add(tr *TenantEnvAndResource) {
 	*list = append(*list, tr)
 }
-func (list TenantList) Len() int {
+func (list TenantEnvList) Len() int {
 	return len(list)
 }
 
-func (list TenantList) Less(i, j int) bool {
+func (list TenantEnvList) Less(i, j int) bool {
 	// Highest priority
 	if list[i].MemoryRequest > list[j].MemoryRequest {
 		return true
@@ -105,7 +105,7 @@ func (list TenantList) Less(i, j int) bool {
 			}
 			if list[i].RunningAppNum == list[j].RunningAppNum {
 				// Minimum priority
-				if list[i].Tenants.LimitMemory > list[j].Tenants.LimitMemory {
+				if list[i].TenantEnvs.LimitMemory > list[j].TenantEnvs.LimitMemory {
 					return true
 				}
 			}
@@ -114,15 +114,15 @@ func (list TenantList) Less(i, j int) bool {
 	return false
 }
 
-func (list TenantList) Swap(i, j int) {
+func (list TenantEnvList) Swap(i, j int) {
 	list[i], list[j] = list[j], list[i]
 }
 
-//Paging paging
-func (list TenantList) Paging(page, pageSize int) map[string]interface{} {
+// Paging paging
+func (list TenantEnvList) Paging(page, pageSize int) map[string]interface{} {
 	startIndex := (page - 1) * pageSize
 	endIndex := page * pageSize
-	var relist TenantList
+	var relist TenantEnvList
 	if startIndex < list.Len() && endIndex < list.Len() {
 		relist = list[startIndex:endIndex]
 	}

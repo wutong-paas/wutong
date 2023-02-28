@@ -1,11 +1,11 @@
 package dao
 
 import (
-	"github.com/wutong-paas/wutong/api/util/bcode"
-	"github.com/wutong-paas/wutong/db/model"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/db/model"
 )
 
 // ApplicationDaoImpl -
@@ -13,11 +13,11 @@ type ApplicationDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel -
+// AddModel -
 func (a *ApplicationDaoImpl) AddModel(mo model.Interface) error {
 	appReq, _ := mo.(*model.Application)
 	var oldApp model.Application
-	if err := a.DB.Where("tenant_id = ? AND app_id = ?", appReq.TenantID, appReq.AppID).Find(&oldApp).Error; err != nil {
+	if err := a.DB.Where("tenant_env_id = ? AND app_id = ?", appReq.TenantEnvID, appReq.AppID).Find(&oldApp).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return a.DB.Create(appReq).Error
 		}
@@ -26,18 +26,18 @@ func (a *ApplicationDaoImpl) AddModel(mo model.Interface) error {
 	return bcode.ErrApplicationExist
 }
 
-//UpdateModel -
+// UpdateModel -
 func (a *ApplicationDaoImpl) UpdateModel(mo model.Interface) error {
 	updateReq := mo.(*model.Application)
 	return a.DB.Save(updateReq).Error
 }
 
 // ListApps -
-func (a *ApplicationDaoImpl) ListApps(tenantID, appName string, page, pageSize int) ([]*model.Application, int64, error) {
+func (a *ApplicationDaoImpl) ListApps(tenantEnvID, appName string, page, pageSize int) ([]*model.Application, int64, error) {
 	var datas []*model.Application
 	offset := (page - 1) * pageSize
 
-	db := a.DB.Where("tenant_id=?", tenantID).Order("create_time desc")
+	db := a.DB.Where("tenant_env_id=?", tenantEnvID).Order("create_time desc")
 	if appName != "" {
 		db = db.Where("app_name like ?", "%"+appName+"%")
 	}
@@ -66,7 +66,7 @@ func (a *ApplicationDaoImpl) GetAppByID(appID string) (*model.Application, error
 // GetByServiceID -
 func (a *ApplicationDaoImpl) GetByServiceID(sid string) (*model.Application, error) {
 	var app model.Application
-	if err := a.DB.Where("app_id = ?", a.DB.Table("tenant_services").Select("app_id").Where("service_id=?", sid).SubQuery()).Find(&app).Error; err != nil {
+	if err := a.DB.Where("app_id = ?", a.DB.Table("tenant_env_services").Select("app_id").Where("service_id=?", sid).SubQuery()).Find(&app).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, bcode.ErrApplicationNotFound
 		}
@@ -97,9 +97,9 @@ func (a *ApplicationDaoImpl) ListByAppIDs(appIDs []string) ([]*model.Application
 }
 
 // IsK8sAppDuplicate Verify whether the k8s app under the same team are duplicate
-func (a *ApplicationDaoImpl) IsK8sAppDuplicate(tenantID, AppID, k8sApp string) bool {
+func (a *ApplicationDaoImpl) IsK8sAppDuplicate(tenantEnvID, AppID, k8sApp string) bool {
 	var count int64
-	if err := a.DB.Model(&model.Application{}).Where("tenant_id=? and app_id <>? and k8s_app=?", tenantID, AppID, k8sApp).Count(&count).Error; err != nil {
+	if err := a.DB.Model(&model.Application{}).Where("tenant_env_id=? and app_id <>? and k8s_app=?", tenantEnvID, AppID, k8sApp).Count(&count).Error; err != nil {
 		logrus.Errorf("judge K8s App Duplicate failed %v", err)
 		return true
 	}

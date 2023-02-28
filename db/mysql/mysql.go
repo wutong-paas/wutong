@@ -31,7 +31,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
-//Manager db manager
+// Manager db manager
 type Manager struct {
 	db      *gorm.DB
 	config  config.Config
@@ -39,7 +39,7 @@ type Manager struct {
 	models  []model.Interface
 }
 
-//CreateManager create manager
+// CreateManager create manager
 func CreateManager(config config.Config) (*Manager, error) {
 	var db *gorm.DB
 	if config.DBType == "mysql" {
@@ -72,12 +72,12 @@ func CreateManager(config config.Config) (*Manager, error) {
 	return manager, nil
 }
 
-//CloseManager 关闭管理器
+// CloseManager 关闭管理器
 func (m *Manager) CloseManager() error {
 	return m.db.Close()
 }
 
-//Begin begin a transaction
+// Begin begin a transaction
 func (m *Manager) Begin() *gorm.DB {
 	return m.db.Begin()
 }
@@ -97,35 +97,35 @@ func (m *Manager) EnsureEndTransactionFunc() func(tx *gorm.DB) {
 	}
 }
 
-//Print Print
+// Print Print
 func (m *Manager) Print(v ...interface{}) {
 	logrus.Info(v...)
 }
 
-//RegisterTableModel register table model
+// RegisterTableModel register table model
 func (m *Manager) RegisterTableModel() {
-	m.models = append(m.models, &model.Tenants{})
-	m.models = append(m.models, &model.TenantServices{})
-	m.models = append(m.models, &model.TenantServicesPort{})
-	m.models = append(m.models, &model.TenantServiceRelation{})
-	m.models = append(m.models, &model.TenantServiceEnvVar{})
-	m.models = append(m.models, &model.TenantServiceMountRelation{})
-	m.models = append(m.models, &model.TenantServiceVolume{})
-	m.models = append(m.models, &model.TenantServiceLable{})
-	m.models = append(m.models, &model.TenantServiceProbe{})
+	m.models = append(m.models, &model.TenantEnvs{})
+	m.models = append(m.models, &model.TenantEnvServices{})
+	m.models = append(m.models, &model.TenantEnvServicesPort{})
+	m.models = append(m.models, &model.TenantEnvServiceRelation{})
+	m.models = append(m.models, &model.TenantEnvServiceEnvVar{})
+	m.models = append(m.models, &model.TenantEnvServiceMountRelation{})
+	m.models = append(m.models, &model.TenantEnvServiceVolume{})
+	m.models = append(m.models, &model.TenantEnvServiceLable{})
+	m.models = append(m.models, &model.TenantEnvServiceProbe{})
 	m.models = append(m.models, &model.LicenseInfo{})
-	m.models = append(m.models, &model.TenantServicesDelete{})
-	m.models = append(m.models, &model.TenantServiceLBMappingPort{})
-	m.models = append(m.models, &model.TenantPlugin{})
-	m.models = append(m.models, &model.TenantPluginBuildVersion{})
-	m.models = append(m.models, &model.TenantServicePluginRelation{})
-	m.models = append(m.models, &model.TenantPluginVersionEnv{})
-	m.models = append(m.models, &model.TenantPluginVersionDiscoverConfig{})
+	m.models = append(m.models, &model.TenantEnvServicesDelete{})
+	m.models = append(m.models, &model.TenantEnvServiceLBMappingPort{})
+	m.models = append(m.models, &model.TenantEnvPlugin{})
+	m.models = append(m.models, &model.TenantEnvPluginBuildVersion{})
+	m.models = append(m.models, &model.TenantEnvServicePluginRelation{})
+	m.models = append(m.models, &model.TenantEnvPluginVersionEnv{})
+	m.models = append(m.models, &model.TenantEnvPluginVersionDiscoverConfig{})
 	m.models = append(m.models, &model.CodeCheckResult{})
 	m.models = append(m.models, &model.ServiceEvent{})
 	m.models = append(m.models, &model.VersionInfo{})
 	m.models = append(m.models, &model.RegionUserInfo{})
-	m.models = append(m.models, &model.TenantServicesStreamPluginPort{})
+	m.models = append(m.models, &model.TenantEnvServicesStreamPluginPort{})
 	m.models = append(m.models, &model.RegionAPIClass{})
 	m.models = append(m.models, &model.RegionProcotols{})
 	m.models = append(m.models, &model.LocalScheduler{})
@@ -143,21 +143,21 @@ func (m *Manager) RegisterTableModel() {
 	m.models = append(m.models, &model.HTTPRule{})
 	m.models = append(m.models, &model.HTTPRuleRewrite{})
 	m.models = append(m.models, &model.TCPRule{})
-	m.models = append(m.models, &model.TenantServiceConfigFile{})
+	m.models = append(m.models, &model.TenantEnvServiceConfigFile{})
 	m.models = append(m.models, &model.Endpoint{})
 	m.models = append(m.models, &model.ThirdPartySvcDiscoveryCfg{})
 	m.models = append(m.models, &model.GwRuleConfig{})
 
 	// volumeType
-	m.models = append(m.models, &model.TenantServiceVolumeType{})
+	m.models = append(m.models, &model.TenantEnvServiceVolumeType{})
 	// pod autoscaler
-	m.models = append(m.models, &model.TenantServiceAutoscalerRules{})
-	m.models = append(m.models, &model.TenantServiceAutoscalerRuleMetrics{})
-	m.models = append(m.models, &model.TenantServiceScalingRecords{})
-	m.models = append(m.models, &model.TenantServiceMonitor{})
+	m.models = append(m.models, &model.TenantEnvServiceAutoscalerRules{})
+	m.models = append(m.models, &model.TenantEnvServiceAutoscalerRuleMetrics{})
+	m.models = append(m.models, &model.TenantEnvServiceScalingRecords{})
+	m.models = append(m.models, &model.TenantEnvServiceMonitor{})
 }
 
-//CheckTable check and create tables
+// CheckTable check and create tables
 func (m *Manager) CheckTable() {
 	m.initOne.Do(func() {
 		for _, md := range m.models {
@@ -188,27 +188,27 @@ func (m *Manager) CheckTable() {
 }
 
 func (m *Manager) patchTable() {
-	if err := m.db.Exec("alter table tenant_services_envs modify column attr_value text;").Error; err != nil {
-		logrus.Errorf("alter table tenant_services_envs error %s", err.Error())
+	if err := m.db.Exec("alter table tenant_env_services_envs modify column attr_value text;").Error; err != nil {
+		logrus.Errorf("alter table tenant_env_services_envs error %s", err.Error())
 	}
 
-	if err := m.db.Exec("alter table tenant_services_event modify column request_body varchar(1024);").Error; err != nil {
-		logrus.Errorf("alter table tenant_services_envent error %s", err.Error())
+	if err := m.db.Exec("alter table tenant_env_services_event modify column request_body varchar(1024);").Error; err != nil {
+		logrus.Errorf("alter table tenant_env_services_envent error %s", err.Error())
 	}
 
 	if err := m.db.Exec("update gateway_tcp_rule set ip=? where ip=?", "0.0.0.0", "").Error; err != nil {
 		logrus.Errorf("update gateway_tcp_rule data error %s", err.Error())
 	}
-	if err := m.db.Exec("alter table tenant_services_volume modify column volume_type varchar(64);").Error; err != nil {
-		logrus.Errorf("alter table tenant_services_volume error: %s", err.Error())
+	if err := m.db.Exec("alter table tenant_env_services_volume modify column volume_type varchar(64);").Error; err != nil {
+		logrus.Errorf("alter table tenant_env_services_volume error: %s", err.Error())
 	}
-	if err := m.db.Exec("update tenants set namespace=uuid where namespace is NULL;").Error; err != nil {
-		logrus.Errorf("update tenants namespace error: %s", err.Error())
+	if err := m.db.Exec("update tenantEnvs set namespace=uuid where namespace is NULL;").Error; err != nil {
+		logrus.Errorf("update tenantEnvs namespace error: %s", err.Error())
 	}
 	if err := m.db.Exec("update applications set k8s_app=concat('app-',LEFT(app_id,8)) where k8s_app is NULL;").Error; err != nil {
-		logrus.Errorf("update tenants namespace error: %s", err.Error())
+		logrus.Errorf("update tenantEnvs namespace error: %s", err.Error())
 	}
-	if err := m.db.Exec("update tenant_services set k8s_component_name=service_alias where k8s_component_name is NULL;").Error; err != nil {
-		logrus.Errorf("update tenants namespace error: %s", err.Error())
+	if err := m.db.Exec("update tenant_env_services set k8s_component_name=service_alias where k8s_component_name is NULL;").Error; err != nil {
+		logrus.Errorf("update tenantEnvs namespace error: %s", err.Error())
 	}
 }

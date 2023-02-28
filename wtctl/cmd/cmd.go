@@ -29,12 +29,12 @@ import (
 	"github.com/wutong-paas/wutong/wtctl/clients"
 )
 
-//GetCmds GetCmds
+// GetCmds GetCmds
 func GetCmds() []cli.Command {
 	cmds := []cli.Command{}
 	cmds = append(cmds, NewCmdInstall())
 	cmds = append(cmds, NewCmdService())
-	cmds = append(cmds, NewCmdTenant())
+	cmds = append(cmds, NewCmdTenantEnv())
 	cmds = append(cmds, NewCmdNode())
 	cmds = append(cmds, NewCmdCluster())
 	cmds = append(cmds, NewSourceBuildCmd())
@@ -47,7 +47,7 @@ func GetCmds() []cli.Command {
 	return cmds
 }
 
-//Common Common
+// Common Common
 func Common(c *cli.Context) {
 	config, err := conf.LoadConfig(c)
 	if err != nil {
@@ -67,7 +67,7 @@ func Common(c *cli.Context) {
 
 }
 
-//CommonWithoutRegion Common
+// CommonWithoutRegion Common
 func CommonWithoutRegion(c *cli.Context) {
 	config, err := conf.LoadConfig(c)
 	if err != nil {
@@ -95,12 +95,12 @@ func fatal(msg string, code int) {
 	os.Exit(code)
 }
 
-//GetTenantNamePath Get Tenantname Path
-func GetTenantNamePath() string {
-	tenantnamepath, err := conf.GetTenantNamePath()
+// GetTenantEnvNamePath Get TenantEnvname Path
+func GetTenantEnvNamePath() string {
+	tenantEnvnamepath, err := conf.GetTenantEnvNamePath()
 	if err != nil {
 		logrus.Warn("Ger Home error", err.Error())
-		return tenantnamepath
+		return tenantEnvnamepath
 	}
-	return tenantnamepath
+	return tenantEnvnamepath
 }

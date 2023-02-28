@@ -38,7 +38,7 @@ func (v2 *V2) Routes() chi.Router {
 	r.Use(license.Verify)
 	r.Get("/show", controller.GetManager().Show)
 	r.Post("/show", controller.GetManager().Show)
-	r.Mount("/tenants", v2.tenantRouter())
+	r.Mount("/tenants/{tenant_name}/envs", v2.tenantEnvRouter())
 	r.Mount("/cluster", v2.clusterRouter())
 	r.Mount("/notificationEvent", v2.notificationEventRouter())
 	r.Mount("/resources", v2.resourcesRouter())
@@ -104,24 +104,24 @@ func (v2 *V2) clusterRouter() chi.Router {
 	return r
 }
 
-func (v2 *V2) tenantRouter() chi.Router {
+func (v2 *V2) tenantEnvRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/", controller.GetManager().Tenants)
-	r.Mount("/{tenant_name}", v2.tenantNameRouter())
-	r.Get("/", controller.GetManager().Tenants)
+	r.Post("/", controller.GetManager().TenantEnvs)
+	r.Mount("/{tenant_env_name}", v2.tenantEnvNameRouter())
+	r.Get("/", controller.GetManager().TenantEnvs)
 	r.Get("/services-count", controller.GetManager().ServicesCount)
 	return r
 }
 
-func (v2 *V2) tenantNameRouter() chi.Router {
+func (v2 *V2) tenantEnvNameRouter() chi.Router {
 	r := chi.NewRouter()
 	//初始化租户和服务信
-	r.Use(middleware.InitTenant)
-	r.Put("/", controller.GetManager().Tenant)
-	r.Get("/", controller.GetManager().Tenant)
-	r.Delete("/", controller.GetManager().Tenant)
+	r.Use(middleware.InitTenantEnv)
+	r.Put("/", controller.GetManager().TenantEnv)
+	r.Get("/", controller.GetManager().TenantEnv)
+	r.Delete("/", controller.GetManager().TenantEnv)
 	//租户中的日志
-	r.Post("/event-log", controller.GetManager().TenantLogByAction)
+	r.Post("/event-log", controller.GetManager().TenantEnvLogByAction)
 	r.Get("/protocols", controller.GetManager().GetSupportProtocols)
 	//插件预安装
 	r.Post("/transplugins", controller.GetManager().TransPlugins)
@@ -129,7 +129,7 @@ func (v2 *V2) tenantNameRouter() chi.Router {
 	r.Post("/code-check", controller.GetManager().CheckCode)
 	r.Post("/servicecheck", controller.Check)
 	r.Get("/servicecheck/{uuid}", controller.GetServiceCheckInfo)
-	r.Get("/resources", controller.GetManager().SingleTenantResources)
+	r.Get("/resources", controller.GetManager().SingleTenantEnvResources)
 	r.Get("/services", controller.GetManager().ServicesInfo)
 	//创建应用
 	r.Post("/services", middleware.WrapEL(controller.GetManager().CreateService, dbmodel.TargetTypeService, "create-service", dbmodel.SYNEVENTTYPE))
@@ -145,7 +145,7 @@ func (v2 *V2) tenantNameRouter() chi.Router {
 	r.Mount("/plugin/{plugin_id}", v2.pluginRouter())
 	r.Get("/event", controller.GetManager().Event)
 	r.Get("/chargesverify", controller.ChargesVerifyController)
-	//tenant app
+	//tenant envapp
 	r.Get("/pods/{pod_name}", controller.GetManager().PodDetail)
 	r.Post("/apps", controller.GetManager().CreateApp)
 	r.Post("/batch_create_apps", controller.GetManager().BatchCreateApp)
@@ -166,8 +166,8 @@ func (v2 *V2) tenantNameRouter() chi.Router {
 	r.Get("/groupapp/backups/{backup_id}/restore/{restore_id}", controller.RestoreResult)
 	r.Post("/deployversions", controller.GetManager().GetManyDeployVersion)
 	//团队资源限制
-	r.Post("/limit_memory", controller.GetManager().LimitTenantMemory)
-	r.Get("/limit_memory", controller.GetManager().TenantResourcesStatus)
+	r.Post("/limit_memory", controller.GetManager().LimitTenantEnvMemory)
+	r.Get("/limit_memory", controller.GetManager().TenantEnvResourcesStatus)
 
 	// Gateway
 	r.Post("/http-rule", controller.GetManager().HTTPRule)
@@ -189,7 +189,7 @@ func (v2 *V2) tenantNameRouter() chi.Router {
 	// kubeconfig
 	r.Get("/kubeconfig", controller.GetManager().GetKubeConfig)
 
-	r.Get("/kube-resources", controller.GetManager().GetTenantKubeResources)
+	r.Get("/kube-resources", controller.GetManager().GetTenantEnvKubeResources)
 
 	return r
 }
@@ -368,15 +368,15 @@ func (v2 *V2) applicationRouter() chi.Router {
 func (v2 *V2) resourcesRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/labels", controller.GetManager().Labels)
-	r.Post("/tenants", controller.GetManager().TenantResources)
+	r.Post("/tenants/{tenant_name}/envs", controller.GetManager().TenantEnvResources)
 	r.Post("/services", controller.GetManager().ServiceResources)
-	r.Get("/tenants/sum", controller.GetManager().SumTenants)
-	//tenants's resource
-	r.Get("/tenants/res", controller.GetManager().TenantsWithResource)
-	r.Get("/tenants/res/page/{curPage}/size/{pageLen}", controller.GetManager().TenantsWithResource)
-	r.Get("/tenants/query/{tenant_name}", controller.GetManager().TenantsQuery)
-	r.Get("/tenants/{tenant_name}/res", controller.GetManager().TenantsGetByName)
-	r.Get("/tenants/kubeconfig", controller.GetManager().GetKubeConfig)
+	r.Get("/tenants/{tenant_name}/envs/sum", controller.GetManager().SumTenantEnvs)
+	//tenant envs's resource
+	r.Get("/tenants/{tenant_name}/envs/res", controller.GetManager().TenantEnvsWithResource)
+	r.Get("/tenants/{tenant_name}/envs/res/page/{curPage}/size/{pageLen}", controller.GetManager().TenantEnvsWithResource)
+	r.Get("/tenants/{tenant_name}/envs/query/{tenant_env_name}", controller.GetManager().TenantEnvsQuery)
+	r.Get("/tenants/{tenant_name}/envs/{tenant_env_name}/res", controller.GetManager().TenantEnvsGetByName)
+	r.Get("/tenants/{tenant_name}/envs/kubeconfig", controller.GetManager().GetKubeConfig)
 	return r
 }
 

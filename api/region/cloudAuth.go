@@ -19,7 +19,7 @@
 package region
 
 // //DefineCloudAuth DefineCloudAuth
-// func (t *tenant) DefineCloudAuth(gt *api_model.GetUserToken) DefineCloudAuthInterface {
+// func (t *tenantEnv) DefineCloudAuth(gt *api_model.GetUserToken) DefineCloudAuthInterface {
 // 	return &DefineCloudAuth{
 // 		GT: gt,
 // 	}

@@ -30,17 +30,17 @@ import (
 )
 
 type services struct {
-	tenant
+	tenantEnv
 	prefix string
 	model  model.ServiceStruct
 }
 
-//ServiceInterface ServiceInterface
+// ServiceInterface ServiceInterface
 type ServiceInterface interface {
 	Get() (*serviceInfo, *util.APIHandleError)
 	GetDeployInfo() (*ServiceDeployInfo, *util.APIHandleError)
 	Pods() ([]*podInfo, *util.APIHandleError)
-	List() ([]*dbmodel.TenantServices, *util.APIHandleError)
+	List() ([]*dbmodel.TenantEnvServices, *util.APIHandleError)
 	Stop(eventID string) (string, *util.APIHandleError)
 	Start(eventID string) (string, *util.APIHandleError)
 	EventLog(eventID, level string) ([]*model.MessageData, *util.APIHandleError)
@@ -87,8 +87,8 @@ func (s *services) EventLog(eventID, level string) ([]*model.MessageData, *util.
 	return message, nil
 }
 
-func (s *services) List() ([]*dbmodel.TenantServices, *util.APIHandleError) {
-	var gc []*dbmodel.TenantServices
+func (s *services) List() ([]*dbmodel.TenantEnvServices, *util.APIHandleError) {
+	var gc []*dbmodel.TenantEnvServices
 	var decode utilhttp.ResponseBody
 	decode.List = &gc
 	code, err := s.DoRequest(s.prefix, "GET", nil, &decode)
@@ -125,7 +125,7 @@ func (s *services) Start(eventID string) (string, *util.APIHandleError) {
 	return eventID, handleAPIResult(code, res)
 }
 
-//GetDeployInfo get service deploy info
+// GetDeployInfo get service deploy info
 func (s *services) GetDeployInfo() (*ServiceDeployInfo, *util.APIHandleError) {
 	var deployInfo ServiceDeployInfo
 	var decode utilhttp.ResponseBody

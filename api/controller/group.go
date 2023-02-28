@@ -30,7 +30,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//Backups list all backup history by group app
+// Backups list all backup history by group app
 func Backups(w http.ResponseWriter, r *http.Request) {
 	groupID := r.FormValue("group_id")
 	if groupID == "" {
@@ -45,7 +45,7 @@ func Backups(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, list)
 }
 
-//NewBackups new group app backup
+// NewBackups new group app backup
 func NewBackups(w http.ResponseWriter, r *http.Request) {
 	var gb group.Backup
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &gb.Body, nil)
@@ -60,7 +60,7 @@ func NewBackups(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, bean)
 }
 
-//BackupCopy backup copy
+// BackupCopy backup copy
 func BackupCopy(w http.ResponseWriter, r *http.Request) {
 	var gb group.BackupCopy
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &gb.Body, nil)
@@ -75,7 +75,7 @@ func BackupCopy(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, bean)
 }
 
-//Restore restore group app
+// Restore restore group app
 func Restore(w http.ResponseWriter, r *http.Request) {
 	var br group.BackupRestore
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &br.Body, nil)
@@ -83,8 +83,8 @@ func Restore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	br.BackupID = chi.URLParam(r, "backup_id")
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	br.Body.TenantID = tenantID
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	br.Body.TenantEnvID = tenantEnvID
 	bean, err := handler.GetAPPBackupHandler().RestoreBackup(br)
 	if err != nil {
 		err.Handle(r, w)
@@ -93,7 +93,7 @@ func Restore(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, bean)
 }
 
-//RestoreResult restore group app result
+// RestoreResult restore group app result
 func RestoreResult(w http.ResponseWriter, r *http.Request) {
 	restoreID := chi.URLParam(r, "restore_id")
 	bean, err := handler.GetAPPBackupHandler().RestoreBackupResult(restoreID)
@@ -104,7 +104,7 @@ func RestoreResult(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, bean)
 }
 
-//GetBackup get one backup status
+// GetBackup get one backup status
 func GetBackup(w http.ResponseWriter, r *http.Request) {
 	backupID := chi.URLParam(r, "backup_id")
 	bean, err := handler.GetAPPBackupHandler().GetBackup(backupID)
@@ -115,7 +115,7 @@ func GetBackup(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, bean)
 }
 
-//DeleteBackup delete backup
+// DeleteBackup delete backup
 func DeleteBackup(w http.ResponseWriter, r *http.Request) {
 	backupID := chi.URLParam(r, "backup_id")
 

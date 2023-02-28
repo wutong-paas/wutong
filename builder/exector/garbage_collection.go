@@ -30,10 +30,10 @@ import (
 
 // GarbageCollectionItem -
 type GarbageCollectionItem struct {
-	TenantID  string        `json:"tenant_id"`
-	ServiceID string        `json:"service_id"`
-	EventIDs  []string      `json:"event_ids"`
-	Cfg       option.Config `json:"-"`
+	TenantEnvID string        `json:"tenant_env_id"`
+	ServiceID   string        `json:"service_id"`
+	EventIDs    []string      `json:"event_ids"`
+	Cfg         option.Config `json:"-"`
 }
 
 // NewGarbageCollectionItem creates a new GarbageCollectionItem
@@ -70,7 +70,7 @@ func (g *GarbageCollectionItem) delLogFile() {
 
 func (g *GarbageCollectionItem) delVolumeData() {
 	logrus.Infof("service id: %s; delete volume data.", g.ServiceID)
-	dir := fmt.Sprintf("/wtdata/tenant/%s/service/%s", g.TenantID, g.ServiceID)
+	dir := fmt.Sprintf("/wtdata/tenantEnv/%s/service/%s", g.TenantEnvID, g.ServiceID)
 	if err := os.RemoveAll(dir); err != nil {
 		logrus.Warningf("dir: %s; remove volume data: %v", dir, err)
 	}

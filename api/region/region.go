@@ -41,12 +41,12 @@ var regionAPI, token string
 
 var region Region
 
-//AllTenant AllTenant
-var AllTenant string
+// AllTenantEnv AllTenantEnv
+var AllTenantEnv string
 
-//Region region api
+// Region region api
 type Region interface {
-	Tenants(name string) TenantInterface
+	TenantEnvs(name string) TenantEnvInterface
 	Resources() ResourcesInterface
 	Nodes() NodeInterface
 	Cluster() ClusterInterface
@@ -57,7 +57,7 @@ type Region interface {
 	DoRequest(path, method string, body io.Reader, decode *utilhttp.ResponseBody) (int, error)
 }
 
-//APIConf region api config
+// APIConf region api config
 type APIConf struct {
 	Endpoints []string `yaml:"endpoints"`
 	Token     string   `yaml:"token"`
@@ -69,9 +69,9 @@ type APIConf struct {
 
 type serviceInfo struct {
 	ServicesAlias string `json:"serviceAlias"`
-	TenantName    string `json:"tenantName"`
+	TenantEnvName string `json:"tenantEnvName"`
 	ServiceID     string `json:"serviceId"`
-	TenantID      string `json:"tenantId"`
+	TenantEnvID   string `json:"tenantEnvId"`
 }
 
 type podInfo struct {
@@ -83,7 +83,7 @@ type podInfo struct {
 	Container       map[string]map[string]string `json:"container"`
 }
 
-//NewRegion NewRegion
+// NewRegion NewRegion
 func NewRegion(c APIConf) (Region, error) {
 	if region == nil {
 		re := &regionImpl{
@@ -120,7 +120,7 @@ func NewRegion(c APIConf) (Region, error) {
 	return region, nil
 }
 
-//GetRegion GetRegion
+// GetRegion GetRegion
 func GetRegion() Region {
 	return region
 }
@@ -130,17 +130,17 @@ type regionImpl struct {
 	Client *http.Client
 }
 
-//Tenants Tenants
-func (r *regionImpl) Tenants(tenantName string) TenantInterface {
-	return &tenant{prefix: path.Join("/v2/tenants", tenantName), tenantName: tenantName, regionImpl: *r}
+// TenantEnvs TenantEnvs
+func (r *regionImpl) TenantEnvs(tenantEnvName string) TenantEnvInterface {
+	return &tenantEnv{prefix: path.Join("/v2/tenants/{tenant_name}/envs", tenantEnvName), tenantEnvName: tenantEnvName, regionImpl: *r}
 }
 
-//Version Version
+// Version Version
 func (r *regionImpl) Version() string {
 	return cmd.GetVersion()
 }
 
-//Resources about resources
+// Resources about resources
 func (r *regionImpl) Resources() ResourcesInterface {
 	return &resources{prefix: "/v2/resources", regionImpl: *r}
 }
@@ -148,7 +148,7 @@ func (r *regionImpl) GetEndpoint() string {
 	return r.Endpoints[0]
 }
 
-//DoRequest do request
+// DoRequest do request
 func (r *regionImpl) DoRequest(path, method string, body io.Reader, decode *utilhttp.ResponseBody) (int, error) {
 	request, err := http.NewRequest(method, r.GetEndpoint()+path, body)
 	if err != nil {
@@ -173,7 +173,7 @@ func (r *regionImpl) DoRequest(path, method string, body io.Reader, decode *util
 	return res.StatusCode, err
 }
 
-//LoadConfig load config
+// LoadConfig load config
 func LoadConfig(regionAPI, token string) (map[string]map[string]interface{}, error) {
 	if regionAPI != "" {
 		//return nil, errors.New("region api url can not be empty")
@@ -206,7 +206,7 @@ func LoadConfig(regionAPI, token string) (map[string]map[string]interface{}, err
 
 }
 
-//SetInfo 设置
+// SetInfo 设置
 func SetInfo(region, t string) {
 	regionAPI = region
 	token = t
@@ -221,9 +221,9 @@ func handleErrAndCode(err error, code int) *util.APIHandleError {
 	return nil
 }
 
-//ResourcesInterface ResourcesInterface
+// ResourcesInterface ResourcesInterface
 type ResourcesInterface interface {
-	Tenants(tenantName string) ResourcesTenantInterface
+	TenantEnvs(tenantEnvName string) ResourcesTenantEnvInterface
 }
 
 type resources struct {
@@ -231,21 +231,21 @@ type resources struct {
 	prefix string
 }
 
-func (r *resources) Tenants(tenantName string) ResourcesTenantInterface {
-	return &resourcesTenant{prefix: path.Join(r.prefix, "tenants", tenantName), resources: *r}
+func (r *resources) TenantEnvs(tenantEnvName string) ResourcesTenantEnvInterface {
+	return &resourcesTenantEnv{prefix: path.Join(r.prefix, "tenantEnvs", tenantEnvName), resources: *r}
 }
 
-//ResourcesTenantInterface ResourcesTenantInterface
-type ResourcesTenantInterface interface {
-	Get() (*model.TenantResource, *util.APIHandleError)
+// ResourcesTenantEnvInterface ResourcesTenantEnvInterface
+type ResourcesTenantEnvInterface interface {
+	Get() (*model.TenantEnvResource, *util.APIHandleError)
 }
-type resourcesTenant struct {
+type resourcesTenantEnv struct {
 	resources
 	prefix string
 }
 
-func (r *resourcesTenant) Get() (*model.TenantResource, *util.APIHandleError) {
-	var rt model.TenantResource
+func (r *resourcesTenantEnv) Get() (*model.TenantEnvResource, *util.APIHandleError) {
+	var rt model.TenantEnvResource
 	var decode utilhttp.ResponseBody
 	decode.Bean = &rt
 	code, err := r.DoRequest(r.prefix+"/res", "GET", nil, &decode)

@@ -53,19 +53,19 @@ func (e *exectorManager) pluginImageBuild(task *pb.TaskMessage) {
 			return
 		}
 	}
-	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByDeployVersion(tb.PluginID, tb.VersionID, tb.DeployVersion)
+	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByDeployVersion(tb.PluginID, tb.VersionID, tb.DeployVersion)
 	if err != nil {
 		logrus.Errorf("get version error, %v", err)
 		return
 	}
-	tenantPlugin, err := db.GetManager().TenantPluginDao().GetPluginByID(tb.PluginID, tb.TenantID)
+	tenantEnvPlugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(tb.PluginID, tb.TenantEnvID)
 	if err != nil {
 		logrus.Errorf("get plugin error, %v", err)
 		return
 	}
-	if tenantPlugin.PluginType != "sys" {
+	if tenantEnvPlugin.PluginType != "sys" {
 		version.Status = "failure"
-		if err := db.GetManager().TenantPluginBuildVersionDao().UpdateModel(version); err != nil {
+		if err := db.GetManager().TenantEnvPluginBuildVersionDao().UpdateModel(version); err != nil {
 			logrus.Errorf("update version error, %v", err)
 		}
 	}
@@ -94,14 +94,14 @@ func (e *exectorManager) run(t *model.BuildPluginTaskBody, logger event.Logger) 
 		logger.Error("推送镜像失败", map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
-	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
+	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
 	if err != nil {
 		logger.Error("更新插件版本信息错误", map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
 	version.BuildLocalImage = newTag
 	version.Status = "complete"
-	if err := db.GetManager().TenantPluginBuildVersionDao().UpdateModel(version); err != nil {
+	if err := db.GetManager().TenantEnvPluginBuildVersionDao().UpdateModel(version); err != nil {
 		logger.Error("更新插件版本信息错误", map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}

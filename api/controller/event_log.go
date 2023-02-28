@@ -59,7 +59,7 @@ func (e *EventLogStruct) HistoryLogs(w http.ResponseWriter, r *http.Request) {
 
 // LogList GetLogList
 func (e *EventLogStruct) LogList(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET  /v2/tenants/{tenant_name}/services/{service_alias}/log-file v2 logList
+	// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log-file v2 logList
 	//
 	// 获取应用日志列表
 	//
@@ -90,7 +90,7 @@ func (e *EventLogStruct) LogList(w http.ResponseWriter, r *http.Request) {
 
 // LogFile GetLogFile
 func (e *EventLogStruct) LogFile(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/log-file/{file_name} v2 logFile
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log-file/{file_name} v2 logFile
 	//
 	// 下载应用指定日志
 	//
@@ -124,7 +124,7 @@ func (e *EventLogStruct) LogFile(w http.ResponseWriter, r *http.Request) {
 
 // LogSocket GetLogSocket
 func (e *EventLogStruct) LogSocket(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/log-instance v2 logSocket
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/log-instance v2 logSocket
 	//
 	// 获取应用日志web-socket实例
 	//
@@ -158,7 +158,7 @@ func (e *EventLogStruct) LogSocket(w http.ResponseWriter, r *http.Request) {
 
 // LogByAction GetLogByAction
 func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/event-log v2 logByAction
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/event-log v2 logByAction
 	//
 	// 获取指定操作的操作日志
 	//
@@ -188,12 +188,12 @@ func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, dl.Data)
 }
 
-// TenantLogByAction GetTenantLogByAction
-// swagger:operation POST /v2/tenants/{tenant_name}/event-log v2 tenantLogByAction
+// TenantEnvLogByAction GetTenantEnvLogByAction
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/event-log v2 tenantEnvLogByAction
 //
 // 获取指定操作的操作日志
 //
-// get tenant log by level
+// get tenant envlog by level
 //
 // ---
 // produces:
@@ -206,8 +206,8 @@ func (e *EventLogStruct) LogByAction(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (e *EventLogStruct) TenantLogByAction(w http.ResponseWriter, r *http.Request) {
-	var elog api_model.TenantLogByLevelStruct
+func (e *EventLogStruct) TenantEnvLogByAction(w http.ResponseWriter, r *http.Request) {
+	var elog api_model.TenantEnvLogByLevelStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &elog.Body, nil)
 	if !ok {
 		return
@@ -215,7 +215,7 @@ func (e *EventLogStruct) TenantLogByAction(w http.ResponseWriter, r *http.Reques
 	logrus.Info(elog.Body.Level)
 	dl, err := handler.GetEventHandler().GetLevelLog(elog.Body.EventID, elog.Body.Level)
 	if err != nil {
-		logrus.Errorf("get tenant event log error, %v", err)
+		logrus.Errorf("get tenant envevent log error, %v", err)
 		httputil.ReturnError(r, w, 200, "success")
 		return
 	}

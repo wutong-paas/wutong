@@ -105,7 +105,7 @@ var DefaultOptions = Options{
 
 // InitMessage -
 type InitMessage struct {
-	TenantID      string `json:"T_id"`
+	TenantEnvID   string `json:"T_id"`
 	ServiceID     string `json:"S_id"`
 	PodName       string `json:"C_id"`
 	ContainerName string `json:"containerName"`
@@ -225,7 +225,7 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	}
-	key := init.TenantID + "_" + init.ServiceID + "_" + init.PodName
+	key := init.TenantEnvID + "_" + init.ServiceID + "_" + init.PodName
 	md5 := md5Func(key)
 	if md5 != init.Md5 {
 		logrus.Print("Auth is not allowed !")
@@ -235,7 +235,7 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 	// base kubernetes api create exec slave
 	if init.Namespace == "" {
-		init.Namespace = init.TenantID
+		init.Namespace = init.TenantEnvID
 	}
 	containerName, ip, args, err := app.GetContainerArgs(init.Namespace, init.PodName, init.ContainerName)
 	if err != nil {

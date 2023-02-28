@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//ClusterResource -
+// ClusterResource -
 type ClusterResource struct {
 	AllNode              int             `json:"all_node"`
 	NotReadyNode         int             `json:"notready_node"`
@@ -36,7 +36,7 @@ type ClusterResource struct {
 	TotalCapacityStorage float32         `json:"total_capacity_storage"`
 	TotalUsedStorage     float32         `json:"total_used_storage"`
 	NodeResources        []*NodeResource `json:"node_resources"`
-	TenantPods           map[string]int  `json:"tenant_pods"`
+	TenantEnvPods        map[string]int  `json:"tenant_env_pods"`
 }
 
 type ClusterEventLevel string
@@ -73,11 +73,11 @@ func ClusterEventFrom(event *corev1.Event, clientset *kubernetes.Clientset) *Clu
 }
 
 func podInfo(pod *corev1.Pod) (string, bool) {
-	tenantID, ok := pod.Labels["tenant_id"]
+	tenantEnvID, ok := pod.Labels["tenant_env_id"]
 	if !ok {
 		return "", false
 	}
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
 	if err != nil {
 		return "", false
 	}
@@ -85,11 +85,11 @@ func podInfo(pod *corev1.Pod) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	servie, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+	servie, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 	if err != nil {
 		return "", false
 	}
-	return fmt.Sprintf("%s/%s", tenant.Name, servie.K8sComponentName), true
+	return fmt.Sprintf("%s/%s", tenantEnv.Name, servie.K8sComponentName), true
 }
 
 func podEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {

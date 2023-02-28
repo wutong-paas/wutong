@@ -2,11 +2,12 @@ package k8s
 
 import (
 	"encoding/json"
-	networkingv1 "k8s.io/api/networking/v1"
-	utilversion "k8s.io/apimachinery/pkg/util/version"
 	"net"
 	"os"
 	"sync"
+
+	networkingv1 "k8s.io/api/networking/v1"
+	utilversion "k8s.io/apimachinery/pkg/util/version"
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -56,7 +57,7 @@ func NewRestConfig(kubecfg string) (restConfig *rest.Config, err error) {
 	return clientcmd.BuildConfigFromFlags("", kubecfg)
 }
 
-//NewRestClient new rest client
+// NewRestClient new rest client
 func NewRestClient(restConfig *rest.Config) (*rest.RESTClient, error) {
 	return rest.RESTClientFor(restConfig)
 }
@@ -87,7 +88,7 @@ func ExtractLabels(labels map[string]string) (string, string, string, string) {
 	if labels == nil {
 		return "", "", "", ""
 	}
-	return labels["tenant_id"], labels["service_id"], labels["version"], labels["creater_id"]
+	return labels["tenant_env_id"], labels["service_id"], labels["version"], labels["creater_id"]
 }
 
 // ListEventsByPod -
@@ -146,7 +147,7 @@ func GetKubeVersion() *utilversion.Version {
 	return utilversion.MustParseSemantic(serverVersion.GitVersion)
 }
 
-//GetClientSet -
+// GetClientSet -
 func GetClientSet() kubernetes.Interface {
 	if clientset == nil {
 		once.Do(func() {
@@ -157,7 +158,7 @@ func GetClientSet() kubernetes.Interface {
 	return clientset
 }
 
-//MustNewKubeConfig -
+// MustNewKubeConfig -
 func MustNewKubeConfig(kubeconfigPath string) *rest.Config {
 	if kubeconfigPath != "" {
 		cfg, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)

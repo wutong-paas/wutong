@@ -18,17 +18,17 @@
 
 package model
 
-//AddOrUpdateRegistryAuthSecretStruct is used to add or update registry auth secret
+// AddOrUpdateRegistryAuthSecretStruct is used to add or update registry auth secret
 type AddOrUpdateRegistryAuthSecretStruct struct {
-	TenantID string `json:"tenant_id" validate:"tenant_id|required"`
-	SecretID string `json:"secret_id" validate:"secret_id|required"`
-	Domain   string `json:"domain" validate:"domain|required"`
-	Username string `json:"username" validate:"username|required"`
-	Password string `json:"password" validate:"password|required"`
+	TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id|required"`
+	SecretID    string `json:"secret_id" validate:"secret_id|required"`
+	Domain      string `json:"domain" validate:"domain|required"`
+	Username    string `json:"username" validate:"username|required"`
+	Password    string `json:"password" validate:"password|required"`
 }
 
-//DeleteRegistryAuthSecretStruct is used to delete registry auth secret
+// DeleteRegistryAuthSecretStruct is used to delete registry auth secret
 type DeleteRegistryAuthSecretStruct struct {
-	TenantID string `json:"tenant_id" validate:"tenant_id|required"`
-	SecretID string `json:"secret_id" validate:"secret_id|required"`
+	TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id|required"`
+	SecretID    string `json:"secret_id" validate:"secret_id|required"`
 }

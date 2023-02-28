@@ -28,7 +28,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
-//RepostoryBuildInfo 源码编译信息
+// RepostoryBuildInfo 源码编译信息
 type RepostoryBuildInfo struct {
 	RepostoryURL     string
 	RepostoryURLType string
@@ -38,7 +38,7 @@ type RepostoryBuildInfo struct {
 	ep               *transport.Endpoint
 }
 
-//GetCodeHome 获取代码目录
+// GetCodeHome 获取代码目录
 func (r *RepostoryBuildInfo) GetCodeHome() string {
 	if r.RepostoryURLType == "svn" {
 		if ok, _ := util.FileExists(path.Join(r.CodeHome, "trunk")); ok && r.BuildBranch == "trunk" {
@@ -68,17 +68,17 @@ func (r *RepostoryBuildInfo) GetCodeHome() string {
 	return r.CodeHome
 }
 
-//GetCodeBuildAbsPath 获取代码编译绝对目录
+// GetCodeBuildAbsPath 获取代码编译绝对目录
 func (r *RepostoryBuildInfo) GetCodeBuildAbsPath() string {
 	return path.Join(r.GetCodeHome(), r.BuildPath)
 }
 
-//GetCodeBuildPath 获取代码编译相对目录
+// GetCodeBuildPath 获取代码编译相对目录
 func (r *RepostoryBuildInfo) GetCodeBuildPath() string {
 	return r.BuildPath
 }
 
-//GetProtocol 获取协议
+// GetProtocol 获取协议
 func (r *RepostoryBuildInfo) GetProtocol() string {
 	if r.ep != nil {
 		if r.ep.Protocol == "" {
@@ -89,9 +89,9 @@ func (r *RepostoryBuildInfo) GetProtocol() string {
 	return ""
 }
 
-//CreateRepostoryBuildInfo 创建源码编译信息
-//repoType git or svn
-func CreateRepostoryBuildInfo(repoURL, repoType, branch, tenantID string, ServiceID string) (*RepostoryBuildInfo, error) {
+// CreateRepostoryBuildInfo 创建源码编译信息
+// repoType git or svn
+func CreateRepostoryBuildInfo(repoURL, repoType, branch, tenantEnvID string, ServiceID string) (*RepostoryBuildInfo, error) {
 	// repoURL= github.com/wutong/xxx.git?dir=home
 	ep, err := transport.NewEndpoint(repoURL)
 	if err != nil {
@@ -107,10 +107,10 @@ func CreateRepostoryBuildInfo(repoURL, repoType, branch, tenantID string, Servic
 	if index > -1 && len(repoURL) > index+5 {
 		fmt.Println(repoURL[index+5:], repoURL[:index])
 		rbi.BuildPath = repoURL[index+5:]
-		rbi.CodeHome = GetCodeSourceDir(repoURL[:index], branch, tenantID, ServiceID)
+		rbi.CodeHome = GetCodeSourceDir(repoURL[:index], branch, tenantEnvID, ServiceID)
 		rbi.RepostoryURL = repoURL[:index]
 	}
-	rbi.CodeHome = GetCodeSourceDir(repoURL, branch, tenantID, ServiceID)
+	rbi.CodeHome = GetCodeSourceDir(repoURL, branch, tenantEnvID, ServiceID)
 	logrus.Infof("cache code dir is %s for service %s", rbi.CodeHome, ServiceID)
 	return rbi, nil
 }

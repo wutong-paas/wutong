@@ -76,9 +76,9 @@ func TestABCService(t *testing.T) {
 		"service_id":"55c60b74a506261608f5c36f0f45068c",
 		"code_from":"gitlab_manual",
 		"volume_mount_path":"/data",
-		"tenant_id":"3000bf47672b40c19529504651697b29",
+		"tenant_env_id":"3000bf47672b40c19529504651697b29",
 		"container_cmd":"start web",
-		"host_path":"/wtdata/tenant/3000bf47672b40c19529504651697b29/service/55c60b74a506261608f5c36f0f45068c",
+		"host_path":"/wtdata/tenantEnv/3000bf47672b40c19529504651697b29/service/55c60b74a506261608f5c36f0f45068c",
 		"envs_info":[
 	
 		],

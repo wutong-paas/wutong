@@ -33,9 +33,9 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//Event GetLogs
-func (t *TenantStruct) Event(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET  /v2/tenants/{tenant_name}/event v2 getevents
+// Event GetLogs
+func (t *TenantEnvStruct) Event(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/event v2 getevents
 	//
 	// 获取指定event_ids详细信息
 	//
@@ -75,8 +75,8 @@ func (t *TenantStruct) Event(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, events)
 }
 
-//GetNotificationEvents GetNotificationEvent
-//support query from start and end time or all
+// GetNotificationEvents GetNotificationEvent
+// support query from start and end time or all
 // swagger:operation GET  /v2/notificationEvent v2/notificationEvent getevents
 //
 // 获取数据中心通知事件
@@ -89,10 +89,11 @@ func (t *TenantStruct) Event(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
 func GetNotificationEvents(w http.ResponseWriter, r *http.Request) {
 	var startTime, endTime time.Time
 	start := r.FormValue("start")
@@ -110,11 +111,11 @@ func GetNotificationEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, v := range res {
-		service, err := db.GetManager().TenantServiceDao().GetServiceByID(v.KindID)
+		service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(v.KindID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				v.ServiceName = ""
-				v.TenantName = ""
+				v.TenantEnvName = ""
 				continue
 			} else {
 				logrus.Errorf(err.Error())
@@ -122,11 +123,11 @@ func GetNotificationEvents(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		tenant, err := db.GetManager().TenantDao().GetTenantByUUID(service.TenantID)
+		tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(service.TenantEnvID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				v.ServiceName = ""
-				v.TenantName = ""
+				v.TenantEnvName = ""
 				continue
 			} else {
 				logrus.Errorf(err.Error())
@@ -135,12 +136,12 @@ func GetNotificationEvents(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		v.ServiceName = service.ServiceAlias
-		v.TenantName = tenant.Name
+		v.TenantEnvName = tenantEnv.Name
 	}
 	httputil.ReturnSuccess(r, w, res)
 }
 
-//Handle Handle
+// Handle Handle
 // swagger:parameters handlenotify
 type Handle struct {
 	Body struct {
@@ -150,7 +151,7 @@ type Handle struct {
 	}
 }
 
-//HandleNotificationEvent HandleNotificationEvent
+// HandleNotificationEvent HandleNotificationEvent
 // swagger:operation PUT  /v2/notificationEvent/{hash} v2/notificationEvent handlenotify
 //
 // 处理通知事件
@@ -163,10 +164,11 @@ type Handle struct {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
 func HandleNotificationEvent(w http.ResponseWriter, r *http.Request) {
 	serviceAlias := chi.URLParam(r, "serviceAlias")
 	if serviceAlias == "" {
@@ -178,7 +180,7 @@ func HandleNotificationEvent(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	service, err := db.GetManager().TenantServiceDao().GetServiceByServiceAlias(serviceAlias)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByServiceAlias(serviceAlias)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			httputil.ReturnError(r, w, 404, "not found")
@@ -209,7 +211,7 @@ func HandleNotificationEvent(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GetNotificationEvent GetNotificationEvent
+// GetNotificationEvent GetNotificationEvent
 // swagger:operation GET  /v2/notificationEvent/{hash} v2/notificationEvent getevents
 //
 // 获取通知事件
@@ -222,10 +224,11 @@ func HandleNotificationEvent(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
 func GetNotificationEvent(w http.ResponseWriter, r *http.Request) {
 
 	hash := chi.URLParam(r, "hash")

@@ -1,23 +1,23 @@
 package dao
 
 import (
-	"github.com/wutong-paas/wutong/db/model"
 	"github.com/jinzhu/gorm"
+	"github.com/wutong-paas/wutong/db/model"
 )
 
-//EnterpriseDaoImpl 租户信息管理
+// EnterpriseDaoImpl 租户环境信息管理
 type EnterpriseDaoImpl struct {
 	DB *gorm.DB
 }
 
-// GetEnterpriseTenants -
-func (e *EnterpriseDaoImpl) GetEnterpriseTenants(enterpriseID string) ([]*model.Tenants, error) {
-	var tenants []*model.Tenants
+// GetEnterpriseTenantEnvs -
+func (e *EnterpriseDaoImpl) GetEnterpriseTenantEnvs(enterpriseID string) ([]*model.TenantEnvs, error) {
+	var tenantEnvs []*model.TenantEnvs
 	if enterpriseID == "" {
-		return []*model.Tenants{}, nil
+		return []*model.TenantEnvs{}, nil
 	}
-	if err := e.DB.Where("eid= ?", enterpriseID).Find(&tenants).Error; err != nil {
+	if err := e.DB.Where("eid= ?", enterpriseID).Find(&tenantEnvs).Error; err != nil {
 		return nil, err
 	}
-	return tenants, nil
+	return tenantEnvs, nil
 }

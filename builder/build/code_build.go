@@ -321,7 +321,7 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	envs := []corev1.EnvVar{
 		{Name: "SLUG_VERSION", Value: re.DeployVersion},
 		{Name: "SERVICE_ID", Value: re.ServiceID},
-		{Name: "TENANT_ID", Value: re.TenantID},
+		{Name: "TENANT_ID", Value: re.TenantEnvID},
 		{Name: "CODE_COMMIT_HASH", Value: re.Commit.Hash},
 		{Name: "CODE_COMMIT_USER", Value: re.Commit.User},
 		{Name: "CODE_COMMIT_MESSAGE", Value: re.Commit.Message},

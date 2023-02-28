@@ -52,7 +52,7 @@ func (v *ConfigFileVolume) CreateVolume(define *Define) error {
 	for _, env := range v.envs {
 		configs[env.Name] = env.Value
 	}
-	cf, err := v.dbmanager.TenantServiceConfigFileDao().GetByVolumeName(v.as.ServiceID, v.svm.VolumeName)
+	cf, err := v.dbmanager.TenantEnvServiceConfigFileDao().GetByVolumeName(v.as.ServiceID, v.svm.VolumeName)
 	if err != nil {
 		logrus.Errorf("error getting config file by volume name(%s): %v", v.svm.VolumeName, err)
 		return fmt.Errorf("error getting config file by volume name(%s): %v", v.svm.VolumeName, err)
@@ -77,14 +77,14 @@ func (v *ConfigFileVolume) CreateDependVolume(define *Define) error {
 	for _, env := range v.envs {
 		configs[env.Name] = env.Value
 	}
-	depVol, err := v.dbmanager.TenantServiceVolumeDao().GetVolumeByServiceIDAndName(v.smr.DependServiceID, v.smr.VolumeName)
+	depVol, err := v.dbmanager.TenantEnvServiceVolumeDao().GetVolumeByServiceIDAndName(v.smr.DependServiceID, v.smr.VolumeName)
 	if err != nil {
-		return fmt.Errorf("error getting TenantServiceVolume according to serviceID(%s) and volumeName(%s): %v",
+		return fmt.Errorf("error getting TenantEnvServiceVolume according to serviceID(%s) and volumeName(%s): %v",
 			v.smr.DependServiceID, v.smr.VolumeName, err)
 	}
-	cf, err := v.dbmanager.TenantServiceConfigFileDao().GetByVolumeName(v.smr.DependServiceID, v.smr.VolumeName)
+	cf, err := v.dbmanager.TenantEnvServiceConfigFileDao().GetByVolumeName(v.smr.DependServiceID, v.smr.VolumeName)
 	if err != nil {
-		return fmt.Errorf("error getting TenantServiceConfigFile according to volumeName(%s): %v", v.smr.VolumeName, err)
+		return fmt.Errorf("error getting TenantEnvServiceConfigFile according to volumeName(%s): %v", v.smr.VolumeName, err)
 	}
 
 	cmap := &corev1.ConfigMap{

@@ -84,45 +84,45 @@ func CreateTestManager() (Manager, error) {
 	return GetManager(), nil
 }
 
-func TestTenantDao(t *testing.T) {
+func TestTenantEnvDao(t *testing.T) {
 	if err := CreateManager(dbconfig.Config{
 		MysqlConnectionInfo: "root:admin@tcp(127.0.0.1:3306)/region",
 		DBType:              "mysql",
 	}); err != nil {
 		t.Fatal(err)
 	}
-	err := GetManager().TenantDao().AddModel(&model.Tenants{
+	err := GetManager().TenantEnvDao().AddModel(&model.TenantEnvs{
 		Name: "barnett4",
 		UUID: util.NewUUID(),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	tenant, err := GetManager().TenantDao().GetTenantByUUID("27bbdd119b24444696dc51aa2f41eef8")
+	tenantEnv, err := GetManager().TenantEnvDao().GetTenantEnvByUUID("27bbdd119b24444696dc51aa2f41eef8")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(tenant)
+	t.Log(tenantEnv)
 }
 
-func TestTenantServiceDao(t *testing.T) {
+func TestTenantEnvServiceDao(t *testing.T) {
 	if err := CreateManager(dbconfig.Config{
 		MysqlConnectionInfo: "root:admin@tcp(127.0.0.1:3306)/region",
 		DBType:              "mysql",
 	}); err != nil {
 		t.Fatal(err)
 	}
-	service, err := GetManager().TenantServiceDao().GetServiceByTenantIDAndServiceAlias("27bbdd119b24444696dc51aa2f41eef8", "wtb58f90")
+	service, err := GetManager().TenantEnvServiceDao().GetServiceByTenantEnvIDAndServiceAlias("27bbdd119b24444696dc51aa2f41eef8", "wtb58f90")
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(service)
-	service, err = GetManager().TenantServiceDao().GetServiceByID("2f29882148c19f5f84e3a7cedf6097c7")
+	service, err = GetManager().TenantEnvServiceDao().GetServiceByID("2f29882148c19f5f84e3a7cedf6097c7")
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(service)
-	services, err := GetManager().TenantServiceDao().GetServiceAliasByIDs([]string{"2f29882148c19f5f84e3a7cedf6097c7"})
+	services, err := GetManager().TenantEnvServiceDao().GetServiceAliasByIDs([]string{"2f29882148c19f5f84e3a7cedf6097c7"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,7 +138,7 @@ func TestGetServiceEnvs(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	envs, err := GetManager().TenantServiceEnvVarDao().GetServiceEnvs("2f29882148c19f5f84e3a7cedf6097c7", nil)
+	envs, err := GetManager().TenantEnvServiceEnvVarDao().GetServiceEnvs("2f29882148c19f5f84e3a7cedf6097c7", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,34 +154,34 @@ func TestSetServiceLabel(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	label := model.TenantServiceLable{
+	label := model.TenantEnvServiceLable{
 		LabelKey:   "labelkey",
 		LabelValue: "labelvalue",
 		ServiceID:  "889bb1f028f655bebd545f24aa184a0b",
 	}
 	label.CreatedAt = time.Now()
 	label.ID = 1
-	err := GetManager().TenantServiceLabelDao().UpdateModel(&label)
+	err := GetManager().TenantEnvServiceLabelDao().UpdateModel(&label)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestCreateTenantServiceLBMappingPort(t *testing.T) {
+func TestCreateTenantEnvServiceLBMappingPort(t *testing.T) {
 	if err := CreateManager(dbconfig.Config{
 		MysqlConnectionInfo: "root:admin@tcp(127.0.0.1:3306)/region",
 		DBType:              "mysql",
 	}); err != nil {
 		t.Fatal(err)
 	}
-	mapPort, err := GetManager().TenantServiceLBMappingPortDao().CreateTenantServiceLBMappingPort("889bb1f028f655bebd545f24aa184a0b", 8080)
+	mapPort, err := GetManager().TenantEnvServiceLBMappingPortDao().CreateTenantEnvServiceLBMappingPort("889bb1f028f655bebd545f24aa184a0b", 8080)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Log(mapPort)
 }
 
-func TestCreateTenantServiceLBMappingPortTran(t *testing.T) {
+func TestCreateTenantEnvServiceLBMappingPortTran(t *testing.T) {
 	if err := CreateManager(dbconfig.Config{
 		MysqlConnectionInfo: "root:admin@tcp(127.0.0.1:3306)/region",
 		DBType:              "mysql",
@@ -189,7 +189,7 @@ func TestCreateTenantServiceLBMappingPortTran(t *testing.T) {
 		t.Fatal(err)
 	}
 	tx := GetManager().Begin()
-	mapPort, err := GetManager().TenantServiceLBMappingPortDaoTransactions(tx).CreateTenantServiceLBMappingPort("889bb1f028f655bebd545f24aa184a0b", 8082)
+	mapPort, err := GetManager().TenantEnvServiceLBMappingPortDaoTransactions(tx).CreateTenantEnvServiceLBMappingPort("889bb1f028f655bebd545f24aa184a0b", 8082)
 	if err != nil {
 		tx.Rollback()
 		t.Fatal(err)
@@ -206,7 +206,7 @@ func TestGetMem(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	// err := GetManager().TenantDao().AddModel(&model.Tenants{
+	// err := GetManager().TenantEnvDao().AddModel(&model.TenantEnvs{
 	// 	Name: "barnett3",
 	// 	UUID: util.NewUUID(),
 	// })
@@ -230,8 +230,8 @@ func TestCockroachDBCreateService(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	err := GetManager().TenantServiceDao().AddModel(&model.TenantServices{
-		TenantID:     "asdasd",
+	err := GetManager().TenantEnvServiceDao().AddModel(&model.TenantEnvServices{
+		TenantEnvID:  "asdasd",
 		ServiceID:    "asdasdasdasd",
 		ServiceAlias: "wtasdasdasdads",
 	})
@@ -247,7 +247,7 @@ func TestCockroachDBDeleteService(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	err := GetManager().TenantServiceDao().DeleteServiceByServiceID("asdasdasdasd")
+	err := GetManager().TenantEnvServiceDao().DeleteServiceByServiceID("asdasdasdasd")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,7 +261,7 @@ func TestCockroachDBDeleteService(t *testing.T) {
 //		t.Fatal(err)
 //	}
 //	err := GetManager().K8sDeployReplicationDao().AddModel(&model.K8sDeployReplication{
-//		TenantID:        "asdasd",
+//		TenantEnvID:        "asdasd",
 //		ServiceID:       "asdasdasdasd",
 //		ReplicationID:   "asdasdadsasdasdasd",
 //		ReplicationType: model.TypeReplicationController,
@@ -292,14 +292,14 @@ func TestGetCertificateByID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cert, err := GetManager().TenantServiceLabelDao().GetTenantNodeAffinityLabel("105bb7d4b94774f922edb3051bdf8ce1")
+	cert, err := GetManager().TenantEnvServiceLabelDao().GetTenantEnvNodeAffinityLabel("105bb7d4b94774f922edb3051bdf8ce1")
 	if err != nil {
 		t.Fatal(err)
 	}
 	fmt.Println(cert)
 }
 
-var shareFileVolumeType = &model.TenantServiceVolumeType{
+var shareFileVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "share-file",
 	NameShow:    "共享存储（文件）",
 	Description: "分布式文件存储，可租户内共享挂载，适用于所有类型应用",
@@ -310,7 +310,7 @@ var shareFileVolumeType = &model.TenantServiceVolumeType{
 	AccessMode:    "RWO,ROX,RWX",
 }
 
-var localVolumeType = &model.TenantServiceVolumeType{
+var localVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "local",
 	NameShow:    "本地存储",
 	Description: "本地存储设备，适用于有状态数据库服务",
@@ -321,7 +321,7 @@ var localVolumeType = &model.TenantServiceVolumeType{
 	AccessMode:    "RWO,ROX,RWX",
 }
 
-var memoryFSVolumeType = &model.TenantServiceVolumeType{
+var memoryFSVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "memoryfs",
 	NameShow:    "内存文件存储",
 	Description: "基于内存的存储设备，容量由内存量限制。应用重启数据即丢失，适用于高速暂存数据",
@@ -332,7 +332,7 @@ var memoryFSVolumeType = &model.TenantServiceVolumeType{
 	AccessMode:    "RWO,ROX,RWX",
 }
 
-var alicloudDiskAvailableVolumeType = &model.TenantServiceVolumeType{
+var alicloudDiskAvailableVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "alicloud-disk-available",
 	NameShow:    "阿里云盘（智能选择）",
 	Description: "阿里云智能选择云盘。会通过高效云盘、SSD、基础云盘的顺序依次尝试创建当前阿里云区域支持的云盘类型",
@@ -344,7 +344,7 @@ var alicloudDiskAvailableVolumeType = &model.TenantServiceVolumeType{
 	Sort:          10,
 }
 
-var alicloudDiskcommonVolumeType = &model.TenantServiceVolumeType{
+var alicloudDiskcommonVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "alicloud-disk-common",
 	NameShow:    "阿里云盘（基础）",
 	Description: "阿里云普通基础云盘。最小限额5G",
@@ -355,7 +355,7 @@ var alicloudDiskcommonVolumeType = &model.TenantServiceVolumeType{
 	AccessMode:    "RWO",
 	Sort:          13,
 }
-var alicloudDiskEfficiencyVolumeType = &model.TenantServiceVolumeType{
+var alicloudDiskEfficiencyVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "alicloud-disk-efficiency",
 	NameShow:    "阿里云盘（高效）",
 	Description: "阿里云高效云盘。最小限额20G",
@@ -366,7 +366,7 @@ var alicloudDiskEfficiencyVolumeType = &model.TenantServiceVolumeType{
 	AccessMode:    "RWO",
 	Sort:          11,
 }
-var alicloudDiskeSSDVolumeType = &model.TenantServiceVolumeType{
+var alicloudDiskeSSDVolumeType = &model.TenantEnvServiceVolumeType{
 	VolumeType:  "alicloud-disk-ssd",
 	NameShow:    "阿里云盘（SSD）",
 	Description: "阿里云SSD类型云盘。最小限额20G",

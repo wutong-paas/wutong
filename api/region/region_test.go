@@ -25,22 +25,22 @@ import (
 	utilhttp "github.com/wutong-paas/wutong/util/http"
 )
 
-func TestListTenant(t *testing.T) {
+func TestListTenantEnv(t *testing.T) {
 	region, _ := NewRegion(APIConf{
 		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
-	tenants, err := region.Tenants("").List()
+	tenantEnvs, err := region.TenantEnvs("").List()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%+v", tenants)
+	t.Logf("%+v", tenantEnvs)
 }
 
 func TestListServices(t *testing.T) {
 	region, _ := NewRegion(APIConf{
 		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
-	services, err := region.Tenants("n93lkp7t").Services("").List()
+	services, err := region.TenantEnvs("n93lkp7t").Services("").List()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,13 +54,13 @@ func TestDoRequest(t *testing.T) {
 		Endpoints: []string{"http://kubeapi.wutong.me:8888"},
 	})
 	var decode utilhttp.ResponseBody
-	var tenants []*dbmodel.Tenants
-	decode.List = &tenants
-	code, err := region.DoRequest("/v2/tenants", "GET", nil, &decode)
+	var tenantEnvs []*dbmodel.TenantEnvs
+	decode.List = &tenantEnvs
+	code, err := region.DoRequest("/v2/tenants/{tenant_name}/envs", "GET", nil, &decode)
 	if err != nil {
 		t.Fatal(err, code)
 	}
-	t.Logf("%+v", tenants)
+	t.Logf("%+v", tenantEnvs)
 }
 
 func TestListNodes(t *testing.T) {
@@ -87,16 +87,16 @@ func TestGetNodes(t *testing.T) {
 	t.Logf("%+v", node)
 }
 
-func TestGetTenantsBySSL(t *testing.T) {
+func TestGetTenantEnvsBySSL(t *testing.T) {
 	region, _ := NewRegion(APIConf{
 		Endpoints: []string{"https://127.0.0.1:8443"},
 		Cacert:    "/Users/qingguo/gopath/src/github.com/wutong-paas/wutong/test/ssl/ca.pem",
 		Cert:      "/Users/qingguo/gopath/src/github.com/wutong-paas/wutong/test/ssl/client.pem",
 		CertKey:   "/Users/qingguo/gopath/src/github.com/wutong-paas/wutong/test/ssl/client.key.pem",
 	})
-	tenants, err := region.Tenants("").List()
+	tenantEnvs, err := region.TenantEnvs("").List()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%+v", tenants)
+	t.Logf("%+v", tenantEnvs)
 }

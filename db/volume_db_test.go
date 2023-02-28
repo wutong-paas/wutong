@@ -31,7 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-func TestManager_TenantServiceConfigFileDaoImpl_UpdateModel(t *testing.T) {
+func TestManager_TenantEnvServiceConfigFileDaoImpl_UpdateModel(t *testing.T) {
 	dbname := "region"
 	rootpw := "wutong"
 
@@ -82,15 +82,15 @@ func TestManager_TenantServiceConfigFileDaoImpl_UpdateModel(t *testing.T) {
 		break
 	}
 
-	cf := &model.TenantServiceConfigFile{
+	cf := &model.TenantEnvServiceConfigFile{
 		ServiceID:   util.NewUUID(),
 		VolumeName:  util.NewUUID(),
 		FileContent: "dummy file content",
 	}
-	if err := GetManager().TenantServiceConfigFileDao().AddModel(cf); err != nil {
+	if err := GetManager().TenantEnvServiceConfigFileDao().AddModel(cf); err != nil {
 		t.Fatal(err)
 	}
-	cf, err = GetManager().TenantServiceConfigFileDao().GetByVolumeName(cf.ServiceID, cf.VolumeName)
+	cf, err = GetManager().TenantEnvServiceConfigFileDao().GetByVolumeName(cf.ServiceID, cf.VolumeName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,10 +98,10 @@ func TestManager_TenantServiceConfigFileDaoImpl_UpdateModel(t *testing.T) {
 		t.Errorf("Expected one config file, but returned %v", cf)
 	}
 
-	if err := GetManager().TenantServiceConfigFileDao().DelByVolumeID(cf.ServiceID, cf.VolumeName); err != nil {
+	if err := GetManager().TenantEnvServiceConfigFileDao().DelByVolumeID(cf.ServiceID, cf.VolumeName); err != nil {
 		t.Fatal(err)
 	}
-	cf, err = GetManager().TenantServiceConfigFileDao().GetByVolumeName(cf.ServiceID, cf.VolumeName)
+	cf, err = GetManager().TenantEnvServiceConfigFileDao().GetByVolumeName(cf.ServiceID, cf.VolumeName)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		t.Fatal(err)
 	}

@@ -256,256 +256,256 @@ func (mr *MockManagerMockRecorder) EnterpriseDao() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnterpriseDao", reflect.TypeOf((*MockManager)(nil).EnterpriseDao))
 }
 
-// TenantDao mocks base method
-func (m *MockManager) TenantDao() dao.TenantDao {
+// TenantEnvDao mocks base method
+func (m *MockManager) TenantEnvDao() dao.TenantEnvDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantDao")
-	ret0, _ := ret[0].(dao.TenantDao)
+	ret := m.ctrl.Call(m, "TenantEnvDao")
+	ret0, _ := ret[0].(dao.TenantEnvDao)
 	return ret0
 }
 
-// TenantDao indicates an expected call of TenantDao
-func (mr *MockManagerMockRecorder) TenantDao() *gomock.Call {
+// TenantEnvDao indicates an expected call of TenantEnvDao
+func (mr *MockManagerMockRecorder) TenantEnvDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantDao", reflect.TypeOf((*MockManager)(nil).TenantDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvDao", reflect.TypeOf((*MockManager)(nil).TenantEnvDao))
 }
 
-// TenantDaoTransactions mocks base method
-func (m *MockManager) TenantDaoTransactions(db *gorm.DB) dao.TenantDao {
+// TenantEnvDaoTransactions mocks base method
+func (m *MockManager) TenantEnvDaoTransactions(db *gorm.DB) dao.TenantEnvDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantDao)
+	ret := m.ctrl.Call(m, "TenantEnvDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvDao)
 	return ret0
 }
 
-// TenantDaoTransactions indicates an expected call of TenantDaoTransactions
-func (mr *MockManagerMockRecorder) TenantDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvDaoTransactions indicates an expected call of TenantEnvDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvDaoTransactions), db)
 }
 
-// TenantServiceDao mocks base method
-func (m *MockManager) TenantServiceDao() dao.TenantServiceDao {
+// TenantEnvServiceDao mocks base method
+func (m *MockManager) TenantEnvServiceDao() dao.TenantEnvServiceDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceDao")
-	ret0, _ := ret[0].(dao.TenantServiceDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceDao)
 	return ret0
 }
 
-// TenantServiceDao indicates an expected call of TenantServiceDao
-func (mr *MockManagerMockRecorder) TenantServiceDao() *gomock.Call {
+// TenantEnvServiceDao indicates an expected call of TenantEnvServiceDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceDao", reflect.TypeOf((*MockManager)(nil).TenantServiceDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceDao))
 }
 
-// TenantServiceDeleteDao mocks base method
-func (m *MockManager) TenantServiceDeleteDao() dao.TenantServiceDeleteDao {
+// TenantEnvServiceDeleteDao mocks base method
+func (m *MockManager) TenantEnvServiceDeleteDao() dao.TenantEnvServiceDeleteDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceDeleteDao")
-	ret0, _ := ret[0].(dao.TenantServiceDeleteDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceDeleteDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceDeleteDao)
 	return ret0
 }
 
-// TenantServiceDeleteDao indicates an expected call of TenantServiceDeleteDao
-func (mr *MockManagerMockRecorder) TenantServiceDeleteDao() *gomock.Call {
+// TenantEnvServiceDeleteDao indicates an expected call of TenantEnvServiceDeleteDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceDeleteDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceDeleteDao", reflect.TypeOf((*MockManager)(nil).TenantServiceDeleteDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceDeleteDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceDeleteDao))
 }
 
-// TenantServiceDaoTransactions mocks base method
-func (m *MockManager) TenantServiceDaoTransactions(db *gorm.DB) dao.TenantServiceDao {
+// TenantEnvServiceDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceDaoTransactions(db *gorm.DB) dao.TenantEnvServiceDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServiceDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServiceDao)
 	return ret0
 }
 
-// TenantServiceDaoTransactions indicates an expected call of TenantServiceDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServiceDaoTransactions indicates an expected call of TenantEnvServiceDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceDaoTransactions), db)
 }
 
-// TenantServiceDeleteDaoTransactions mocks base method
-func (m *MockManager) TenantServiceDeleteDaoTransactions(db *gorm.DB) dao.TenantServiceDeleteDao {
+// TenantEnvServiceDeleteDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceDeleteDaoTransactions(db *gorm.DB) dao.TenantEnvServiceDeleteDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceDeleteDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServiceDeleteDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceDeleteDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServiceDeleteDao)
 	return ret0
 }
 
-// TenantServiceDeleteDaoTransactions indicates an expected call of TenantServiceDeleteDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceDeleteDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServiceDeleteDaoTransactions indicates an expected call of TenantEnvServiceDeleteDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceDeleteDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceDeleteDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceDeleteDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceDeleteDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceDeleteDaoTransactions), db)
 }
 
-// TenantServicesPortDao mocks base method
-func (m *MockManager) TenantServicesPortDao() dao.TenantServicesPortDao {
+// TenantEnvServicesPortDao mocks base method
+func (m *MockManager) TenantEnvServicesPortDao() dao.TenantEnvServicesPortDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServicesPortDao")
-	ret0, _ := ret[0].(dao.TenantServicesPortDao)
+	ret := m.ctrl.Call(m, "TenantEnvServicesPortDao")
+	ret0, _ := ret[0].(dao.TenantEnvServicesPortDao)
 	return ret0
 }
 
-// TenantServicesPortDao indicates an expected call of TenantServicesPortDao
-func (mr *MockManagerMockRecorder) TenantServicesPortDao() *gomock.Call {
+// TenantEnvServicesPortDao indicates an expected call of TenantEnvServicesPortDao
+func (mr *MockManagerMockRecorder) TenantEnvServicesPortDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServicesPortDao", reflect.TypeOf((*MockManager)(nil).TenantServicesPortDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServicesPortDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServicesPortDao))
 }
 
-// TenantServicesPortDaoTransactions mocks base method
-func (m *MockManager) TenantServicesPortDaoTransactions(arg0 *gorm.DB) dao.TenantServicesPortDao {
+// TenantEnvServicesPortDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServicesPortDaoTransactions(arg0 *gorm.DB) dao.TenantEnvServicesPortDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServicesPortDaoTransactions", arg0)
-	ret0, _ := ret[0].(dao.TenantServicesPortDao)
+	ret := m.ctrl.Call(m, "TenantEnvServicesPortDaoTransactions", arg0)
+	ret0, _ := ret[0].(dao.TenantEnvServicesPortDao)
 	return ret0
 }
 
-// TenantServicesPortDaoTransactions indicates an expected call of TenantServicesPortDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServicesPortDaoTransactions(arg0 interface{}) *gomock.Call {
+// TenantEnvServicesPortDaoTransactions indicates an expected call of TenantEnvServicesPortDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServicesPortDaoTransactions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServicesPortDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServicesPortDaoTransactions), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServicesPortDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServicesPortDaoTransactions), arg0)
 }
 
-// TenantServiceRelationDao mocks base method
-func (m *MockManager) TenantServiceRelationDao() dao.TenantServiceRelationDao {
+// TenantEnvServiceRelationDao mocks base method
+func (m *MockManager) TenantEnvServiceRelationDao() dao.TenantEnvServiceRelationDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceRelationDao")
-	ret0, _ := ret[0].(dao.TenantServiceRelationDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceRelationDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceRelationDao)
 	return ret0
 }
 
-// TenantServiceRelationDao indicates an expected call of TenantServiceRelationDao
-func (mr *MockManagerMockRecorder) TenantServiceRelationDao() *gomock.Call {
+// TenantEnvServiceRelationDao indicates an expected call of TenantEnvServiceRelationDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceRelationDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceRelationDao", reflect.TypeOf((*MockManager)(nil).TenantServiceRelationDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceRelationDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceRelationDao))
 }
 
-// TenantServiceRelationDaoTransactions mocks base method
-func (m *MockManager) TenantServiceRelationDaoTransactions(arg0 *gorm.DB) dao.TenantServiceRelationDao {
+// TenantEnvServiceRelationDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceRelationDaoTransactions(arg0 *gorm.DB) dao.TenantEnvServiceRelationDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceRelationDaoTransactions", arg0)
-	ret0, _ := ret[0].(dao.TenantServiceRelationDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceRelationDaoTransactions", arg0)
+	ret0, _ := ret[0].(dao.TenantEnvServiceRelationDao)
 	return ret0
 }
 
-// TenantServiceRelationDaoTransactions indicates an expected call of TenantServiceRelationDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceRelationDaoTransactions(arg0 interface{}) *gomock.Call {
+// TenantEnvServiceRelationDaoTransactions indicates an expected call of TenantEnvServiceRelationDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceRelationDaoTransactions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceRelationDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceRelationDaoTransactions), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceRelationDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceRelationDaoTransactions), arg0)
 }
 
-// TenantServiceEnvVarDao mocks base method
-func (m *MockManager) TenantServiceEnvVarDao() dao.TenantServiceEnvVarDao {
+// TenantEnvServiceEnvVarDao mocks base method
+func (m *MockManager) TenantEnvServiceEnvVarDao() dao.TenantEnvServiceEnvVarDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceEnvVarDao")
-	ret0, _ := ret[0].(dao.TenantServiceEnvVarDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceEnvVarDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceEnvVarDao)
 	return ret0
 }
 
-// TenantServiceEnvVarDao indicates an expected call of TenantServiceEnvVarDao
-func (mr *MockManagerMockRecorder) TenantServiceEnvVarDao() *gomock.Call {
+// TenantEnvServiceEnvVarDao indicates an expected call of TenantEnvServiceEnvVarDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceEnvVarDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceEnvVarDao", reflect.TypeOf((*MockManager)(nil).TenantServiceEnvVarDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceEnvVarDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceEnvVarDao))
 }
 
-// TenantServiceEnvVarDaoTransactions mocks base method
-func (m *MockManager) TenantServiceEnvVarDaoTransactions(arg0 *gorm.DB) dao.TenantServiceEnvVarDao {
+// TenantEnvServiceEnvVarDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceEnvVarDaoTransactions(arg0 *gorm.DB) dao.TenantEnvServiceEnvVarDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceEnvVarDaoTransactions", arg0)
-	ret0, _ := ret[0].(dao.TenantServiceEnvVarDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceEnvVarDaoTransactions", arg0)
+	ret0, _ := ret[0].(dao.TenantEnvServiceEnvVarDao)
 	return ret0
 }
 
-// TenantServiceEnvVarDaoTransactions indicates an expected call of TenantServiceEnvVarDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceEnvVarDaoTransactions(arg0 interface{}) *gomock.Call {
+// TenantEnvServiceEnvVarDaoTransactions indicates an expected call of TenantEnvServiceEnvVarDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceEnvVarDaoTransactions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceEnvVarDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceEnvVarDaoTransactions), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceEnvVarDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceEnvVarDaoTransactions), arg0)
 }
 
-// TenantServiceMountRelationDao mocks base method
-func (m *MockManager) TenantServiceMountRelationDao() dao.TenantServiceMountRelationDao {
+// TenantEnvServiceMountRelationDao mocks base method
+func (m *MockManager) TenantEnvServiceMountRelationDao() dao.TenantEnvServiceMountRelationDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceMountRelationDao")
-	ret0, _ := ret[0].(dao.TenantServiceMountRelationDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceMountRelationDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceMountRelationDao)
 	return ret0
 }
 
-// TenantServiceMountRelationDao indicates an expected call of TenantServiceMountRelationDao
-func (mr *MockManagerMockRecorder) TenantServiceMountRelationDao() *gomock.Call {
+// TenantEnvServiceMountRelationDao indicates an expected call of TenantEnvServiceMountRelationDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceMountRelationDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMountRelationDao", reflect.TypeOf((*MockManager)(nil).TenantServiceMountRelationDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceMountRelationDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceMountRelationDao))
 }
 
-// TenantServiceMountRelationDaoTransactions mocks base method
-func (m *MockManager) TenantServiceMountRelationDaoTransactions(db *gorm.DB) dao.TenantServiceMountRelationDao {
+// TenantEnvServiceMountRelationDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceMountRelationDaoTransactions(db *gorm.DB) dao.TenantEnvServiceMountRelationDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceMountRelationDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServiceMountRelationDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceMountRelationDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServiceMountRelationDao)
 	return ret0
 }
 
-// TenantServiceMountRelationDaoTransactions indicates an expected call of TenantServiceMountRelationDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceMountRelationDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServiceMountRelationDaoTransactions indicates an expected call of TenantEnvServiceMountRelationDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceMountRelationDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMountRelationDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceMountRelationDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceMountRelationDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceMountRelationDaoTransactions), db)
 }
 
-// TenantServiceVolumeDao mocks base method
-func (m *MockManager) TenantServiceVolumeDao() dao.TenantServiceVolumeDao {
+// TenantEnvServiceVolumeDao mocks base method
+func (m *MockManager) TenantEnvServiceVolumeDao() dao.TenantEnvServiceVolumeDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceVolumeDao")
-	ret0, _ := ret[0].(dao.TenantServiceVolumeDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceVolumeDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceVolumeDao)
 	return ret0
 }
 
-// TenantServiceVolumeDao indicates an expected call of TenantServiceVolumeDao
-func (mr *MockManagerMockRecorder) TenantServiceVolumeDao() *gomock.Call {
+// TenantEnvServiceVolumeDao indicates an expected call of TenantEnvServiceVolumeDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceVolumeDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceVolumeDao", reflect.TypeOf((*MockManager)(nil).TenantServiceVolumeDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceVolumeDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceVolumeDao))
 }
 
-// TenantServiceVolumeDaoTransactions mocks base method
-func (m *MockManager) TenantServiceVolumeDaoTransactions(arg0 *gorm.DB) dao.TenantServiceVolumeDao {
+// TenantEnvServiceVolumeDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceVolumeDaoTransactions(arg0 *gorm.DB) dao.TenantEnvServiceVolumeDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceVolumeDaoTransactions", arg0)
-	ret0, _ := ret[0].(dao.TenantServiceVolumeDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceVolumeDaoTransactions", arg0)
+	ret0, _ := ret[0].(dao.TenantEnvServiceVolumeDao)
 	return ret0
 }
 
-// TenantServiceVolumeDaoTransactions indicates an expected call of TenantServiceVolumeDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceVolumeDaoTransactions(arg0 interface{}) *gomock.Call {
+// TenantEnvServiceVolumeDaoTransactions indicates an expected call of TenantEnvServiceVolumeDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceVolumeDaoTransactions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceVolumeDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceVolumeDaoTransactions), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceVolumeDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceVolumeDaoTransactions), arg0)
 }
 
-// TenantServiceConfigFileDao mocks base method
-func (m *MockManager) TenantServiceConfigFileDao() dao.TenantServiceConfigFileDao {
+// TenantEnvServiceConfigFileDao mocks base method
+func (m *MockManager) TenantEnvServiceConfigFileDao() dao.TenantEnvServiceConfigFileDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceConfigFileDao")
-	ret0, _ := ret[0].(dao.TenantServiceConfigFileDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceConfigFileDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceConfigFileDao)
 	return ret0
 }
 
-// TenantServiceConfigFileDao indicates an expected call of TenantServiceConfigFileDao
-func (mr *MockManagerMockRecorder) TenantServiceConfigFileDao() *gomock.Call {
+// TenantEnvServiceConfigFileDao indicates an expected call of TenantEnvServiceConfigFileDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceConfigFileDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceConfigFileDao", reflect.TypeOf((*MockManager)(nil).TenantServiceConfigFileDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceConfigFileDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceConfigFileDao))
 }
 
-// TenantServiceConfigFileDaoTransactions mocks base method
-func (m *MockManager) TenantServiceConfigFileDaoTransactions(arg0 *gorm.DB) dao.TenantServiceConfigFileDao {
+// TenantEnvServiceConfigFileDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceConfigFileDaoTransactions(arg0 *gorm.DB) dao.TenantEnvServiceConfigFileDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceConfigFileDaoTransactions", arg0)
-	ret0, _ := ret[0].(dao.TenantServiceConfigFileDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceConfigFileDaoTransactions", arg0)
+	ret0, _ := ret[0].(dao.TenantEnvServiceConfigFileDao)
 	return ret0
 }
 
-// TenantServiceConfigFileDaoTransactions indicates an expected call of TenantServiceConfigFileDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceConfigFileDaoTransactions(arg0 interface{}) *gomock.Call {
+// TenantEnvServiceConfigFileDaoTransactions indicates an expected call of TenantEnvServiceConfigFileDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceConfigFileDaoTransactions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceConfigFileDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceConfigFileDaoTransactions), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceConfigFileDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceConfigFileDaoTransactions), arg0)
 }
 
 // ServiceProbeDao mocks base method
@@ -536,60 +536,60 @@ func (mr *MockManagerMockRecorder) ServiceProbeDaoTransactions(arg0 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceProbeDaoTransactions", reflect.TypeOf((*MockManager)(nil).ServiceProbeDaoTransactions), arg0)
 }
 
-// TenantServiceLBMappingPortDao mocks base method
-func (m *MockManager) TenantServiceLBMappingPortDao() dao.TenantServiceLBMappingPortDao {
+// TenantEnvServiceLBMappingPortDao mocks base method
+func (m *MockManager) TenantEnvServiceLBMappingPortDao() dao.TenantEnvServiceLBMappingPortDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceLBMappingPortDao")
-	ret0, _ := ret[0].(dao.TenantServiceLBMappingPortDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceLBMappingPortDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceLBMappingPortDao)
 	return ret0
 }
 
-// TenantServiceLBMappingPortDao indicates an expected call of TenantServiceLBMappingPortDao
-func (mr *MockManagerMockRecorder) TenantServiceLBMappingPortDao() *gomock.Call {
+// TenantEnvServiceLBMappingPortDao indicates an expected call of TenantEnvServiceLBMappingPortDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceLBMappingPortDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceLBMappingPortDao", reflect.TypeOf((*MockManager)(nil).TenantServiceLBMappingPortDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceLBMappingPortDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceLBMappingPortDao))
 }
 
-// TenantServiceLBMappingPortDaoTransactions mocks base method
-func (m *MockManager) TenantServiceLBMappingPortDaoTransactions(arg0 *gorm.DB) dao.TenantServiceLBMappingPortDao {
+// TenantEnvServiceLBMappingPortDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceLBMappingPortDaoTransactions(arg0 *gorm.DB) dao.TenantEnvServiceLBMappingPortDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceLBMappingPortDaoTransactions", arg0)
-	ret0, _ := ret[0].(dao.TenantServiceLBMappingPortDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceLBMappingPortDaoTransactions", arg0)
+	ret0, _ := ret[0].(dao.TenantEnvServiceLBMappingPortDao)
 	return ret0
 }
 
-// TenantServiceLBMappingPortDaoTransactions indicates an expected call of TenantServiceLBMappingPortDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceLBMappingPortDaoTransactions(arg0 interface{}) *gomock.Call {
+// TenantEnvServiceLBMappingPortDaoTransactions indicates an expected call of TenantEnvServiceLBMappingPortDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceLBMappingPortDaoTransactions(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceLBMappingPortDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceLBMappingPortDaoTransactions), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceLBMappingPortDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceLBMappingPortDaoTransactions), arg0)
 }
 
-// TenantServiceLabelDao mocks base method
-func (m *MockManager) TenantServiceLabelDao() dao.TenantServiceLabelDao {
+// TenantEnvServiceLabelDao mocks base method
+func (m *MockManager) TenantEnvServiceLabelDao() dao.TenantEnvServiceLabelDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceLabelDao")
-	ret0, _ := ret[0].(dao.TenantServiceLabelDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceLabelDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceLabelDao)
 	return ret0
 }
 
-// TenantServiceLabelDao indicates an expected call of TenantServiceLabelDao
-func (mr *MockManagerMockRecorder) TenantServiceLabelDao() *gomock.Call {
+// TenantEnvServiceLabelDao indicates an expected call of TenantEnvServiceLabelDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceLabelDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceLabelDao", reflect.TypeOf((*MockManager)(nil).TenantServiceLabelDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceLabelDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceLabelDao))
 }
 
-// TenantServiceLabelDaoTransactions mocks base method
-func (m *MockManager) TenantServiceLabelDaoTransactions(db *gorm.DB) dao.TenantServiceLabelDao {
+// TenantEnvServiceLabelDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceLabelDaoTransactions(db *gorm.DB) dao.TenantEnvServiceLabelDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceLabelDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServiceLabelDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceLabelDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServiceLabelDao)
 	return ret0
 }
 
-// TenantServiceLabelDaoTransactions indicates an expected call of TenantServiceLabelDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceLabelDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServiceLabelDaoTransactions indicates an expected call of TenantEnvServiceLabelDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceLabelDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceLabelDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceLabelDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceLabelDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceLabelDaoTransactions), db)
 }
 
 // LocalSchedulerDao mocks base method
@@ -606,200 +606,200 @@ func (mr *MockManagerMockRecorder) LocalSchedulerDao() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LocalSchedulerDao", reflect.TypeOf((*MockManager)(nil).LocalSchedulerDao))
 }
 
-// TenantPluginDaoTransactions mocks base method
-func (m *MockManager) TenantPluginDaoTransactions(db *gorm.DB) dao.TenantPluginDao {
+// TenantEnvPluginDaoTransactions mocks base method
+func (m *MockManager) TenantEnvPluginDaoTransactions(db *gorm.DB) dao.TenantEnvPluginDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantPluginDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvPluginDao)
 	return ret0
 }
 
-// TenantPluginDaoTransactions indicates an expected call of TenantPluginDaoTransactions
-func (mr *MockManagerMockRecorder) TenantPluginDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvPluginDaoTransactions indicates an expected call of TenantEnvPluginDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvPluginDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantPluginDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginDaoTransactions), db)
 }
 
-// TenantPluginDao mocks base method
-func (m *MockManager) TenantPluginDao() dao.TenantPluginDao {
+// TenantEnvPluginDao mocks base method
+func (m *MockManager) TenantEnvPluginDao() dao.TenantEnvPluginDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginDao")
-	ret0, _ := ret[0].(dao.TenantPluginDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginDao")
+	ret0, _ := ret[0].(dao.TenantEnvPluginDao)
 	return ret0
 }
 
-// TenantPluginDao indicates an expected call of TenantPluginDao
-func (mr *MockManagerMockRecorder) TenantPluginDao() *gomock.Call {
+// TenantEnvPluginDao indicates an expected call of TenantEnvPluginDao
+func (mr *MockManagerMockRecorder) TenantEnvPluginDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginDao", reflect.TypeOf((*MockManager)(nil).TenantPluginDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginDao", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginDao))
 }
 
-// TenantPluginDefaultENVDaoTransactions mocks base method
-func (m *MockManager) TenantPluginDefaultENVDaoTransactions(db *gorm.DB) dao.TenantPluginDefaultENVDao {
+// TenantEnvPluginDefaultENVDaoTransactions mocks base method
+func (m *MockManager) TenantEnvPluginDefaultENVDaoTransactions(db *gorm.DB) dao.TenantEnvPluginDefaultENVDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginDefaultENVDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantPluginDefaultENVDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginDefaultENVDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvPluginDefaultENVDao)
 	return ret0
 }
 
-// TenantPluginDefaultENVDaoTransactions indicates an expected call of TenantPluginDefaultENVDaoTransactions
-func (mr *MockManagerMockRecorder) TenantPluginDefaultENVDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvPluginDefaultENVDaoTransactions indicates an expected call of TenantEnvPluginDefaultENVDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvPluginDefaultENVDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginDefaultENVDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantPluginDefaultENVDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginDefaultENVDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginDefaultENVDaoTransactions), db)
 }
 
-// TenantPluginDefaultENVDao mocks base method
-func (m *MockManager) TenantPluginDefaultENVDao() dao.TenantPluginDefaultENVDao {
+// TenantEnvPluginDefaultENVDao mocks base method
+func (m *MockManager) TenantEnvPluginDefaultENVDao() dao.TenantEnvPluginDefaultENVDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginDefaultENVDao")
-	ret0, _ := ret[0].(dao.TenantPluginDefaultENVDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginDefaultENVDao")
+	ret0, _ := ret[0].(dao.TenantEnvPluginDefaultENVDao)
 	return ret0
 }
 
-// TenantPluginDefaultENVDao indicates an expected call of TenantPluginDefaultENVDao
-func (mr *MockManagerMockRecorder) TenantPluginDefaultENVDao() *gomock.Call {
+// TenantEnvPluginDefaultENVDao indicates an expected call of TenantEnvPluginDefaultENVDao
+func (mr *MockManagerMockRecorder) TenantEnvPluginDefaultENVDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginDefaultENVDao", reflect.TypeOf((*MockManager)(nil).TenantPluginDefaultENVDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginDefaultENVDao", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginDefaultENVDao))
 }
 
-// TenantPluginBuildVersionDao mocks base method
-func (m *MockManager) TenantPluginBuildVersionDao() dao.TenantPluginBuildVersionDao {
+// TenantEnvPluginBuildVersionDao mocks base method
+func (m *MockManager) TenantEnvPluginBuildVersionDao() dao.TenantEnvPluginBuildVersionDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginBuildVersionDao")
-	ret0, _ := ret[0].(dao.TenantPluginBuildVersionDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginBuildVersionDao")
+	ret0, _ := ret[0].(dao.TenantEnvPluginBuildVersionDao)
 	return ret0
 }
 
-// TenantPluginBuildVersionDao indicates an expected call of TenantPluginBuildVersionDao
-func (mr *MockManagerMockRecorder) TenantPluginBuildVersionDao() *gomock.Call {
+// TenantEnvPluginBuildVersionDao indicates an expected call of TenantEnvPluginBuildVersionDao
+func (mr *MockManagerMockRecorder) TenantEnvPluginBuildVersionDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginBuildVersionDao", reflect.TypeOf((*MockManager)(nil).TenantPluginBuildVersionDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginBuildVersionDao", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginBuildVersionDao))
 }
 
-// TenantPluginBuildVersionDaoTransactions mocks base method
-func (m *MockManager) TenantPluginBuildVersionDaoTransactions(db *gorm.DB) dao.TenantPluginBuildVersionDao {
+// TenantEnvPluginBuildVersionDaoTransactions mocks base method
+func (m *MockManager) TenantEnvPluginBuildVersionDaoTransactions(db *gorm.DB) dao.TenantEnvPluginBuildVersionDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginBuildVersionDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantPluginBuildVersionDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginBuildVersionDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvPluginBuildVersionDao)
 	return ret0
 }
 
-// TenantPluginBuildVersionDaoTransactions indicates an expected call of TenantPluginBuildVersionDaoTransactions
-func (mr *MockManagerMockRecorder) TenantPluginBuildVersionDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvPluginBuildVersionDaoTransactions indicates an expected call of TenantEnvPluginBuildVersionDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvPluginBuildVersionDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginBuildVersionDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantPluginBuildVersionDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginBuildVersionDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginBuildVersionDaoTransactions), db)
 }
 
-// TenantPluginVersionENVDao mocks base method
-func (m *MockManager) TenantPluginVersionENVDao() dao.TenantPluginVersionEnvDao {
+// TenantEnvPluginVersionENVDao mocks base method
+func (m *MockManager) TenantEnvPluginVersionENVDao() dao.TenantEnvPluginVersionEnvDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginVersionENVDao")
-	ret0, _ := ret[0].(dao.TenantPluginVersionEnvDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginVersionENVDao")
+	ret0, _ := ret[0].(dao.TenantEnvPluginVersionEnvDao)
 	return ret0
 }
 
-// TenantPluginVersionENVDao indicates an expected call of TenantPluginVersionENVDao
-func (mr *MockManagerMockRecorder) TenantPluginVersionENVDao() *gomock.Call {
+// TenantEnvPluginVersionENVDao indicates an expected call of TenantEnvPluginVersionENVDao
+func (mr *MockManagerMockRecorder) TenantEnvPluginVersionENVDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginVersionENVDao", reflect.TypeOf((*MockManager)(nil).TenantPluginVersionENVDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginVersionENVDao", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginVersionENVDao))
 }
 
-// TenantPluginVersionENVDaoTransactions mocks base method
-func (m *MockManager) TenantPluginVersionENVDaoTransactions(db *gorm.DB) dao.TenantPluginVersionEnvDao {
+// TenantEnvPluginVersionENVDaoTransactions mocks base method
+func (m *MockManager) TenantEnvPluginVersionENVDaoTransactions(db *gorm.DB) dao.TenantEnvPluginVersionEnvDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginVersionENVDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantPluginVersionEnvDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginVersionENVDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvPluginVersionEnvDao)
 	return ret0
 }
 
-// TenantPluginVersionENVDaoTransactions indicates an expected call of TenantPluginVersionENVDaoTransactions
-func (mr *MockManagerMockRecorder) TenantPluginVersionENVDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvPluginVersionENVDaoTransactions indicates an expected call of TenantEnvPluginVersionENVDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvPluginVersionENVDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginVersionENVDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantPluginVersionENVDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginVersionENVDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginVersionENVDaoTransactions), db)
 }
 
-// TenantPluginVersionConfigDao mocks base method
-func (m *MockManager) TenantPluginVersionConfigDao() dao.TenantPluginVersionConfigDao {
+// TenantEnvPluginVersionConfigDao mocks base method
+func (m *MockManager) TenantEnvPluginVersionConfigDao() dao.TenantEnvPluginVersionConfigDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginVersionConfigDao")
-	ret0, _ := ret[0].(dao.TenantPluginVersionConfigDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginVersionConfigDao")
+	ret0, _ := ret[0].(dao.TenantEnvPluginVersionConfigDao)
 	return ret0
 }
 
-// TenantPluginVersionConfigDao indicates an expected call of TenantPluginVersionConfigDao
-func (mr *MockManagerMockRecorder) TenantPluginVersionConfigDao() *gomock.Call {
+// TenantEnvPluginVersionConfigDao indicates an expected call of TenantEnvPluginVersionConfigDao
+func (mr *MockManagerMockRecorder) TenantEnvPluginVersionConfigDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginVersionConfigDao", reflect.TypeOf((*MockManager)(nil).TenantPluginVersionConfigDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginVersionConfigDao", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginVersionConfigDao))
 }
 
-// TenantPluginVersionConfigDaoTransactions mocks base method
-func (m *MockManager) TenantPluginVersionConfigDaoTransactions(db *gorm.DB) dao.TenantPluginVersionConfigDao {
+// TenantEnvPluginVersionConfigDaoTransactions mocks base method
+func (m *MockManager) TenantEnvPluginVersionConfigDaoTransactions(db *gorm.DB) dao.TenantEnvPluginVersionConfigDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantPluginVersionConfigDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantPluginVersionConfigDao)
+	ret := m.ctrl.Call(m, "TenantEnvPluginVersionConfigDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvPluginVersionConfigDao)
 	return ret0
 }
 
-// TenantPluginVersionConfigDaoTransactions indicates an expected call of TenantPluginVersionConfigDaoTransactions
-func (mr *MockManagerMockRecorder) TenantPluginVersionConfigDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvPluginVersionConfigDaoTransactions indicates an expected call of TenantEnvPluginVersionConfigDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvPluginVersionConfigDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantPluginVersionConfigDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantPluginVersionConfigDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvPluginVersionConfigDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvPluginVersionConfigDaoTransactions), db)
 }
 
-// TenantServicePluginRelationDao mocks base method
-func (m *MockManager) TenantServicePluginRelationDao() dao.TenantServicePluginRelationDao {
+// TenantEnvServicePluginRelationDao mocks base method
+func (m *MockManager) TenantEnvServicePluginRelationDao() dao.TenantEnvServicePluginRelationDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServicePluginRelationDao")
-	ret0, _ := ret[0].(dao.TenantServicePluginRelationDao)
+	ret := m.ctrl.Call(m, "TenantEnvServicePluginRelationDao")
+	ret0, _ := ret[0].(dao.TenantEnvServicePluginRelationDao)
 	return ret0
 }
 
-// TenantServicePluginRelationDao indicates an expected call of TenantServicePluginRelationDao
-func (mr *MockManagerMockRecorder) TenantServicePluginRelationDao() *gomock.Call {
+// TenantEnvServicePluginRelationDao indicates an expected call of TenantEnvServicePluginRelationDao
+func (mr *MockManagerMockRecorder) TenantEnvServicePluginRelationDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServicePluginRelationDao", reflect.TypeOf((*MockManager)(nil).TenantServicePluginRelationDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServicePluginRelationDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServicePluginRelationDao))
 }
 
-// TenantServicePluginRelationDaoTransactions mocks base method
-func (m *MockManager) TenantServicePluginRelationDaoTransactions(db *gorm.DB) dao.TenantServicePluginRelationDao {
+// TenantEnvServicePluginRelationDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServicePluginRelationDaoTransactions(db *gorm.DB) dao.TenantEnvServicePluginRelationDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServicePluginRelationDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServicePluginRelationDao)
+	ret := m.ctrl.Call(m, "TenantEnvServicePluginRelationDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServicePluginRelationDao)
 	return ret0
 }
 
-// TenantServicePluginRelationDaoTransactions indicates an expected call of TenantServicePluginRelationDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServicePluginRelationDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServicePluginRelationDaoTransactions indicates an expected call of TenantEnvServicePluginRelationDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServicePluginRelationDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServicePluginRelationDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServicePluginRelationDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServicePluginRelationDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServicePluginRelationDaoTransactions), db)
 }
 
-// TenantServicesStreamPluginPortDao mocks base method
-func (m *MockManager) TenantServicesStreamPluginPortDao() dao.TenantServicesStreamPluginPortDao {
+// TenantEnvServicesStreamPluginPortDao mocks base method
+func (m *MockManager) TenantEnvServicesStreamPluginPortDao() dao.TenantEnvServicesStreamPluginPortDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServicesStreamPluginPortDao")
-	ret0, _ := ret[0].(dao.TenantServicesStreamPluginPortDao)
+	ret := m.ctrl.Call(m, "TenantEnvServicesStreamPluginPortDao")
+	ret0, _ := ret[0].(dao.TenantEnvServicesStreamPluginPortDao)
 	return ret0
 }
 
-// TenantServicesStreamPluginPortDao indicates an expected call of TenantServicesStreamPluginPortDao
-func (mr *MockManagerMockRecorder) TenantServicesStreamPluginPortDao() *gomock.Call {
+// TenantEnvServicesStreamPluginPortDao indicates an expected call of TenantEnvServicesStreamPluginPortDao
+func (mr *MockManagerMockRecorder) TenantEnvServicesStreamPluginPortDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServicesStreamPluginPortDao", reflect.TypeOf((*MockManager)(nil).TenantServicesStreamPluginPortDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServicesStreamPluginPortDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServicesStreamPluginPortDao))
 }
 
-// TenantServicesStreamPluginPortDaoTransactions mocks base method
-func (m *MockManager) TenantServicesStreamPluginPortDaoTransactions(db *gorm.DB) dao.TenantServicesStreamPluginPortDao {
+// TenantEnvServicesStreamPluginPortDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServicesStreamPluginPortDaoTransactions(db *gorm.DB) dao.TenantEnvServicesStreamPluginPortDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServicesStreamPluginPortDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServicesStreamPluginPortDao)
+	ret := m.ctrl.Call(m, "TenantEnvServicesStreamPluginPortDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServicesStreamPluginPortDao)
 	return ret0
 }
 
-// TenantServicesStreamPluginPortDaoTransactions indicates an expected call of TenantServicesStreamPluginPortDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServicesStreamPluginPortDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServicesStreamPluginPortDaoTransactions indicates an expected call of TenantEnvServicesStreamPluginPortDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServicesStreamPluginPortDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServicesStreamPluginPortDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServicesStreamPluginPortDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServicesStreamPluginPortDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServicesStreamPluginPortDaoTransactions), db)
 }
 
 // CodeCheckResultDao mocks base method
@@ -1194,119 +1194,119 @@ func (mr *MockManagerMockRecorder) ThirdPartySvcDiscoveryCfgDaoTransactions(db i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ThirdPartySvcDiscoveryCfgDaoTransactions", reflect.TypeOf((*MockManager)(nil).ThirdPartySvcDiscoveryCfgDaoTransactions), db)
 }
 
-// TenantServceAutoscalerRulesDao mocks base method
-func (m *MockManager) TenantServceAutoscalerRulesDao() dao.TenantServceAutoscalerRulesDao {
+// TenantEnvServceAutoscalerRulesDao mocks base method
+func (m *MockManager) TenantEnvServceAutoscalerRulesDao() dao.TenantEnvServceAutoscalerRulesDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServceAutoscalerRulesDao")
-	ret0, _ := ret[0].(dao.TenantServceAutoscalerRulesDao)
+	ret := m.ctrl.Call(m, "TenantEnvServceAutoscalerRulesDao")
+	ret0, _ := ret[0].(dao.TenantEnvServceAutoscalerRulesDao)
 	return ret0
 }
 
-// TenantServceAutoscalerRulesDao indicates an expected call of TenantServceAutoscalerRulesDao
-func (mr *MockManagerMockRecorder) TenantServceAutoscalerRulesDao() *gomock.Call {
+// TenantEnvServceAutoscalerRulesDao indicates an expected call of TenantEnvServceAutoscalerRulesDao
+func (mr *MockManagerMockRecorder) TenantEnvServceAutoscalerRulesDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServceAutoscalerRulesDao", reflect.TypeOf((*MockManager)(nil).TenantServceAutoscalerRulesDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServceAutoscalerRulesDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServceAutoscalerRulesDao))
 }
 
-// TenantServceAutoscalerRulesDaoTransactions mocks base method
-func (m *MockManager) TenantServceAutoscalerRulesDaoTransactions(db *gorm.DB) dao.TenantServceAutoscalerRulesDao {
+// TenantEnvServceAutoscalerRulesDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServceAutoscalerRulesDaoTransactions(db *gorm.DB) dao.TenantEnvServceAutoscalerRulesDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServceAutoscalerRulesDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServceAutoscalerRulesDao)
+	ret := m.ctrl.Call(m, "TenantEnvServceAutoscalerRulesDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServceAutoscalerRulesDao)
 	return ret0
 }
 
-// TenantServceAutoscalerRulesDaoTransactions indicates an expected call of TenantServceAutoscalerRulesDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServceAutoscalerRulesDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServceAutoscalerRulesDaoTransactions indicates an expected call of TenantEnvServceAutoscalerRulesDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServceAutoscalerRulesDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServceAutoscalerRulesDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServceAutoscalerRulesDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServceAutoscalerRulesDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServceAutoscalerRulesDaoTransactions), db)
 }
 
-// TenantServceAutoscalerRuleMetricsDao mocks base method
-func (m *MockManager) TenantServceAutoscalerRuleMetricsDao() dao.TenantServceAutoscalerRuleMetricsDao {
+// TenantEnvServceAutoscalerRuleMetricsDao mocks base method
+func (m *MockManager) TenantEnvServceAutoscalerRuleMetricsDao() dao.TenantEnvServceAutoscalerRuleMetricsDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServceAutoscalerRuleMetricsDao")
-	ret0, _ := ret[0].(dao.TenantServceAutoscalerRuleMetricsDao)
+	ret := m.ctrl.Call(m, "TenantEnvServceAutoscalerRuleMetricsDao")
+	ret0, _ := ret[0].(dao.TenantEnvServceAutoscalerRuleMetricsDao)
 	return ret0
 }
 
-// TenantServceAutoscalerRuleMetricsDao indicates an expected call of TenantServceAutoscalerRuleMetricsDao
-func (mr *MockManagerMockRecorder) TenantServceAutoscalerRuleMetricsDao() *gomock.Call {
+// TenantEnvServceAutoscalerRuleMetricsDao indicates an expected call of TenantEnvServceAutoscalerRuleMetricsDao
+func (mr *MockManagerMockRecorder) TenantEnvServceAutoscalerRuleMetricsDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServceAutoscalerRuleMetricsDao", reflect.TypeOf((*MockManager)(nil).TenantServceAutoscalerRuleMetricsDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServceAutoscalerRuleMetricsDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServceAutoscalerRuleMetricsDao))
 }
 
-// TenantServceAutoscalerRuleMetricsDaoTransactions mocks base method
-func (m *MockManager) TenantServceAutoscalerRuleMetricsDaoTransactions(db *gorm.DB) dao.TenantServceAutoscalerRuleMetricsDao {
+// TenantEnvServceAutoscalerRuleMetricsDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServceAutoscalerRuleMetricsDaoTransactions(db *gorm.DB) dao.TenantEnvServceAutoscalerRuleMetricsDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServceAutoscalerRuleMetricsDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServceAutoscalerRuleMetricsDao)
+	ret := m.ctrl.Call(m, "TenantEnvServceAutoscalerRuleMetricsDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServceAutoscalerRuleMetricsDao)
 	return ret0
 }
 
-// TenantServceAutoscalerRuleMetricsDaoTransactions indicates an expected call of TenantServceAutoscalerRuleMetricsDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServceAutoscalerRuleMetricsDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServceAutoscalerRuleMetricsDaoTransactions indicates an expected call of TenantEnvServceAutoscalerRuleMetricsDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServceAutoscalerRuleMetricsDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServceAutoscalerRuleMetricsDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServceAutoscalerRuleMetricsDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServceAutoscalerRuleMetricsDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServceAutoscalerRuleMetricsDaoTransactions), db)
 }
 
-// TenantServiceScalingRecordsDao mocks base method
-func (m *MockManager) TenantServiceScalingRecordsDao() dao.TenantServiceScalingRecordsDao {
+// TenantEnvServiceScalingRecordsDao mocks base method
+func (m *MockManager) TenantEnvServiceScalingRecordsDao() dao.TenantEnvServiceScalingRecordsDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceScalingRecordsDao")
-	ret0, _ := ret[0].(dao.TenantServiceScalingRecordsDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceScalingRecordsDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceScalingRecordsDao)
 	return ret0
 }
 
-// TenantServiceScalingRecordsDao indicates an expected call of TenantServiceScalingRecordsDao
-func (mr *MockManagerMockRecorder) TenantServiceScalingRecordsDao() *gomock.Call {
+// TenantEnvServiceScalingRecordsDao indicates an expected call of TenantEnvServiceScalingRecordsDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceScalingRecordsDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceScalingRecordsDao", reflect.TypeOf((*MockManager)(nil).TenantServiceScalingRecordsDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceScalingRecordsDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceScalingRecordsDao))
 }
 
-// TenantServiceScalingRecordsDaoTransactions mocks base method
-func (m *MockManager) TenantServiceScalingRecordsDaoTransactions(db *gorm.DB) dao.TenantServiceScalingRecordsDao {
+// TenantEnvServiceScalingRecordsDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceScalingRecordsDaoTransactions(db *gorm.DB) dao.TenantEnvServiceScalingRecordsDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceScalingRecordsDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServiceScalingRecordsDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceScalingRecordsDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServiceScalingRecordsDao)
 	return ret0
 }
 
-// TenantServiceScalingRecordsDaoTransactions indicates an expected call of TenantServiceScalingRecordsDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceScalingRecordsDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServiceScalingRecordsDaoTransactions indicates an expected call of TenantEnvServiceScalingRecordsDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceScalingRecordsDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceScalingRecordsDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceScalingRecordsDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceScalingRecordsDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceScalingRecordsDaoTransactions), db)
 }
 
-// TenantServiceMonitorDao mocks base method
-func (m *MockManager) TenantServiceMonitorDao() dao.TenantServiceMonitorDao {
+// TenantEnvServiceMonitorDao mocks base method
+func (m *MockManager) TenantEnvServiceMonitorDao() dao.TenantEnvServiceMonitorDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceMonitorDao")
-	ret0, _ := ret[0].(dao.TenantServiceMonitorDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceMonitorDao")
+	ret0, _ := ret[0].(dao.TenantEnvServiceMonitorDao)
 	return ret0
 }
 
-// TenantServiceMonitorDao indicates an expected call of TenantServiceMonitorDao
-func (mr *MockManagerMockRecorder) TenantServiceMonitorDao() *gomock.Call {
+// TenantEnvServiceMonitorDao indicates an expected call of TenantEnvServiceMonitorDao
+func (mr *MockManagerMockRecorder) TenantEnvServiceMonitorDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMonitorDao", reflect.TypeOf((*MockManager)(nil).TenantServiceMonitorDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceMonitorDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceMonitorDao))
 }
 
-// TenantServiceMonitorDaoTransactions mocks base method
-func (m *MockManager) TenantServiceMonitorDaoTransactions(db *gorm.DB) dao.TenantServiceMonitorDao {
+// TenantEnvServiceMonitorDaoTransactions mocks base method
+func (m *MockManager) TenantEnvServiceMonitorDaoTransactions(db *gorm.DB) dao.TenantEnvServiceMonitorDao {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TenantServiceMonitorDaoTransactions", db)
-	ret0, _ := ret[0].(dao.TenantServiceMonitorDao)
+	ret := m.ctrl.Call(m, "TenantEnvServiceMonitorDaoTransactions", db)
+	ret0, _ := ret[0].(dao.TenantEnvServiceMonitorDao)
 	return ret0
 }
 
-// TenantServiceMonitorDaoTransactions indicates an expected call of TenantServiceMonitorDaoTransactions
-func (mr *MockManagerMockRecorder) TenantServiceMonitorDaoTransactions(db interface{}) *gomock.Call {
+// TenantEnvServiceMonitorDaoTransactions indicates an expected call of TenantEnvServiceMonitorDaoTransactions
+func (mr *MockManagerMockRecorder) TenantEnvServiceMonitorDaoTransactions(db interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMonitorDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantServiceMonitorDaoTransactions), db)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceMonitorDaoTransactions", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceMonitorDaoTransactions), db)
 }
 
-// TenantServiceMonitorDao mocks base method
+// TenantEnvServiceMonitorDao mocks base method
 func (m *MockManager) HTTPRuleRewriteDao() dao.HTTPRuleRewriteDao {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HTTPRuleRewriteDao")
@@ -1317,7 +1317,7 @@ func (m *MockManager) HTTPRuleRewriteDao() dao.HTTPRuleRewriteDao {
 // HTTPRuleRewriteDao indicates an expected call of HTTPRuleRewriteDao
 func  (mr *MockManagerMockRecorder) HTTPRuleRewriteDao() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantServiceMonitorDao", reflect.TypeOf((*MockManager)(nil).TenantServiceMonitorDao))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TenantEnvServiceMonitorDao", reflect.TypeOf((*MockManager)(nil).TenantEnvServiceMonitorDao))
 }
 
 // HTTPRuleRewriteDaoTransactions mocks base method

@@ -18,12 +18,13 @@
 
 package model
 
-//AddVolumeStruct AddVolumeStruct
+// AddVolumeStruct AddVolumeStruct
+//
 //swagger:parameters addVolumes
 type AddVolumeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -65,12 +66,13 @@ type AddVolumeStruct struct {
 	}
 }
 
-//DeleteVolumeStruct DeleteVolumeStruct
+// DeleteVolumeStruct DeleteVolumeStruct
+//
 //swagger:parameters deleteVolumes
 type DeleteVolumeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -80,12 +82,13 @@ type DeleteVolumeStruct struct {
 	VolumeName string `json:"volume_name"`
 }
 
-//AddVolumeDependencyStruct AddVolumeDependencyStruct
+// AddVolumeDependencyStruct AddVolumeDependencyStruct
+//
 //swagger:parameters addDepVolume
 type AddVolumeDependencyStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -108,12 +111,13 @@ type AddVolumeDependencyStruct struct {
 	}
 }
 
-//DeleteVolumeDependencyStruct DeleteVolumeDependencyStruct
+// DeleteVolumeDependencyStruct DeleteVolumeDependencyStruct
+//
 //swagger:parameters  delDepVolume
 type DeleteVolumeDependencyStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -132,12 +136,13 @@ type DeleteVolumeDependencyStruct struct {
 
 //以下为v2旧版API参数定义
 
-//V2AddVolumeStruct AddVolumeStruct
+// V2AddVolumeStruct AddVolumeStruct
+//
 //swagger:parameters addVolume
 type V2AddVolumeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -172,12 +177,13 @@ type V2AddVolumeStruct struct {
 	}
 }
 
-//V2DelVolumeStruct AddVolumeStruct
+// V2DelVolumeStruct AddVolumeStruct
+//
 //swagger:parameters deleteVolume
 type V2DelVolumeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -194,12 +200,13 @@ type V2DelVolumeStruct struct {
 	}
 }
 
-//V2AddVolumeDependencyStruct AddVolumeDependencyStruct
+// V2AddVolumeDependencyStruct AddVolumeDependencyStruct
+//
 //swagger:parameters addVolumeDependency
 type V2AddVolumeDependencyStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -220,12 +227,13 @@ type V2AddVolumeDependencyStruct struct {
 	}
 }
 
-//V2DelVolumeDependencyStruct V2DelVolumeDependencyStruct
+// V2DelVolumeDependencyStruct V2DelVolumeDependencyStruct
+//
 //swagger:parameters deleteVolumeDependency
 type V2DelVolumeDependencyStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`

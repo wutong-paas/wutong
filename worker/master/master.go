@@ -123,18 +123,18 @@ func NewMasterController(conf option.Config, store store.Storer, kubeClient kube
 		memoryUse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "app_resource",
 			Name:      "appmemory",
-			Help:      "tenant service memory request.",
-		}, []string{"tenant_id", "app_id", "service_id", "service_status"}),
+			Help:      "tenant env service memory request.",
+		}, []string{"tenant_env_id", "app_id", "service_id", "service_status"}),
 		cpuUse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "app_resource",
 			Name:      "appcpu",
-			Help:      "tenant service cpu request.",
-		}, []string{"tenant_id", "app_id", "service_id", "service_status"}),
+			Help:      "tenant env service cpu request.",
+		}, []string{"tenant_env_id", "app_id", "service_id", "service_status"}),
 		fsUse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "app_resource",
 			Name:      "appfs",
-			Help:      "tenant service fs used.",
-		}, []string{"tenant_id", "app_id", "service_id", "volume_type"}),
+			Help:      "tenant env service fs used.",
+		}, []string{"tenant_env_id", "app_id", "service_id", "volume_type"}),
 		namespaceMemRequest: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "namespace_resource",
 			Name:      "memory_request",
@@ -278,8 +278,8 @@ func (m *Controller) Scrape(ch chan<- prometheus.Metric, scrapeDurationDesc *pro
 	//获取内存使用情况
 	for _, service := range services {
 		if _, ok := status[service.ServiceID]; ok {
-			m.memoryUse.WithLabelValues(service.TenantID, service.AppID, service.ServiceID, "running").Set(float64(service.GetMemoryRequest()))
-			m.cpuUse.WithLabelValues(service.TenantID, service.AppID, service.ServiceID, "running").Set(float64(service.GetMemoryRequest()))
+			m.memoryUse.WithLabelValues(service.TenantEnvID, service.AppID, service.ServiceID, "running").Set(float64(service.GetMemoryRequest()))
+			m.cpuUse.WithLabelValues(service.TenantEnvID, service.AppID, service.ServiceID, "running").Set(float64(service.GetMemoryRequest()))
 		}
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, time.Since(scrapeTime).Seconds(), "collect.memory")
@@ -292,7 +292,7 @@ func (m *Controller) Scrape(ch chan<- prometheus.Metric, scrapeDurationDesc *pro
 		}
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, time.Since(scrapeTime).Seconds(), "collect.fs")
-	resources := m.store.GetTenantResourceList()
+	resources := m.store.GetTenantEnvResourceList()
 	for _, re := range resources {
 		m.namespaceMemLimit.WithLabelValues(re.Namespace).Set(float64(re.MemoryLimit / 1024 / 1024))
 		m.namespaceCPULimit.WithLabelValues(re.Namespace).Set(float64(re.CPULimit))

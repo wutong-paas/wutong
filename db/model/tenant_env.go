@@ -27,52 +27,54 @@ import (
 	"github.com/wutong-paas/wutong/util/commonutil"
 )
 
-//Model 默认字段
+// Model 默认字段
 type Model struct {
 	ID        uint      `gorm:"column:ID;primary_key"`
 	CreatedAt time.Time `gorm:"column:create_time" json:"create_time"`
 }
 
-//IDModel 默认ID字段
+// IDModel 默认ID字段
 type IDModel struct {
 	ID uint `gorm:"column:ID;primary_key"`
 }
 
-//Interface model interface
+// Interface model interface
 type Interface interface {
 	TableName() string
 }
 
-// TenantStatus -
-type TenantStatus string
+// TenantEnvStatus -
+type TenantEnvStatus string
 
 var (
-	// TenantStatusNormal -
-	TenantStatusNormal TenantStatus = "normal"
-	// TenantStatusDeleting -
-	TenantStatusDeleting TenantStatus = "deleting"
-	// TenantStatusDeleteFailed -
-	TenantStatusDeleteFailed TenantStatus = "delete_failed"
+	// TenantEnvStatusNormal -
+	TenantEnvStatusNormal TenantEnvStatus = "normal"
+	// TenantEnvStatusDeleting -
+	TenantEnvStatusDeleting TenantEnvStatus = "deleting"
+	// TenantEnvStatusDeleteFailed -
+	TenantEnvStatusDeleteFailed TenantEnvStatus = "delete_failed"
 )
 
-func (t TenantStatus) String() string {
+func (t TenantEnvStatus) String() string {
 	return string(t)
 }
 
-//Tenants 租户信息
-type Tenants struct {
+// TenantEnvs 租户环境信息
+type TenantEnvs struct {
 	Model
 	Name        string `gorm:"column:name;size:40;unique_index"`
 	UUID        string `gorm:"column:uuid;size:33;unique_index"`
+	TenantID    string `gorm:"column:tenant_id"`
+	TenantName  string `gorm:"column:tenant_name"`
 	EID         string `gorm:"column:eid"`
 	LimitMemory int    `gorm:"column:limit_memory"`
 	Status      string `gorm:"column:status;default:'normal'"`
 	Namespace   string `gorm:"column:namespace;size:32;unique_index"`
 }
 
-//TableName 返回租户表名称
-func (t *Tenants) TableName() string {
-	return "tenants"
+// TableName 返回租户表名称
+func (t *TenantEnvs) TableName() string {
+	return "tenantEnvs"
 }
 
 // ServiceKind kind of service
@@ -120,7 +122,7 @@ func (s ServiceType) IsSingleton() bool {
 
 // IsState is state service or stateless service
 // TODO fanyangyang 根据组件简单判断是否是有状态
-func (t *TenantServices) IsState() bool {
+func (t *TenantEnvServices) IsState() bool {
 	if t.ExtendMethod == "" {
 		return false
 	}
@@ -128,7 +130,7 @@ func (t *TenantServices) IsState() bool {
 }
 
 // IsSingleton is singleton or multiple service
-func (t *TenantServices) IsSingleton() bool {
+func (t *TenantEnvServices) IsSingleton() bool {
 	if t.ExtendMethod == "" {
 		return false
 	}
@@ -138,7 +140,7 @@ func (t *TenantServices) IsSingleton() bool {
 // ServiceTypeUnknown unknown
 var ServiceTypeUnknown ServiceType = "unknown"
 
-//ServiceTypeStatelessSingleton stateless_singleton
+// ServiceTypeStatelessSingleton stateless_singleton
 var ServiceTypeStatelessSingleton ServiceType = "stateless_singleton"
 
 // ServiceTypeStatelessMultiple stateless_multiple
@@ -150,11 +152,11 @@ var ServiceTypeStateSingleton ServiceType = "state_singleton"
 // ServiceTypeStateMultiple state_multiple
 var ServiceTypeStateMultiple ServiceType = "state_multiple"
 
-//TenantServices app service base info
-type TenantServices struct {
+// TenantEnvServices app service base info
+type TenantEnvServices struct {
 	Model
-	TenantID  string `gorm:"column:tenant_id;size:32" json:"tenant_id"`
-	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
+	TenantEnvID string `gorm:"column:tenant_env_id;size:32" json:"tenant_env_id"`
+	ServiceID   string `gorm:"column:service_id;size:32" json:"service_id"`
 	// 服务key
 	ServiceKey string `gorm:"column:service_key;size:32" json:"service_key"`
 	// 服务别名
@@ -208,7 +210,7 @@ type TenantServices struct {
 	K8sComponentName string `gorm:"column:k8s_component_name" json:"k8s_component_name"`
 }
 
-//Image 镜像
+// Image 镜像
 type Image struct {
 	Host      string
 	Namespace string
@@ -222,7 +224,7 @@ func (i Image) String() string {
 	return fmt.Sprintf("%s/%s/%s", i.Host, i.Namespace, i.Name)
 }
 
-//ParseImage 简单解析镜像名
+// ParseImage 简单解析镜像名
 func ParseImage(name string) (image Image) {
 	i := strings.IndexRune(name, '/')
 	if i == -1 || (!strings.ContainsAny(name[:i], ".:") && name[:i] != "localhost") {
@@ -239,20 +241,20 @@ func ParseImage(name string) (image Image) {
 	return
 }
 
-//CreateShareSlug 生成源码包分享的地址
-func (t *TenantServices) CreateShareSlug(servicekey, namespace, version string) string {
+// CreateShareSlug 生成源码包分享的地址
+func (t *TenantEnvServices) CreateShareSlug(servicekey, namespace, version string) string {
 	return fmt.Sprintf("%s/%s/%s_%s.tgz", namespace, servicekey, version, t.DeployVersion)
 }
 
-//ChangeDelete ChangeDelete
-func (t *TenantServices) ChangeDelete() *TenantServicesDelete {
-	delete := TenantServicesDelete(*t)
+// ChangeDelete ChangeDelete
+func (t *TenantEnvServices) ChangeDelete() *TenantEnvServicesDelete {
+	delete := TenantEnvServicesDelete(*t)
 	delete.UpdateTime = time.Now()
 	return &delete
 }
 
-//Autodomain 构建默认域名
-func (t *TenantServices) Autodomain(tenantName string, containerPort int) string {
+// Autodomain 构建默认域名
+func (t *TenantEnvServices) Autodomain(tenantEnvName string, containerPort int) string {
 	exDomain := os.Getenv("EX_DOMAIN")
 	if exDomain == "" {
 		return ""
@@ -260,19 +262,19 @@ func (t *TenantServices) Autodomain(tenantName string, containerPort int) string
 	if strings.Contains(exDomain, ":") {
 		exDomain = strings.Split(exDomain, ":")[0]
 	}
-	return fmt.Sprintf("%d.%s.%s.%s", containerPort, t.ServiceAlias, tenantName, exDomain)
+	return fmt.Sprintf("%d.%s.%s.%s", containerPort, t.ServiceAlias, tenantEnvName, exDomain)
 }
 
-//TableName 表名
-func (t *TenantServices) TableName() string {
-	return "tenant_services"
+// TableName 表名
+func (t *TenantEnvServices) TableName() string {
+	return "tenant_env_services"
 }
 
-//TenantServicesDelete 已删除的应用表
-type TenantServicesDelete struct {
+// TenantEnvServicesDelete 已删除的应用表
+type TenantEnvServicesDelete struct {
 	Model
-	TenantID  string `gorm:"column:tenant_id;size:32" json:"tenant_id"`
-	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
+	TenantEnvID string `gorm:"column:tenant_env_id;size:32" json:"tenant_env_id"`
+	ServiceID   string `gorm:"column:service_id;size:32" json:"service_id"`
 	// 服务key
 	ServiceKey string `gorm:"column:service_key;size:32" json:"service_key"`
 	// 服务别名
@@ -324,15 +326,15 @@ type TenantServicesDelete struct {
 	K8sComponentName string `gorm:"column:k8s_component_name" json:"k8s_component_name"`
 }
 
-//TableName 表名
-func (t *TenantServicesDelete) TableName() string {
-	return "tenant_services_delete"
+// TableName 表名
+func (t *TenantEnvServicesDelete) TableName() string {
+	return "tenant_env_services_delete"
 }
 
-//TenantServicesPort 应用端口信息
-type TenantServicesPort struct {
+// TenantEnvServicesPort 应用端口信息
+type TenantEnvServicesPort struct {
 	Model
-	TenantID       string `gorm:"column:tenant_id;size:32" validate:"tenant_id|between:30,33" json:"tenant_id"`
+	TenantEnvID    string `gorm:"column:tenant_env_id;size:32" validate:"tenant_env_id|between:30,33" json:"tenant_env_id"`
 	ServiceID      string `gorm:"column:service_id;size:32" validate:"service_id|between:30,33" json:"service_id"`
 	ContainerPort  int    `gorm:"column:container_port" validate:"container_port|required|numeric_between:1,65535" json:"container_port"`
 	MappingPort    int    `gorm:"column:mapping_port" validate:"mapping_port|required|numeric_between:1,65535" json:"mapping_port"`
@@ -343,23 +345,23 @@ type TenantServicesPort struct {
 	K8sServiceName string `gorm:"column:k8s_service_name" json:"k8s_service_name"`
 }
 
-// Key returns the key of TenantServicesPort.
-func (t *TenantServicesPort) Key() string {
-	return fmt.Sprintf("%s/%s/%d", t.TenantID, t.ServiceID, t.ContainerPort)
+// Key returns the key of TenantEnvServicesPort.
+func (t *TenantEnvServicesPort) Key() string {
+	return fmt.Sprintf("%s/%s/%d", t.TenantEnvID, t.ServiceID, t.ContainerPort)
 }
 
-//TableName 表名
-func (t *TenantServicesPort) TableName() string {
-	return "tenant_services_port"
+// TableName 表名
+func (t *TenantEnvServicesPort) TableName() string {
+	return "tenant_env_services_port"
 }
 
 // IsOpen checks if the port is opened.
-func (t *TenantServicesPort) IsOpen() bool {
+func (t *TenantEnvServicesPort) IsOpen() bool {
 	return commonutil.BoolValue(t.IsOuterService) || commonutil.BoolValue(t.IsInnerService)
 }
 
-//TenantServiceLBMappingPort stream应用端口映射情况
-type TenantServiceLBMappingPort struct {
+// TenantEnvServiceLBMappingPort stream应用端口映射情况
+type TenantEnvServiceLBMappingPort struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32"`
 	//负载均衡VS使用端口
@@ -370,30 +372,30 @@ type TenantServiceLBMappingPort struct {
 	ContainerPort int `gorm:"column:container_port"`
 }
 
-//TableName 表名
-func (t *TenantServiceLBMappingPort) TableName() string {
-	return "tenant_lb_mapping_port"
+// TableName 表名
+func (t *TenantEnvServiceLBMappingPort) TableName() string {
+	return "tenant_env_lb_mapping_port"
 }
 
-//TenantServiceRelation 应用依赖关系
-type TenantServiceRelation struct {
+// TenantEnvServiceRelation 应用依赖关系
+type TenantEnvServiceRelation struct {
 	Model
-	TenantID          string `gorm:"column:tenant_id;size:32" validate:"tenant_id" json:"tenant_id"`
+	TenantEnvID       string `gorm:"column:tenant_env_id;size:32" validate:"tenant_env_id" json:"tenant_env_id"`
 	ServiceID         string `gorm:"column:service_id;size:32" validate:"service_id" json:"service_id"`
 	DependServiceID   string `gorm:"column:dep_service_id;size:32" validate:"depend_service_id" json:"depend_service_id"`
 	DependServiceType string `gorm:"column:dep_service_type" validate:"dep_service_type" json:"dep_service_type"`
 	DependOrder       int    `gorm:"column:dep_order" validate:"dep_order" json:"dep_order"`
 }
 
-//TableName 表名
-func (t *TenantServiceRelation) TableName() string {
-	return "tenant_services_relation"
+// TableName 表名
+func (t *TenantEnvServiceRelation) TableName() string {
+	return "tenant_env_services_relation"
 }
 
-//TenantServiceEnvVar  应用环境变量
-type TenantServiceEnvVar struct {
+// TenantEnvServiceEnvVar  应用环境变量
+type TenantEnvServiceEnvVar struct {
 	Model
-	TenantID      string `gorm:"column:tenant_id;size:32" validate:"tenant_id|between:30,33" json:"tenant_id"`
+	TenantEnvID   string `gorm:"column:tenant_env_id;size:32" validate:"tenant_env_id|between:30,33" json:"tenant_env_id"`
 	ServiceID     string `gorm:"column:service_id;size:32" validate:"service_id|between:30,33" json:"service_id"`
 	ContainerPort int    `gorm:"column:container_port" validate:"container_port|numeric_between:1,65535" json:"container_port"`
 	Name          string `gorm:"column:name;size:1024" validate:"name" json:"name"`
@@ -403,16 +405,16 @@ type TenantServiceEnvVar struct {
 	Scope         string `gorm:"column:scope;default:'outer'" validate:"scope|in:outer,inner,both" json:"scope"`
 }
 
-//TableName 表名
-func (t *TenantServiceEnvVar) TableName() string {
+// TableName 表名
+func (t *TenantEnvServiceEnvVar) TableName() string {
 	//TODO:表名修改
-	return "tenant_services_envs"
+	return "tenant_env_services_envs"
 }
 
-//TenantServiceMountRelation 应用挂载依赖纪录
-type TenantServiceMountRelation struct {
+// TenantEnvServiceMountRelation 应用挂载依赖纪录
+type TenantEnvServiceMountRelation struct {
 	Model
-	TenantID        string `gorm:"column:tenant_id;size:32" json:"tenant_id" validate:"tenant_id|between:30,33"`
+	TenantEnvID     string `gorm:"column:tenant_env_id;size:32" json:"tenant_env_id" validate:"tenant_env_id|between:30,33"`
 	ServiceID       string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
 	DependServiceID string `gorm:"column:dep_service_id;size:32" json:"dep_service_id" validate:"dep_service_id|between:30,33"`
 	//挂载路径(挂载应用可自定义)
@@ -424,24 +426,24 @@ type TenantServiceMountRelation struct {
 	VolumeType string `gorm:"column:volume_type" json:"volume_type" validate:"volume_type|required"`
 }
 
-//TableName 表名
-func (t *TenantServiceMountRelation) TableName() string {
-	return "tenant_services_mnt_relation"
+// TableName 表名
+func (t *TenantEnvServiceMountRelation) TableName() string {
+	return "tenant_env_services_mnt_relation"
 }
 
-//VolumeType 存储类型
+// VolumeType 存储类型
 type VolumeType string
 
-//ShareFileVolumeType 共享文件存储
+// ShareFileVolumeType 共享文件存储
 var ShareFileVolumeType VolumeType = "share-file"
 
-//LocalVolumeType 本地文件存储
+// LocalVolumeType 本地文件存储
 var LocalVolumeType VolumeType = "local"
 
-//MemoryFSVolumeType 内存文件存储
+// MemoryFSVolumeType 内存文件存储
 var MemoryFSVolumeType VolumeType = "memoryfs"
 
-//ConfigFileVolumeType configuration file volume type
+// ConfigFileVolumeType configuration file volume type
 var ConfigFileVolumeType VolumeType = "config-file"
 
 // CephRBDVolumeType ceph wt volume type
@@ -459,8 +461,8 @@ func (vt VolumeType) String() string {
 	return string(vt)
 }
 
-//TenantServiceVolume 应用持久化纪录
-type TenantServiceVolume struct {
+// TenantEnvServiceVolume 应用持久化纪录
+type TenantEnvServiceVolume struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
 	//服务类型
@@ -492,63 +494,63 @@ type TenantServiceVolume struct {
 	Mode               *int32 `gorm:"column:mode" json:"mode"`
 }
 
-//TableName 表名
-func (t *TenantServiceVolume) TableName() string {
-	return "tenant_services_volume"
+// TableName 表名
+func (t *TenantEnvServiceVolume) TableName() string {
+	return "tenant_env_services_volume"
 }
 
-// Key returns the key of TenantServiceVolume.
-func (t *TenantServiceVolume) Key() string {
+// Key returns the key of TenantEnvServiceVolume.
+func (t *TenantEnvServiceVolume) Key() string {
 	return fmt.Sprintf("%s/%s", t.ServiceID, t.VolumeName)
 }
 
-// TenantServiceConfigFile represents a data in configMap which is one of the types of volumes
-type TenantServiceConfigFile struct {
+// TenantEnvServiceConfigFile represents a data in configMap which is one of the types of volumes
+type TenantEnvServiceConfigFile struct {
 	Model
 	ServiceID   string `gorm:"column:service_id;size:32" json:"service_id"`
 	VolumeName  string `gorm:"column:volume_name;size:32" json:"volume_name"`
 	FileContent string `gorm:"column:file_content;size:65535" json:"filename"`
 }
 
-// TableName returns table name of TenantServiceConfigFile.
-func (t *TenantServiceConfigFile) TableName() string {
-	return "tenant_service_config_file"
+// TableName returns table name of TenantEnvServiceConfigFile.
+func (t *TenantEnvServiceConfigFile) TableName() string {
+	return "tenant_env_service_config_file"
 }
 
-//TenantServiceLable 应用高级标签
-type TenantServiceLable struct {
+// TenantEnvServiceLable 应用高级标签
+type TenantEnvServiceLable struct {
 	Model
 	ServiceID  string `gorm:"column:service_id;size:32"`
 	LabelKey   string `gorm:"column:label_key;size:50"`
 	LabelValue string `gorm:"column:label_value;size:50"`
 }
 
-//TableName 表名
-func (t *TenantServiceLable) TableName() string {
-	return "tenant_services_label"
+// TableName 表名
+func (t *TenantEnvServiceLable) TableName() string {
+	return "tenant_env_services_label"
 }
 
-//LabelKeyNodeSelector 节点选择标签
+// LabelKeyNodeSelector 节点选择标签
 var LabelKeyNodeSelector = "node-selector"
 
-//LabelKeyNodeAffinity 节点亲和标签
+// LabelKeyNodeAffinity 节点亲和标签
 var LabelKeyNodeAffinity = "node-affinity"
 
-//LabelKeyServiceType 应用部署类型标签
-// TODO fanyangyang 待删除，组件类型记录在tenant_service表中
+// LabelKeyServiceType 应用部署类型标签
+// TODO fanyangyang 待删除，组件类型记录在tenant_env_service表中
 var LabelKeyServiceType = "service-type"
 
-//LabelKeyServiceAffinity 应用亲和标签
+// LabelKeyServiceAffinity 应用亲和标签
 var LabelKeyServiceAffinity = "service-affinity"
 
-//LabelKeyServiceAntyAffinity 应用反亲和标签
+// LabelKeyServiceAntyAffinity 应用反亲和标签
 var LabelKeyServiceAntyAffinity = "service-anti-affinity"
 
 // LabelKeyServicePrivileged -
 var LabelKeyServicePrivileged = "privileged"
 
-//TenantServiceProbe 应用探针信息
-type TenantServiceProbe struct {
+// TenantEnvServiceProbe 应用探针信息
+type TenantEnvServiceProbe struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
 	ProbeID   string `gorm:"column:probe_id;size:32" json:"probe_id" validate:"probe_id|between:30,33"`
@@ -590,13 +592,13 @@ const (
 	RestartFailureAction FailureActionType = "liveness"
 )
 
-//TableName 表名
-func (t *TenantServiceProbe) TableName() string {
-	return "tenant_services_probe"
+// TableName 表名
+func (t *TenantEnvServiceProbe) TableName() string {
+	return "tenant_env_services_probe"
 }
 
-// TenantServiceAutoscalerRules -
-type TenantServiceAutoscalerRules struct {
+// TenantEnvServiceAutoscalerRules -
+type TenantEnvServiceAutoscalerRules struct {
 	Model
 	RuleID      string `gorm:"column:rule_id;unique;size:32"`
 	ServiceID   string `gorm:"column:service_id;size:32"`
@@ -607,12 +609,12 @@ type TenantServiceAutoscalerRules struct {
 }
 
 // TableName -
-func (t *TenantServiceAutoscalerRules) TableName() string {
-	return "tenant_services_autoscaler_rules"
+func (t *TenantEnvServiceAutoscalerRules) TableName() string {
+	return "tenant_env_services_autoscaler_rules"
 }
 
-// TenantServiceAutoscalerRuleMetrics -
-type TenantServiceAutoscalerRuleMetrics struct {
+// TenantEnvServiceAutoscalerRuleMetrics -
+type TenantEnvServiceAutoscalerRuleMetrics struct {
 	Model
 	RuleID            string `gorm:"column:rule_id;size:32;not null"`
 	MetricsType       string `gorm:"column:metric_type;not null"`
@@ -622,12 +624,12 @@ type TenantServiceAutoscalerRuleMetrics struct {
 }
 
 // TableName -
-func (t *TenantServiceAutoscalerRuleMetrics) TableName() string {
-	return "tenant_services_autoscaler_rule_metrics"
+func (t *TenantEnvServiceAutoscalerRuleMetrics) TableName() string {
+	return "tenant_env_services_autoscaler_rule_metrics"
 }
 
-// TenantServiceScalingRecords -
-type TenantServiceScalingRecords struct {
+// TenantEnvServiceScalingRecords -
+type TenantEnvServiceScalingRecords struct {
 	Model
 	ServiceID   string    `gorm:"column:service_id" json:"-"`
 	RuleID      string    `gorm:"column:rule_id" json:"rule_id"`
@@ -641,8 +643,8 @@ type TenantServiceScalingRecords struct {
 }
 
 // TableName -
-func (t *TenantServiceScalingRecords) TableName() string {
-	return "tenant_services_scaling_records"
+func (t *TenantEnvServiceScalingRecords) TableName() string {
+	return "tenant_env_services_scaling_records"
 }
 
 // ServiceID -

@@ -26,7 +26,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//VersionInfo version info struct
+// VersionInfo version info struct
 type VersionInfo struct {
 	Model
 	BuildVersion string `gorm:"column:build_version;size:40" json:"build_version"` //唯一
@@ -54,12 +54,12 @@ type VersionInfo struct {
 	PlanVersion string    `gorm:"column:plan_version;size:250" json:"plan_version"`
 }
 
-//TableName 表名
+// TableName 表名
 func (t *VersionInfo) TableName() string {
-	return "tenant_service_version"
+	return "tenant_env_service_version"
 }
 
-//CreateShareImage create share image name
+// CreateShareImage create share image name
 func (t *VersionInfo) CreateShareImage(hubURL, namespace, appVersion string) (string, error) {
 	_, err := reference.ParseAnyReference(t.DeliveredPath)
 	if err != nil {

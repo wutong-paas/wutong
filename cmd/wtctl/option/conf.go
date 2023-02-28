@@ -33,14 +33,14 @@ import (
 
 var config Config
 
-//Config Config
+// Config Config
 type Config struct {
 	Kubernets     Kubernets      `yaml:"kube"`
 	RegionAPI     region.APIConf `yaml:"region_api"`
 	DockerLogPath string         `yaml:"docker_log_path"`
 }
 
-//RegionMysql RegionMysql
+// RegionMysql RegionMysql
 type RegionMysql struct {
 	URL      string `yaml:"url"`
 	Pass     string `yaml:"pass"`
@@ -48,12 +48,12 @@ type RegionMysql struct {
 	Database string `yaml:"database"`
 }
 
-//Kubernets Kubernets
+// Kubernets Kubernets
 type Kubernets struct {
 	KubeConf string `yaml:"kube-conf"`
 }
 
-//LoadConfig 加载配置
+// LoadConfig 加载配置
 func LoadConfig(ctx *cli.Context) (Config, error) {
 	config = Config{
 		RegionAPI: region.APIConf{
@@ -81,18 +81,18 @@ func LoadConfig(ctx *cli.Context) (Config, error) {
 	return config, nil
 }
 
-//GetConfig GetConfig
+// GetConfig GetConfig
 func GetConfig() Config {
 	return config
 }
 
-// Get TenantNamePath
-func GetTenantNamePath() (tenantnamepath string, err error) {
+// Get TenantEnvNamePath
+func GetTenantEnvNamePath() (tenantEnvnamepath string, err error) {
 	home, err := sources.Home()
 	if err != nil {
 		logrus.Warn("Get Home Dir error.", err.Error())
-		return tenantnamepath, err
+		return tenantEnvnamepath, err
 	}
-	tenantnamepath = path.Join(home, ".wt", "tenant.txt")
-	return tenantnamepath, err
+	tenantEnvnamepath = path.Join(home, ".wt", "tenantEnv.txt")
+	return tenantEnvnamepath, err
 }

@@ -54,7 +54,7 @@ func (t *ThirdPartyServiceHanlder) AddEndpoints(sid string, d *model.AddEndpiont
 	address, port := convertAddressPort(d.Address)
 	if port == 0 {
 		//set default port by service port
-		ports, _ := t.dbmanager.TenantServicesPortDao().GetPortsByServiceID(sid)
+		ports, _ := t.dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(sid)
 		if len(ports) > 0 {
 			port = ports[0].ContainerPort
 		}

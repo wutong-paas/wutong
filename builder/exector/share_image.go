@@ -34,7 +34,7 @@ import (
 // ImageShareItem ImageShareItem
 type ImageShareItem struct {
 	Namespace          string `json:"namespace"`
-	TenantName         string `json:"tenant_name"`
+	TenantEnvName      string `json:"tenant_env_name"`
 	ServiceID          string `json:"service_id"`
 	ServiceAlias       string `json:"service_alias"`
 	ImageName          string `json:"image_name"`

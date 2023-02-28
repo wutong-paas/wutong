@@ -32,8 +32,8 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//ChargesVerifyController service charges verify
-// swagger:operation GET /v2/tenants/{tenant_name}/chargesverify v2 chargesverify
+// ChargesVerifyController service charges verify
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/chargesverify v2 chargesverify
 //
 // 应用扩大资源申请接口，公有云云市验证，私有云不验证
 //
@@ -49,20 +49,21 @@ import (
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 状态码非200，表示验证过程发生错误。状态码200，msg代表实际状态：success, illegal_quantity, missing_tenant, owned_fee, region_unauthorized, lack_of_memory
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 状态码非200，表示验证过程发生错误。状态码200，msg代表实际状态：success, illegal_quantity, missing_tenantEnv, owned_fee, region_unauthorized, lack_of_memory
 func ChargesVerifyController(w http.ResponseWriter, r *http.Request) {
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*model.Tenants)
-	if tenant.EID == "" {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*model.TenantEnvs)
+	if tenantEnv.EID == "" {
 		eid := r.FormValue("eid")
 		if eid == "" {
 			httputil.ReturnError(r, w, 400, "enterprise id can not found")
 			return
 		}
-		tenant.EID = eid
-		db.GetManager().TenantDao().UpdateModel(tenant)
+		tenantEnv.EID = eid
+		db.GetManager().TenantEnvDao().UpdateModel(tenantEnv)
 	}
 	quantity := r.FormValue("quantity")
 	if quantity == "" {
@@ -76,7 +77,7 @@ func ChargesVerifyController(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if publicCloud := os.Getenv("PUBLIC_CLOUD"); publicCloud != "true" {
-		err := cloud.PriChargeSverify(r.Context(), tenant, quantityInt)
+		err := cloud.PriChargeSverify(r.Context(), tenantEnv, quantityInt)
 		if err != nil {
 			err.Handle(r, w)
 			return
@@ -84,7 +85,7 @@ func ChargesVerifyController(w http.ResponseWriter, r *http.Request) {
 		httputil.ReturnSuccess(r, w, nil)
 	} else {
 		reason := r.FormValue("reason")
-		if err := cloud.PubChargeSverify(tenant, quantityInt, reason); err != nil {
+		if err := cloud.PubChargeSverify(tenantEnv, quantityInt, reason); err != nil {
 			err.Handle(r, w)
 			return
 		}

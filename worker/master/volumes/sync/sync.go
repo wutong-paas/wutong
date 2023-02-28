@@ -1,14 +1,14 @@
 package sync
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
-	"github.com/sirupsen/logrus"
 )
 
 // VolumeTypeEvent -
 type VolumeTypeEvent struct {
-	vtEventCh chan *model.TenantServiceVolumeType
+	vtEventCh chan *model.TenantEnvServiceVolumeType
 	stopCh    chan struct{}
 }
 
@@ -16,12 +16,12 @@ type VolumeTypeEvent struct {
 func New(stopCh chan struct{}) *VolumeTypeEvent {
 	return &VolumeTypeEvent{
 		stopCh:    stopCh,
-		vtEventCh: make(chan *model.TenantServiceVolumeType, 100),
+		vtEventCh: make(chan *model.TenantEnvServiceVolumeType, 100),
 	}
 }
 
 // GetChan -
-func (e *VolumeTypeEvent) GetChan() chan<- *model.TenantServiceVolumeType {
+func (e *VolumeTypeEvent) GetChan() chan<- *model.TenantEnvServiceVolumeType {
 	return e.vtEventCh
 }
 

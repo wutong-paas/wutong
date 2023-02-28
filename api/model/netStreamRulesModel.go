@@ -18,12 +18,13 @@
 
 package model
 
-//SetNetDownStreamRuleStruct SetNetDownStreamRuleStruct
+// SetNetDownStreamRuleStruct SetNetDownStreamRuleStruct
+//
 //swagger:parameters setNetDownStreamRuleStruct
 type SetNetDownStreamRuleStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -51,7 +52,7 @@ type SetNetDownStreamRuleStruct struct {
 	}
 }
 
-//NetRulesDownStreamBody NetRulesDownStreamBody
+// NetRulesDownStreamBody NetRulesDownStreamBody
 type NetRulesDownStreamBody struct {
 	DestService      string              `json:"dest_service"`
 	DestServiceAlias string              `json:"dest_service_alias"`
@@ -60,7 +61,7 @@ type NetRulesDownStreamBody struct {
 	Rules            *NetDownStreamRules `json:"rules"`
 }
 
-//NetDownStreamRules NetDownStreamRules
+// NetDownStreamRules NetDownStreamRules
 type NetDownStreamRules struct {
 	//限流值 max_connections
 	Limit              int `json:"limit" validate:"limit|numeric_between:0,1024"`
@@ -83,25 +84,26 @@ type NetDownStreamRules struct {
 	ServiceID    string `json:"service_id" validate:"service_id"`
 }
 
-//NetUpStreamRules NetUpStreamRules
+// NetUpStreamRules NetUpStreamRules
 type NetUpStreamRules struct {
 	NetDownStreamRules
 	SourcePort int32 `json:"source_port"`
 	MapPort    int32 `json:"map_port"`
 }
 
-//HeaderRules HeaderRules
+// HeaderRules HeaderRules
 type HeaderRules struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
 
-//GetNetDownStreamRuleStruct GetNetDownStreamRuleStruct
+// GetNetDownStreamRuleStruct GetNetDownStreamRuleStruct
+//
 //swagger:parameters getNetDownStreamRuleStruct
 type GetNetDownStreamRuleStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`
@@ -113,12 +115,13 @@ type GetNetDownStreamRuleStruct struct {
 	Port int `json:"port" validate:"port|numeric_between:1,65535"`
 }
 
-//UpdateNetDownStreamRuleStruct UpdateNetDownStreamRuleStruct
+// UpdateNetDownStreamRuleStruct UpdateNetDownStreamRuleStruct
+//
 //swagger:parameters updateNetDownStreamRuleStruct
 type UpdateNetDownStreamRuleStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`

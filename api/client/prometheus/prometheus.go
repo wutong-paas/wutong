@@ -33,7 +33,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-//Options prometheus options
+// Options prometheus options
 type Options struct {
 	Endpoint string `json:"endpoint,omitempty" yaml:"endpoint"`
 }
@@ -43,7 +43,7 @@ type prometheus struct {
 	client apiv1.API
 }
 
-//NewPrometheus new prometheus monitor
+// NewPrometheus new prometheus monitor
 func NewPrometheus(options *Options) (Interface, error) {
 	if options.Endpoint == "" {
 		options.Endpoint = "http://wt-monitor:9999"
@@ -96,11 +96,11 @@ func (p prometheus) GetMetricOverTime(expr string, start, end time.Time, step ti
 	return parsedResp
 }
 
-func (p prometheus) GetMetadata(tenantID string) []Metadata {
+func (p prometheus) GetMetadata(tenantEnvID string) []Metadata {
 	var meta []Metadata
 
 	// Filter metrics available to members of this namespace
-	matchTarget := fmt.Sprintf("{tenant_id=\"%s\"}", tenantID)
+	matchTarget := fmt.Sprintf("{tenant_env_id=\"%s\"}", tenantEnvID)
 	fmt.Println(matchTarget)
 	items, err := p.client.TargetsMetadata(context.Background(), matchTarget, "", "")
 	if err != nil {
@@ -125,11 +125,11 @@ func (p prometheus) GetMetadata(tenantID string) []Metadata {
 	return meta
 }
 
-func (p prometheus) GetAppMetadata(tenantID, appID string) []Metadata {
+func (p prometheus) GetAppMetadata(tenantEnvID, appID string) []Metadata {
 	var meta []Metadata
 
 	// Filter metrics available to members of this namespace
-	matchTarget := fmt.Sprintf("{tenant_id=\"%s\",app_id=\"%s\"}", tenantID, appID)
+	matchTarget := fmt.Sprintf("{tenant_env_id=\"%s\",app_id=\"%s\"}", tenantEnvID, appID)
 	items, err := p.client.TargetsMetadata(context.Background(), matchTarget, "", "")
 	if err != nil {
 		logrus.Error(err)
@@ -152,14 +152,14 @@ func (p prometheus) GetAppMetadata(tenantID, appID string) []Metadata {
 	return meta
 }
 
-func (p prometheus) GetComponentMetadata(tenantID, componentID string) []Metadata {
+func (p prometheus) GetComponentMetadata(tenantEnvID, componentID string) []Metadata {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	var meta []Metadata
 
 	// Filter metrics available to members of this namespace
-	matchTarget := fmt.Sprintf("{tenant_id=\"%s\",service_id=\"%s\"}", tenantID, componentID)
+	matchTarget := fmt.Sprintf("{tenant_env_id=\"%s\",service_id=\"%s\"}", tenantEnvID, componentID)
 	items, err := p.client.TargetsMetadata(ctx, matchTarget, "", "")
 	if err != nil {
 		logrus.Error(err)

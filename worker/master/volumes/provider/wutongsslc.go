@@ -70,7 +70,7 @@ func NewWutongsslcProvisioner(kubecli kubernetes.Interface, store store.Storer) 
 
 var _ controller.Provisioner = &wutongsslcProvisioner{}
 
-//selectNode select an appropriate node with the largest resource surplus
+// selectNode select an appropriate node with the largest resource surplus
 func (p *wutongsslcProvisioner) selectNode(ctx context.Context, nodeOS, ignore string) (*v1.Node, error) {
 	allnode, err := p.kubecli.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -140,21 +140,21 @@ func (p *wutongsslcProvisioner) selectNode(ctx context.Context, nodeOS, ignore s
 	return selectnode, nil
 }
 func (p *wutongsslcProvisioner) createPath(options controller.VolumeOptions) (string, error) {
-	tenantID := options.PVC.Labels["tenant_id"]
+	tenantEnvID := options.PVC.Labels["tenant_env_id"]
 	serviceID := options.PVC.Labels["service_id"]
 	volumeID := getVolumeIDByPVCName(options.PVC.Name)
 	if volumeID != 0 {
-		volume, err := db.GetManager().TenantServiceVolumeDao().GetVolumeByID(volumeID)
+		volume, err := db.GetManager().TenantEnvServiceVolumeDao().GetVolumeByID(volumeID)
 		if err != nil {
 			logrus.Warningf("get volume by id %d failure %s", volumeID, err.Error())
 			return "", err
 		}
 		reqoptions := map[string]string{
-			"tenant_id":   tenantID,
-			"service_id":  serviceID,
-			"pvcname":     options.PVC.Name,
-			"volume_name": volume.VolumeName,
-			"pod_name":    getPodNameByPVCName(options.PVC.Name),
+			"tenant_env_id": tenantEnvID,
+			"service_id":    serviceID,
+			"pvcname":       options.PVC.Name,
+			"volume_name":   volume.VolumeName,
+			"pod_name":      getPodNameByPVCName(options.PVC.Name),
 		}
 		var ip string
 		for _, address := range options.SelectedNode.Status.Addresses {

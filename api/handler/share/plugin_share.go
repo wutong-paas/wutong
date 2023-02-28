@@ -50,8 +50,8 @@ type PluginResult struct {
 type PluginShare struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
-	TenantID   string
+	TenantEnvName string `json:"tenant_env_name"`
+	TenantEnvID   string
 	// in: path
 	// required: true
 	PluginID string `json:"plugin_id"`
@@ -76,14 +76,14 @@ type PluginShare struct {
 
 // Share share app
 func (s *PluginShareHandle) Share(ss PluginShare) (*PluginResult, *util.APIHandleError) {
-	plugin, err := db.GetManager().TenantPluginDao().GetPluginByID(ss.PluginID, ss.TenantID)
+	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(ss.PluginID, ss.TenantEnvID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("query plugin error", err)
 	}
 
 	var shareImageName, localImageName string
 	//query new build version
-	version, err := db.GetManager().TenantPluginBuildVersionDao().GetLastBuildVersionByVersionID(ss.PluginID, ss.Body.PluginVersion)
+	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetLastBuildVersionByVersionID(ss.PluginID, ss.Body.PluginVersion)
 
 	if err != nil {
 		logrus.Error("query service deploy version error", err.Error())
@@ -102,7 +102,7 @@ func (s *PluginShareHandle) Share(ss PluginShare) (*PluginResult, *util.APIHandl
 	info := map[string]interface{}{
 		"image_info":       ss.Body.ImageInfo,
 		"event_id":         ss.Body.EventID,
-		"tenant_name":      ss.TenantName,
+		"tenant_env_name":  ss.TenantEnvName,
 		"image_name":       shareImageName,
 		"share_id":         shareID,
 		"local_image_name": localImageName,

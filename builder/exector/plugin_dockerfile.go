@@ -64,13 +64,13 @@ func (e *exectorManager) pluginDockerfileBuild(task *pb.TaskMessage) {
 			return
 		}
 	}
-	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByDeployVersion(tb.PluginID, tb.VersionID, tb.DeployVersion)
+	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByDeployVersion(tb.PluginID, tb.VersionID, tb.DeployVersion)
 	if err != nil {
 		logrus.Errorf("get version error, %v", err)
 		return
 	}
 	version.Status = "failure"
-	if err := db.GetManager().TenantPluginBuildVersionDao().UpdateModel(version); err != nil {
+	if err := db.GetManager().TenantEnvPluginBuildVersionDao().UpdateModel(version); err != nil {
 		logrus.Errorf("update version error, %v", err)
 	}
 	MetricErrorTaskNum++
@@ -79,7 +79,7 @@ func (e *exectorManager) pluginDockerfileBuild(task *pb.TaskMessage) {
 
 func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger) error {
 	logger.Info("开始拉取代码", map[string]string{"step": "build-exector"})
-	sourceDir := fmt.Sprintf(formatSourceDir, t.TenantID, t.VersionID)
+	sourceDir := fmt.Sprintf(formatSourceDir, t.TenantEnvID, t.VersionID)
 	if t.Repo == "" {
 		t.Repo = "master"
 	}
@@ -115,14 +115,14 @@ func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger)
 	logger.Info("build image success, start to push image to local image registry", map[string]string{"step": "builder-exector"})
 
 	logger.Info("push image success", map[string]string{"step": "build-exector"})
-	version, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
+	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
 	if err != nil {
 		logrus.Errorf("get version error, %v", err)
 		return err
 	}
 	version.BuildLocalImage = buildImageName
 	version.Status = "complete"
-	if err := db.GetManager().TenantPluginBuildVersionDao().UpdateModel(version); err != nil {
+	if err := db.GetManager().TenantEnvPluginBuildVersionDao().UpdateModel(version); err != nil {
 		logrus.Errorf("update version error, %v", err)
 		return err
 	}

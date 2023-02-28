@@ -35,7 +35,7 @@ import (
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//InitHandle 初始化handle
+// InitHandle 初始化handle
 func InitHandle(conf option.Config,
 	etcdClientArgs *etcdutil.ClientArgs,
 	statusCli *client.AppRuntimeSyncClient,
@@ -65,7 +65,7 @@ func InitHandle(conf option.Config,
 	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
-	defaultTenantHandler = CreateTenManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)
+	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)
 	defaultNetRulesHandler = CreateNetRulesManager(etcdcli)
 	defaultCloudHandler = CreateCloudManager(conf)
 	defaultAPPBackupHandler = group.CreateBackupHandle(mqClient, statusCli, etcdcli)
@@ -97,71 +97,71 @@ var shareHandler *share.ServiceShareHandle
 var pluginShareHandler *share.PluginShareHandle
 var defaultmonitorHandler MonitorHandler
 
-//GetMonitorHandle get monitor handler
+// GetMonitorHandle get monitor handler
 func GetMonitorHandle() MonitorHandler {
 	return defaultmonitorHandler
 }
 
-//GetShareHandle get share handle
+// GetShareHandle get share handle
 func GetShareHandle() *share.ServiceShareHandle {
 	return shareHandler
 }
 
-//GetPluginShareHandle get plugin share handle
+// GetPluginShareHandle get plugin share handle
 func GetPluginShareHandle() *share.PluginShareHandle {
 	return pluginShareHandler
 }
 
-//GetServiceManager get manager
+// GetServiceManager get manager
 func GetServiceManager() ServiceHandler {
 	return defaultServieHandler
 }
 
 var defaultPluginHandler PluginHandler
 
-//GetPluginManager get manager
+// GetPluginManager get manager
 func GetPluginManager() PluginHandler {
 	return defaultPluginHandler
 }
 
-var defaultTenantHandler TenantHandler
+var defaultTenantEnvHandler TenantEnvHandler
 
-//GetTenantManager get manager
-func GetTenantManager() TenantHandler {
-	return defaultTenantHandler
+// GetTenantEnvManager get manager
+func GetTenantEnvManager() TenantEnvHandler {
+	return defaultTenantEnvHandler
 }
 
 var defaultNetRulesHandler NetRulesHandler
 
-//GetRulesManager get manager
+// GetRulesManager get manager
 func GetRulesManager() NetRulesHandler {
 	return defaultNetRulesHandler
 }
 
 var defaultCloudHandler CloudHandler
 
-//GetCloudManager get manager
+// GetCloudManager get manager
 func GetCloudManager() CloudHandler {
 	return defaultCloudHandler
 }
 
 var defaultEventHandler EventHandler
 
-//GetEventHandler get event handler
+// GetEventHandler get event handler
 func GetEventHandler() EventHandler {
 	return defaultEventHandler
 }
 
 var defaultAppHandler *AppAction
 
-//GetAppHandler GetAppHandler
+// GetAppHandler GetAppHandler
 func GetAppHandler() *AppAction {
 	return defaultAppHandler
 }
 
 var defaultAPPBackupHandler *group.BackupHandle
 
-//GetAPPBackupHandler GetAPPBackupHandler
+// GetAPPBackupHandler GetAPPBackupHandler
 func GetAPPBackupHandler() *group.BackupHandle {
 	return defaultAPPBackupHandler
 }
@@ -182,14 +182,14 @@ func Get3rdPartySvcHandler() *ThirdPartyServiceHanlder {
 
 var batchOperationHandler *BatchOperationHandler
 
-//GetBatchOperationHandler get handler
+// GetBatchOperationHandler get handler
 func GetBatchOperationHandler() *BatchOperationHandler {
 	return batchOperationHandler
 }
 
 var operationHandler *OperationHandler
 
-//GetOperationHandler get handler
+// GetOperationHandler get handler
 func GetOperationHandler() *OperationHandler {
 	return operationHandler
 }
@@ -224,7 +224,7 @@ func GetClusterHandler() ClusterHandler {
 
 var defApplicationHandler ApplicationHandler
 
-// GetApplicationHandler  returns the default tenant application handler.
+// GetApplicationHandler  returns the default tenant env application handler.
 func GetApplicationHandler() ApplicationHandler {
 	return defApplicationHandler
 }

@@ -43,8 +43,8 @@ var (
 	defBufferSize = 65535
 )
 
-//NginxConfigFileTemplete nginx config file manage
-//write by templete
+// NginxConfigFileTemplete nginx config file manage
+// write by templete
 type NginxConfigFileTemplete struct {
 	templeteFileDirPath string
 	configFileDirPath   string
@@ -54,7 +54,7 @@ type NginxConfigFileTemplete struct {
 	writeLocks          map[string]*sync.Mutex
 }
 
-//NewNginxConfigFileTemplete new nginx config file manage
+// NewNginxConfigFileTemplete new nginx config file manage
 func NewNginxConfigFileTemplete() (*NginxConfigFileTemplete, error) {
 	var configFileDirPath = "/run/nginx/conf"
 	if envConfigFileDirPath := os.Getenv("NGINX_CUSTOM_CONFIG"); envConfigFileDirPath != "" {
@@ -86,12 +86,12 @@ func NewNginxConfigFileTemplete() (*NginxConfigFileTemplete, error) {
 	}, nil
 }
 
-//GetConfigFileDirPath get configfile dir path
+// GetConfigFileDirPath get configfile dir path
 func (n *NginxConfigFileTemplete) GetConfigFileDirPath() string {
 	return n.configFileDirPath
 }
 
-//NewNginxTemplate new nginx main config
+// NewNginxTemplate new nginx main config
 func (n *NginxConfigFileTemplete) NewNginxTemplate(data *model.Nginx) error {
 	body, err := n.nginxTmpl.Write(data)
 	if err != nil {
@@ -153,21 +153,21 @@ func (n *NginxConfigFileTemplete) writeFileNotCheck(first bool, configBody []byt
 	return hasOldConfig, err
 }
 
-//WriteServer write server config
-func (n *NginxConfigFileTemplete) WriteServer(c option.Config, configtype, tenant string, servers ...*model.Server) error {
-	if tenant == "" {
-		tenant = "default"
+// WriteServer write server config
+func (n *NginxConfigFileTemplete) WriteServer(c option.Config, configtype, tenantEnv string, servers ...*model.Server) error {
+	if tenantEnv == "" {
+		tenantEnv = "default"
 	}
 	if configtype == "" {
 		configtype = "http"
 	}
-	if _, ok := n.writeLocks[tenant]; !ok {
-		n.writeLocks[tenant] = &sync.Mutex{}
+	if _, ok := n.writeLocks[tenantEnv]; !ok {
+		n.writeLocks[tenantEnv] = &sync.Mutex{}
 	}
-	n.writeLocks[tenant].Lock()
-	defer n.writeLocks[tenant].Unlock()
-	filename := fmt.Sprintf("%s_servers.conf", tenant)
-	serverConfigFile := path.Join(n.configFileDirPath, configtype, tenant, filename)
+	n.writeLocks[tenantEnv].Lock()
+	defer n.writeLocks[tenantEnv].Unlock()
+	filename := fmt.Sprintf("%s_servers.conf", tenantEnv)
+	serverConfigFile := path.Join(n.configFileDirPath, configtype, tenantEnv, filename)
 	first := true
 	var writeServers []*model.Server
 	for i, s := range servers {
@@ -178,7 +178,7 @@ func (n *NginxConfigFileTemplete) WriteServer(c option.Config, configtype, tenan
 		}
 	}
 	if len(writeServers) < 1 {
-		logrus.Warnf("%s proxy is empty, nginx server[%s] will clean up", tenant, serverConfigFile)
+		logrus.Warnf("%s proxy is empty, nginx server[%s] will clean up", tenantEnv, serverConfigFile)
 		return n.writeFile(first, []byte{}, serverConfigFile)
 	}
 	logrus.Debugf("write %d count http server to config", len(writeServers))
@@ -268,17 +268,17 @@ func (n *NginxConfigFileTemplete) writeFile(first bool, configBody []byte, confi
 	return nil
 }
 
-//ClearByTenant clear tenant config
-func (n *NginxConfigFileTemplete) ClearByTenant(tenant string) error {
-	tenantConfigFile := path.Join(n.configFileDirPath, "http", tenant)
-	if err := os.RemoveAll(tenantConfigFile); err != nil {
+// ClearByTenantEnv clear tenant env config
+func (n *NginxConfigFileTemplete) ClearByTenantEnv(tenantEnv string) error {
+	tenantEnvConfigFile := path.Join(n.configFileDirPath, "http", tenantEnv)
+	if err := os.RemoveAll(tenantEnvConfigFile); err != nil {
 		return err
 	}
-	tenantStreamConfigFile := path.Join(n.configFileDirPath, "stream", tenant)
-	return os.RemoveAll(tenantStreamConfigFile)
+	tenantEnvStreamConfigFile := path.Join(n.configFileDirPath, "stream", tenantEnv)
+	return os.RemoveAll(tenantEnvStreamConfigFile)
 }
 
-//NginxServerContext nginx server config
+// NginxServerContext nginx server config
 type NginxServerContext struct {
 	Servers     []*model.Server
 	TCPBackends []*model.Server
@@ -286,7 +286,7 @@ type NginxServerContext struct {
 	Set         option.Config
 }
 
-//NginxUpstreamContext nginx upstream config
+// NginxUpstreamContext nginx upstream config
 type NginxUpstreamContext struct {
 	Upstream *model.Upstream
 	Set      option.Config
@@ -299,8 +299,8 @@ type Template struct {
 	bp *BufferPool
 }
 
-//NewTemplate returns a new Template instance or an
-//error if the specified template file contains errors
+// NewTemplate returns a new Template instance or an
+// error if the specified template file contains errors
 func NewTemplate(fileName string) (*Template, error) {
 	tmplFile, err := ioutil.ReadFile(fileName)
 	if err != nil {

@@ -37,13 +37,13 @@ import (
 	"github.com/wutong-paas/wutong/util/constants"
 )
 
-//LogAction  log action struct
+// LogAction  log action struct
 type LogAction struct {
 	EtcdCli *clientv3.Client
 	eventdb *eventdb.EventFilePlugin
 }
 
-//CreateLogManager get log manager
+// CreateLogManager get log manager
 func CreateLogManager(cli *clientv3.Client) *LogAction {
 	return &LogAction{
 		EtcdCli: cli,
@@ -55,13 +55,13 @@ func CreateLogManager(cli *clientv3.Client) *LogAction {
 
 // GetEvents get target logs
 func (l *LogAction) GetEvents(target, targetID string, page, size int) ([]*dbmodel.ServiceEvent, int, error) {
-	if target == "tenant" {
-		return db.GetManager().ServiceEventDao().GetEventsByTenantID(targetID, (page-1)*size, size)
+	if target == "tenantEnv" {
+		return db.GetManager().ServiceEventDao().GetEventsByTenantEnvID(targetID, (page-1)*size, size)
 	}
 	return db.GetManager().ServiceEventDao().GetEventsByTarget(target, targetID, (page-1)*size, size)
 }
 
-//GetLogList get log list
+// GetLogList get log list
 func (l *LogAction) GetLogList(serviceAlias string) ([]*model.HistoryLogFile, error) {
 	logDIR := path.Join(constants.WTDataLogPath, serviceAlias)
 	_, err := os.Stat(logDIR)
@@ -84,7 +84,7 @@ func (l *LogAction) GetLogList(serviceAlias string) ([]*model.HistoryLogFile, er
 	return logFiles, nil
 }
 
-//GetLogFile GetLogFile
+// GetLogFile GetLogFile
 func (l *LogAction) GetLogFile(serviceAlias, fileName string) (string, string, error) {
 	logPath := path.Join(constants.WTDataLogPath, serviceAlias)
 	fullPath := path.Join(logPath, fileName)
@@ -95,7 +95,7 @@ func (l *LogAction) GetLogFile(serviceAlias, fileName string) (string, string, e
 	return logPath, fullPath, err
 }
 
-//GetLogInstance get log web socket instance
+// GetLogInstance get log web socket instance
 func (l *LogAction) GetLogInstance(serviceID string) (string, error) {
 	value, err := l.EtcdCli.Get(context.Background(), fmt.Sprintf("/event/dockerloginstacne/%s", serviceID))
 	if err != nil {
@@ -108,7 +108,7 @@ func (l *LogAction) GetLogInstance(serviceID string) (string, error) {
 	return "", nil
 }
 
-//GetLevelLog get event log
+// GetLevelLog get event log
 func (l *LogAction) GetLevelLog(eventID string, level string) (*api_model.DataLog, error) {
 	re, err := l.eventdb.GetMessages(eventID, level, 0)
 	if err != nil {
@@ -129,7 +129,7 @@ func (l *LogAction) GetLevelLog(eventID string, level string) (*api_model.DataLo
 	}, nil
 }
 
-//Decompress zlib解码
+// Decompress zlib解码
 func decompress(zb []byte) ([]byte, error) {
 	b := bytes.NewReader(zb)
 	var out bytes.Buffer

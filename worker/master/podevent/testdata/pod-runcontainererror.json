@@ -14,8 +14,8 @@
             "pod-template-hash": "2516269873",
             "service_alias": "wt4c4cc4",
             "service_id": "05459b941f86156e1093c14ced4c4cc4",
-            "tenant_id": "2d15195dcda242a3aab6f89ec56d25f0",
-            "tenant_name": "v9dw2hx5",
+            "tenant_env_id": "2d15195dcda242a3aab6f89ec56d25f0",
+            "tenant_env_name": "v9dw2hx5",
             "version": "20190829144831"
         },
         "annotations": {

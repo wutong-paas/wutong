@@ -100,30 +100,30 @@ func BackupAPPNewCreater(in []byte, m *exectorManager) (TaskWorker, error) {
 // AppSnapshot holds a snapshot of your app
 type AppSnapshot struct {
 	Services            []*RegionServiceSnapshot
-	Plugins             []*dbmodel.TenantPlugin
-	PluginBuildVersions []*dbmodel.TenantPluginBuildVersion
+	Plugins             []*dbmodel.TenantEnvPlugin
+	PluginBuildVersions []*dbmodel.TenantEnvPluginBuildVersion
 }
 
 // RegionServiceSnapshot RegionServiceSnapshot
 type RegionServiceSnapshot struct {
 	ServiceID          string
-	Service            *dbmodel.TenantServices
-	ServiceProbe       []*dbmodel.TenantServiceProbe
-	LBMappingPort      []*dbmodel.TenantServiceLBMappingPort
-	ServiceEnv         []*dbmodel.TenantServiceEnvVar
-	ServiceLabel       []*dbmodel.TenantServiceLable
-	ServiceMntRelation []*dbmodel.TenantServiceMountRelation
-	ServiceRelation    []*dbmodel.TenantServiceRelation
+	Service            *dbmodel.TenantEnvServices
+	ServiceProbe       []*dbmodel.TenantEnvServiceProbe
+	LBMappingPort      []*dbmodel.TenantEnvServiceLBMappingPort
+	ServiceEnv         []*dbmodel.TenantEnvServiceEnvVar
+	ServiceLabel       []*dbmodel.TenantEnvServiceLable
+	ServiceMntRelation []*dbmodel.TenantEnvServiceMountRelation
+	ServiceRelation    []*dbmodel.TenantEnvServiceRelation
 	ServiceStatus      string
-	ServiceVolume      []*dbmodel.TenantServiceVolume
-	ServiceConfigFile  []*dbmodel.TenantServiceConfigFile
-	ServicePort        []*dbmodel.TenantServicesPort
+	ServiceVolume      []*dbmodel.TenantEnvServiceVolume
+	ServiceConfigFile  []*dbmodel.TenantEnvServiceConfigFile
+	ServicePort        []*dbmodel.TenantEnvServicesPort
 	Versions           []*dbmodel.VersionInfo
 
-	PluginRelation    []*dbmodel.TenantServicePluginRelation
-	PluginConfigs     []*dbmodel.TenantPluginVersionDiscoverConfig
-	PluginEnvs        []*dbmodel.TenantPluginVersionEnv
-	PluginStreamPorts []*dbmodel.TenantServicesStreamPluginPort
+	PluginRelation    []*dbmodel.TenantEnvServicePluginRelation
+	PluginConfigs     []*dbmodel.TenantEnvPluginVersionDiscoverConfig
+	PluginEnvs        []*dbmodel.TenantEnvPluginVersionEnv
+	PluginStreamPorts []*dbmodel.TenantEnvServicesStreamPluginPort
 }
 
 // Run Run
@@ -288,7 +288,7 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 		if len(app.ServiceVolume) > 0 {
 			dstDir := fmt.Sprintf("%s/data_%s/%s.zip", b.SourceDir, app.Service.ServiceID, "__all_data")
 			_, sharepath := GetVolumeDir()
-			serviceVolumeData := path.Join(sharepath, "tenant", app.Service.TenantID, "service", app.Service.ServiceID)
+			serviceVolumeData := path.Join(sharepath, "tenantEnv", app.Service.TenantEnvID, "service", app.Service.ServiceID)
 			if !util.DirIsEmpty(serviceVolumeData) {
 				if err := util.Zip(serviceVolumeData, dstDir); err != nil {
 					logrus.Errorf("backup service(%s) volume data error.%s", app.ServiceID, err.Error())

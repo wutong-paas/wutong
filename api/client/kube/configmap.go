@@ -28,12 +28,12 @@ func (c *ConfigMaps) Migrate(namespace string, seletcor labels.Selector) {
 func (c *ConfigMaps) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for i := 0; i < len(c.ConfigMaps); i++ {
 		labels := map[string]string{
-			"app":           c.ConfigMaps[i].Labels["app"],
-			"app_id":        c.ConfigMaps[i].Labels["app_id"],
-			"service_alias": c.ConfigMaps[i].Labels["service_alias"],
-			"service_id":    c.ConfigMaps[i].Labels["service_id"],
-			"tenant_id":     c.ConfigMaps[i].Labels["tenant_id"],
-			"tenant_name":   c.ConfigMaps[i].Labels["tenant_name"],
+			"app":             c.ConfigMaps[i].Labels["app"],
+			"app_id":          c.ConfigMaps[i].Labels["app_id"],
+			"service_alias":   c.ConfigMaps[i].Labels["service_alias"],
+			"service_id":      c.ConfigMaps[i].Labels["service_id"],
+			"tenant_env_id":   c.ConfigMaps[i].Labels["tenant_env_id"],
+			"tenant_env_name": c.ConfigMaps[i].Labels["tenant_env_name"],
 		}
 		if c.ConfigMaps[i] != nil {
 			c.ConfigMaps[i].APIVersion = "v1"

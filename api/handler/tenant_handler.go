@@ -26,29 +26,30 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-// TenantHandler tenant handler
-type TenantHandler interface {
-	GetTenants(query string) ([]*dbmodel.Tenants, error)
-	GetTenantsByName(name string) (*dbmodel.Tenants, error)
-	GetTenantsByEid(eid, query string) ([]*dbmodel.Tenants, error)
-	GetTenantsByUUID(uuid string) (*dbmodel.Tenants, error)
-	GetTenantsName() ([]string, error)
-	StatsMemCPU(services []*dbmodel.TenantServices) (*api_model.StatsInfo, error)
-	TotalMemCPU(services []*dbmodel.TenantServices) (*api_model.StatsInfo, error)
-	GetTenantsResources(ctx context.Context, tr *api_model.TenantResources) (map[string]map[string]interface{}, error)
-	GetTenantResource(tenantID string) (TenantResourceStats, error)
+// TenantEnvHandler tenant env handler
+type TenantEnvHandler interface {
+	GetAllTenantEnvs(query string) ([]*dbmodel.TenantEnvs, error)
+	GetTenantEnvs(tenantName, query string) ([]*dbmodel.TenantEnvs, error)
+	GetTenantEnvsByName(tenantName, tenantEnvName string) (*dbmodel.TenantEnvs, error)
+	GetTenantEnvsByEid(eid, query string) ([]*dbmodel.TenantEnvs, error)
+	GetTenantEnvsByUUID(uuid string) (*dbmodel.TenantEnvs, error)
+	GetTenantEnvsName(tenantName string) ([]string, error)
+	StatsMemCPU(services []*dbmodel.TenantEnvServices) (*api_model.StatsInfo, error)
+	TotalMemCPU(services []*dbmodel.TenantEnvServices) (*api_model.StatsInfo, error)
+	GetTenantEnvsResources(ctx context.Context, tr *api_model.TenantEnvResources) (map[string]map[string]interface{}, error)
+	GetTenantEnvResource(tenantEnvID string) (TenantEnvResourceStats, error)
 	GetAllocatableResources(ctx context.Context) (*ClusterResourceStats, error)
 	GetServicesResources(tr *api_model.ServicesResources) (map[string]map[string]interface{}, error)
-	TenantsSum() (int, error)
+	TenantEnvsSum(tenantName string) (int, error)
 	GetProtocols() ([]*dbmodel.RegionProcotols, *util.APIHandleError)
-	TransPlugins(tenantID, tenantName, fromTenant string, pluginList []string) *util.APIHandleError
+	TransPlugins(tenantEnvID, tenantEnvName, fromTenantEnv string, pluginList []string) *util.APIHandleError
 	GetServicesStatus(ids string) map[string]string
 	IsClosedStatus(status string) bool
-	BindTenantsResource(source []*dbmodel.Tenants) api_model.TenantList
-	UpdateTenant(*dbmodel.Tenants) error
-	DeleteTenant(ctx context.Context, tenantID string) error
+	BindTenantEnvsResource(source []*dbmodel.TenantEnvs) api_model.TenantEnvList
+	UpdateTenantEnv(*dbmodel.TenantEnvs) error
+	DeleteTenantEnv(ctx context.Context, tenantEnvID string) error
 	GetClusterResource(ctx context.Context) *ClusterResourceStats
 	CheckResourceName(ctx context.Context, namespace string, req *api_model.CheckResourceNameReq) (*api_model.CheckResourceNameResp, error)
 	GetKubeConfig(namespace string) (string, error)
-	GetKubeResources(namespace, tenantID string, customSetting api_model.KubeResourceCustomSetting) string
+	GetKubeResources(namespace, tenantEnvID string, customSetting api_model.KubeResourceCustomSetting) string
 }

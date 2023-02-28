@@ -30,7 +30,7 @@ import (
 	"github.com/wutong-paas/wutong/db/mysql"
 )
 
-//Manager db manager
+// Manager db manager
 type Manager interface {
 	CloseManager() error
 	Begin() *gorm.DB
@@ -48,45 +48,45 @@ type Manager interface {
 	AppConfigGroupItemDao() dao.AppConfigGroupItemDao
 	AppConfigGroupItemDaoTransactions(db *gorm.DB) dao.AppConfigGroupItemDao
 	EnterpriseDao() dao.EnterpriseDao
-	TenantDao() dao.TenantDao
-	TenantDaoTransactions(db *gorm.DB) dao.TenantDao
-	TenantServiceDao() dao.TenantServiceDao
-	TenantServiceDeleteDao() dao.TenantServiceDeleteDao
-	TenantServiceDaoTransactions(db *gorm.DB) dao.TenantServiceDao
-	TenantServiceDeleteDaoTransactions(db *gorm.DB) dao.TenantServiceDeleteDao
-	TenantServicesPortDao() dao.TenantServicesPortDao
-	TenantServicesPortDaoTransactions(*gorm.DB) dao.TenantServicesPortDao
-	TenantServiceRelationDao() dao.TenantServiceRelationDao
-	TenantServiceRelationDaoTransactions(*gorm.DB) dao.TenantServiceRelationDao
-	TenantServiceEnvVarDao() dao.TenantServiceEnvVarDao
-	TenantServiceEnvVarDaoTransactions(*gorm.DB) dao.TenantServiceEnvVarDao
-	TenantServiceMountRelationDao() dao.TenantServiceMountRelationDao
-	TenantServiceMountRelationDaoTransactions(db *gorm.DB) dao.TenantServiceMountRelationDao
-	TenantServiceVolumeDao() dao.TenantServiceVolumeDao
-	TenantServiceVolumeDaoTransactions(*gorm.DB) dao.TenantServiceVolumeDao
-	TenantServiceConfigFileDao() dao.TenantServiceConfigFileDao
-	TenantServiceConfigFileDaoTransactions(*gorm.DB) dao.TenantServiceConfigFileDao
+	TenantEnvDao() dao.TenantEnvDao
+	TenantEnvDaoTransactions(db *gorm.DB) dao.TenantEnvDao
+	TenantEnvServiceDao() dao.TenantEnvServiceDao
+	TenantEnvServiceDeleteDao() dao.TenantEnvServiceDeleteDao
+	TenantEnvServiceDaoTransactions(db *gorm.DB) dao.TenantEnvServiceDao
+	TenantEnvServiceDeleteDaoTransactions(db *gorm.DB) dao.TenantEnvServiceDeleteDao
+	TenantEnvServicesPortDao() dao.TenantEnvServicesPortDao
+	TenantEnvServicesPortDaoTransactions(*gorm.DB) dao.TenantEnvServicesPortDao
+	TenantEnvServiceRelationDao() dao.TenantEnvServiceRelationDao
+	TenantEnvServiceRelationDaoTransactions(*gorm.DB) dao.TenantEnvServiceRelationDao
+	TenantEnvServiceEnvVarDao() dao.TenantEnvServiceEnvVarDao
+	TenantEnvServiceEnvVarDaoTransactions(*gorm.DB) dao.TenantEnvServiceEnvVarDao
+	TenantEnvServiceMountRelationDao() dao.TenantEnvServiceMountRelationDao
+	TenantEnvServiceMountRelationDaoTransactions(db *gorm.DB) dao.TenantEnvServiceMountRelationDao
+	TenantEnvServiceVolumeDao() dao.TenantEnvServiceVolumeDao
+	TenantEnvServiceVolumeDaoTransactions(*gorm.DB) dao.TenantEnvServiceVolumeDao
+	TenantEnvServiceConfigFileDao() dao.TenantEnvServiceConfigFileDao
+	TenantEnvServiceConfigFileDaoTransactions(*gorm.DB) dao.TenantEnvServiceConfigFileDao
 	ServiceProbeDao() dao.ServiceProbeDao
 	ServiceProbeDaoTransactions(*gorm.DB) dao.ServiceProbeDao
-	TenantServiceLBMappingPortDao() dao.TenantServiceLBMappingPortDao
-	TenantServiceLBMappingPortDaoTransactions(*gorm.DB) dao.TenantServiceLBMappingPortDao
-	TenantServiceLabelDao() dao.TenantServiceLabelDao
-	TenantServiceLabelDaoTransactions(db *gorm.DB) dao.TenantServiceLabelDao
+	TenantEnvServiceLBMappingPortDao() dao.TenantEnvServiceLBMappingPortDao
+	TenantEnvServiceLBMappingPortDaoTransactions(*gorm.DB) dao.TenantEnvServiceLBMappingPortDao
+	TenantEnvServiceLabelDao() dao.TenantEnvServiceLabelDao
+	TenantEnvServiceLabelDaoTransactions(db *gorm.DB) dao.TenantEnvServiceLabelDao
 	LocalSchedulerDao() dao.LocalSchedulerDao
-	TenantPluginDaoTransactions(db *gorm.DB) dao.TenantPluginDao
-	TenantPluginDao() dao.TenantPluginDao
-	TenantPluginDefaultENVDaoTransactions(db *gorm.DB) dao.TenantPluginDefaultENVDao
-	TenantPluginDefaultENVDao() dao.TenantPluginDefaultENVDao
-	TenantPluginBuildVersionDao() dao.TenantPluginBuildVersionDao
-	TenantPluginBuildVersionDaoTransactions(db *gorm.DB) dao.TenantPluginBuildVersionDao
-	TenantPluginVersionENVDao() dao.TenantPluginVersionEnvDao
-	TenantPluginVersionENVDaoTransactions(db *gorm.DB) dao.TenantPluginVersionEnvDao
-	TenantPluginVersionConfigDao() dao.TenantPluginVersionConfigDao
-	TenantPluginVersionConfigDaoTransactions(db *gorm.DB) dao.TenantPluginVersionConfigDao
-	TenantServicePluginRelationDao() dao.TenantServicePluginRelationDao
-	TenantServicePluginRelationDaoTransactions(db *gorm.DB) dao.TenantServicePluginRelationDao
-	TenantServicesStreamPluginPortDao() dao.TenantServicesStreamPluginPortDao
-	TenantServicesStreamPluginPortDaoTransactions(db *gorm.DB) dao.TenantServicesStreamPluginPortDao
+	TenantEnvPluginDaoTransactions(db *gorm.DB) dao.TenantEnvPluginDao
+	TenantEnvPluginDao() dao.TenantEnvPluginDao
+	TenantEnvPluginDefaultENVDaoTransactions(db *gorm.DB) dao.TenantEnvPluginDefaultENVDao
+	TenantEnvPluginDefaultENVDao() dao.TenantEnvPluginDefaultENVDao
+	TenantEnvPluginBuildVersionDao() dao.TenantEnvPluginBuildVersionDao
+	TenantEnvPluginBuildVersionDaoTransactions(db *gorm.DB) dao.TenantEnvPluginBuildVersionDao
+	TenantEnvPluginVersionENVDao() dao.TenantEnvPluginVersionEnvDao
+	TenantEnvPluginVersionENVDaoTransactions(db *gorm.DB) dao.TenantEnvPluginVersionEnvDao
+	TenantEnvPluginVersionConfigDao() dao.TenantEnvPluginVersionConfigDao
+	TenantEnvPluginVersionConfigDaoTransactions(db *gorm.DB) dao.TenantEnvPluginVersionConfigDao
+	TenantEnvServicePluginRelationDao() dao.TenantEnvServicePluginRelationDao
+	TenantEnvServicePluginRelationDaoTransactions(db *gorm.DB) dao.TenantEnvServicePluginRelationDao
+	TenantEnvServicesStreamPluginPortDao() dao.TenantEnvServicesStreamPluginPortDao
+	TenantEnvServicesStreamPluginPortDaoTransactions(db *gorm.DB) dao.TenantEnvServicesStreamPluginPortDao
 
 	CodeCheckResultDao() dao.CodeCheckResultDao
 	CodeCheckResultDaoTransactions(db *gorm.DB) dao.CodeCheckResultDao
@@ -128,15 +128,15 @@ type Manager interface {
 	ThirdPartySvcDiscoveryCfgDao() dao.ThirdPartySvcDiscoveryCfgDao
 	ThirdPartySvcDiscoveryCfgDaoTransactions(db *gorm.DB) dao.ThirdPartySvcDiscoveryCfgDao
 
-	TenantServceAutoscalerRulesDao() dao.TenantServceAutoscalerRulesDao
-	TenantServceAutoscalerRulesDaoTransactions(db *gorm.DB) dao.TenantServceAutoscalerRulesDao
-	TenantServceAutoscalerRuleMetricsDao() dao.TenantServceAutoscalerRuleMetricsDao
-	TenantServceAutoscalerRuleMetricsDaoTransactions(db *gorm.DB) dao.TenantServceAutoscalerRuleMetricsDao
-	TenantServiceScalingRecordsDao() dao.TenantServiceScalingRecordsDao
-	TenantServiceScalingRecordsDaoTransactions(db *gorm.DB) dao.TenantServiceScalingRecordsDao
+	TenantEnvServceAutoscalerRulesDao() dao.TenantEnvServceAutoscalerRulesDao
+	TenantEnvServceAutoscalerRulesDaoTransactions(db *gorm.DB) dao.TenantEnvServceAutoscalerRulesDao
+	TenantEnvServceAutoscalerRuleMetricsDao() dao.TenantEnvServceAutoscalerRuleMetricsDao
+	TenantEnvServceAutoscalerRuleMetricsDaoTransactions(db *gorm.DB) dao.TenantEnvServceAutoscalerRuleMetricsDao
+	TenantEnvServiceScalingRecordsDao() dao.TenantEnvServiceScalingRecordsDao
+	TenantEnvServiceScalingRecordsDaoTransactions(db *gorm.DB) dao.TenantEnvServiceScalingRecordsDao
 
-	TenantServiceMonitorDao() dao.TenantServiceMonitorDao
-	TenantServiceMonitorDaoTransactions(db *gorm.DB) dao.TenantServiceMonitorDao
+	TenantEnvServiceMonitorDao() dao.TenantEnvServiceMonitorDao
+	TenantEnvServiceMonitorDaoTransactions(db *gorm.DB) dao.TenantEnvServiceMonitorDao
 }
 
 var defaultManager Manager
@@ -150,7 +150,7 @@ func init() {
 	}
 }
 
-//CreateManager 创建manager
+// CreateManager 创建manager
 func CreateManager(config config.Config) (err error) {
 	if _, ok := supportDrivers[config.DBType]; !ok {
 		return fmt.Errorf("DB drivers: %s not supported", config.DBType)
@@ -170,7 +170,7 @@ func CreateManager(config config.Config) (err error) {
 	return
 }
 
-//CloseManager close db manager
+// CloseManager close db manager
 func CloseManager() error {
 	if defaultManager == nil {
 		return errors.New("default db manager not init")
@@ -178,7 +178,7 @@ func CloseManager() error {
 	return defaultManager.CloseManager()
 }
 
-//GetManager get db manager
+// GetManager get db manager
 func GetManager() Manager {
 	return defaultManager
 }

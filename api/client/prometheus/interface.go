@@ -20,13 +20,13 @@ package prometheus
 
 import "time"
 
-//Interface monitor interface
+// Interface monitor interface
 type Interface interface {
 	GetMetric(expr string, time time.Time) Metric
 	GetMetricOverTime(expr string, start, end time.Time, step time.Duration) Metric
-	GetMetadata(tenantID string) []Metadata
+	GetMetadata(tenantEnvID string) []Metadata
 	//TODO Query dimensions to be improved
-	GetAppMetadata(tenantID, appID string) []Metadata
-	GetComponentMetadata(tenantID, componentID string) []Metadata
+	GetAppMetadata(tenantEnvID, appID string) []Metadata
+	GetComponentMetadata(tenantEnvID, componentID string) []Metadata
 	GetMetricLabelSet(expr string, start, end time.Time) []map[string]string
 }

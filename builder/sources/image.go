@@ -713,7 +713,7 @@ func printLog(logger event.Logger, level, msg string, info map[string]string) {
 func CreateImageName(ServiceID, DeployVersion string) string {
 	imageName := strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, ServiceID, DeployVersion))
 	logrus.Info("imageName:", imageName)
-	component, err := db.GetManager().TenantServiceDao().GetServiceByID(ServiceID)
+	component, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(ServiceID)
 	if err != nil {
 		logrus.Errorf("image build get service by id error: %v", err)
 		return imageName
@@ -723,12 +723,12 @@ func CreateImageName(ServiceID, DeployVersion string) string {
 		logrus.Errorf("image build get app by serviceid error: %v", err)
 		return imageName
 	}
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(component.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(component.TenantEnvID)
 	if err != nil {
-		logrus.Errorf("image build get tenant by uuid error: %v", err)
+		logrus.Errorf("image build get tenant env by uuid error: %v", err)
 		return imageName
 	}
-	workloadName := fmt.Sprintf("%s-%s-%s", tenant.Namespace, app.K8sApp, component.K8sComponentName)
+	workloadName := fmt.Sprintf("%s-%s-%s", tenantEnv.Namespace, app.K8sApp, component.K8sComponentName)
 	return strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, workloadName, DeployVersion))
 }
 
