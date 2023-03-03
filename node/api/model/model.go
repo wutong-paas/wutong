@@ -209,7 +209,7 @@ type ClusterResource struct {
 	AllNode                          int           `json:"all_node"`
 	NotReadyNode                     int           `json:"notready_node"`
 	ComputeNode                      int           `json:"compute_node"`
-	TenantEnv                        int           `json:"tenantEnv"`
+	TenantEnv                        int           `json:"tenant_env"`
 	CapCPU                           int           `json:"cap_cpu"`          //可分配CPU总额
 	CapMem                           float32       `json:"cap_mem"`          //可分配Mem总额
 	HealthCapCPU                     int           `json:"health_cap_cpu"`   //健康可分配CPU

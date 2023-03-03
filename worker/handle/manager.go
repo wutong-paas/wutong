@@ -116,8 +116,8 @@ func (m *Manager) AnalystToExec(task *model.Task) error {
 	case "service_gc":
 		logrus.Info("start the 'service_gc' task")
 		return m.ExecServiceGCTask(task)
-	case "delete_tenantEnv":
-		logrus.Info("start a 'delete_tenantEnv' task worker")
+	case "delete_tenant_env":
+		logrus.Info("start a 'delete_tenant_env' task worker")
 		return m.deleteTenantEnv(task)
 	case "refreshhpa":
 		logrus.Info("start a 'refreshhpa' task worker")

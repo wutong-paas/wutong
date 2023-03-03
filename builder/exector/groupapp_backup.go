@@ -288,7 +288,7 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 		if len(app.ServiceVolume) > 0 {
 			dstDir := fmt.Sprintf("%s/data_%s/%s.zip", b.SourceDir, app.Service.ServiceID, "__all_data")
 			_, sharepath := GetVolumeDir()
-			serviceVolumeData := path.Join(sharepath, "tenantEnv", app.Service.TenantEnvID, "service", app.Service.ServiceID)
+			serviceVolumeData := path.Join(sharepath, "tenant_env", app.Service.TenantEnvID, "service", app.Service.ServiceID)
 			if !util.DirIsEmpty(serviceVolumeData) {
 				if err := util.Zip(serviceVolumeData, dstDir); err != nil {
 					logrus.Errorf("backup service(%s) volume data error.%s", app.ServiceID, err.Error())

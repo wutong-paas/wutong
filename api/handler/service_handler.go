@@ -64,10 +64,10 @@ type ServiceHandler interface {
 	RollBack(rs *api_model.RollbackStruct) error
 	GetStatus(serviceID string) (*api_model.StatusList, error)
 	GetServicesStatus(tenantEnvID string, services []string) []map[string]interface{}
-	GetEnterpriseRunningServices(enterpriseID string) ([]string, *util.APIHandleError)
-	GetEntrepriseServicesStatus(enterpriseID string) (*ServicesStatus, *util.APIHandleError)
+	GetAllRunningServices() ([]string, *util.APIHandleError)
+	GetAllServicesStatus() (*ServicesStatus, *util.APIHandleError)
 	CreateTenantEnv(*dbmodel.TenantEnvs) error
-	CreateTenantEnvIDAndName(eid string) (string, string, error)
+	CreateTenantEnvIDAndName() (string, string, error)
 	GetPods(serviceID string) (*K8sPodInfos, error)
 	GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, error)
 	GetComponentPodNums(ctx context.Context, componentIDs []string) (map[string]int32, error)

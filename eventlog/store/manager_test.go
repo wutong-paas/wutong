@@ -27,7 +27,7 @@ import (
 )
 
 var urlData = `
-2017-05-19 11:33:34 APPS SumTimeByUrl [{"tenantEnv":"o2o","service":"zzcplus","url":"/active/js/wx_share.js","avgtime":"1.453","sumtime":"1.453","counts":"1"}]
+2017-05-19 11:33:34 APPS SumTimeByUrl [{"tenant_env":"o2o","service":"zzcplus","url":"/active/js/wx_share.js","avgtime":"1.453","sumtime":"1.453","counts":"1"}]
 `
 
 func BenchmarkHandleMonitorMessage(b *testing.B) {

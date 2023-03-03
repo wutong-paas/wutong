@@ -151,7 +151,7 @@ func NewTaskBody(taskType string, body []byte) TaskBody {
 			return nil
 		}
 		return b
-	case "delete_tenantEnv":
+	case "delete_tenant_env":
 		b := &DeleteTenantEnvTaskBody{}
 		err := ffjson.Unmarshal(body, &b)
 		if err != nil {
@@ -201,7 +201,7 @@ func CreateTaskBody(taskType string) TaskBody {
 		return VerticalScalingTaskBody{}
 	case "apply_plugin_config":
 		return ApplyPluginConfigTaskBody{}
-	case "delete_tenantEnv":
+	case "delete_tenant_env":
 		return DeleteTenantEnvTaskBody{}
 	case "refreshhpa":
 		return RefreshHPATaskBody{}

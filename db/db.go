@@ -47,7 +47,6 @@ type Manager interface {
 	AppConfigGroupServiceDaoTransactions(db *gorm.DB) dao.AppConfigGroupServiceDao
 	AppConfigGroupItemDao() dao.AppConfigGroupItemDao
 	AppConfigGroupItemDaoTransactions(db *gorm.DB) dao.AppConfigGroupItemDao
-	EnterpriseDao() dao.EnterpriseDao
 	TenantEnvDao() dao.TenantEnvDao
 	TenantEnvDaoTransactions(db *gorm.DB) dao.TenantEnvDao
 	TenantEnvServiceDao() dao.TenantEnvServiceDao
@@ -96,9 +95,6 @@ type Manager interface {
 
 	VersionInfoDao() dao.VersionInfoDao
 	VersionInfoDaoTransactions(db *gorm.DB) dao.VersionInfoDao
-
-	RegionUserInfoDao() dao.RegionUserInfoDao
-	RegionUserInfoDaoTransactions(db *gorm.DB) dao.RegionUserInfoDao
 
 	RegionAPIClassDao() dao.RegionAPIClassDao
 	RegionAPIClassDaoTransactions(db *gorm.DB) dao.RegionAPIClassDao

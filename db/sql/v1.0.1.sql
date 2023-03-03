@@ -12,7 +12,6 @@ CREATE TABLE `tenant_envs` (
   `uuid` varchar(33) DEFAULT NULL,
   `tenant_id` varchar(255) DEFAULT NULL,
   `tenant_name` varchar(255) DEFAULT NULL,
-  `eid` varchar(255) DEFAULT NULL,
   `limit_memory` int DEFAULT NULL,
   `status` varchar(255) DEFAULT 'normal',
   `namespace` varchar(32) DEFAULT NULL,
@@ -31,7 +30,6 @@ INSERT INTO tenant_envs (
     uuid, 
     tenant_id, 
     tenant_name, 
-    eid, 
     limit_memory, 
     status, 
     namespace
@@ -42,7 +40,6 @@ INSERT INTO tenant_envs (
     uuid, 
     uuid, 
     name, 
-    eid, 
     limit_memory, 
     status, 
     namespace

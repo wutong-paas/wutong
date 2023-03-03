@@ -241,7 +241,7 @@ func (t *TenantEnvStruct) TenantEnvsQuery(w http.ResponseWriter, r *http.Request
 
 	rep, err := handler.GetTenantEnvManager().GetTenantEnvsName(tenantName)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenantEnvs names error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenant envs names error, %v", err))
 		return
 	}
 
@@ -281,19 +281,18 @@ func (t *TenantEnvStruct) TenantEnvsGetByName(w http.ResponseWriter, r *http.Req
 
 	v, err := handler.GetTenantEnvManager().GetTenantEnvsByName(tenantName, tenantEnvName)
 	if err != nil {
-		httputil.ReturnError(r, w, 404, fmt.Sprintf("get tenantEnvs names error, %v", err))
+		httputil.ReturnError(r, w, 404, fmt.Sprintf("get tenant envs names error, %v", err))
 		return
 	}
 	logrus.Infof("query tenant env from db by name %s ,got %v", tenantEnvName, v)
 
 	tenantEnvServiceRes, err := handler.GetServiceManager().GetTenantEnvRes(v.UUID)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenantEnvs service total resources  error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenant envs service total resources  error, %v", err))
 		return
 	}
 	tenantEnvServiceRes.UUID = v.UUID
 	tenantEnvServiceRes.Name = v.Name
-	tenantEnvServiceRes.EID = v.EID
 
 	httputil.ReturnSuccess(r, w, tenantEnvServiceRes)
 }
@@ -346,7 +345,7 @@ func (t *TenantEnvStruct) TenantEnvsWithResource(w http.ResponseWriter, r *http.
 	}
 	resource, count, err := handler.GetServiceManager().GetPagedTenantEnvRes((curPage-1)*pageLen, pageLen)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenantEnvs  error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenant envs  error, %v", err))
 		return
 	}
 	var ret api_model.PagedTenantEnvResList
@@ -377,7 +376,7 @@ func (t *TenantEnvStruct) SumTenantEnvs(w http.ResponseWriter, r *http.Request) 
 	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
 	s, err := handler.GetTenantEnvManager().TenantEnvsSum(tenantName)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("sum tenantEnvs error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("sum tenant envs error, %v", err))
 		return
 	}
 	rc := make(map[string]int)
@@ -398,14 +397,14 @@ func (t *TenantEnvStruct) TenantEnv(w http.ResponseWriter, r *http.Request) {
 }
 
 // TenantEnvs TenantEnv
-func (t *TenantEnvStruct) TenantEnvs(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		t.AddTenantEnv(w, r)
-	case "GET":
-		t.GetTenantEnvs(w, r)
-	}
-}
+// func (t *TenantEnvStruct) TenantEnvs(w http.ResponseWriter, r *http.Request) {
+// 	switch r.Method {
+// 	case "POST":
+// 		t.AddTenantEnv(w, r)
+// 	case "GET":
+// 		t.GetTenantEnvs(w, r)
+// 	}
+// }
 
 // AddTenantEnv AddTenantEnv
 func (t *TenantEnvStruct) AddTenantEnv(w http.ResponseWriter, r *http.Request) {
@@ -413,7 +412,7 @@ func (t *TenantEnvStruct) AddTenantEnv(w http.ResponseWriter, r *http.Request) {
 	//
 	// 添加租户环境信息
 	//
-	// add tenantEnv
+	// add tenant env
 	//
 	// ---
 	// consumes:
@@ -435,83 +434,55 @@ func (t *TenantEnvStruct) AddTenantEnv(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var dbts dbmodel.TenantEnvs
-	if ts.Body.Eid != "" {
-		//新接口
-		//TODO:生成tenant_env_id and tenant_env_name
-		id, name, errN := handler.GetServiceManager().CreateTenantEnvIDAndName(ts.Body.Eid)
-		if errN != nil {
-			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", errN))
-			return
-		}
-		dbts.EID = ts.Body.Eid
-		if ts.Body.TenantEnvName == "" {
-			dbts.Name = name
-		} else {
-			dbts.Name = ts.Body.TenantEnvName
-			name = ts.Body.TenantEnvName
-		}
-		if ts.Body.TenantEnvID == "" {
-			dbts.UUID = id
-		} else {
-			dbts.UUID = ts.Body.TenantEnvID
-			id = ts.Body.TenantEnvID
-		}
-		dbts.LimitMemory = ts.Body.LimitMemory
-		dbts.Namespace = dbts.UUID
-		if ts.Body.Namespace != "" {
-			dbts.Namespace = ts.Body.Namespace
-		}
-		dbts.TenantID = ts.Body.TenantID
-		dbts.TenantName = ts.Body.TenantName
-		if err := handler.GetServiceManager().CreateTenantEnv(&dbts); err != nil {
-			if strings.HasSuffix(err.Error(), "is exist") {
-				httputil.ReturnError(r, w, 400, err.Error())
-				return
-			}
-			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", err))
-			return
-		}
-		rc := make(map[string]string)
-		rc["tenant_env_id"] = id
-		rc["tenant_env_name"] = name
-		rc["eid"] = ts.Body.Eid
-		rc["namespace"] = dbts.Namespace
-		httputil.ReturnSuccess(r, w, rc)
+	//新接口
+	//TODO:生成tenant_env_id and tenant_env_name
+	id, name, errN := handler.GetServiceManager().CreateTenantEnvIDAndName()
+	if errN != nil {
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", errN))
 		return
 	}
-	if ts.Body.TenantEnvID != "" && ts.Body.TenantEnvName != "" {
-		//兼容旧接口
+	if ts.Body.TenantEnvName == "" {
+		dbts.Name = name
+	} else {
 		dbts.Name = ts.Body.TenantEnvName
+		name = ts.Body.TenantEnvName
+	}
+	if ts.Body.TenantEnvID == "" {
+		dbts.UUID = id
+	} else {
 		dbts.UUID = ts.Body.TenantEnvID
-		dbts.Namespace = ts.Body.TenantEnvID
-		if ts.Body.Namespace != "" {
-			dbts.Namespace = ts.Body.Namespace
-		}
-		if err := handler.GetServiceManager().CreateTenantEnv(&dbts); err != nil {
-			if strings.HasSuffix(err.Error(), "is exist") {
-				httputil.ReturnError(r, w, 400, err.Error())
-				return
-			}
-			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", err))
+		id = ts.Body.TenantEnvID
+	}
+	dbts.LimitMemory = ts.Body.LimitMemory
+	dbts.Namespace = dbts.UUID
+	if ts.Body.Namespace != "" {
+		dbts.Namespace = ts.Body.Namespace
+	}
+	dbts.TenantID = ts.Body.TenantID
+	dbts.TenantName = ts.Body.TenantName
+	if err := handler.GetServiceManager().CreateTenantEnv(&dbts); err != nil {
+		if strings.HasSuffix(err.Error(), "is exist") {
+			httputil.ReturnError(r, w, 400, err.Error())
 			return
 		}
-		httputil.ReturnSuccess(r, w, nil)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", err))
 		return
 	}
-	if ts.Body.Eid == "" && (ts.Body.TenantEnvID == "" || ts.Body.TenantEnvName == "") {
-		httputil.ReturnError(r, w, 400, "args error")
-		return
-	}
-	httputil.ReturnError(r, w, 400, "args error, need eid or tenatn_id / tenant_env_name")
+	rc := make(map[string]string)
+	rc["tenant_env_id"] = id
+	rc["tenant_env_name"] = name
+	rc["namespace"] = dbts.Namespace
+	httputil.ReturnSuccess(r, w, rc)
+	return
 }
 
-// GetTenantEnvs GetTenantEnvs
-func (t *TenantEnvStruct) GetTenantEnvs(w http.ResponseWriter, r *http.Request) {
+// GetAllTenantEnvs GetAllTenantEnvs
+func (t *TenantEnvStruct) GetAllTenantEnvs(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/{tenant_name}/envs v2 getTenantEnvs
 	//
 	// 获取所有租户环境信息
 	//
-	// get tenantEnv
+	// get tenant env
 	//
 	// ---
 	// consumes:
@@ -527,7 +498,6 @@ func (t *TenantEnvStruct) GetTenantEnvs(w http.ResponseWriter, r *http.Request) 
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	value := r.FormValue("eid")
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	if page == 0 {
 		page = 1
@@ -539,18 +509,54 @@ func (t *TenantEnvStruct) GetTenantEnvs(w http.ResponseWriter, r *http.Request) 
 	queryName := r.FormValue("query")
 	var tenantEnvs []*dbmodel.TenantEnvs
 	var err error
-	if len(value) == 0 {
-		tenantEnvs, err = handler.GetTenantEnvManager().GetAllTenantEnvs(queryName)
-		if err != nil {
-			httputil.ReturnError(r, w, 500, "get tenant env error")
-			return
-		}
-	} else {
-		tenantEnvs, err = handler.GetTenantEnvManager().GetTenantEnvsByEid(value, queryName)
-		if err != nil {
-			httputil.ReturnError(r, w, 500, "get tenant env error")
-			return
-		}
+	tenantEnvs, err = handler.GetTenantEnvManager().GetAllTenantEnvs(queryName)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, "get tenant env error")
+		return
+	}
+	list := handler.GetTenantEnvManager().BindTenantEnvsResource(tenantEnvs)
+	re := list.Paging(page, pageSize)
+	httputil.ReturnSuccess(r, w, re)
+}
+
+// GetTenantEnvs GetTenantEnvs
+func (t *TenantEnvStruct) GetTenantEnvs(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs v2 getTenantEnvs
+	//
+	// 获取所有租户环境信息
+	//
+	// get tenant env
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// - application/x-protobuf
+	//
+	// produces:
+	// - application/json
+	// - application/xml
+	//
+	// responses:
+	//   default:
+	//     schema:
+	//       "$ref": "#/responses/commandResponse"
+	//     description: 统一返回格式
+	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	if page == 0 {
+		page = 1
+	}
+	pageSize, _ := strconv.Atoi(r.FormValue("pageSize"))
+	if pageSize == 0 {
+		pageSize = 10
+	}
+	queryName := r.FormValue("query")
+	var tenantEnvs []*dbmodel.TenantEnvs
+
+	tenantEnvs, err := handler.GetTenantEnvManager().GetTenantEnvs(tenantName, queryName)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, "get tenant env error")
+		return
 	}
 	list := handler.GetTenantEnvManager().BindTenantEnvsResource(tenantEnvs)
 	re := list.Paging(page, pageSize)
@@ -571,7 +577,7 @@ func (t *TenantEnvStruct) DeleteTenantEnv(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete tenantEnv: %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete tenant env: %v", err))
 		return
 	}
 
@@ -586,7 +592,7 @@ func (t *TenantEnvStruct) UpdateTenantEnv(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	tenantEnv.LimitMemory = ts.Body.LimitMemory
 	if err := handler.GetTenantEnvManager().UpdateTenantEnv(tenantEnv); err != nil {
 		httputil.ReturnError(r, w, 500, "update tenant env error")
@@ -595,9 +601,9 @@ func (t *TenantEnvStruct) UpdateTenantEnv(w http.ResponseWriter, r *http.Request
 	httputil.ReturnSuccess(r, w, tenantEnv)
 }
 
-// GetTenantEnv get one tenantEnv
+// GetTenantEnv get one tenant env
 func (t *TenantEnvStruct) GetTenantEnv(w http.ResponseWriter, r *http.Request) {
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	list := handler.GetTenantEnvManager().BindTenantEnvsResource([]*dbmodel.TenantEnvs{tenantEnv})
 	httputil.ReturnSuccess(r, w, list[0])
 }
@@ -1966,7 +1972,7 @@ func (t *TenantEnvStruct) CheckResourceName(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 
 	res, err := handler.GetTenantEnvManager().CheckResourceName(r.Context(), tenantEnv.UUID, &req)
 	if err != nil {

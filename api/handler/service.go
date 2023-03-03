@@ -1040,9 +1040,8 @@ func (s *ServiceAction) GetPagedTenantEnvRes(offset, len int) ([]*api_model.Tena
 	var result []*api_model.TenantEnvResource
 	for _, v := range services {
 		var res api_model.TenantEnvResource
-		res.UUID, _ = v["tenantEnv"].(string)
+		res.UUID, _ = v["tenant_env"].(string)
 		res.Name, _ = v["tenant_env_name"].(string)
-		res.EID, _ = v["eid"].(string)
 		res.AllocatedCPU, _ = v["capcpu"].(int)
 		res.AllocatedMEM, _ = v["capmem"].(int)
 		res.UsedCPU, _ = v["usecpu"].(int)
@@ -1091,7 +1090,6 @@ func (s *ServiceAction) GetTenantEnvRes(uuid string) (*api_model.TenantEnvResour
 	var res api_model.TenantEnvResource
 	res.UUID = uuid
 	res.Name = tenantEnv.Name
-	res.EID = tenantEnv.EID
 	res.AllocatedCPU = AllocatedCPU
 	res.AllocatedMEM = AllocatedMEM
 	if tenantEnvResUesd != nil {
@@ -1983,16 +1981,16 @@ func (s *ServiceAction) GetServicesStatus(tenantEnvID string, serviceIDs []strin
 	return info
 }
 
-// GetEnterpriseRunningServices get running services
-func (s *ServiceAction) GetEnterpriseRunningServices(enterpriseID string) ([]string, *util.APIHandleError) {
+// GetAllRunningServices get running services
+func (s *ServiceAction) GetAllRunningServices() ([]string, *util.APIHandleError) {
 	var tenantEnvIDs []string
-	tenantEnvs, err := db.GetManager().EnterpriseDao().GetEnterpriseTenantEnvs(enterpriseID)
+	tenantEnvs, err := db.GetManager().TenantEnvDao().GetAllTenantEnvs("")
 	if err != nil {
 		logrus.Errorf("list tenant env failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("enterprise[%s] get tenant env failed", enterpriseID), err)
+		return nil, util.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
 	}
 	if len(tenantEnvs) == 0 {
-		return nil, util.CreateAPIHandleErrorf(400, "enterprise[%s] has not tenantEnvs", enterpriseID)
+		return nil, util.CreateAPIHandleErrorf(400, "not found any tenantEnvs")
 	}
 	for _, tenantEnv := range tenantEnvs {
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnv.UUID)
@@ -2000,7 +1998,7 @@ func (s *ServiceAction) GetEnterpriseRunningServices(enterpriseID string) ([]str
 	services, err := db.GetManager().TenantEnvServiceDao().GetServicesByTenantEnvIDs(tenantEnvIDs)
 	if err != nil {
 		logrus.Errorf("list tenantEnvs service failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorf(500, "get enterprise[%s] service failed: %s", enterpriseID, err.Error())
+		return nil, util.CreateAPIHandleErrorf(500, "get service failed: %s", err.Error())
 	}
 	var serviceIDs []string
 	for _, svc := range services {
@@ -2022,23 +2020,23 @@ type ServicesStatus struct {
 	AbnormalServices  []string `json:"abnormal_services"`
 }
 
-func (s *ServiceAction) GetEntrepriseServicesStatus(enterpriseID string) (*ServicesStatus, *util.APIHandleError) {
+func (s *ServiceAction) GetAllServicesStatus() (*ServicesStatus, *util.APIHandleError) {
 	var tenantEnvIDs []string
-	tenantEnvs, err := db.GetManager().EnterpriseDao().GetEnterpriseTenantEnvs(enterpriseID)
+	tenantEnvs, err := db.GetManager().TenantEnvDao().GetAllTenantEnvs("")
 	if err != nil {
 		logrus.Errorf("list tenant env failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("enterprise[%s] get tenant env failed", enterpriseID), err)
+		return nil, util.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
 	}
 	if len(tenantEnvs) == 0 {
-		return nil, util.CreateAPIHandleErrorf(400, "enterprise[%s] has not tenantEnvs", enterpriseID)
+		return nil, util.CreateAPIHandleErrorf(400, "not found any tenant envs")
 	}
 	for _, tenantEnv := range tenantEnvs {
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnv.UUID)
 	}
 	services, err := db.GetManager().TenantEnvServiceDao().GetServicesByTenantEnvIDs(tenantEnvIDs)
 	if err != nil {
-		logrus.Errorf("list tenantEnvs service failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorf(500, "get enterprise[%s] service failed: %s", enterpriseID, err.Error())
+		logrus.Errorf("list tenant envs service failed: %s", err.Error())
+		return nil, util.CreateAPIHandleErrorf(500, "get service failed: %s", err.Error())
 	}
 	var serviceIDs []string
 	for _, svc := range services {
@@ -2070,7 +2068,11 @@ func (s *ServiceAction) CreateTenantEnv(t *dbmodel.TenantEnvs) error {
 		return fmt.Errorf("tenant env name %s is exist", t.Name)
 	}
 	labels := map[string]string{
-		constants.ResourceManagedByLabel: constants.Wutong,
+		constants.ResourceManagedByLabel:     constants.Wutong,
+		constants.ResourceTenantIDLabel:      t.TenantID,
+		constants.ResourceTenantNameLabel:    t.TenantName,
+		constants.ResourceTenantEnvIDLabel:   t.UUID,
+		constants.ResourceTenantEnvNameLabel: t.Name,
 	}
 	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
 		if err := db.GetManager().TenantEnvDaoTransactions(tx).AddModel(t); err != nil {
@@ -2094,7 +2096,7 @@ func (s *ServiceAction) CreateTenantEnv(t *dbmodel.TenantEnvs) error {
 }
 
 // CreateTenantEnvIDAndName create tenant_env_id and tenant_env_name
-func (s *ServiceAction) CreateTenantEnvIDAndName(eid string) (string, string, error) {
+func (s *ServiceAction) CreateTenantEnvIDAndName() (string, string, error) {
 	id := uuid.NewV4().String()
 	uid := strings.Replace(id, "-", "", -1)
 	name := strings.Split(id, "-")[0]
@@ -2277,7 +2279,7 @@ func (s *ServiceAction) GetPodContainerCPU(podNames []string) (map[string]map[st
 func (s *ServiceAction) TransServieToDelete(ctx context.Context, tenantEnvID, serviceID string) error {
 	_, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 	if err != nil && gorm.ErrRecordNotFound == err {
-		logrus.Infof("service[%s] of tenantEnv[%s] do not exist, ignore it", serviceID, tenantEnvID)
+		logrus.Infof("service[%s] of tenant env[%s] do not exist, ignore it", serviceID, tenantEnvID)
 		return nil
 	}
 	if err := s.isServiceClosed(serviceID); err != nil {

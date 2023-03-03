@@ -90,7 +90,6 @@ func (a *ApplicationAction) CreateApp(ctx context.Context, req *model.Applicatio
 		req.K8sApp = fmt.Sprintf("app-%s", appID[:8])
 	}
 	appReq := &dbmodel.Application{
-		EID:             req.EID,
 		TenantEnvID:     req.TenantEnvID,
 		AppID:           appID,
 		AppName:         req.AppName,
@@ -141,7 +140,6 @@ func (a *ApplicationAction) createHelmApp(ctx context.Context, app *dbmodel.Appl
 			Labels:    labels,
 		},
 		Spec: v1alpha1.HelmAppSpec{
-			EID:          app.EID,
 			TemplateName: app.AppTemplateName,
 			Version:      app.Version,
 			AppStore: &v1alpha1.HelmAppStore{

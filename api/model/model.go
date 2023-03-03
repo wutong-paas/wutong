@@ -592,7 +592,7 @@ type LicenseInfo struct {
 	Node       int      `json:"node"`
 	CPU        int      `json:"cpu"`
 	MEM        int      `json:"memory"`
-	TenantEnv  int      `json:"tenantEnv"`
+	TenantEnv  int      `json:"tenant_env"`
 	EndTime    string   `json:"end_time"`
 	StartTime  string   `json:"start_time"`
 	DataCenter int      `json:"data_center"`
@@ -619,11 +619,7 @@ type AddTenantEnvStruct struct {
 		// the tenant name
 		// in: body
 		// required: false
-		TenantName string `json:"tenant_name" validate:"tenant_name"`
-		// the eid
-		// in : body
-		// required: false
-		Eid         string `json:"eid" validata:"eid"`
+		TenantName  string `json:"tenant_name" validate:"tenant_name"`
 		Token       string `json:"token" validate:"token"`
 		LimitMemory int    `json:"limit_memory" validate:"limit_memory"`
 		Namespace   string `json:"namespace" validate:"namespace"`
@@ -635,7 +631,7 @@ type AddTenantEnvStruct struct {
 type UpdateTenantEnvStruct struct {
 	//in: body
 	Body struct {
-		// the eid
+		// the limit memory
 		// in : body
 		// required: false
 		LimitMemory int `json:"limit_memory" validate:"limit_memory"`
@@ -1848,7 +1844,6 @@ func NewAppStatusFromImport(app *ImportAppStruct) *dbmodel.AppStatus {
 
 // Application -
 type Application struct {
-	EID             string   `json:"eid" validate:"required"`
 	AppName         string   `json:"app_name" validate:"required"`
 	AppType         string   `json:"app_type" validate:"required,oneof=wutong helm"`
 	ConsoleAppID    int64    `json:"console_app_id"`

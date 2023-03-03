@@ -54,12 +54,12 @@ func InitTenantEnv(next http.Handler) http.Handler {
 		tenantName := chi.URLParam(r, "tenant_name")
 		tenantEnvName := chi.URLParam(r, "tenant_env_name")
 		if tenantEnvName == "" {
-			httputil.ReturnError(r, w, 404, "cant find tenantEnv")
+			httputil.ReturnError(r, w, 404, "cant find tenant env")
 			return
 		}
 		tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvIDByName(tenantName, tenantEnvName)
 		if err != nil {
-			logrus.Errorf("get tenant env by tenantEnvName error: %s %v", tenantEnvName, err)
+			logrus.Errorf("get tenant env by tenant env name error: %s %v", tenantEnvName, err)
 			if err.Error() == gorm.ErrRecordNotFound.Error() {
 				httputil.ReturnError(r, w, 404, "cant find tenantEnv")
 				return
@@ -69,7 +69,7 @@ func InitTenantEnv(next http.Handler) http.Handler {
 		}
 		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("tenant_env_name"), tenantEnvName)
 		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenant_env_id"), tenantEnv.UUID)
-		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenantEnv"), tenantEnv)
+		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenant_env"), tenantEnv)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)

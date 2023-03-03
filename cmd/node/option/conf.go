@@ -189,8 +189,6 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&a.AutoScheduler, "auto-scheduler", true, "Whether auto set node unscheduler where current node is unhealth")
 	fs.BoolVar(&a.EnableCollectLog, "enabel-collect-log", true, "Whether to collect container logs")
 	fs.DurationVar(&a.AutoUnschedulerUnHealthDuration, "autounscheduler-unhealthy-dura", 5*time.Minute, "Node unhealthy duration, after the automatic offline,if set 0,disable auto handle unscheduler.default is 5 Minute")
-	fs.StringVar(&a.LicPath, "lic-path", "/opt/wutong/etc/license/license.yb", "the license path of the enterprise version.")
-	fs.StringVar(&a.LicSoPath, "lic-so-path", "/opt/wutong/etc/license/license.so", "Dynamic library file path for parsing the license.")
 	fs.BoolVar(&a.EnableImageGC, "enable-image-gc", true, "The trigger of image garbage collection.")
 	fs.DurationVar(&a.ImageMinimumGCAge, "minimum-image-ttl-duration", 2*time.Hour, "Minimum age for an unused image before it is garbage collected.  Examples: '300ms', '10s' or '2h45m'.")
 	fs.DurationVar(&a.ImageGCPeriod, "image-gc-period", 5*time.Minute, "ImageGCPeriod is the period for performing image garbage collection.  Examples: '10s', '5m' or '2h45m'.")

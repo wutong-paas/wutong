@@ -26,7 +26,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-// BatchOperation batch operation for tenantEnv
+// BatchOperation batch operation for tenant env
 // support operation is : start,build,stop,update
 func BatchOperation(w http.ResponseWriter, r *http.Request) {
 	var build model.BatchOperationReq
@@ -36,7 +36,7 @@ func BatchOperation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	// tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 
 	// var batchOpReqs []model.ComponentOpReq
 	// var f func(ctx context.Context, tenant env *dbmodel.TenantEnvs, operator string, batchOpReqs model.BatchOpRequesters) (model.BatchOpResult, error)

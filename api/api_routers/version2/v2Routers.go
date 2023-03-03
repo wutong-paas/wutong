@@ -34,10 +34,9 @@ type V2 struct {
 // Routes routes
 func (v2 *V2) Routes() chi.Router {
 	r := chi.NewRouter()
-	license := middleware.NewLicense(v2.Cfg)
-	r.Use(license.Verify)
 	r.Get("/show", controller.GetManager().Show)
 	r.Post("/show", controller.GetManager().Show)
+	r.Get("/tenants/envs", controller.GetManager().GetAllTenantEnvs)
 	r.Mount("/tenants/{tenant_name}/envs", v2.tenantEnvRouter())
 	r.Mount("/cluster", v2.clusterRouter())
 	r.Mount("/notificationEvent", v2.notificationEventRouter())
@@ -60,7 +59,7 @@ func (v2 *V2) Routes() chi.Router {
 	r.Post("/volume-options", controller.VolumeSetVar)
 	r.Delete("/volume-options/{volume_type}", controller.DeleteVolumeType)
 	r.Put("/volume-options/{volume_type}", controller.UpdateVolumeType)
-	r.Mount("/enterprise/{enterprise_id}", v2.enterpriseRouter())
+	r.Mount("/enterprise", v2.enterpriseRouter())
 	r.Mount("/monitor", v2.monitorRouter())
 
 	// helm resources
@@ -106,9 +105,9 @@ func (v2 *V2) clusterRouter() chi.Router {
 
 func (v2 *V2) tenantEnvRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Post("/", controller.GetManager().TenantEnvs)
+	r.Post("/", controller.GetManager().AddTenantEnv)
 	r.Mount("/{tenant_env_name}", v2.tenantEnvNameRouter())
-	r.Get("/", controller.GetManager().TenantEnvs)
+	r.Get("/", controller.GetManager().GetTenantEnvs)
 	r.Get("/services-count", controller.GetManager().ServicesCount)
 	return r
 }
@@ -143,9 +142,7 @@ func (v2 *V2) tenantEnvNameRouter() chi.Router {
 	r.Post("/services_status", controller.GetManager().StatusServiceList)
 	r.Mount("/services/{service_alias}", v2.serviceRouter())
 	r.Mount("/plugin/{plugin_id}", v2.pluginRouter())
-	r.Get("/event", controller.GetManager().Event)
-	r.Get("/chargesverify", controller.ChargesVerifyController)
-	//tenant envapp
+	r.Get("/event", controller.GetManager().Event) //tenant envapp
 	r.Get("/pods/{pod_name}", controller.GetManager().PodDetail)
 	r.Post("/apps", controller.GetManager().CreateApp)
 	r.Post("/batch_create_apps", controller.GetManager().BatchCreateApp)

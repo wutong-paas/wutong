@@ -44,7 +44,6 @@ type TenantEnvResource struct {
 	UsedDisk float64 `json:"used_disk"`
 	Name     string  `json:"name"`
 	UUID     string  `json:"uuid"`
-	EID      string  `json:"eid"`
 }
 
 func (list TenantEnvResList) Len() int {

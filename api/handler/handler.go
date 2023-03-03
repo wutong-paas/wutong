@@ -67,15 +67,10 @@ func InitHandle(conf option.Config,
 	defaultAppHandler = CreateAppManager(mqClient)
 	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)
 	defaultNetRulesHandler = CreateNetRulesManager(etcdcli)
-	defaultCloudHandler = CreateCloudManager(conf)
 	defaultAPPBackupHandler = group.CreateBackupHandle(mqClient, statusCli, etcdcli)
 	defaultEventHandler = CreateLogManager(etcdcli)
 	shareHandler = &share.ServiceShareHandle{MQClient: mqClient, EtcdCli: etcdcli}
 	pluginShareHandler = &share.PluginShareHandle{MQClient: mqClient, EtcdCli: etcdcli}
-	if err := CreateTokenIdenHandler(conf); err != nil {
-		logrus.Errorf("create token identification mannager error, %v", err)
-		return err
-	}
 	defaultGatewayHandler = CreateGatewayManager(dbmanager, mqClient, etcdcli)
 	def3rdPartySvcHandler = Create3rdPartySvcHandler(dbmanager, statusCli)
 	operationHandler = CreateOperationHandler(mqClient)
@@ -136,13 +131,6 @@ var defaultNetRulesHandler NetRulesHandler
 // GetRulesManager get manager
 func GetRulesManager() NetRulesHandler {
 	return defaultNetRulesHandler
-}
-
-var defaultCloudHandler CloudHandler
-
-// GetCloudManager get manager
-func GetCloudManager() CloudHandler {
-	return defaultCloudHandler
 }
 
 var defaultEventHandler EventHandler

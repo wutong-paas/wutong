@@ -3,17 +3,14 @@ package controller
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
-
 	"github.com/wutong-paas/wutong/api/handler"
 
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//GetRunningServices list all running service ids
+// GetRunningServices list all running service ids
 func GetRunningServices(w http.ResponseWriter, r *http.Request) {
-	enterpriseID := chi.URLParam(r, "enterprise_id")
-	runningList, err := handler.GetServiceManager().GetEnterpriseRunningServices(enterpriseID)
+	runningList, err := handler.GetServiceManager().GetAllRunningServices()
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -22,8 +19,7 @@ func GetRunningServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetServicesStatus(w http.ResponseWriter, r *http.Request) {
-	enterpriseID := chi.URLParam(r, "enterprise_id")
-	servicesStatus, err := handler.GetServiceManager().GetEntrepriseServicesStatus(enterpriseID)
+	servicesStatus, err := handler.GetServiceManager().GetAllServicesStatus()
 	if err != nil {
 		err.Handle(r, w)
 		return

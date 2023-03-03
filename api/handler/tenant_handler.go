@@ -31,7 +31,6 @@ type TenantEnvHandler interface {
 	GetAllTenantEnvs(query string) ([]*dbmodel.TenantEnvs, error)
 	GetTenantEnvs(tenantName, query string) ([]*dbmodel.TenantEnvs, error)
 	GetTenantEnvsByName(tenantName, tenantEnvName string) (*dbmodel.TenantEnvs, error)
-	GetTenantEnvsByEid(eid, query string) ([]*dbmodel.TenantEnvs, error)
 	GetTenantEnvsByUUID(uuid string) (*dbmodel.TenantEnvs, error)
 	GetTenantEnvsName(tenantName string) ([]string, error)
 	StatsMemCPU(services []*dbmodel.TenantEnvServices) (*api_model.StatsInfo, error)

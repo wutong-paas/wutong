@@ -64,14 +64,14 @@ func (t *TenantEnvStruct) UpdateServiceMonitors(w http.ResponseWriter, r *http.R
 func GetMonitorMetrics(w http.ResponseWriter, r *http.Request) {
 	target := r.FormValue("target")
 	var metricMetadatas []prometheus.Metadata
-	if target == "tenantEnv" {
-		metricMetadatas = handler.GetMonitorHandle().GetTenantEnvMonitorMetrics(r.FormValue("tenantEnv"))
+	if target == "tenant_env" {
+		metricMetadatas = handler.GetMonitorHandle().GetTenantEnvMonitorMetrics(r.FormValue("tenant_env"))
 	}
 	if target == "app" {
-		metricMetadatas = handler.GetMonitorHandle().GetAppMonitorMetrics(r.FormValue("tenantEnv"), r.FormValue("app"))
+		metricMetadatas = handler.GetMonitorHandle().GetAppMonitorMetrics(r.FormValue("tenant_env"), r.FormValue("app"))
 	}
 	if target == "component" {
-		metricMetadatas = handler.GetMonitorHandle().GetComponentMonitorMetrics(r.FormValue("tenantEnv"), r.FormValue("component"))
+		metricMetadatas = handler.GetMonitorHandle().GetComponentMonitorMetrics(r.FormValue("tenant_env"), r.FormValue("component"))
 	}
 	httputil.ReturnSuccess(r, w, metricMetadatas)
 }

@@ -66,7 +66,7 @@ func (t *TenantEnvStruct) StartService(w http.ResponseWriter, r *http.Request) {
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	if service.Kind != "third_party" {
@@ -169,7 +169,7 @@ func (t *TenantEnvStruct) RestartService(w http.ResponseWriter, r *http.Request)
 		startStopStruct.TaskType = "start"
 	}
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 		httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
@@ -234,7 +234,7 @@ func (t *TenantEnvStruct) VerticalService(w http.ResponseWriter, r *http.Request
 		gpuInt := int(gpu)
 		gpuSet = &gpuInt
 	}
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if memorySet != nil {
 		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*(*memorySet)); err != nil {
@@ -293,7 +293,7 @@ func (t *TenantEnvStruct) HorizontalService(w http.ResponseWriter, r *http.Reque
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	replicas := int32(data["node_num"].(float64))
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.ContainerMemory*int(replicas)); err != nil {
 		httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
@@ -352,7 +352,7 @@ func (t *TenantEnvStruct) BuildService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 		httputil.ReturnResNotEnough(r, w, build.EventID, err.Error())
@@ -569,7 +569,7 @@ func (t *TenantEnvStruct) UpgradeService(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if service.Kind != "third_party" {
 		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
@@ -663,7 +663,7 @@ func (t *TenantEnvStruct) RollBack(w http.ResponseWriter, r *http.Request) {
 	}
 	rollbackRequest.EventID = r.Context().Value(ctxutil.ContextKey("event_id")).(string)
 
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*service.ContainerMemory); err != nil {
 		httputil.ReturnResNotEnough(r, w, rollbackRequest.EventID, err.Error())
@@ -823,7 +823,7 @@ func (t *TenantEnvStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) 
 func (t *TenantEnvStruct) GetTenantEnvKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting api_model.KubeResourceCustomSetting
 	customSetting.Namespace = r.URL.Query().Get("namespace")
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	resources := handler.GetTenantEnvManager().GetKubeResources(tenantEnv.Namespace, tenantEnv.UUID, customSetting)
 	httputil.ReturnSuccess(r, w, resources)
 }
@@ -832,7 +832,7 @@ func (t *TenantEnvStruct) GetTenantEnvKubeResources(w http.ResponseWriter, r *ht
 func (t *TenantEnvStruct) GetServiceKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting api_model.KubeResourceCustomSetting
 	customSetting.Namespace = r.URL.Query().Get("namespace")
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	resources := handler.GetServiceManager().GetKubeResources(tenantEnv.Namespace, serviceID, customSetting)
 	httputil.ReturnSuccess(r, w, resources)

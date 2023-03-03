@@ -292,8 +292,6 @@ spec:
               - url
               - version
               type: object
-            eid:
-              type: string
             overrides:
               description: Overrides will overrides the values in the chart.
               items:
@@ -316,7 +314,6 @@ spec:
               type: string
           required:
           - appStore
-          - eid
           - templateName
           - version
           type: object

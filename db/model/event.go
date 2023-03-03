@@ -33,7 +33,7 @@ const TargetTypeService = "service"
 const TargetTypePod = "pod"
 
 // TargetTypeTenantEnv tenant env target
-const TargetTypeTenantEnv = "tenantEnv"
+const TargetTypeTenantEnv = "tenant_env"
 
 // UsernameSystem -
 const UsernameSystem = "system"
@@ -103,7 +103,7 @@ func (t *ServiceEvent) TableName() string {
 // NotificationEvent NotificationEvent
 type NotificationEvent struct {
 	Model
-	//Kind could be service, tenantEnv, cluster, node
+	//Kind could be service, tenant env, cluster, node
 	Kind string `gorm:"column:kind;size:40"`
 	//KindID could be service_id,tenant_env_id,cluster_id,node_id
 	KindID string `gorm:"column:kind_id;size:40"`

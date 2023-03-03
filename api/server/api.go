@@ -42,9 +42,7 @@ import (
 	"github.com/wutong-paas/wutong/api/api_routers/doc"
 	"github.com/wutong-paas/wutong/api/api_routers/license"
 	"github.com/wutong-paas/wutong/api/metric"
-	"github.com/wutong-paas/wutong/api/proxy"
 
-	"github.com/wutong-paas/wutong/api/api_routers/cloud"
 	"github.com/wutong-paas/wutong/api/api_routers/version2"
 	"github.com/wutong-paas/wutong/api/api_routers/websocket"
 
@@ -57,14 +55,13 @@ import (
 
 // Manager apiserver
 type Manager struct {
-	ctx             context.Context
-	cancel          context.CancelFunc
-	conf            option.Config
-	stopChan        chan struct{}
-	r               *chi.Mux
-	prometheusProxy proxy.Proxy
-	etcdcli         *clientv3.Client
-	exporter        *metric.Exporter
+	ctx      context.Context
+	cancel   context.CancelFunc
+	conf     option.Config
+	stopChan chan struct{}
+	r        *chi.Mux
+	etcdcli  *clientv3.Client
+	exporter *metric.Exporter
 }
 
 // NewManager newManager
@@ -108,10 +105,6 @@ func (m *Manager) SetMiddleware() {
 	r.Use(middleware.Recoverer)
 	//request time out
 	r.Use(middleware.Timeout(time.Second * 5))
-	//simple authz
-	if os.Getenv("TOKEN") != "" {
-		r.Use(apimiddleware.FullToken)
-	}
 	//simple api version
 	r.Use(apimiddleware.APIVersion)
 	r.Use(apimiddleware.Proxy)
@@ -156,7 +149,6 @@ func (m *Manager) Run() {
 		res.Write([]byte("ok"))
 	})
 	m.r.Mount("/v2", v2R.Routes())
-	m.r.Mount("/cloud", cloud.Routes())
 	m.r.Mount("/", doc.Routes())
 	m.r.Mount("/license", license.Routes())
 	//兼容老版docker

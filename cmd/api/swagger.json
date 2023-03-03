@@ -956,11 +956,6 @@
             "schema": {
               "type": "object",
               "properties": {
-                "eid": {
-                  "description": "the eid\nin : body",
-                  "type": "string",
-                  "x-go-name": "Eid"
-                },
                 "tenant_env_id": {
                   "description": "the tenant env id\nin: body",
                   "type": "string",

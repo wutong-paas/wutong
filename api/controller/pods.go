@@ -61,7 +61,7 @@ type PodController struct{}
 func Pods(w http.ResponseWriter, r *http.Request) {
 	serviceIDs := strings.Split(r.FormValue("service_ids"), ",")
 	if len(serviceIDs) == 0 {
-		tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*model.TenantEnvs)
+		tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*model.TenantEnvs)
 		services, _ := db.GetManager().TenantEnvServiceDao().GetServicesByTenantEnvID(tenantEnv.UUID)
 		for _, s := range services {
 			serviceIDs = append(serviceIDs, s.ServiceID)
@@ -98,7 +98,7 @@ func PodNums(w http.ResponseWriter, r *http.Request) {
 // PodDetail -
 func (p *PodController) PodDetail(w http.ResponseWriter, r *http.Request) {
 	podName := chi.URLParam(r, "pod_name")
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*model.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*model.TenantEnvs)
 	pd, err := handler.GetPodHandler().PodDetail(tenantEnv.Namespace, podName)
 	if err != nil {
 		logrus.Errorf("error getting pod detail: %v", err)

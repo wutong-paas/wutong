@@ -51,8 +51,8 @@ func (a *ApplicationController) CreateApp(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
-	// get current tenantEnv
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	// get current tenant env
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	tenantEnvReq.TenantEnvID = tenantEnv.UUID
 	// create app
 	app, err := handler.GetApplicationHandler().CreateApp(r.Context(), &tenantEnvReq)
@@ -72,8 +72,8 @@ func (a *ApplicationController) BatchCreateApp(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// get current tenantEnv
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	// get current tenant env
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	respList, err := handler.GetApplicationHandler().BatchCreateApp(r.Context(), &apps, tenantEnv.UUID)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
@@ -319,7 +319,7 @@ func (t *TenantEnvStruct) GetApplicationKubeResources(w http.ResponseWriter, r *
 	var customSetting model.KubeResourceCustomSetting
 	customSetting.Namespace = r.URL.Query().Get("namespace")
 	serviceAliases := r.URL.Query()["service_aliases"]
-	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenantEnv")).(*dbmodel.TenantEnvs)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	resources := handler.GetApplicationHandler().GetKubeResources(tenantEnv.Namespace, serviceAliases, customSetting)
 	httputil.ReturnSuccess(r, w, resources)
 }

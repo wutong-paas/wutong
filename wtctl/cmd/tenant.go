@@ -37,7 +37,7 @@ import (
 // NewCmdTenantEnv tenant env cmd
 func NewCmdTenantEnv() cli.Command {
 	c := cli.Command{
-		Name:  "tenantEnv",
+		Name:  "tenant_env",
 		Usage: "wtctl tenant env -h",
 		Subcommands: []cli.Command{
 			{
@@ -139,7 +139,6 @@ func findTenantEnvResourceUsage(c *cli.Context) error {
 	table.Wrap = true // wrap columns
 	table.AddRow("租户名：", resources.Name)
 	table.AddRow("租户ID：", resources.UUID)
-	table.AddRow("企业ID：", resources.EID)
 	table.AddRow("正使用CPU资源：", fmt.Sprintf("%.2f Core", float64(resources.UsedCPU)/1000))
 	table.AddRow("正使用内存资源：", fmt.Sprintf("%d %s", resources.UsedMEM, "Mb"))
 	table.AddRow("正使用磁盘资源：", fmt.Sprintf("%.2f Mb", resources.UsedDisk/1024))

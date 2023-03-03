@@ -109,8 +109,6 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&a.Debug, "debug", false, "open debug will enable pprof")
 	fs.IntVar(&a.MinExtPort, "min-ext-port", 0, "minimum external port")
 	fs.StringArrayVar(&a.EnableFeature, "enable-feature", []string{}, "List of special features supported, such as `windows`")
-	fs.StringVar(&a.LicensePath, "license-path", "/opt/wutong/etc/license/license.yb", "the license path of the enterprise version.")
-	fs.StringVar(&a.LicSoPath, "license-so-path", "/opt/wutong/etc/license/license.so", "Dynamic library file path for parsing the license.")
 	fs.StringVar(&a.LogPath, "log-path", "/wtdata/logs", "Where Docker log files and event log files are stored.")
 	fs.StringVar(&a.KubeConfigPath, "kube-config", "", "kube config file path, No setup is required to run in a cluster.")
 	fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")

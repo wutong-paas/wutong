@@ -55,7 +55,7 @@ func CreateLogManager(cli *clientv3.Client) *LogAction {
 
 // GetEvents get target logs
 func (l *LogAction) GetEvents(target, targetID string, page, size int) ([]*dbmodel.ServiceEvent, int, error) {
-	if target == "tenantEnv" {
+	if target == "tenant_env" {
 		return db.GetManager().ServiceEventDao().GetEventsByTenantEnvID(targetID, (page-1)*size, size)
 	}
 	return db.GetManager().ServiceEventDao().GetEventsByTarget(target, targetID, (page-1)*size, size)

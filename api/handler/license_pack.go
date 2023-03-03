@@ -36,7 +36,7 @@ type Info struct {
 	Node       int64    `json:"node"`
 	CPU        int64    `json:"cpu"`
 	Memory     int64    `json:"memory"`
-	TenantEnv  int64    `json:"tenantEnv"`
+	TenantEnv  int64    `json:"tenant_env"`
 	EndTime    string   `json:"end_time"`
 	StartTime  string   `json:"start_time"`
 	DataCenter int64    `json:"data_center"`

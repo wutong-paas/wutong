@@ -143,18 +143,9 @@ func (t *TenantEnvAction) GetAllTenantEnvs(query string) ([]*dbmodel.TenantEnvs,
 	return tenantEnvs, err
 }
 
-// GetTenantEnvs get tenantEnvs
+// GetTenantEnvs get tenant envs
 func (t *TenantEnvAction) GetTenantEnvs(tenantName, query string) ([]*dbmodel.TenantEnvs, error) {
 	tenantEnvs, err := db.GetManager().TenantEnvDao().GetTenantEnvs(tenantName, query)
-	if err != nil {
-		return nil, err
-	}
-	return tenantEnvs, err
-}
-
-// GetTenantEnvsByEid GetTenantEnvsByEid
-func (t *TenantEnvAction) GetTenantEnvsByEid(eid, query string) ([]*dbmodel.TenantEnvs, error) {
-	tenantEnvs, err := db.GetManager().TenantEnvDao().GetTenantEnvByEid(eid, query)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +199,7 @@ func (t *TenantEnvAction) DeleteTenantEnv(ctx context.Context, tenantEnvID strin
 
 	// delete namespace in k8s
 	err = t.MQClient.SendBuilderTopic(mqclient.TaskStruct{
-		TaskType: "delete_tenantEnv",
+		TaskType: "delete_tenant_env",
 		Topic:    mqclient.WorkerTopic,
 		TaskBody: map[string]string{
 			"tenant_env_id": tenantEnvID,
@@ -216,7 +207,7 @@ func (t *TenantEnvAction) DeleteTenantEnv(ctx context.Context, tenantEnvID strin
 	})
 	if err != nil {
 		rollback()
-		logrus.Error("send task 'delete tenantEnv'", err)
+		logrus.Error("send task 'delete_tenant_env'", err)
 		return err
 	}
 
@@ -239,7 +230,7 @@ func (t *TenantEnvAction) TotalMemCPU(services []*dbmodel.TenantEnvServices) (*a
 	return si, nil
 }
 
-// GetTenantEnvsName get tenantEnvs name
+// GetTenantEnvsName get tenant envs name
 func (t *TenantEnvAction) GetTenantEnvsName(tenantName string) ([]string, error) {
 	tenantEnvs, err := db.GetManager().TenantEnvDao().GetTenantEnvs(tenantName, "")
 	if err != nil {
@@ -252,7 +243,7 @@ func (t *TenantEnvAction) GetTenantEnvsName(tenantName string) ([]string, error)
 	return result, err
 }
 
-// GetTenantEnvsByName get tenantEnvs
+// GetTenantEnvsByName get tenant envs
 func (t *TenantEnvAction) GetTenantEnvsByName(tenantName, tenantEnvName string) (*dbmodel.TenantEnvs, error) {
 	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvIDByName(tenantName, tenantEnvName)
 	if err != nil {

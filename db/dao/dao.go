@@ -42,11 +42,6 @@ type DelDao interface {
 	DeleteModel(serviceID string, arg ...interface{}) error
 }
 
-// EnterpriseDao enterprise dao
-type EnterpriseDao interface {
-	GetEnterpriseTenantEnvs(enterpriseID string) ([]*model.TenantEnvs, error)
-}
-
 // TenantEnvDao tenant env dao
 type TenantEnvDao interface {
 	Dao
@@ -54,7 +49,6 @@ type TenantEnvDao interface {
 	GetTenantEnvByUUID(uuid string) (*model.TenantEnvs, error)
 	GetTenantEnvIDByName(tenantName, tenantEnvName string) (*model.TenantEnvs, error)
 	GetTenantEnvs(tenantName, query string) ([]*model.TenantEnvs, error)
-	GetTenantEnvByEid(eid, query string) ([]*model.TenantEnvs, error)
 	GetPagedTenantEnvs(offset, len int) ([]*model.TenantEnvs, error)
 	GetTenantEnvIDsByNames(tenantName string, tenantEnvNames []string) ([]string, error)
 	GetTenantEnvLimitsByNames(tenantName string, tenantEnvNames []string) (map[string]int, error)
@@ -453,14 +447,6 @@ type VersionInfoDao interface {
 	SearchVersionInfo() ([]*model.VersionInfo, error)
 	ListByServiceIDStatus(serviceID string, finalStatus *bool) ([]*model.VersionInfo, error)
 	ListVersionsByComponentIDs(componentIDs []string) ([]*model.VersionInfo, error)
-}
-
-// RegionUserInfoDao UserRegionInfoDao
-type RegionUserInfoDao interface {
-	Dao
-	GetALLTokenInValidityPeriod() ([]*model.RegionUserInfo, error)
-	GetTokenByEid(eid string) (*model.RegionUserInfo, error)
-	GetTokenByTokenID(token string) (*model.RegionUserInfo, error)
 }
 
 // RegionAPIClassDao RegionAPIClassDao

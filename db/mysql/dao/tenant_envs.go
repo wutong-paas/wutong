@@ -119,24 +119,9 @@ func (t *TenantEnvDaoImpl) GetTenantEnvs(tenantName string, query string) ([]*mo
 	return tenantEnvs, nil
 }
 
-// GetTenantEnvByEid get tenantEnvs by eid
-func (t *TenantEnvDaoImpl) GetTenantEnvByEid(eid, query string) ([]*model.TenantEnvs, error) {
-	var tenantEnvs []*model.TenantEnvs
-	if query != "" {
-		if err := t.DB.Where("eid = ? and name like '%?%'", eid, query).Find(&tenantEnvs).Error; err != nil {
-			return nil, err
-		}
-	} else {
-		if err := t.DB.Where("eid = ?", eid).Find(&tenantEnvs).Error; err != nil {
-			return nil, err
-		}
-	}
-	return tenantEnvs, nil
-}
-
 // GetTenantEnvIDsByNames get tenant env ids by names
 func (t *TenantEnvDaoImpl) GetTenantEnvIDsByNames(tenantName string, tenantEnvNames []string) (re []string, err error) {
-	rows, err := t.DB.Raw("select uuid from tenantEnvs where tenant_name = ? and name in (?)", tenantName, tenantEnvNames).Rows()
+	rows, err := t.DB.Raw("select uuid from tenant_envs where tenant_name = ? and name in (?)", tenantName, tenantEnvNames).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +137,7 @@ func (t *TenantEnvDaoImpl) GetTenantEnvIDsByNames(tenantName string, tenantEnvNa
 // GetTenantEnvLimitsByNames get tenantEnvs memory limit
 func (t *TenantEnvDaoImpl) GetTenantEnvLimitsByNames(tenantName string, tenantEnvNames []string) (limit map[string]int, err error) {
 	limit = make(map[string]int)
-	rows, err := t.DB.Raw("select uuid,limit_memory from tenantEnvs where tenant_name = ? and name in (?)", tenantName, tenantEnvNames).Rows()
+	rows, err := t.DB.Raw("select uuid,limit_memory from tenant_envs where tenant_name = ? and name in (?)", tenantName, tenantEnvNames).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +348,7 @@ func (t *TenantEnvServicesDaoImpl) GetPagedTenantEnvService(offset, length int, 
 		res := make(map[string]interface{})
 		res["usecpu"] = useCPU
 		res["usemem"] = useMem
-		res["tenantEnv"] = tenantEnvID
+		res["tenant_env_id"] = tenantEnvID
 		rc[tenantEnvID] = &res
 		result = append(result, res)
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnvID)
@@ -385,7 +370,7 @@ func (t *TenantEnvServicesDaoImpl) GetPagedTenantEnvService(offset, length int, 
 			*rc[tenantEnvID] = s
 		}
 	}
-	tenantEnvs, err := t.DB.Raw("SELECT uuid,name,eid from tenantEnvs where uuid in (?)", tenantEnvIDs).Rows()
+	tenantEnvs, err := t.DB.Raw("SELECT uuid,name from tenant_envs where uuid in (?)", tenantEnvIDs).Rows()
 	if err != nil {
 		return nil, 0, pkgerr.Wrap(err, "list tenantEnvs")
 	}
@@ -393,11 +378,9 @@ func (t *TenantEnvServicesDaoImpl) GetPagedTenantEnvService(offset, length int, 
 	for tenantEnvs.Next() {
 		var tenantEnvID string
 		var name string
-		var eid string
-		tenantEnvs.Scan(&tenantEnvID, &name, &eid)
+		tenantEnvs.Scan(&tenantEnvID, &name)
 		if _, ok := rc[tenantEnvID]; ok {
 			s := (*rc[tenantEnvID])
-			s["eid"] = eid
 			s["tenant_env_name"] = name
 			*rc[tenantEnvID] = s
 		}

@@ -18,7 +18,6 @@ const (
 // Application -
 type Application struct {
 	Model
-	EID             string `gorm:"column:eid" json:"eid"`
 	TenantEnvID     string `gorm:"column:tenant_env_id" json:"tenant_env_id"`
 	AppName         string `gorm:"column:app_name" json:"app_name"`
 	AppID           string `gorm:"column:app_id" json:"app_id"`

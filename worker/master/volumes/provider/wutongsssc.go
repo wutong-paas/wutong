@@ -67,7 +67,7 @@ func (p *wutongssscProvisioner) Provision(options controller.VolumeOptions) (*v1
 	serviceID := options.PVC.Labels["service_id"]
 	_, stateless := options.PVC.Labels["stateless"]
 	// v5.0.4 Previous versions
-	hostpath := path.Join(p.pvDir, "tenantEnv", tenantEnvID, "service", serviceID, options.PVC.Name)
+	hostpath := path.Join(p.pvDir, "tenant_env", tenantEnvID, "service", serviceID, options.PVC.Name)
 
 	// after v5.0.4,change host path
 	// Directory path has nothing to do with volume ID

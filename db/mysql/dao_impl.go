@@ -39,13 +39,6 @@ func (m *Manager) LicenseDao() dao.LicenseDao {
 	}
 }
 
-// EnterpriseDao enterprise dao
-func (m *Manager) EnterpriseDao() dao.EnterpriseDao {
-	return &mysqldao.EnterpriseDaoImpl{
-		DB: m.db,
-	}
-}
-
 // TenantEnvDao 租户数据
 func (m *Manager) TenantEnvDao() dao.TenantEnvDao {
 	return &mysqldao.TenantEnvDaoImpl{
@@ -358,20 +351,6 @@ func (m *Manager) VersionInfoDaoTransactions(db *gorm.DB) dao.VersionInfoDao {
 func (m *Manager) LocalSchedulerDao() dao.LocalSchedulerDao {
 	return &mysqldao.LocalSchedulerDaoImpl{
 		DB: m.db,
-	}
-}
-
-// RegionUserInfoDao RegionUserInfoDao
-func (m *Manager) RegionUserInfoDao() dao.RegionUserInfoDao {
-	return &mysqldao.RegionUserInfoDaoImpl{
-		DB: m.db,
-	}
-}
-
-// RegionUserInfoDaoTransactions RegionUserInfoDaoTransactions
-func (m *Manager) RegionUserInfoDaoTransactions(db *gorm.DB) dao.RegionUserInfoDao {
-	return &mysqldao.RegionUserInfoDaoImpl{
-		DB: db,
 	}
 }
 
