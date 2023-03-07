@@ -108,11 +108,11 @@ func (t *TenantEnvDaoImpl) GetAllTenantEnvs(query string) ([]*model.TenantEnvs, 
 func (t *TenantEnvDaoImpl) GetTenantEnvs(tenantName string, query string) ([]*model.TenantEnvs, error) {
 	var tenantEnvs []*model.TenantEnvs
 	if query != "" {
-		if err := t.DB.Where("tenantName = ? and name like ?", tenantName, "%"+query+"%").Find(&tenantEnvs).Error; err != nil {
+		if err := t.DB.Where("tenant_name = ? and name like ?", tenantName, "%"+query+"%").Find(&tenantEnvs).Error; err != nil {
 			return nil, err
 		}
 	} else {
-		if err := t.DB.Find(&tenantEnvs).Error; err != nil {
+		if err := t.DB.Where("tenant_name = ?", tenantName).Find(&tenantEnvs).Error; err != nil {
 			return nil, err
 		}
 	}

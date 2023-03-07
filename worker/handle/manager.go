@@ -578,6 +578,8 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 						Name:      secretNameFrom(body.SecretID),
 						Namespace: tenantEnv.Namespace,
 						Labels: map[string]string{
+							"tenant_id":                      tenantEnv.TenantID,
+							"tenant_name":                    tenantEnv.TenantName,
 							"tenant_env_id":                  tenantEnv.UUID,
 							"tenant_env_name":                tenantEnv.Name,
 							"creator":                        "Wutong",

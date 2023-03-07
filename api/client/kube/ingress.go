@@ -31,6 +31,8 @@ func (i *Ingresses) Decorate(setting *api_model.KubeResourceCustomSetting) {
 			"app_id":          i.Ingresses[n].Labels["app_id"],
 			"service_alias":   i.Ingresses[n].Labels["service_alias"],
 			"service_id":      i.Ingresses[n].Labels["service_id"],
+			"tenant_id":       i.Ingresses[n].Labels["tenant_id"],
+			"tenant_name":     i.Ingresses[n].Labels["tenant_name"],
 			"tenant_env_id":   i.Ingresses[n].Labels["tenant_env_id"],
 			"tenant_env_name": i.Ingresses[n].Labels["tenant_env_name"],
 		}

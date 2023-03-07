@@ -431,6 +431,7 @@ func (t *TenantEnvStruct) AddTenantEnv(w http.ResponseWriter, r *http.Request) {
 	var ts api_model.AddTenantEnvStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ts.Body, nil)
 	if !ok {
+		httputil.ReturnError(r, w, 400, "bad request")
 		return
 	}
 	var dbts dbmodel.TenantEnvs

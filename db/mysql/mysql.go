@@ -201,13 +201,13 @@ func (m *Manager) patchTable() {
 	if err := m.db.Exec("alter table tenant_env_services_volume modify column volume_type varchar(64);").Error; err != nil {
 		logrus.Errorf("alter table tenant_env_services_volume error: %s", err.Error())
 	}
-	if err := m.db.Exec("update tenantEnvs set namespace=uuid where namespace is NULL;").Error; err != nil {
-		logrus.Errorf("update tenantEnvs namespace error: %s", err.Error())
+	if err := m.db.Exec("update tenant_envs set namespace=uuid where namespace is NULL;").Error; err != nil {
+		logrus.Errorf("update tenant_envs namespace error: %s", err.Error())
 	}
 	if err := m.db.Exec("update applications set k8s_app=concat('app-',LEFT(app_id,8)) where k8s_app is NULL;").Error; err != nil {
-		logrus.Errorf("update tenantEnvs namespace error: %s", err.Error())
+		logrus.Errorf("update tenant_envs namespace error: %s", err.Error())
 	}
 	if err := m.db.Exec("update tenant_env_services set k8s_component_name=service_alias where k8s_component_name is NULL;").Error; err != nil {
-		logrus.Errorf("update tenantEnvs namespace error: %s", err.Error())
+		logrus.Errorf("update tenant_envs namespace error: %s", err.Error())
 	}
 }

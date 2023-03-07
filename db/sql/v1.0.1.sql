@@ -17,7 +17,6 @@ CREATE TABLE `tenant_envs` (
   `namespace` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `uix_tenant_envs_namespace` (`namespace`),
-  UNIQUE KEY `uix_tenant_envs_name` (`name`),
   UNIQUE KEY `uix_tenant_envs_uuid` (`uuid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

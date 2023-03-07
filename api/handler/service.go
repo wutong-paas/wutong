@@ -2076,9 +2076,7 @@ func (s *ServiceAction) CreateTenantEnv(t *dbmodel.TenantEnvs) error {
 	}
 	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
 		if err := db.GetManager().TenantEnvDaoTransactions(tx).AddModel(t); err != nil {
-			if !strings.HasSuffix(err.Error(), "is exist") {
-				return err
-			}
+			return err
 		}
 		if _, err := s.kubeClient.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{

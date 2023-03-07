@@ -62,7 +62,7 @@ func (t TenantEnvStatus) String() string {
 // TenantEnvs 租户环境信息
 type TenantEnvs struct {
 	Model
-	Name        string `gorm:"column:name;size:40;unique_index"`
+	Name        string `gorm:"column:name;size:40"`
 	UUID        string `gorm:"column:uuid;size:33;unique_index"`
 	TenantID    string `gorm:"column:tenant_id"`
 	TenantName  string `gorm:"column:tenant_name"`

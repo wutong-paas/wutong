@@ -43,7 +43,6 @@ type TenantEnvInterface interface {
 	AddTenantEnv(w http.ResponseWriter, r *http.Request)
 	GetAllTenantEnvs(w http.ResponseWriter, r *http.Request)
 	GetTenantEnvs(w http.ResponseWriter, r *http.Request)
-	// TenantEnvs(w http.ResponseWriter, r *http.Request)
 	ServicesInfo(w http.ResponseWriter, r *http.Request)
 	TenantEnvsWithResource(w http.ResponseWriter, r *http.Request)
 	TenantEnvsQuery(w http.ResponseWriter, r *http.Request)

@@ -32,6 +32,8 @@ func (s *Statefulsets) Decorate(setting *api_model.KubeResourceCustomSetting) {
 			"name":            s.StatefulSets[i].Labels["name"],
 			"service_alias":   s.StatefulSets[i].Labels["service_alias"],
 			"service_id":      s.StatefulSets[i].Labels["service_id"],
+			"tenant_id":       s.StatefulSets[i].Labels["tenant_id"],
+			"tenant_name":     s.StatefulSets[i].Labels["tenant_name"],
 			"tenant_env_id":   s.StatefulSets[i].Labels["tenant_env_id"],
 			"tenant_env_name": s.StatefulSets[i].Labels["tenant_env_name"],
 		}
