@@ -464,7 +464,7 @@ type TenantEnvResources struct {
 		TenantName string `json:"tenant_name" validate:"tenant_name"`
 		// in: body
 		// required: true
-		TenantEnvNames []string `json:"tenant_env_name" validate:"tenant_env_name"`
+		TenantEnvNames []string `json:"tenant_env_names" validate:"tenant_env_names"`
 	}
 }
 
