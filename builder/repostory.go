@@ -44,7 +44,7 @@ func init() {
 		RUNNERIMAGENAME = os.Getenv("RUNNER_IMAGE_NAME")
 	}
 
-	CIVERSION = "v1.0.0-stable"
+	CIVERSION = "latest"
 	if os.Getenv("CI_VERSION") != "" {
 		CIVERSION = os.Getenv("CI_VERSION")
 	}
