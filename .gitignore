@@ -31,6 +31,8 @@ venv/
 # Pycharm
 .idea/
 
+bin
+
 # Eclipse files
 .classpath
 .project
