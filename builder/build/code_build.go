@@ -159,6 +159,9 @@ func (s *slugBuild) getSourceCodeTarFile(re *Request) (string, error) {
 	if re.ServerType == "git" {
 		cmd = append(cmd, "tar", "-cf", sourceTarFile, "./")
 	}
+	if len(cmd) == 0 {
+		return "", fmt.Errorf("server type [%s] is not supported", re.ServerType)
+	}
 	source := exec.Command(cmd[0], cmd[1:]...)
 	source.Dir = re.SourceDir
 	logrus.Debugf("tar source code to file %s", sourceTarFile)
