@@ -797,7 +797,7 @@ func CreateVolumesAndMounts(contextDir, buildType string) (volumes []corev1.Volu
 			Name: "run-build",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: "wt-cpt-grdata",
+					ClaimName: "wt-cpt-wtdata",
 				},
 			},
 		}

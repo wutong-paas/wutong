@@ -129,6 +129,15 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 	hostOpt.Credentials = func(host string) (string, string, error) {
 		return username, password, nil
 	}
+	registry := refdocker.Domain(named)
+	hosts := getContianerdHosts()
+	for _, host := range hosts {
+		if host == registry {
+			hostOpt.HostDir = func(s string) (string, error) {
+				return "/etc/containerd/certs.d/" + registry, nil
+			}
+		}
+	}
 	Tracker := docker.NewInMemoryTracker()
 	options := docker.ResolverOptions{
 		Tracker: Tracker,
@@ -139,7 +148,7 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 	opts := []containerd.RemoteOpt{
 		containerd.WithImageHandler(h),
 		//nolint:staticcheck
-		containerd.WithSchema1Conversion, //lint:ignore SA1019 nerdctl should support schema1 as well.
+		containerd.WithSchema1Conversion,
 		containerd.WithPlatformMatcher(platformMC),
 		containerd.WithResolver(docker.NewResolver(options)),
 	}
@@ -152,6 +161,22 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 	<-progress
 	printLog(logger, "info", fmt.Sprintf("Success Pull Image：%s", reference), map[string]string{"step": "pullimage"})
 	return getImageConfig(ctx, img)
+}
+
+func getContianerdHosts() []string {
+	hosts := []string{}
+	// 获取目录下的子目录
+	files, err := os.ReadDir("/etc/containerd/certs.d/")
+	if err != nil {
+		return hosts
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			hosts = append(hosts, file.Name())
+		}
+	}
+
+	return hosts
 }
 
 func getImageConfig(ctx context.Context, image containerd.Image) (*ocispec.ImageConfig, error) {
