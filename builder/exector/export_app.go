@@ -61,11 +61,12 @@ func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
 	logger := event.GetManager().GetLogger(eventID)
 	return &ExportApp{
-		Format:      gjson.GetBytes(in, "format").String(),
-		SourceDir:   gjson.GetBytes(in, "source_dir").String(),
-		Logger:      logger,
-		EventID:     eventID,
-		ImageClient: m.imageClient,
+		Format:        gjson.GetBytes(in, "format").String(),
+		SourceDir:     gjson.GetBytes(in, "source_dir").String(),
+		Logger:        logger,
+		EventID:       eventID,
+		ImageClient:   m.imageClient,
+		WithImageData: gjson.GetBytes(in, "with_image_data").Bool(),
 	}, nil
 }
 

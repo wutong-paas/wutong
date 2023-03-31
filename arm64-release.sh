@@ -3,4 +3,4 @@
 
 export BUILD_ARCH=arm64
 export VERSION=v1.1.0-stable-arm64
-./release.sh all push
+./release.sh chaos push

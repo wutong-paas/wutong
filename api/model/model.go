@@ -163,7 +163,7 @@ type CreateServiceStruct struct {
 		// 扩容方式；0:无状态；1:有状态；2:分区
 		// in: body
 		// required: false
-		ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method" validate:"extend_method"`
+		ExtendMethod string `gorm:"column:extend_method;default:stateless;" json:"extend_method" validate:"extend_method"`
 		// 节点数
 		// in: body
 		// required: false
@@ -191,11 +191,11 @@ type CreateServiceStruct struct {
 		// 共享类型shared、exclusive
 		// in: body
 		// required: false
-		VolumeType string `gorm:"column:volume_type;default:'shared'" json:"volume_type" validate:"volume_type"`
+		VolumeType string `gorm:"column:volume_type;default:shared" json:"volume_type" validate:"volume_type"`
 		// 端口类型，one_outer;dif_protocol;multi_outer
 		// in: body
 		// required: false
-		PortType string `gorm:"column:port_type;default:'multi_outer'" json:"port_type" validate:"port_type"`
+		PortType string `gorm:"column:port_type;default:multi_outer" json:"port_type" validate:"port_type"`
 		// 更新时间
 		// in: body
 		// required: false
@@ -203,7 +203,7 @@ type CreateServiceStruct struct {
 		// 服务创建类型cloud云市服务,assistant云帮服务
 		// in: body
 		// required: false
-		ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin" validate:"service_origin"`
+		ServiceOrigin string `gorm:"column:service_origin;default:assistant" json:"service_origin" validate:"service_origin"`
 		// 代码来源:gitlab,github
 		// in: body
 		// required: false
@@ -1432,8 +1432,8 @@ type ServiceProbe struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
 	ProbeID   string `gorm:"column:probe_id;size:32" json:"probe_id" validate:"probe_id|required|between:30,33"`
-	Mode      string `gorm:"column:mode;default:'liveness'" json:"mode" validate:"mode"`
-	Scheme    string `gorm:"column:scheme;default:'scheme'" json:"scheme" validate:"scheme"`
+	Mode      string `gorm:"column:mode;default:liveness" json:"mode" validate:"mode"`
+	Scheme    string `gorm:"column:scheme;default:scheme" json:"scheme" validate:"scheme"`
 	Path      string `gorm:"column:path" json:"path" validate:"path"`
 	Port      int    `gorm:"column:port;size:5;default:80" json:"port" validate:"port|numeric_between:1,65535"`
 	Cmd       string `gorm:"column:cmd;size:150" json:"cmd" validate:"cmd"`
