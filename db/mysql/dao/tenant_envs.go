@@ -44,12 +44,12 @@ type TenantEnvDaoImpl struct {
 func (t *TenantEnvDaoImpl) AddModel(mo model.Interface) error {
 	tenantEnv := mo.(*model.TenantEnvs)
 	var oldTenantEnv model.TenantEnvs
-	if ok := t.DB.Where("uuid = ? or name=?", tenantEnv.UUID, tenantEnv.Name).Find(&oldTenantEnv).RecordNotFound(); ok {
+	if ok := t.DB.Where("uuid = ?", tenantEnv.UUID).Find(&oldTenantEnv).RecordNotFound(); ok {
 		if err := t.DB.Create(tenantEnv).Error; err != nil {
 			return err
 		}
 	} else {
-		return fmt.Errorf("tenant env uuid  %s or name %s is exist", tenantEnv.UUID, tenantEnv.Name)
+		return fmt.Errorf("tenant env uuid %s is exist", tenantEnv.UUID)
 	}
 	return nil
 }
