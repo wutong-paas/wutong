@@ -21,12 +21,12 @@ type Application struct {
 	TenantEnvID     string `gorm:"column:tenant_env_id" json:"tenant_env_id"`
 	AppName         string `gorm:"column:app_name" json:"app_name"`
 	AppID           string `gorm:"column:app_id" json:"app_id"`
-	AppType         string `gorm:"column:app_type;default:wutong" json:"app_type"`
+	AppType         string `gorm:"column:app_type;default:'wutong'" json:"app_type"`
 	AppStoreName    string `gorm:"column:app_store_name" json:"app_store_name"`
 	AppStoreURL     string `gorm:"column:app_store_url" json:"app_store_url"`
 	AppTemplateName string `gorm:"column:app_template_name" json:"app_template_name"`
 	Version         string `gorm:"column:version" json:"version"`
-	GovernanceMode  string `gorm:"column:governance_mode;default:BUILD_IN_SERVICE_MESH" json:"governance_mode"`
+	GovernanceMode  string `gorm:"column:governance_mode;default:'BUILD_IN_SERVICE_MESH'" json:"governance_mode"`
 	K8sApp          string `gorm:"column:k8s_app" json:"k8s_app"`
 }
 
@@ -68,7 +68,7 @@ type ApplicationConfigGroup struct {
 	Model
 	AppID           string `gorm:"column:app_id" json:"app_id"`
 	ConfigGroupName string `gorm:"column:config_group_name" json:"config_group_name"`
-	DeployType      string `gorm:"column:deploy_type;default:env" json:"deploy_type"`
+	DeployType      string `gorm:"column:deploy_type;default:'env'" json:"deploy_type"`
 	Enable          bool   `gorm:"column:enable" json:"enable"`
 }
 

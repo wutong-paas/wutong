@@ -67,7 +67,7 @@ type TenantEnvs struct {
 	TenantID    string `gorm:"column:tenant_id"`
 	TenantName  string `gorm:"column:tenant_name"`
 	LimitMemory int    `gorm:"column:limit_memory"`
-	Status      string `gorm:"column:status;default:normal"`
+	Status      string `gorm:"column:status;default:'normal'"`
 	Namespace   string `gorm:"column:namespace;size:32;unique_index"`
 }
 
@@ -180,9 +180,9 @@ type TenantEnvServices struct {
 	ContainerGPU int `gorm:"column:container_gpu;default:0" json:"container_gpu"`
 	//UpgradeMethod service upgrade controller type
 	//such as : `Rolling` `OnDelete`
-	UpgradeMethod string `gorm:"column:upgrade_method;default:Rolling" json:"upgrade_method"`
+	UpgradeMethod string `gorm:"column:upgrade_method;default:'Rolling'" json:"upgrade_method"`
 	// 组件类型  component deploy type stateless_singleton/stateless_multiple/state_singleton/state_multiple
-	ExtendMethod string `gorm:"column:extend_method;default:stateless;" json:"extend_method"`
+	ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method"`
 	// 节点数
 	Replicas int `gorm:"column:replicas;default:1" json:"replicas"`
 	// 部署版本
@@ -190,7 +190,7 @@ type TenantEnvServices struct {
 	// 服务分类：application,cache,store
 	Category string `gorm:"column:category" json:"category"`
 	// 服务当前状态：undeploy,running,closed,unusual,starting,checking,stoping(deprecated)
-	CurStatus string `gorm:"column:cur_status;default:undeploy" json:"cur_status"`
+	CurStatus string `gorm:"column:cur_status;default:'undeploy'" json:"cur_status"`
 	// 计费状态 为1 计费，为0不计费 (deprecated)
 	Status int `gorm:"column:status;default:0" json:"status"`
 	// 最新操作ID
@@ -200,9 +200,9 @@ type TenantEnvServices struct {
 	// 更新时间
 	UpdateTime time.Time `gorm:"column:update_time" json:"update_time"`
 	// 服务创建类型cloud云市服务,assistant云帮服务
-	ServiceOrigin string `gorm:"column:service_origin;default:assistant" json:"service_origin"`
+	ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin"`
 	// kind of service. option: internal, third_party, custom
-	Kind string `gorm:"column:kind;default:internal" json:"kind"`
+	Kind string `gorm:"column:kind;default:'internal'" json:"kind"`
 	// service bind appID
 	AppID string `gorm:"column:app_id" json:"app_id"`
 	// Component name in cluster
@@ -296,9 +296,9 @@ type TenantEnvServicesDelete struct {
 	ContainerGPU int `gorm:"column:container_gpu;default:0" json:"container_gpu"`
 	//UpgradeMethod service upgrade controller type
 	//such as : `Rolling` `OnDelete`
-	UpgradeMethod string `gorm:"column:upgrade_method;default:Rolling" json:"upgrade_method"`
+	UpgradeMethod string `gorm:"column:upgrade_method;default:'Rolling'" json:"upgrade_method"`
 	// 扩容方式；0:无状态；1:有状态；2:分区
-	ExtendMethod string `gorm:"column:extend_method;default:stateless;" json:"extend_method"`
+	ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method"`
 	// 节点数
 	Replicas int `gorm:"column:replicas;default:1" json:"replicas"`
 	// 部署版本
@@ -306,7 +306,7 @@ type TenantEnvServicesDelete struct {
 	// 服务分类：application,cache,store
 	Category string `gorm:"column:category" json:"category"`
 	// 服务当前状态：undeploy,running,closed,unusual,starting,checking,stoping(deprecated)
-	CurStatus string `gorm:"column:cur_status;default:undeploy" json:"cur_status"`
+	CurStatus string `gorm:"column:cur_status;default:'undeploy'" json:"cur_status"`
 	// 计费状态 为1 计费，为0不计费 (deprecated)
 	Status int `gorm:"column:status;default:0" json:"status"`
 	// 最新操作ID
@@ -316,9 +316,9 @@ type TenantEnvServicesDelete struct {
 	// 更新时间
 	UpdateTime time.Time `gorm:"column:update_time" json:"update_time"`
 	// 服务创建类型cloud云市服务,assistant云帮服务
-	ServiceOrigin string `gorm:"column:service_origin;default:assistant" json:"service_origin"`
+	ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin"`
 	// kind of service. option: internal, third_party
-	Kind string `gorm:"column:kind;default:internal" json:"kind"`
+	Kind string `gorm:"column:kind;default:'internal'" json:"kind"`
 	// service bind appID
 	AppID string `gorm:"column:app_id" json:"app_id"`
 	// Component name in cluster
@@ -401,7 +401,7 @@ type TenantEnvServiceEnvVar struct {
 	AttrName      string `gorm:"column:attr_name;size:1024" validate:"env_name|required" json:"attr_name"`
 	AttrValue     string `gorm:"column:attr_value;type:text" validate:"env_value|required" json:"attr_value"`
 	IsChange      bool   `gorm:"column:is_change" validate:"is_change|bool" json:"is_change"`
-	Scope         string `gorm:"column:scope;default:outer" validate:"scope|in:outer,inner,both" json:"scope"`
+	Scope         string `gorm:"column:scope;default:'outer'" validate:"scope|in:outer,inner,both" json:"scope"`
 }
 
 // TableName 表名
@@ -553,8 +553,8 @@ type TenantEnvServiceProbe struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
 	ProbeID   string `gorm:"column:probe_id;size:32" json:"probe_id" validate:"probe_id|between:30,33"`
-	Mode      string `gorm:"column:mode;default:liveness" json:"mode" validate:"mode"`
-	Scheme    string `gorm:"column:scheme;default:scheme" json:"scheme" validate:"scheme"`
+	Mode      string `gorm:"column:mode;default:'liveness'" json:"mode" validate:"mode"`
+	Scheme    string `gorm:"column:scheme;default:'scheme'" json:"scheme" validate:"scheme"`
 	Path      string `gorm:"column:path" json:"path" validate:"path"`
 	Port      int    `gorm:"column:port;size:5;default:80" json:"port" validate:"port|required|numeric_between:1,65535"`
 	Cmd       string `gorm:"column:cmd;size:150" json:"cmd" validate:"cmd"`
