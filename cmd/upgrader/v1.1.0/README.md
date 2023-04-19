@@ -2,9 +2,7 @@
 
 Step 1: Upgrade the database
 
-```bash
-./v1.1.0.sh
-```
+exec ./upgrade.sql in region database
 
 Step 2: Run the upgrader
 
