@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/wutong-paas/wutong/util/constants"
@@ -45,6 +46,9 @@ func init() {
 	}
 
 	CIVERSION = "latest"
+	if runtime.GOARCH != "amd64" {
+		CIVERSION = fmt.Sprintf("%s-arm64", CIVERSION)
+	}
 	if os.Getenv("CI_VERSION") != "" {
 		CIVERSION = os.Getenv("CI_VERSION")
 	}
