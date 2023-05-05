@@ -814,21 +814,37 @@ func (g *GatewayAction) TCPRuleConfig(req *apimodel.TCPRuleConfigReq) error {
 		RuleID: req.RuleID,
 		Key:    "keepalive-enabled",
 		Value:  keepaliveEnabled,
-	})
-	configs = append(configs, &model.GwRuleConfig{
+	}, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "keepalive-idle",
 		Value:  fmt.Sprintf("%dm", req.Body.KeepaliveIdle),
-	})
-	configs = append(configs, &model.GwRuleConfig{
+	}, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "keepalive-intvl",
 		Value:  fmt.Sprintf("%ds", req.Body.KeepaliveIntvl),
-	})
-	configs = append(configs, &model.GwRuleConfig{
+	}, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "keepalive-cnt",
 		Value:  fmt.Sprintf("%d", req.Body.KeepaliveCnt),
+	})
+
+	// proxy timeout
+	proxyStreamTimeout := "600s"
+	if req.Body.ProxyStreamTimeout > 0 {
+		proxyStreamTimeout = fmt.Sprintf("%ds", req.Body.ProxyStreamTimeout)
+	}
+	proxyStreamNextUpstreamTimeout := "600s"
+	if req.Body.ProxyStreamNextUpstreamTimeout > 0 {
+		proxyStreamNextUpstreamTimeout = fmt.Sprintf("%ds", req.Body.ProxyStreamNextUpstreamTimeout)
+	}
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "proxy-stream-timeout",
+		Value:  proxyStreamTimeout,
+	}, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "proxy-stream-next-upstream-timeout",
+		Value:  proxyStreamNextUpstreamTimeout,
 	})
 
 	rule, err := g.dbmanager.TCPRuleDao().GetTCPRuleByID(req.RuleID)

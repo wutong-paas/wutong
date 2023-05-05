@@ -61,10 +61,12 @@ type VirtualService struct {
 	ForceSSLRedirect bool                   `json:"force_ssl_redirect"`
 	ExtensionConfig  map[string]interface{} `json:"extension_config"`
 
-	TCPKeepaliveEnabled bool   `json:"tcp_keepalive_enabled"`
-	TCPKeepaliveIdle    string `json:"tcp_keepalive_idle"`
-	TCPKeepaliveIntvl   string `json:"tcp_keepalive_intvl"`
-	TCPKeepaliveCnt     string `json:"tcp_keepalive_cnt"`
+	TCPKeepaliveEnabled            bool   `json:"tcp_keepalive_enabled"`
+	TCPKeepaliveIdle               string `json:"tcp_keepalive_idle"`
+	TCPKeepaliveIntvl              string `json:"tcp_keepalive_intvl"`
+	TCPKeepaliveCnt                string `json:"tcp_keepalive_cnt"`
+	ProxyStreamTimeout             string `json:"proxy_stream_timeout"`
+	ProxyStreamNextUpstreamTimeout string `json:"proxy_stream_next_upstream_timeout"`
 }
 
 // Equals equals vs
@@ -101,6 +103,13 @@ func (v *VirtualService) Equals(c *VirtualService) bool {
 		return false
 	}
 	if v.TCPKeepaliveCnt != c.TCPKeepaliveCnt {
+		return false
+	}
+	// proxy stream config
+	if v.ProxyStreamTimeout != c.ProxyStreamTimeout {
+		return false
+	}
+	if v.ProxyStreamNextUpstreamTimeout != c.ProxyStreamNextUpstreamTimeout {
 		return false
 	}
 

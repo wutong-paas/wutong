@@ -190,10 +190,12 @@ type Body struct {
 
 // TCPBody is a embedded sturct of TCPRuleConfigReq.
 type TCPBody struct {
-	KeepaliveEnabled bool `json:"keepalive_enabled,omitempty"`
-	KeepaliveIdle    int  `json:"keepalive_idle,omitempty"`
-	KeepaliveIntvl   int  `json:"keepalive_intvl,omitempty"`
-	KeepaliveCnt     int  `json:"keepalive_cnt,omitempty"`
+	KeepaliveEnabled               bool `json:"keepalive_enabled,omitempty"`
+	KeepaliveIdle                  int  `json:"keepalive_idle,omitempty"`
+	KeepaliveIntvl                 int  `json:"keepalive_intvl,omitempty"`
+	KeepaliveCnt                   int  `json:"keepalive_cnt,omitempty"`
+	ProxyStreamTimeout             int  `json:"proxy_stream_timeout,omitempty"`
+	ProxyStreamNextUpstreamTimeout int  `json:"proxy_stream_next_upstream_timeout,omitempty"`
 }
 
 // HTTPRuleConfig -
@@ -214,11 +216,13 @@ type HTTPRuleConfig struct {
 
 // TCPRuleConfig -
 type TCPRuleConfig struct {
-	RuleID           string `json:"rule_id,omitempty" validate:"rule_id|required"`
-	KeepaliveEnabled bool   `json:"keepalive_enabled,omitempty"`
-	KeepaliveIdle    int    `json:"keepalive_idle,omitempty"`
-	KeepaliveIntvl   int    `json:"keepalive_intvl,omitempty"`
-	KeepaliveCnt     int    `json:"keepalive_cnt,omitempty"`
+	RuleID                         string `json:"rule_id,omitempty" validate:"rule_id|required"`
+	KeepaliveEnabled               bool   `json:"keepalive_enabled,omitempty"`
+	KeepaliveIdle                  int    `json:"keepalive_idle,omitempty"`
+	KeepaliveIntvl                 int    `json:"keepalive_intvl,omitempty"`
+	KeepaliveCnt                   int    `json:"keepalive_cnt,omitempty"`
+	ProxyStreamTimeout             int    `json:"proxy_stream_timeout,omitempty"`
+	ProxyStreamNextUpstreamTimeout int    `json:"proxy_stream_next_upstream_timeout,omitempty"`
 }
 
 // DbModel return database model
@@ -296,6 +300,7 @@ func (h *HTTPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 // DbModel return database model
 func (t *TCPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 	var configs []*dbmodel.GwRuleConfig
+	// keepalive
 	keepaliveEnabled := "true"
 	if !t.KeepaliveEnabled {
 		keepaliveEnabled = "false"
@@ -304,21 +309,36 @@ func (t *TCPRuleConfig) DbModel() []*dbmodel.GwRuleConfig {
 		RuleID: t.RuleID,
 		Key:    "keepalive-enabled",
 		Value:  keepaliveEnabled,
-	})
-	configs = append(configs, &dbmodel.GwRuleConfig{
+	}, &dbmodel.GwRuleConfig{
 		RuleID: t.RuleID,
 		Key:    "keepalive-idle",
 		Value:  fmt.Sprintf("%dm", t.KeepaliveIdle),
-	})
-	configs = append(configs, &dbmodel.GwRuleConfig{
+	}, &dbmodel.GwRuleConfig{
 		RuleID: t.RuleID,
 		Key:    "keepalive-intvl",
 		Value:  fmt.Sprintf("%ds", t.KeepaliveIntvl),
-	})
-	configs = append(configs, &dbmodel.GwRuleConfig{
+	}, &dbmodel.GwRuleConfig{
 		RuleID: t.RuleID,
 		Key:    "keepalive-cnt",
 		Value:  fmt.Sprintf("%d", t.KeepaliveCnt),
+	})
+	// proxy timeout
+	proxyStreamTimeout := "600s"
+	if t.ProxyStreamTimeout > 0 {
+		proxyStreamTimeout = fmt.Sprintf("%ds", t.ProxyStreamTimeout)
+	}
+	proxyStreamNextUpstreamTimeout := "600s"
+	if t.ProxyStreamNextUpstreamTimeout > 0 {
+		proxyStreamNextUpstreamTimeout = fmt.Sprintf("%ds", t.ProxyStreamNextUpstreamTimeout)
+	}
+	configs = append(configs, &dbmodel.GwRuleConfig{
+		RuleID: t.RuleID,
+		Key:    "proxy-stream-timeout",
+		Value:  proxyStreamTimeout,
+	}, &dbmodel.GwRuleConfig{
+		RuleID: t.RuleID,
+		Key:    "proxy-stream-next-upstream-timeout",
+		Value:  proxyStreamNextUpstreamTimeout,
 	})
 	return configs
 }

@@ -248,12 +248,13 @@ func (o *OrService) getNgxServer(conf *v1.Config) (l7srv []*model.Server, l4srv 
 			},
 			UpstreamName:                   vs.PoolName,
 			ProxyStreamNextUpstream:        true,
-			ProxyStreamNextUpstreamTimeout: "600s",
 			ProxyStreamNextUpstreamTries:   3,
 			TCPKeepaliveEnabled:            vs.TCPKeepaliveEnabled,
 			TCPKeepaliveIdle:               vs.TCPKeepaliveIdle,
 			TCPKeepaliveIntvl:              vs.TCPKeepaliveIntvl,
 			TCPKeepaliveCnt:                vs.TCPKeepaliveCnt,
+			ProxyStreamTimeout:             vs.ProxyStreamTimeout,
+			ProxyStreamNextUpstreamTimeout: vs.ProxyStreamNextUpstreamTimeout,
 		}
 		server.Listen = strings.Join(vs.Listening, " ")
 		for _, loc := range vs.Locations {
