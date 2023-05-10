@@ -30,7 +30,7 @@ package main
 // 	"github.com/pebbe/zmq4"
 // 	"github.com/sirupsen/logrus"
 // 	"github.com/spf13/pflag"
-// 	"github.com/twinj/uuid"
+// 	"github.com/google/uuid"
 // )
 
 // const (
@@ -61,7 +61,7 @@ package main
 // 			client, _ := zmq4.NewSocket(zmq4.REQ)
 // 			client.Connect(en)
 // 			defer client.Close()
-// 			id := uuid.NewV4()
+// 			id := uuid.New()
 // 		Continuous:
 // 			for {
 // 				request := []string{fmt.Sprintf(`{"event_id":"%s","message":"hello word2","time":"%s"}`, id, time.Now().Format(time.RFC3339))}

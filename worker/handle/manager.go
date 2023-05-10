@@ -125,6 +125,12 @@ func (m *Manager) AnalystToExec(task *model.Task) error {
 	case "apply_registry_auth_secret":
 		logrus.Info("start a 'apply_registry_auth_secret' task worker")
 		return m.ExecApplyRegistryAuthSecretTask(task)
+	case "export_helm_chart":
+		logrus.Info("start a 'export_helm_chart' task worker")
+		return m.ExecExportHelmChartTask(task)
+	case "export_k8s_yaml":
+		logrus.Info("start a 'export_k8s_yaml' task worker")
+		return m.ExecExportK8sYamlTask(task)
 	default:
 		logrus.Warning("task can not execute because no type is identified")
 		return nil
@@ -615,5 +621,72 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 		}
 		return err
 	}
+	return nil
+}
+
+func (m *Manager) ExecExportHelmChartTask(task *model.Task) error {
+	body, ok := task.Body.(*model.ExportHelmChartOrK8sYamlTaskBody)
+	if !ok {
+		logrus.Error("export_helm_chart body convert to taskbody error", task.Body)
+		return fmt.Errorf("export_helm_chart body convert to taskbody error")
+	}
+	logger := event.GetManager().GetLogger(util.NewUUID())
+	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
+	if err != nil {
+		logrus.Errorf("component init create failure:%s", err.Error())
+		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component init create failure")
+	}
+	newAppService.Logger = logger
+	oldAppService := m.store.GetAppService(body.ServiceID)
+	// if service not deploy,start it
+	if oldAppService == nil || oldAppService.IsClosed() {
+		//regist new app service
+		m.store.RegistAppService(newAppService)
+
+	}
+	err = m.controllerManager.StartExportHelmChartController(body.AppName, body.AppVersion, body.End, *newAppService)
+	if err != nil {
+		logrus.Errorf("component run export_helm_chart controller failure:%s", err.Error())
+		logger.Info("component run export_helm_chart controller failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component export_helm_chart failure")
+	}
+	logrus.Infof("service(%s) %s working is running.", body.ServiceID, "export_helm_chart")
+	return nil
+
+}
+
+func (m *Manager) ExecExportK8sYamlTask(task *model.Task) error {
+	body, ok := task.Body.(*model.ExportHelmChartOrK8sYamlTaskBody)
+	if !ok {
+		logrus.Error("export_k8s_yaml body convert to taskbody error", task.Body)
+		return fmt.Errorf("export_k8s_yaml body convert to taskbody error")
+	}
+	logger := event.GetManager().GetLogger(util.NewUUID())
+	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
+	if err != nil {
+		logrus.Errorf("component init create failure:%s", err.Error())
+		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component init create failure")
+	}
+	newAppService.AppServiceBase.GovernanceMode = dbmodel.GovernanceModeKubernetesNativeService
+	newAppService.Logger = logger
+	oldAppService := m.store.GetAppService(body.ServiceID)
+	// if service not deploy,start it
+	if oldAppService == nil || oldAppService.IsClosed() {
+		//regist new app service
+		m.store.RegistAppService(newAppService)
+	}
+	err = m.controllerManager.StartExportK8sYamlController(body.AppName, body.AppVersion, body.End, *newAppService)
+	if err != nil {
+		logrus.Errorf("component run export_k8s_yaml controller failure:%s", err.Error())
+		logger.Info("component run export_k8s_yaml controller failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component start failure")
+	}
+	logrus.Infof("service(%s) %s working is running.", body.ServiceID, "export_k8s_yaml")
 	return nil
 }

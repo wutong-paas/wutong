@@ -23,9 +23,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 )
@@ -95,7 +95,7 @@ func TestABCService(t *testing.T) {
 }
 
 func TestUUID(t *testing.T) {
-	id := fmt.Sprintf("%s", uuid.NewV4())
+	id := fmt.Sprintf("%s", uuid.New())
 	uid := strings.Replace(id, "-", "", -1)
 	logrus.Debugf("uuid is %v", uid)
 	name := strings.Split(id, "-")[0]

@@ -26,7 +26,6 @@ type AppStruct struct{}
 
 // ExportApp -
 func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
-
 	switch r.Method {
 	case "POST":
 		var tr model.ExportAppStruct

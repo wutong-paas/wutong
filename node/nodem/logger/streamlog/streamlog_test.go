@@ -7,7 +7,7 @@ import (
 
 	"github.com/wutong-paas/wutong/node/nodem/logger"
 
-	"github.com/pborman/uuid"
+	"github.com/google/uuid"
 )
 
 func TestStreamLog(t *testing.T) {
@@ -17,8 +17,8 @@ func TestStreamLog(t *testing.T) {
 		go func() {
 			defer wait.Done()
 			log, err := New(logger.Info{
-				ContainerID:  uuid.New(),
-				ContainerEnv: []string{"TENANT_ID=" + uuid.New(), "SERVICE_ID=" + uuid.New()},
+				ContainerID:  uuid.New().String(),
+				ContainerEnv: []string{"TENANT_ID=" + uuid.New().String(), "SERVICE_ID=" + uuid.New().String()},
 				Config:       map[string]string{"stream-server": "192.168.2.203:6362"},
 			})
 			if err != nil {
@@ -44,8 +44,8 @@ func TestStreamLog(t *testing.T) {
 
 func BenchmarkStreamLog(t *testing.B) {
 	log, err := New(logger.Info{
-		ContainerID:  uuid.New(),
-		ContainerEnv: []string{"TENANT_ID=" + uuid.New(), "SERVICE_ID=" + uuid.New()},
+		ContainerID:  uuid.New().String(),
+		ContainerEnv: []string{"TENANT_ID=" + uuid.New().String(), "SERVICE_ID=" + uuid.New().String()},
 		Config:       map[string]string{"stream-server": "127.0.0.1:5031"},
 	})
 	if err != nil {

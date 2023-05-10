@@ -25,9 +25,9 @@ import (
 	"github.com/wutong-paas/wutong/mq/client"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/google/uuid"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/builder/exector"
 	"github.com/wutong-paas/wutong/db"
@@ -97,7 +97,7 @@ func (s *PluginShareHandle) Share(ss PluginShare) (*PluginResult, *util.APIHandl
 			return nil, util.CreateAPIHandleErrorf(500, "create share image name error:%s", err.Error())
 		}
 	}
-	shareID := uuid.NewV4().String()
+	shareID := uuid.New().String()
 
 	info := map[string]interface{}{
 		"image_info":       ss.Body.ImageInfo,

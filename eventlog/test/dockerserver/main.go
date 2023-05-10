@@ -32,7 +32,7 @@ package main
 // 	"github.com/sirupsen/logrus"
 // 	"github.com/spf13/pflag"
 // 	"github.com/tidwall/gjson"
-// 	"github.com/twinj/uuid"
+// 	"github.com/google/uuid"
 // )
 
 // const (
@@ -84,7 +84,7 @@ package main
 // 			go monitor()
 // 			client.Connect(en)
 // 			defer client.Close()
-// 			id := uuid.NewV4()
+// 			id := uuid.New()
 // 		Continuous:
 // 			for {
 // 				request := fmt.Sprintf(`{"event_id":"%s","message":"hello word2","time":"%s"}`, id, time.Now().Format(time.RFC3339))

@@ -7,7 +7,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/twinj/uuid"
+	"github.com/google/uuid"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
@@ -17,7 +17,7 @@ import (
 // SetVolumeDefaultValue set volume default value
 func SetVolumeDefaultValue(info *dbmodel.TenantEnvServiceVolume) {
 	if info.VolumeName == "" {
-		info.VolumeName = uuid.NewV4().String()
+		info.VolumeName = uuid.New().String()
 	}
 
 	if info.AccessMode != "" {

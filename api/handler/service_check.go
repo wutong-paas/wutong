@@ -24,9 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/builder/exector"
@@ -34,9 +34,9 @@ import (
 	tutil "github.com/wutong-paas/wutong/util"
 )
 
-//ServiceCheck check service build source
+// ServiceCheck check service build source
 func (s *ServiceAction) ServiceCheck(scs *api_model.ServiceCheckStruct) (string, string, *util.APIHandleError) {
-	checkUUID := uuid.NewV4().String()
+	checkUUID := uuid.New().String()
 	scs.Body.CheckUUID = checkUUID
 	if scs.Body.EventID == "" {
 		scs.Body.EventID = tutil.NewUUID()
@@ -76,7 +76,7 @@ func maybeIsWindowsContainerImage(source string) bool {
 
 }
 
-//GetServiceCheckInfo get application source detection information
+// GetServiceCheckInfo get application source detection information
 func (s *ServiceAction) GetServiceCheckInfo(uuid string) (*exector.ServiceCheckResult, *util.APIHandleError) {
 	k := fmt.Sprintf("/servicecheck/%s", uuid)
 	var si exector.ServiceCheckResult

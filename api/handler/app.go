@@ -3,11 +3,15 @@ package handler
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/wutong-paas/wutong/mq/client"
+	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
+	dmodel "github.com/wutong-paas/wutong/worker/discover/model"
 
 	"regexp"
 
@@ -22,8 +26,18 @@ var re = regexp.MustCompile(`\s`)
 
 // AppAction app action
 type AppAction struct {
-	MQClient  client.MQClient
-	staticDir string
+	MQClient   mqclient.MQClient
+	staticDir  string
+	appName    string
+	appVersion string
+	end        bool
+}
+
+// SetExportAppInfoParameter pass the export app info parameter
+func (a *AppAction) SetExportAppInfoParameter(appName, appVersion string, end bool) {
+	a.appName = appName
+	a.appVersion = appVersion
+	a.end = end
 }
 
 // GetStaticDir get static dir
@@ -32,7 +46,7 @@ func (a *AppAction) GetStaticDir() string {
 }
 
 // CreateAppManager create app manager
-func CreateAppManager(mqClient client.MQClient) *AppAction {
+func CreateAppManager(mqClient mqclient.MQClient) *AppAction {
 	staticDir := "/wtdata/app"
 	if os.Getenv("LOCAL_APP_CACHE_DIR") != "" {
 		staticDir = os.Getenv("LOCAL_APP_CACHE_DIR")
@@ -52,7 +66,11 @@ func (a *AppAction) Complete(tr *model.ExportAppStruct) error {
 		return err
 	}
 
-	if tr.Body.Format != "wutong-app" && tr.Body.Format != "docker-compose" {
+	if tr.Body.Format != "wutong-app" &&
+		tr.Body.Format != "docker-compose" &&
+		tr.Body.Format != "slug" &&
+		tr.Body.Format != "helm-chart" &&
+		tr.Body.Format != "k8s-yaml" {
 		err := errors.New("Unsupported the format: " + tr.Body.Format)
 		logrus.Error(err)
 		return err
@@ -60,8 +78,26 @@ func (a *AppAction) Complete(tr *model.ExportAppStruct) error {
 
 	version := gjson.Get(tr.Body.GroupMetadata, "group_version").String()
 
+	components := gjson.Get(tr.Body.GroupMetadata, "apps").Array()
+
 	appName = unicode2zh(appName)
 	tr.SourceDir = fmt.Sprintf("%s/%s/%s-%s", a.staticDir, tr.Body.Format, appName, version)
+
+	if tr.Body.Format == "helm-chart" || tr.Body.Format == "k8s-yaml" {
+		for i, v := range components {
+			a.SetExportAppInfoParameter(appName, version, i == len(components)-1)
+			serviceID := v.Get("service_id").String()
+			service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
+			if err != nil {
+				return err
+			}
+			err = a.exportHelmChartOrK8sYaml(tr.Body.Format, service)
+			if err != nil {
+				log.Printf("Failed to export helm chart or k8s yaml: %v", err)
+				return err
+			}
+		}
+	}
 
 	return nil
 }
@@ -69,13 +105,13 @@ func (a *AppAction) Complete(tr *model.ExportAppStruct) error {
 // ExportApp ExportApp
 func (a *AppAction) ExportApp(tr *model.ExportAppStruct) error {
 	// 保存元数据到组目录
-	if err := saveMetadata(tr); err != nil {
+	if err := a.saveMetadata(tr); err != nil {
 		return util.CreateAPIHandleErrorFromDBError("Failed to export app", err)
 	}
-	err := a.MQClient.SendBuilderTopic(client.TaskStruct{
+	err := a.MQClient.SendBuilderTopic(mqclient.TaskStruct{
 		TaskBody: model.BuildMQBodyFrom(tr),
 		TaskType: "export_app",
-		Topic:    client.BuilderTopic,
+		Topic:    mqclient.BuilderTopic,
 	})
 	if err != nil {
 		logrus.Error("Failed to Enqueue MQ for ExportApp:", err)
@@ -85,13 +121,39 @@ func (a *AppAction) ExportApp(tr *model.ExportAppStruct) error {
 	return nil
 }
 
+func (a *AppAction) exportHelmChartOrK8sYaml(format string, service *dbmodel.TenantEnvServices) error {
+	body := dmodel.ExportHelmChartOrK8sYamlTaskBody{
+		TenantEnvID: service.TenantEnvID,
+		ServiceID:   service.ServiceID,
+		// EventID:     r.EventID,
+		AppVersion: a.appVersion,
+		AppName:    a.appName,
+		End:        a.end,
+	}
+	var taskType string
+	switch format {
+	case "helm-chart":
+		taskType = model.ExportHelmChart
+	case "k8s-yaml":
+		taskType = model.ExportK8sYaml
+	default:
+		return fmt.Errorf("unsupported the export mode: %s", format)
+	}
+
+	return a.MQClient.SendBuilderTopic(mqclient.TaskStruct{
+		Topic:    mqclient.WorkerTopic,
+		TaskType: taskType,
+		TaskBody: body,
+	})
+}
+
 // ImportApp import app
 func (a *AppAction) ImportApp(importApp *model.ImportAppStruct) error {
 
-	err := a.MQClient.SendBuilderTopic(client.TaskStruct{
+	err := a.MQClient.SendBuilderTopic(mqclient.TaskStruct{
 		TaskBody: importApp,
 		TaskType: "import_app",
-		Topic:    client.BuilderTopic,
+		Topic:    mqclient.BuilderTopic,
 	})
 	if err != nil {
 		logrus.Error("Failed to MQ Enqueue for ImportApp:", err)
@@ -102,10 +164,21 @@ func (a *AppAction) ImportApp(importApp *model.ImportAppStruct) error {
 	return nil
 }
 
-func saveMetadata(tr *model.ExportAppStruct) error {
+func (a *AppAction) saveMetadata(tr *model.ExportAppStruct) error {
 	retry := true
 	// 创建应用组目录
 	os.MkdirAll(tr.SourceDir, 0755)
+
+	if tr.Body.Format == "helm-chart" {
+		exportApp := fmt.Sprintf("%v-%v", a.appName, a.appVersion)
+		exportPath := fmt.Sprintf("/wtdata/app/helm-chart/%v/%v-helm/%v", exportApp, exportApp, a.appName)
+		os.MkdirAll(exportPath, 0755)
+	}
+	if tr.Body.Format == "k8s-yaml" {
+		exportApp := fmt.Sprintf("%v-%v", a.appName, a.appVersion)
+		exportPath := fmt.Sprintf("/wtdata/app/k8s-yaml/%v/%v-yaml/%v", exportApp, exportApp, a.appName)
+		os.MkdirAll(exportPath, 0755)
+	}
 
 	// 写入元数据到文件
 	if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {

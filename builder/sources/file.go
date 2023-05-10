@@ -26,14 +26,14 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/twinj/uuid"
+	"github.com/google/uuid"
 
 	"github.com/wutong-paas/wutong/util"
 
 	"github.com/wutong-paas/wutong/event"
 )
 
-//CopyFileWithProgress 复制文件，带进度
+// CopyFileWithProgress 复制文件，带进度
 func CopyFileWithProgress(src, dst string, logger event.Logger) error {
 	srcFile, err := os.OpenFile(src, os.O_RDONLY, 0644)
 	if err != nil {
@@ -73,21 +73,21 @@ func CopyFileWithProgress(src, dst string, logger event.Logger) error {
 	return CopyWithProgress(srcFile, dstFile, allSize, logger)
 }
 
-//SrcFile  源文件
+// SrcFile  源文件
 type SrcFile interface {
 	Read([]byte) (int, error)
 }
 
-//DstFile  目标文件
+// DstFile  目标文件
 type DstFile interface {
 	Write([]byte) (int, error)
 }
 
-//CopyWithProgress copy file
+// CopyWithProgress copy file
 func CopyWithProgress(srcFile SrcFile, dstFile DstFile, allSize int64, logger event.Logger) (err error) {
 	var written int64
 	buf := make([]byte, 1024*1024)
-	progressID := uuid.NewV4().String()[0:7]
+	progressID := uuid.New().String()[0:7]
 	for {
 		nr, er := srcFile.Read(buf)
 		if nr > 0 {

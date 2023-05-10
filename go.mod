@@ -58,7 +58,6 @@ require (
 	github.com/onsi/gomega v1.17.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.2
-	github.com/pborman/uuid v1.2.1
 	github.com/pebbe/zmq4 v1.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
@@ -78,10 +77,9 @@ require (
 	github.com/testcontainers/testcontainers-go v0.8.0
 	github.com/thejerf/suture v3.0.3+incompatible
 	github.com/tidwall/gjson v1.6.8
-	github.com/twinj/uuid v1.0.0
 	github.com/urfave/cli v1.22.2
 	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
-	github.com/wutong-paas/wutong-oam v1.1.0
+	github.com/wutong-paas/wutong-oam v1.1.3
 	github.com/wutong-paas/wutong-operator v1.0.1
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
@@ -183,7 +181,7 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
 	github.com/gorilla/mux v1.8.0 // indirect

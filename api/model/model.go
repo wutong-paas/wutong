@@ -1529,6 +1529,18 @@ type ServiceShare struct {
 	}
 }
 
+// ExportHelmChart -
+var ExportHelmChart = "export_helm_chart"
+
+// ExportK8sYaml -
+var ExportK8sYaml = "export_k8s_yaml"
+
+// ExportAppInfo -
+type ExportAppInfo struct {
+	AppName    string `json:"app_name"`
+	AppVersion string `json:"app_version"`
+}
+
 // ExportAppStruct -
 type ExportAppStruct struct {
 	SourceDir string `json:"source_dir"`
@@ -1536,7 +1548,7 @@ type ExportAppStruct struct {
 		EventID       string `json:"event_id"`
 		GroupKey      string `json:"group_key"` // TODO 考虑去掉
 		Version       string `json:"version"`   // TODO 考虑去掉
-		Format        string `json:"format"`    // only wutong-app/docker-compose
+		Format        string `json:"format"`    // only wutong-app/docker-compose/slug/helm-chart/k8s-yaml
 		GroupMetadata string `json:"group_metadata"`
 		WithImageData bool   `json:"with_image_data"`
 	}

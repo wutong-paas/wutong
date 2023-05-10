@@ -169,7 +169,13 @@ func NewTaskBody(taskType string, body []byte) TaskBody {
 		b := ApplyRegistryAuthSecretTaskBody{}
 		err := ffjson.Unmarshal(body, &b)
 		if err != nil {
-			logrus.Debugf("error unmarshal data: %v", err)
+			return nil
+		}
+		return &b
+	case "export_helm_chart", "export_k8s_yaml":
+		b := ExportHelmChartOrK8sYamlTaskBody{}
+		err := ffjson.Unmarshal(body, &b)
+		if err != nil {
 			return nil
 		}
 		return &b
@@ -285,6 +291,11 @@ type RollingUpgradeTaskBody struct {
 	EventID          string            `json:"event_id"`
 	Strategy         []string          `json:"strategy"`
 	Configs          map[string]string `json:"configs"`
+	DryRun           bool              `json:"dry_run"`
+	AppName          string            `json:"app_name"`
+	AppVersion       string            `json:"app_version"`
+	EventIDs         []string          `json:"event_ids"`
+	End              bool              `json:"end"`
 }
 
 // RollBackTaskBody 回滚操作任务主体
@@ -374,6 +385,16 @@ type ApplyRegistryAuthSecretTaskBody struct {
 	Domain      string `json:"domain"`
 	Username    string `json:"username"`
 	Password    string `json:"password"`
+}
+
+type ExportHelmChartOrK8sYamlTaskBody struct {
+	TenantEnvID string `json:"tenant_env_id"`
+	ServiceID   string `json:"service_id"`
+	// EventID     string `json:"event_id"`
+	// Configs     map[string]string `json:"configs"`
+	AppName    string `json:"app_name"`
+	AppVersion string `json:"app_version"`
+	End        bool   `json:"end"`
 }
 
 // DefaultTaskBody 默认操作任务主体

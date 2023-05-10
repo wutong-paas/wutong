@@ -79,8 +79,10 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 	// 	return nil
 	// }
 	// Delete the old application group directory and then regenerate the application package
-	if err := i.CleanSourceDir(); err != nil {
-		return err
+	if i.Format != "helm-chart" && i.Format != "k8s-yaml" {
+		if err := i.CleanSourceDir(); err != nil {
+			return err
+		}
 	}
 
 	ram, err := i.parseRAM()
@@ -100,6 +102,27 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 		re, err = i.exportDockerCompose(*ram)
 		if err != nil {
 			logrus.Errorf("export docker compose app package failure %s", err.Error())
+			i.updateStatus("failed", "")
+			return err
+		}
+	} else if i.Format == "slug" {
+		re, err = i.exportSlug(*ram)
+		if err != nil {
+			logrus.Errorf("export slug app package failure %s", err.Error())
+			i.updateStatus("failed", "")
+			return err
+		}
+	} else if i.Format == "helm-chart" {
+		re, err = i.exportHelmChart(*ram)
+		if err != nil {
+			logrus.Errorf("export helm chart package failure %s", err.Error())
+			i.updateStatus("failed", "")
+			return err
+		}
+	} else if i.Format == "k8s-yaml" {
+		re, err = i.exportK8sYaml(*ram)
+		if err != nil {
+			logrus.Errorf("export k8s yaml package failure %s", err.Error())
 			i.updateStatus("failed", "")
 			return err
 		}
@@ -172,6 +195,22 @@ func (i *ExportApp) exportSlug(ram v1alpha1.WutongApplicationConfig) (*export.Re
 	return slugExporter.Export()
 }
 
+func (i *ExportApp) exportHelmChart(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
+	helmChartExporter, err := export.New(export.HELM, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
+	return helmChartExporter.Export()
+}
+
+func (i *ExportApp) exportK8sYaml(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
+	k8sYamlExporter, err := export.New(export.YAML, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
+	return k8sYamlExporter.Export()
+}
+
 // Stop stop
 func (i *ExportApp) Stop() error {
 	return nil
@@ -241,21 +280,8 @@ func (i *ExportApp) parseRAM() (*ramv1alpha1.WutongApplicationConfig, error) {
 		return nil, err
 	}
 
-	// If WithImageData is false, then remove the value of ShareImage from components and plugins
-	if !i.WithImageData {
-		for i := range ram.Components {
-			if ram.Components[i].Image == "" {
-				ram.Components[i].Image = ram.Components[i].ShareImage
-			}
-			ram.Components[i].ShareImage = ""
-		}
-		for i := range ram.Plugins {
-			if ram.Plugins[i].Image == "" {
-				ram.Plugins[i].Image = ram.Plugins[i].ShareImage
-			}
-			ram.Plugins[i].ShareImage = ""
-		}
-	}
+	ram.WithImageData = i.WithImageData
+
 	return &ram, nil
 }
 

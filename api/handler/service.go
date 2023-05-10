@@ -32,11 +32,11 @@ import (
 	"github.com/wutong-paas/wutong/util/constants"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
@@ -679,7 +679,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				}
 			}
 			if volumn.VolumeName == "" {
-				v.VolumeName = uuid.NewV4().String()
+				v.VolumeName = uuid.New().String()
 			}
 			if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).AddModel(&v); err != nil {
 				logrus.Errorf("add volumn %v error, %v", volumn.HostPath, err)
@@ -2095,7 +2095,7 @@ func (s *ServiceAction) CreateTenantEnv(t *dbmodel.TenantEnvs) error {
 
 // CreateTenantEnvIDAndName create tenant_env_id and tenant_env_name
 func (s *ServiceAction) CreateTenantEnvIDAndName() (string, string, error) {
-	id := uuid.NewV4().String()
+	id := uuid.New().String()
 	uid := strings.Replace(id, "-", "", -1)
 	name := strings.Split(id, "-")[0]
 	logrus.Debugf("uuid is %v, name is %v", uid, name)

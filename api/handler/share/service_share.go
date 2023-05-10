@@ -26,7 +26,7 @@ import (
 
 	"github.com/wutong-paas/wutong/builder/exector"
 
-	"github.com/twinj/uuid"
+	"github.com/google/uuid"
 
 	"github.com/pquerna/ffjson/ffjson"
 
@@ -63,7 +63,7 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 	if err != nil {
 		logrus.Error("query service deploy version error", err.Error())
 	}
-	shareID := uuid.NewV4().String()
+	shareID := uuid.New().String()
 	var slugPath, shareImageName string
 	var task client.TaskStruct
 	if version.DeliveredType == "slug" {

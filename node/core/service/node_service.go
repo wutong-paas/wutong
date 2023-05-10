@@ -26,8 +26,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/node/api/model"
@@ -79,7 +79,7 @@ func (n *NodeService) AddNode(node *client.APIHostNode) (*client.HostNode, *util
 		return nil, utils.CreateAPIHandleError(400, err)
 	}
 	if node.ID == "" {
-		node.ID = uuid.NewV4().String()
+		node.ID = uuid.New().String()
 	}
 	if node.InternalIP == "" {
 		return nil, utils.CreateAPIHandleError(400, fmt.Errorf("node internal ip can not be empty"))
