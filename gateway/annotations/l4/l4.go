@@ -65,7 +65,13 @@ func (l l4) Parse(meta *metav1.ObjectMeta) (interface{}, error) {
 	keepaliveIntvl, _ := parser.GetStringAnnotation("keepalive-intvl", meta)
 	keepaliveCnt, _ := parser.GetStringAnnotation("keepalive-cnt", meta)
 	proxyStreamTimeout, _ := parser.GetStringAnnotation("proxy-stream-timeout", meta)
+	if proxyStreamTimeout == "" {
+		proxyStreamTimeout = "600s"
+	}
 	proxyStreamNextUpstreamTimeout, _ := parser.GetStringAnnotation("proxy-stream-next-upstream-timeout", meta)
+	if proxyStreamNextUpstreamTimeout == "" {
+		proxyStreamNextUpstreamTimeout = "600s"
+	}
 
 	return &Config{
 		L4Enable:                       l4Enable,
