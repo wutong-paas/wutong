@@ -79,7 +79,7 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 	// 	return nil
 	// }
 	// Delete the old application group directory and then regenerate the application package
-	if i.Format != "helm-chart" && i.Format != "k8s-yaml" {
+	if i.Format != "helm_chart" && i.Format != "yaml" {
 		if err := i.CleanSourceDir(); err != nil {
 			return err
 		}
@@ -112,14 +112,14 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 			i.updateStatus("failed", "")
 			return err
 		}
-	} else if i.Format == "helm-chart" {
+	} else if i.Format == "helm_chart" {
 		re, err = i.exportHelmChart(*ram)
 		if err != nil {
 			logrus.Errorf("export helm chart package failure %s", err.Error())
 			i.updateStatus("failed", "")
 			return err
 		}
-	} else if i.Format == "k8s-yaml" {
+	} else if i.Format == "yaml" {
 		re, err = i.exportK8sYaml(*ram)
 		if err != nil {
 			logrus.Errorf("export k8s yaml package failure %s", err.Error())

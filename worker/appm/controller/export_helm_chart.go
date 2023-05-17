@@ -8,11 +8,16 @@ import (
 	"path"
 	"strings"
 
+	k8sstrings "k8s.io/utils/strings"
+
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -28,40 +33,38 @@ type exportHelmChartController struct {
 	End          bool
 }
 
+func newWutongExport() *WutongExport {
+	return &WutongExport{
+		ConfigGroups:    make(map[string]map[string]string),
+		ExternalDomains: make(map[string]map[string]string),
+		StorageClass:    "wutongvolumerwx",
+	}
+}
+
 func (s *exportHelmChartController) Begin() {
-	var r WutongExport
-	r.ConfigGroups = make(map[string]map[string]string)
 	exportApp := fmt.Sprintf("%v-%v", s.AppName, s.AppVersion)
-	exportPath := fmt.Sprintf("/wtdata/app/helm-chart/%v/%v-helm/%v", exportApp, exportApp, s.AppName)
+	exportPath := fmt.Sprintf("/wtdata/app/helm_chart/%v/%v-helm/%v", exportApp, exportApp, s.AppName)
+	r := s.readHelmValuesFromFileOrInit(path.Join(exportPath, "values.yaml"))
+
 	for _, service := range s.appService {
-		err := s.exportOne(service, &r)
+		err := s.exportOne(service, r)
 		if err != nil {
 			logrus.Errorf("worker export %v failure %v", service.ServiceAlias, err)
 		}
 	}
 
+	// Write values.yaml
+	valuesYamlByte, err := yaml.Marshal(r)
+	if err != nil {
+		logrus.Errorf("yaml marshal valueYaml failure %v", err)
+	}
+	err = write(path.Join(exportPath, "values.yaml"), valuesYamlByte, "\n", false)
+	if err != nil {
+		logrus.Errorf("write values.yaml other failure %v", err)
+	}
+
 	if s.End {
-		if len(r.ConfigGroups) != 0 {
-			configGroupByte, err := yaml.Marshal(r.ConfigGroups)
-			if err != nil {
-				logrus.Errorf("yaml marshal valueYaml failure %v", err)
-			} else {
-				err = s.write(path.Join(exportPath, "values.yaml"), configGroupByte, "")
-				if err != nil {
-					logrus.Errorf("write values.yaml configgroup failure %v", err)
-				}
-			}
-		}
-		r.StorageClass = "wutongvolumerwx"
-		volumeYamlByte, err := yaml.Marshal(r)
-		if err != nil {
-			logrus.Errorf("yaml marshal valueYaml failure %v", err)
-		}
-		err = s.write(path.Join(exportPath, "values.yaml"), volumeYamlByte, "\n")
-		if err != nil {
-			logrus.Errorf("write values.yaml other failure %v", err)
-		}
-		err = s.write(path.Join(exportPath, "dependent_image.txt"), []byte(v1.GetOnlineProbeMeshImageName()), "\n")
+		err = write(path.Join(exportPath, "dependent_image.txt"), []byte(v1.GetOnlineProbeMeshImageName()), "\n", false)
 		if err != nil {
 			logrus.Errorf("write dependent_image.txt failure %v", err)
 		}
@@ -76,7 +79,7 @@ func (s *exportHelmChartController) Stop() error {
 
 func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport) error {
 	exportApp := fmt.Sprintf("%v-%v", s.AppName, s.AppVersion)
-	exportPath := fmt.Sprintf("/wtdata/app/helm-chart/%v/%v-helm/%v", exportApp, exportApp, s.AppName)
+	exportPath := fmt.Sprintf("/wtdata/app/helm_chart/%v/%v-helm/%v", exportApp, exportApp, s.AppName)
 	logrus.Infof("start export app %s to helm chart spec", s.AppName)
 
 	exportTemplatePath := path.Join(exportPath, "templates")
@@ -92,7 +95,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 			if err != nil {
 				return fmt.Errorf("manifest to yaml failure %v", err)
 			}
-			err = s.write(path.Join(exportTemplatePath, fmt.Sprintf("%v.yaml", manifest.GetKind())), resourceBytes, "\n---\n")
+			err = write(path.Join(exportTemplatePath, fmt.Sprintf("%v.yaml", manifest.GetKind())), resourceBytes, "\n---\n", true)
 			if err != nil {
 				return fmt.Errorf("write manifest yaml failure %v", err)
 			}
@@ -108,7 +111,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 			if err != nil {
 				return fmt.Errorf("configmap to yaml failure %v", err)
 			}
-			err = s.write(path.Join(exportTemplatePath, "ConfigMap.yaml"), cmBytes, "\n---\n")
+			err = write(path.Join(exportTemplatePath, "ConfigMap.yaml"), cmBytes, "\n---\n", true)
 			if err != nil {
 				return fmt.Errorf("write configmap yaml failure %v", err)
 			}
@@ -128,7 +131,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 		if err != nil {
 			return fmt.Errorf("pvc to yaml failure %v", err)
 		}
-		err = s.write(path.Join(exportTemplatePath, "PersistentVolumeClaim.yaml"), pvcBytes, "\n---\n")
+		err = write(path.Join(exportTemplatePath, "PersistentVolumeClaim.yaml"), pvcBytes, "\n---\n", true)
 		if err != nil {
 			return fmt.Errorf("write pvc yaml failure %v", err)
 		}
@@ -155,7 +158,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 		if err != nil {
 			return fmt.Errorf("statefulset to yaml failure %v", err)
 		}
-		err = s.write(path.Join(exportTemplatePath, "StatefulSet.yaml"), statefulsetBytes, "\n---\n")
+		err = write(path.Join(exportTemplatePath, "StatefulSet.yaml"), statefulsetBytes, "\n---\n", true)
 		if err != nil {
 			return fmt.Errorf("write statefulset yaml failure %v", err)
 		}
@@ -175,7 +178,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 		if err != nil {
 			return fmt.Errorf("deployment to yaml failure %v", err)
 		}
-		err = s.write(path.Join(exportTemplatePath, "Deployment.yaml"), deploymentBytes, "\n---\n")
+		err = write(path.Join(exportTemplatePath, "Deployment.yaml"), deploymentBytes, "\n---\n", true)
 		if err != nil {
 			return fmt.Errorf("write deployment yaml failure %v", err)
 		}
@@ -194,11 +197,71 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 			if err != nil {
 				return fmt.Errorf("svc to yaml failure %v", err)
 			}
-			err = s.write(path.Join(exportTemplatePath, "Service.yaml"), svcBytes, "\n---\n")
+			err = write(path.Join(exportTemplatePath, "Service.yaml"), svcBytes, "\n---\n", true)
 			if err != nil {
 				return fmt.Errorf("write svc yaml failure %v", err)
 			}
 		}
+	}
+	v1ingresses, v1beta1ingresses := app.GetIngress(true)
+	domains := make(map[string]string)
+	for _, ing := range v1ingresses {
+		ing.Kind = "Ingress"
+		ing.Namespace = ""
+		ing.APIVersion = APIVersionV1Ingress
+		ing.Status = networkingv1.IngressStatus{}
+
+		if len(ing.Spec.Rules) > 0 {
+			var port = "http"
+			if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil && ing.Spec.DefaultBackend.Service.Port.Number > 0 {
+				port = cast.ToString(ing.Spec.DefaultBackend.Service.Port.Number)
+			}
+			ing.Name = fmt.Sprintf("%s-%s-%s", app.K8sComponentName, port, k8sstrings.ShortenString(ing.Name, 5))
+			domains[ing.Name] = ing.Spec.Rules[0].Host
+			ing.Spec.Rules[0].Host = fmt.Sprintf("{{ $host := index .Values \"externalDomains\" \"%s\" \"%s\" }}{{ default \"%v\" $host }}", app.K8sComponentName, ing.Name, ing.Spec.Rules[0].Host)
+		} else {
+			continue
+		}
+
+		ingBytes, err := yaml.Marshal(ing)
+		if err != nil {
+			return fmt.Errorf("networking v1 ingress to yaml failure %v", err)
+		}
+		err = write(path.Join(exportTemplatePath, "Ingress.yaml"), ingBytes, "\n---\n", true)
+		if err != nil {
+			return fmt.Errorf("write networking v1 ingress yaml failure %v", err)
+		}
+	}
+
+	for _, ing := range v1beta1ingresses {
+		ing.Kind = "Ingress"
+		ing.Namespace = ""
+		ing.APIVersion = APIVersionV1beta1Ingress
+		ing.Status = networkingv1beta1.IngressStatus{}
+
+		if len(ing.Spec.Rules) > 0 {
+			var port = "http"
+			if ing.Spec.Backend != nil {
+				port = ing.Spec.Backend.ServicePort.String()
+			}
+			ing.Name = fmt.Sprintf("%s-%s-%s", app.K8sComponentName, port, k8sstrings.ShortenString(ing.Name, 5))
+			domains[ing.Name] = ing.Spec.Rules[0].Host
+			ing.Spec.Rules[0].Host = fmt.Sprintf("{{ $host := index .Values \"externalDomains\" \"%s\" \"%s\" }}{{ default \"%v\" $host }}", app.K8sComponentName, ing.Name, ing.Spec.Rules[0].Host)
+		} else {
+			continue
+		}
+
+		ingBytes, err := yaml.Marshal(ing)
+		if err != nil {
+			return fmt.Errorf("networking v1beta1 ingress to yaml failure %v", err)
+		}
+		err = write(path.Join(exportTemplatePath, "Ingress.yaml"), ingBytes, "\n---\n", true)
+		if err != nil {
+			return fmt.Errorf("write networking v1beta1 ingress yaml failure %v", err)
+		}
+	}
+	if len(domains) > 0 {
+		r.ExternalDomains[app.K8sComponentName] = domains
 	}
 	if secrets := app.GetSecrets(true); secrets != nil {
 		for _, secret := range secrets {
@@ -211,7 +274,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 				if err != nil {
 					return fmt.Errorf("secret to yaml failure %v", err)
 				}
-				err = s.write(path.Join(exportTemplatePath, "Secret.yaml"), secretBytes, "\n---\n")
+				err = write(path.Join(exportTemplatePath, "Secret.yaml"), secretBytes, "\n---\n", true)
 				if err != nil {
 					return fmt.Errorf("write secret yaml failure %v", err)
 				}
@@ -227,42 +290,39 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 		StringData        string     `json:"stringData,omitempty" protobuf:"bytes,4,rep,name=stringData"`
 		Type              SecretType `json:"type,omitempty" protobuf:"bytes,3,opt,name=type,casttype=SecretType"`
 	}
-	if s.End {
-		if secrets := app.GetEnvVarSecrets(true); secrets != nil {
-			for _, secret := range secrets {
-				if len(secret.ResourceVersion) == 0 {
-					secret.APIVersion = APIVersionSecret
-					secret.Namespace = ""
-					secret.Type = ""
-					secret.Kind = "Secret"
-					data := secret.Data
-					secret.Data = nil
-					var ySecret YamlSecret
-					jsonSecret, err := json.Marshal(secret)
-					if err != nil {
-						return fmt.Errorf("json.Marshal configGroup secret failure %v", err)
-					}
-					err = json.Unmarshal(jsonSecret, &ySecret)
-					if err != nil {
-						return fmt.Errorf("json.Unmarshal configGroup secret failure %v", err)
-					}
-					templateConfigGroupName := strings.Split(ySecret.Name, "-")[0]
-					templateConfigGroup := make(map[string]string)
-					for key, value := range data {
-						templateConfigGroup[key] = string(value)
-					}
-					r.ConfigGroups[templateConfigGroupName] = templateConfigGroup
-					dataTemplate := fmt.Sprintf("  {{- range $key, $val := .Values.%v }}\n  {{ $key }}: {{ $val | quote}}\n  {{- end }}", templateConfigGroupName)
-					ySecret.StringData = dataTemplate
-					secretBytes, err := yaml.Marshal(ySecret)
-					if err != nil {
-						return fmt.Errorf("configGroup secret to yaml failure %v", err)
-					}
-					secretStr := strings.Replace(string(secretBytes), "|2-", "", 1)
-					err = s.write(path.Join(exportTemplatePath, "Secret.yaml"), []byte(secretStr), "\n---\n")
-					if err != nil {
-						return fmt.Errorf("configGroup write secret yaml failure %v", err)
-					}
+	if secrets := app.GetEnvVarSecrets(true); secrets != nil {
+		for _, secret := range secrets {
+			if len(secret.ResourceVersion) == 0 {
+				secret.APIVersion = APIVersionSecret
+				secret.Namespace = ""
+				secret.Type = ""
+				secret.Kind = "Secret"
+				data := secret.Data
+				secret.Data = nil
+				var ySecret YamlSecret
+				jsonSecret, err := json.Marshal(secret)
+				if err != nil {
+					return fmt.Errorf("json.Marshal configGroup secret failure %v", err)
+				}
+				err = json.Unmarshal(jsonSecret, &ySecret)
+				if err != nil {
+					return fmt.Errorf("json.Unmarshal configGroup secret failure %v", err)
+				}
+				templateConfigGroup := make(map[string]string)
+				for key, value := range data {
+					templateConfigGroup[key] = string(value)
+				}
+				r.ConfigGroups[secret.Name] = templateConfigGroup
+				dataTemplate := fmt.Sprintf("  {{ $secret := index .Values \"secretEnvs\" \"%s\"}}\n  {{- range $key, $val := $secret }}\n  {{ $key }}: {{ $val | quote}}\n  {{- end }}", secret.Name)
+				ySecret.StringData = dataTemplate
+				secretBytes, err := yaml.Marshal(ySecret)
+				if err != nil {
+					return fmt.Errorf("configGroup secret to yaml failure %v", err)
+				}
+				secretStr := strings.Replace(string(secretBytes), "|2-", "", 1)
+				err = write(path.Join(exportTemplatePath, "Secret-"+secret.Name+".yaml"), []byte(secretStr), "\n---\n", false)
+				if err != nil {
+					return fmt.Errorf("configGroup write secret yaml failure %v", err)
 				}
 			}
 		}
@@ -279,7 +339,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 				if err != nil {
 					return fmt.Errorf("hpa to yaml failure %v", err)
 				}
-				err = s.write(path.Join(exportTemplatePath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n")
+				err = write(path.Join(exportTemplatePath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n", true)
 				if err != nil {
 					return fmt.Errorf("write hpa yaml failure %v", err)
 				}
@@ -290,27 +350,21 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 	return nil
 }
 
-func (s *exportHelmChartController) write(helmChartFilePath string, meta []byte, endString string) error {
-	var fl *os.File
-	var err error
+func (s *exportHelmChartController) readHelmValuesFromFileOrInit(helmChartFilePath string) *WutongExport {
 	if CheckFileExist(helmChartFilePath) {
-		fl, err = os.OpenFile(helmChartFilePath, os.O_APPEND|os.O_WRONLY, 0755)
+		bytes, err := os.ReadFile(helmChartFilePath)
 		if err != nil {
-			return err
+			logrus.Errorf("read helm values file error: %v", err)
+			return newWutongExport()
 		}
-	} else {
-		fl, err = os.Create(helmChartFilePath)
+		var wutongExport WutongExport
+		err = yaml.Unmarshal(bytes, &wutongExport)
 		if err != nil {
-			return err
+			logrus.Errorf("unmarshal helm values error: %v", err)
+			return newWutongExport()
 		}
+		return &wutongExport
 	}
-	defer fl.Close()
-	n, err := fl.Write(append(meta, []byte(endString)...))
-	if err != nil {
-		return err
-	}
-	if n < len(append(meta, []byte(endString)...)) {
-		return fmt.Errorf("write insufficient length")
-	}
-	return nil
+
+	return newWutongExport()
 }

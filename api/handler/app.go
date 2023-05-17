@@ -69,8 +69,8 @@ func (a *AppAction) Complete(tr *model.ExportAppStruct) error {
 	if tr.Body.Format != "wutong-app" &&
 		tr.Body.Format != "docker-compose" &&
 		tr.Body.Format != "slug" &&
-		tr.Body.Format != "helm-chart" &&
-		tr.Body.Format != "k8s-yaml" {
+		tr.Body.Format != "helm_chart" &&
+		tr.Body.Format != "yaml" {
 		err := errors.New("Unsupported the format: " + tr.Body.Format)
 		logrus.Error(err)
 		return err
@@ -83,7 +83,7 @@ func (a *AppAction) Complete(tr *model.ExportAppStruct) error {
 	appName = unicode2zh(appName)
 	tr.SourceDir = fmt.Sprintf("%s/%s/%s-%s", a.staticDir, tr.Body.Format, appName, version)
 
-	if tr.Body.Format == "helm-chart" || tr.Body.Format == "k8s-yaml" {
+	if tr.Body.Format == "helm_chart" || tr.Body.Format == "yaml" {
 		for i, v := range components {
 			a.SetExportAppInfoParameter(appName, version, i == len(components)-1)
 			serviceID := v.Get("service_id").String()
@@ -125,16 +125,15 @@ func (a *AppAction) exportHelmChartOrK8sYaml(format string, service *dbmodel.Ten
 	body := dmodel.ExportHelmChartOrK8sYamlTaskBody{
 		TenantEnvID: service.TenantEnvID,
 		ServiceID:   service.ServiceID,
-		// EventID:     r.EventID,
 		AppVersion: a.appVersion,
 		AppName:    a.appName,
 		End:        a.end,
 	}
 	var taskType string
 	switch format {
-	case "helm-chart":
+	case "helm_chart":
 		taskType = model.ExportHelmChart
-	case "k8s-yaml":
+	case "yaml":
 		taskType = model.ExportK8sYaml
 	default:
 		return fmt.Errorf("unsupported the export mode: %s", format)
@@ -169,14 +168,14 @@ func (a *AppAction) saveMetadata(tr *model.ExportAppStruct) error {
 	// 创建应用组目录
 	os.MkdirAll(tr.SourceDir, 0755)
 
-	if tr.Body.Format == "helm-chart" {
+	if tr.Body.Format == "helm_chart" {
 		exportApp := fmt.Sprintf("%v-%v", a.appName, a.appVersion)
-		exportPath := fmt.Sprintf("/wtdata/app/helm-chart/%v/%v-helm/%v", exportApp, exportApp, a.appName)
+		exportPath := fmt.Sprintf("/wtdata/app/%s/%v/%v-helm/%v", tr.Body.Format, exportApp, exportApp, a.appName)
 		os.MkdirAll(exportPath, 0755)
 	}
-	if tr.Body.Format == "k8s-yaml" {
+	if tr.Body.Format == "yaml" {
 		exportApp := fmt.Sprintf("%v-%v", a.appName, a.appVersion)
-		exportPath := fmt.Sprintf("/wtdata/app/k8s-yaml/%v/%v-yaml/%v", exportApp, exportApp, a.appName)
+		exportPath := fmt.Sprintf("/wtdata/app/%s/%v/%v-yaml/%v", tr.Body.Format, exportApp, exportApp, a.appName)
 		os.MkdirAll(exportPath, 0755)
 	}
 

@@ -508,7 +508,7 @@ func (a *AppServiceBuild) createStatefulService(ports []*model.TenantEnvServices
 	service.Namespace = a.appService.GetNamespace()
 	service.Labels = a.appService.GetCommonLabels(map[string]string{
 		"service_type": "stateful",
-		"name":         a.service.ServiceAlias + "ServiceStateful",
+		"name":         a.service.ServiceAlias,
 	})
 	var serviceports []corev1.ServicePort
 	for _, p := range ports {
@@ -525,7 +525,7 @@ func (a *AppServiceBuild) createStatefulService(ports []*model.TenantEnvServices
 	}
 	spec := corev1.ServiceSpec{
 		Ports:                    serviceports,
-		Selector:                 map[string]string{"name": a.appService.GetK8sWorkloadName()},
+		Selector:                 map[string]string{"name": a.appService.ServiceAlias},
 		ClusterIP:                "None",
 		PublishNotReadyAddresses: true,
 	}

@@ -3,15 +3,17 @@ package controller
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/db"
+	"github.com/spf13/cast"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	networkingv1beta1 "k8s.io/api/networking/v1beta1"
+	k8sstrings "k8s.io/utils/strings"
 	"sigs.k8s.io/yaml"
 )
 
@@ -23,7 +25,6 @@ type exportK8sYamlController struct {
 	ctx          context.Context
 	AppName      string
 	AppVersion   string
-	EventIDs     []string
 	End          bool
 }
 
@@ -31,7 +32,7 @@ func (s *exportK8sYamlController) Begin() {
 	var r WutongExport
 	r.ConfigGroups = make(map[string]map[string]string)
 	exportApp := fmt.Sprintf("%v-%v", s.AppName, s.AppVersion)
-	exportPath := fmt.Sprintf("/wtdata/app/k8s-yaml/%v/%v-yaml/%v", exportApp, exportApp, s.AppName)
+	exportPath := fmt.Sprintf("/wtdata/app/yaml/%v/%v-yaml/%v", exportApp, exportApp, s.AppName)
 	for _, service := range s.appService {
 		err := s.exportOne(service, &r)
 		if err != nil {
@@ -39,13 +40,9 @@ func (s *exportK8sYamlController) Begin() {
 		}
 	}
 	if s.End {
-		err := s.write(path.Join(exportPath, "dependent_image.txt"), []byte(v1.GetOnlineProbeMeshImageName()), "\n")
+		err := write(path.Join(exportPath, "dependent_image.txt"), []byte(v1.GetOnlineProbeMeshImageName()), "\n", false)
 		if err != nil {
 			logrus.Errorf("write dependent_image.txt failure %v", err)
-		}
-		err = db.GetManager().ServiceEventDao().DeleteEvents(s.EventIDs)
-		if err != nil {
-			logrus.Errorf("delete event failure %v", err)
 		}
 	}
 	s.manager.callback(s.controllerID, nil)
@@ -58,7 +55,7 @@ func (s *exportK8sYamlController) Stop() error {
 
 func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) error {
 	exportApp := fmt.Sprintf("%v-%v", s.AppName, s.AppVersion)
-	exportPath := fmt.Sprintf("/wtdata/app/k8s-yaml/%v/%v-yaml/%v", exportApp, exportApp, s.AppName)
+	exportPath := fmt.Sprintf("/wtdata/app/yaml/%v/%v-yaml/%v", exportApp, exportApp, s.AppName)
 	logrus.Infof("start export app %s to k8s yaml spec", s.AppName)
 
 	if len(app.GetManifests()) > 0 {
@@ -68,7 +65,7 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 			if err != nil {
 				return fmt.Errorf("manifest to yaml failure %v", err)
 			}
-			err = s.write(path.Join(exportPath, fmt.Sprintf("%v.yaml", manifest.GetKind())), resourceBytes, "\n---\n")
+			err = write(path.Join(exportPath, fmt.Sprintf("%v.yaml", manifest.GetKind())), resourceBytes, "\n---\n", true)
 			if err != nil {
 				return fmt.Errorf("write manifest yaml failure %v", err)
 			}
@@ -84,7 +81,7 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 			if err != nil {
 				return fmt.Errorf("configmap to yaml failure %v", err)
 			}
-			err = s.write(path.Join(exportPath, "ConfigMap.yaml"), cmBytes, "\n---\n")
+			err = write(path.Join(exportPath, "ConfigMap.yaml"), cmBytes, "\n---\n", true)
 			if err != nil {
 				return fmt.Errorf("write configmap yaml failure %v", err)
 			}
@@ -101,7 +98,7 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 		if err != nil {
 			return fmt.Errorf("pvc to yaml failure %v", err)
 		}
-		err = s.write(path.Join(exportPath, "PersistentVolumeClaim.yaml"), pvcBytes, "\n---\n")
+		err = write(path.Join(exportPath, "PersistentVolumeClaim.yaml"), pvcBytes, "\n---\n", true)
 		if err != nil {
 			return fmt.Errorf("write pvc yaml failure %v", err)
 		}
@@ -121,7 +118,7 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 		if err != nil {
 			return fmt.Errorf("statefulset to yaml failure %v", err)
 		}
-		err = s.write(path.Join(exportPath, "StatefulSet.yaml"), statefulsetBytes, "\n---\n")
+		err = write(path.Join(exportPath, "StatefulSet.yaml"), statefulsetBytes, "\n---\n", true)
 		if err != nil {
 			return fmt.Errorf("write statefulset yaml failure %v", err)
 		}
@@ -137,7 +134,7 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 		if err != nil {
 			return fmt.Errorf("deployment to yaml failure %v", err)
 		}
-		err = s.write(path.Join(exportPath, "Deployment.yaml"), deploymentBytes, "\n---\n")
+		err = write(path.Join(exportPath, "Deployment.yaml"), deploymentBytes, "\n---\n", true)
 		if err != nil {
 			return fmt.Errorf("write deployment yaml failure %v", err)
 		}
@@ -156,10 +153,62 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 			if err != nil {
 				return fmt.Errorf("svc to yaml failure %v", err)
 			}
-			err = s.write(path.Join(exportPath, "Service.yaml"), svcBytes, "\n---\n")
+			err = write(path.Join(exportPath, "Service.yaml"), svcBytes, "\n---\n", true)
 			if err != nil {
 				return fmt.Errorf("write svc yaml failure %v", err)
 			}
+		}
+	}
+	v1ingresses, v1beta1ingresses := app.GetIngress(true)
+	for _, ing := range v1ingresses {
+		ing.Kind = "Ingress"
+		ing.Namespace = ""
+		ing.APIVersion = APIVersionV1Ingress
+		ing.Status = networkingv1.IngressStatus{}
+
+		if len(ing.Spec.Rules) > 0 {
+			var port = "http"
+			if ing.Spec.DefaultBackend != nil && ing.Spec.DefaultBackend.Service != nil && ing.Spec.DefaultBackend.Service.Port.Number > 0 {
+				port = cast.ToString(ing.Spec.DefaultBackend.Service.Port.Number)
+			}
+			ing.Name = fmt.Sprintf("%s-%s-%s", app.K8sComponentName, port, k8sstrings.ShortenString(ing.Name, 5))
+		} else {
+			continue
+		}
+
+		ingBytes, err := yaml.Marshal(ing)
+		if err != nil {
+			return fmt.Errorf("networking v1 ingress to yaml failure %v", err)
+		}
+		err = write(path.Join(exportPath, "Ingress.yaml"), ingBytes, "\n---\n", true)
+		if err != nil {
+			return fmt.Errorf("write networking v1 ingress yaml failure %v", err)
+		}
+	}
+	for _, ing := range v1beta1ingresses {
+		ing.Kind = "Ingress"
+		ing.Namespace = ""
+		ing.Name = app.K8sComponentName + "-" + k8sstrings.ShortenString(ing.Name, 5)
+		ing.APIVersion = APIVersionV1beta1Ingress
+		ing.Status = networkingv1beta1.IngressStatus{}
+
+		if len(ing.Spec.Rules) > 0 {
+			var port = "http"
+			if ing.Spec.Backend != nil {
+				port = ing.Spec.Backend.ServicePort.String()
+			}
+			ing.Name = fmt.Sprintf("%s-%s-%s", app.K8sComponentName, port, k8sstrings.ShortenString(ing.Name, 5))
+		} else {
+			continue
+		}
+
+		ingBytes, err := yaml.Marshal(ing)
+		if err != nil {
+			return fmt.Errorf("networking v1beta1 ingress to yaml failure %v", err)
+		}
+		err = write(path.Join(exportPath, "Ingress.yaml"), ingBytes, "\n---\n", true)
+		if err != nil {
+			return fmt.Errorf("write networking v1beta1 ingress yaml failure %v", err)
 		}
 	}
 	if secrets := app.GetSecrets(true); secrets != nil {
@@ -173,30 +222,28 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 				if err != nil {
 					return fmt.Errorf("secret to yaml failure %v", err)
 				}
-				err = s.write(path.Join(exportPath, "Secret.yaml"), secretBytes, "\n---\n")
+				err = write(path.Join(exportPath, "Secret.yaml"), secretBytes, "\n---\n", true)
 				if err != nil {
 					return fmt.Errorf("write secret yaml failure %v", err)
 				}
 			}
 		}
 	}
-	if s.End {
-		if secrets := app.GetEnvVarSecrets(true); secrets != nil {
-			for _, secret := range secrets {
-				if len(secret.ResourceVersion) == 0 {
-					secret.APIVersion = APIVersionSecret
-					secret.Namespace = ""
-					secret.Type = ""
-					secret.Kind = "Secret"
+	if secrets := app.GetEnvVarSecrets(true); secrets != nil {
+		for _, secret := range secrets {
+			if len(secret.ResourceVersion) == 0 {
+				secret.APIVersion = APIVersionSecret
+				secret.Namespace = ""
+				secret.Type = ""
+				secret.Kind = "Secret"
 
-					secretBytes, err := yaml.Marshal(secret)
-					if err != nil {
-						return fmt.Errorf("configGroup secret to yaml failure %v", err)
-					}
-					err = s.write(path.Join(exportPath, "Secret.yaml"), secretBytes, "\n---\n")
-					if err != nil {
-						return fmt.Errorf("configGroup write secret yaml failure %v", err)
-					}
+				secretBytes, err := yaml.Marshal(secret)
+				if err != nil {
+					return fmt.Errorf("configGroup secret to yaml failure %v", err)
+				}
+				err = write(path.Join(exportPath, "Secret-"+secret.Name+".yaml"), secretBytes, "\n---\n", false)
+				if err != nil {
+					return fmt.Errorf("configGroup write secret yaml failure %v", err)
 				}
 			}
 		}
@@ -213,7 +260,7 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 				if err != nil {
 					return fmt.Errorf("hpa to yaml failure %v", err)
 				}
-				err = s.write(path.Join(exportPath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n")
+				err = write(path.Join(exportPath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n", true)
 				if err != nil {
 					return fmt.Errorf("write hpa yaml failure %v", err)
 				}
@@ -221,30 +268,5 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) 
 		}
 	}
 	logrus.Infof("Create all app yaml file success, will waiting app export")
-	return nil
-}
-
-func (s *exportK8sYamlController) write(k8sYamlFilePath string, meta []byte, endString string) error {
-	var fl *os.File
-	var err error
-	if CheckFileExist(k8sYamlFilePath) {
-		fl, err = os.OpenFile(k8sYamlFilePath, os.O_APPEND|os.O_WRONLY, 0755)
-		if err != nil {
-			return err
-		}
-	} else {
-		fl, err = os.Create(k8sYamlFilePath)
-		if err != nil {
-			return err
-		}
-	}
-	defer fl.Close()
-	n, err := fl.Write(append(meta, []byte(endString)...))
-	if err != nil {
-		return err
-	}
-	if n < len(append(meta, []byte(endString)...)) {
-		return fmt.Errorf("write insufficient length")
-	}
 	return nil
 }

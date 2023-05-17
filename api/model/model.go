@@ -1548,7 +1548,7 @@ type ExportAppStruct struct {
 		EventID       string `json:"event_id"`
 		GroupKey      string `json:"group_key"` // TODO 考虑去掉
 		Version       string `json:"version"`   // TODO 考虑去掉
-		Format        string `json:"format"`    // only wutong-app/docker-compose/slug/helm-chart/k8s-yaml
+		Format        string `json:"format"`    // only wutong-app/docker-compose/slug/helm_chart/yaml
 		GroupMetadata string `json:"group_metadata"`
 		WithImageData bool   `json:"with_image_data"`
 	}
