@@ -8,13 +8,13 @@
 CREATE TABLE `tenant_envs` (
   `ID` int unsigned NOT NULL AUTO_INCREMENT,
   `create_time` datetime DEFAULT NULL,
-  `name` varchar(40) DEFAULT NULL,
+  `name` varchar(31) DEFAULT NULL,
   `uuid` varchar(33) DEFAULT NULL,
   `tenant_id` varchar(255) DEFAULT NULL,
-  `tenant_name` varchar(255) DEFAULT NULL,
+  `tenant_name` varchar(31) DEFAULT NULL,
   `limit_memory` int DEFAULT NULL,
   `status` varchar(255) DEFAULT 'normal',
-  `namespace` varchar(32) DEFAULT NULL,
+  `namespace` varchar(63) DEFAULT NULL,
   PRIMARY KEY (`ID`),
   UNIQUE KEY `uix_tenant_envs_namespace` (`namespace`),
   UNIQUE KEY `uix_tenant_envs_uuid` (`uuid`)
