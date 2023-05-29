@@ -74,32 +74,43 @@ func (e *exectorManager) pluginImageBuild(task *pb.TaskMessage) {
 }
 
 func (e *exectorManager) run(t *model.BuildPluginTaskBody, logger event.Logger) error {
-	hubUser, hubPass := builder.GetImageUserInfoV2(t.ImageURL, t.ImageInfo.HubUser, t.ImageInfo.HubPassword)
-	if _, err := e.imageClient.ImagePull(t.ImageURL, hubUser, hubPass, logger, 10); err != nil {
-		logrus.Errorf("pull image %v error, %v", t.ImageURL, err)
-		logger.Error("拉取镜像失败", map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+	var syncImage = true
+	image := t.ImageURL
+	if strings.HasPrefix(t.ImageURL, builder.REGISTRYDOMAIN) {
+		syncImage = false
 	}
-	logger.Info("拉取镜像完成", map[string]string{"step": "build-exector", "status": "complete"})
-	newTag := createPluginImageTag(t.ImageURL, t.PluginID, t.DeployVersion)
-	err := e.imageClient.ImageTag(t.ImageURL, newTag, logger, 1)
-	if err != nil {
-		logrus.Errorf("set plugin image tag error, %v", err)
-		logger.Error("修改镜像tag失败", map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+	if t.ImageInfo.HubUser == "" {
+		syncImage = false
 	}
-	logger.Info("修改镜像Tag完成", map[string]string{"step": "build-exector", "status": "complete"})
-	if err := e.imageClient.ImagePush(newTag, builder.REGISTRYUSER, builder.REGISTRYPASS, logger, 10); err != nil {
-		logrus.Errorf("push image %s error, %v", newTag, err)
-		logger.Error("推送镜像失败", map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+	if syncImage {
+		hubUser, hubPass := builder.GetImageUserInfoV2(t.ImageURL, t.ImageInfo.HubUser, t.ImageInfo.HubPassword)
+		if _, err := e.imageClient.ImagePull(t.ImageURL, hubUser, hubPass, logger, 10); err != nil {
+			logrus.Errorf("pull image %v error, %v", t.ImageURL, err)
+			logger.Error("拉取镜像失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
+		logger.Info("拉取镜像完成", map[string]string{"step": "build-exector", "status": "complete"})
+		image := createPluginImageTag(t.ImageURL, t.PluginID, t.DeployVersion)
+		err := e.imageClient.ImageTag(t.ImageURL, image, logger, 1)
+		if err != nil {
+			logrus.Errorf("set plugin image tag error, %v", err)
+			logger.Error("修改镜像tag失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
+		logger.Info("修改镜像Tag完成", map[string]string{"step": "build-exector", "status": "complete"})
+		if err := e.imageClient.ImagePush(image, builder.REGISTRYUSER, builder.REGISTRYPASS, logger, 10); err != nil {
+			logrus.Errorf("push image %s error, %v", image, err)
+			logger.Error("推送镜像失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
 	}
+
 	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
 	if err != nil {
 		logger.Error("更新插件版本信息错误", map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
-	version.BuildLocalImage = newTag
+	version.BuildLocalImage = image
 	version.Status = "complete"
 	if err := db.GetManager().TenantEnvPluginBuildVersionDao().UpdateModel(version); err != nil {
 		logger.Error("更新插件版本信息错误", map[string]string{"step": "builder-exector", "status": "failure"})

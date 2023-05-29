@@ -50,5 +50,5 @@ type TenantEnvHandler interface {
 	GetClusterResource(ctx context.Context) *ClusterResourceStats
 	CheckResourceName(ctx context.Context, namespace string, req *api_model.CheckResourceNameReq) (*api_model.CheckResourceNameResp, error)
 	GetKubeConfig(namespace string) (string, error)
-	GetKubeResources(namespace, tenantEnvID string, customSetting api_model.KubeResourceCustomSetting) string
+	GetKubeResources(namespace, tenantEnvID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
 }

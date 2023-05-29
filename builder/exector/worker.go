@@ -36,34 +36,17 @@ limitations under the License.
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
-	"time"
-
-	"github.com/wutong-paas/wutong/util"
 )
 
-//Worker 工作器
+// Worker 工作器
 type Worker struct {
 	cmd  *exec.Cmd
 	user string
 }
 
-func (w *Worker) run(timeout time.Duration) ([]byte, error) {
-	stdout := &bytes.Buffer{}
-	isTimeout, err := util.CmdRunWithTimeout(w.cmd, timeout)
-	if err != nil {
-		return nil, workerErr(err, stdout.Bytes())
-	}
-	if isTimeout {
-		return nil, fmt.Errorf("exec worker timeout")
-	}
-	return stdout.Bytes(), nil
-}
-
-//NewWorker 创建一个worker
+// NewWorker 创建一个worker
 func NewWorker(cmdpath, user string, envs []string, in []byte) *Worker {
 
 	stdout := &bytes.Buffer{}
@@ -78,24 +61,9 @@ func NewWorker(cmdpath, user string, envs []string, in []byte) *Worker {
 	return &Worker{cmd: c, user: user}
 }
 
-//Error Error
+// Error Error
 type Error struct {
 	Code    uint   `json:"code"`
 	Msg     string `json:"msg"`
 	Details string `json:"details,omitempty"`
-}
-
-func workerErr(err error, output []byte) error {
-	if _, ok := err.(*exec.ExitError); ok {
-		emsg := Error{}
-		if perr := json.Unmarshal(output, &emsg); perr != nil {
-			return fmt.Errorf("netplugin failed but error parsing its diagnostic message %q: %v", string(output), perr)
-		}
-		details := ""
-		if emsg.Details != "" {
-			details = fmt.Sprintf("; %v", emsg.Details)
-		}
-		return fmt.Errorf("%v%v", emsg.Msg, details)
-	}
-	return err
 }

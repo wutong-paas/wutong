@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
@@ -317,9 +318,16 @@ func (a *ApplicationController) ChangeVolumes(w http.ResponseWriter, r *http.Req
 // GetApplicationKubeResources get kube resources for application
 func (t *TenantEnvStruct) GetApplicationKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting model.KubeResourceCustomSetting
-	customSetting.Namespace = r.URL.Query().Get("namespace")
+	customSetting.Namespace = strings.Trim(r.URL.Query().Get("namespace"), " ")
+	if customSetting.Namespace == "" {
+		customSetting.Namespace = "default"
+	}
 	serviceAliases := r.URL.Query()["service_aliases"]
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
-	resources := handler.GetApplicationHandler().GetKubeResources(tenantEnv.Namespace, serviceAliases, customSetting)
+	resources, err := handler.GetApplicationHandler().GetKubeResources(tenantEnv.Namespace, serviceAliases, customSetting)
+	if err != nil {
+		httputil.ReturnError(r, w, 400, err.Error())
+		return
+	}
 	httputil.ReturnSuccess(r, w, resources)
 }

@@ -3,14 +3,14 @@ package constants
 const (
 	// Wutong -
 	Wutong = "wutong"
-	// DefImageRepository default private image repository
-	DefImageRepository = "wutong.me"
+	// WutongHubImageRepository default private image repository
+	WutongHubImageRepository = "wutong.me"
 	// WTDataLogPath -
 	WTDataLogPath = "/wtdata/logs"
 	// ImagePullSecretKey the key of environment IMAGE_PULL_SECRET
 	ImagePullSecretKey = "IMAGE_PULL_SECRET"
-	// DefOnlineImageRepository default private image repository
-	DefOnlineImageRepository = "swr.cn-southwest-2.myhuaweicloud.com/wutong"
+	// WutongOnlineImageRepository default private image repository
+	WutongOnlineImageRepository = "swr.cn-southwest-2.myhuaweicloud.com/wutong"
 )
 
 // Kubernetes recommended Labels

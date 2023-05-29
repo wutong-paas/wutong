@@ -107,5 +107,5 @@ type ServiceHandler interface {
 
 	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantEnvServices, podName, containerName string, follow bool) error
 
-	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) string
+	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
 }

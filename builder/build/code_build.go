@@ -136,11 +136,6 @@ func (s *slugBuild) buildRunnerImage(slugPackage string) (string, error) {
 	if err := s.writeRunDockerfile(cacheDir, packageName, s.re.BuildEnvs); err != nil {
 		return "", fmt.Errorf("write default runtime dockerfile error:%s", err.Error())
 	}
-	//build runtime image
-	if err := s.re.ImageClient.ImagesPullAndPush(builder.RUNNERIMAGENAME, builder.ONLINERUNNERIMAGENAME, "", "", s.re.Logger); err != nil {
-		return "", fmt.Errorf("pull image %s: %v", builder.RUNNERIMAGENAME, err)
-	}
-	logrus.Infof("pull image %s successfully.", builder.RUNNERIMAGENAME)
 	err := sources.ImageBuild(cacheDir, s.re.WtNamespace, s.re.ServiceID, s.re.DeployVersion, s.re.Logger, "run-build", "", s.re.KanikoImage)
 	if err != nil {
 		s.re.Logger.Error(fmt.Sprintf("build image %s of new version failure", imageName), map[string]string{"step": "builder-exector", "status": "failure"})
@@ -439,12 +434,6 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Get builder image at build time
-	if err := s.re.ImageClient.ImagesPullAndPush(builder.BUILDERIMAGENAME, builder.ONLINEBUILDERIMAGENAME, "", "", re.Logger); err != nil {
-		return err
-	}
-
-	logrus.Debugf("create job[name: %s; namespace: %s]", job.Name, job.Namespace)
 	err := jobc.GetJobController().ExecJob(ctx, &job, writer, reChan)
 	if err != nil {
 		logrus.Errorf("create new job:%s failed: %s", name, err.Error())

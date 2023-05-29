@@ -51,6 +51,10 @@ func (s *Statefulsets) Decorate(setting *api_model.KubeResourceCustomSetting) {
 			s.StatefulSets[i].Spec.Template.Spec.DNSPolicy = ""
 			s.StatefulSets[i].Status = appsv1.StatefulSetStatus{}
 		}
+		for vctIndex := range s.StatefulSets[i].Spec.VolumeClaimTemplates {
+			s.StatefulSets[i].Spec.VolumeClaimTemplates[vctIndex].Namespace = ""
+			s.StatefulSets[i].Spec.VolumeClaimTemplates[vctIndex].Spec.StorageClassName = nil
+		}
 		if setting != nil {
 			if setting.Namespace != "" {
 				s.StatefulSets[i].Namespace = setting.Namespace

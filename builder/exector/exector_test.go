@@ -61,7 +61,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	etcdCli, err := clientv3.New(clientv3.Config{
+	etcdCli, _ := clientv3.New(clientv3.Config{
 		Endpoints:   conf.EtcdEndPoints,
 		DialTimeout: 10 * time.Second,
 	})

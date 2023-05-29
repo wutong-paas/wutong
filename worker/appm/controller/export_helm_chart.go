@@ -12,6 +12,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
+	"github.com/wutong-paas/wutong/builder"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta2"
@@ -64,7 +65,7 @@ func (s *exportHelmChartController) Begin() {
 	}
 
 	if s.End {
-		err = write(path.Join(exportPath, "dependent_image.txt"), []byte(v1.GetOnlineProbeMeshImageName()), "\n", false)
+		err = write(path.Join(exportPath, "dependent_image.txt"), []byte(builder.PROBEMESHIMAGENAME), "\n", false)
 		if err != nil {
 			logrus.Errorf("write dependent_image.txt failure %v", err)
 		}
@@ -152,6 +153,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 				sc := "{{ .Values.storageClass }}"
 				statefulset.Spec.VolumeClaimTemplates[i].Spec.StorageClassName = &sc
 			}
+			statefulset.Spec.VolumeClaimTemplates[i].Namespace = ""
 		}
 		statefulset.Status = appv1.StatefulSetStatus{}
 		statefulsetBytes, err := yaml.Marshal(statefulset)
@@ -170,6 +172,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 		deployment.Namespace = ""
 		deployment.APIVersion = APIVersionDeployment
 		image := deployment.Spec.Template.Spec.Containers[0].Image
+
 		imageCut := strings.Split(image, "/")
 		Image := fmt.Sprintf("{{ default \"%v\" .Values.imageDomain }}/%v", strings.Join(imageCut[:len(imageCut)-1], "/"), imageCut[len(imageCut)-1])
 		deployment.Spec.Template.Spec.Containers[0].Image = Image

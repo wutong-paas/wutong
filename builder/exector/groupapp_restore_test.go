@@ -37,29 +37,29 @@ func TestModify(t *testing.T) {
 		Logger:        event.GetTestLogger(),
 	}
 	var appSnapshots = []*RegionServiceSnapshot{
-		&RegionServiceSnapshot{
+		{
 			ServiceID: "1234",
 			Service: &dbmodel.TenantEnvServices{
 				ServiceID: "1234",
 			},
 			ServiceMntRelation: []*dbmodel.TenantEnvServiceMountRelation{
-				&dbmodel.TenantEnvServiceMountRelation{
+				{
 					ServiceID:       "1234",
 					DependServiceID: "123456",
 				},
 			},
 		},
-		&RegionServiceSnapshot{
+		{
 			ServiceID: "123456",
 			Service: &dbmodel.TenantEnvServices{
 				ServiceID: "1234",
 			},
 			ServiceEnv: []*dbmodel.TenantEnvServiceEnvVar{
-				&dbmodel.TenantEnvServiceEnvVar{
+				{
 					ServiceID: "123456",
 					Name:      "testenv",
 				},
-				&dbmodel.TenantEnvServiceEnvVar{
+				{
 					ServiceID: "123456",
 					Name:      "testenv2",
 				},

@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
@@ -822,18 +823,32 @@ func (t *TenantEnvStruct) GetKubeConfig(w http.ResponseWriter, r *http.Request) 
 // GetTenantEnvKubeResources get kube resources for tenantEnv
 func (t *TenantEnvStruct) GetTenantEnvKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting api_model.KubeResourceCustomSetting
-	customSetting.Namespace = r.URL.Query().Get("namespace")
+	customSetting.Namespace = strings.Trim(r.URL.Query().Get("namespace"), " ")
+	if customSetting.Namespace == "" {
+		customSetting.Namespace = "default"
+	}
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
-	resources := handler.GetTenantEnvManager().GetKubeResources(tenantEnv.Namespace, tenantEnv.UUID, customSetting)
+	resources, err := handler.GetTenantEnvManager().GetKubeResources(tenantEnv.Namespace, tenantEnv.UUID, customSetting)
+	if err != nil {
+		httputil.ReturnError(r, w, 400, err.Error())
+		return
+	}
 	httputil.ReturnSuccess(r, w, resources)
 }
 
 // GetServiceKubeResources get kube resources for component
 func (t *TenantEnvStruct) GetServiceKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting api_model.KubeResourceCustomSetting
-	customSetting.Namespace = r.URL.Query().Get("namespace")
+	customSetting.Namespace = strings.Trim(r.URL.Query().Get("namespace"), " ")
+	if customSetting.Namespace == "" {
+		customSetting.Namespace = "default"
+	}
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	resources := handler.GetServiceManager().GetKubeResources(tenantEnv.Namespace, serviceID, customSetting)
+	resources, err := handler.GetServiceManager().GetKubeResources(tenantEnv.Namespace, serviceID, customSetting)
+	if err != nil {
+		httputil.ReturnError(r, w, 400, err.Error())
+		return
+	}
 	httputil.ReturnSuccess(r, w, resources)
 }

@@ -60,6 +60,7 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/util/flushwriter"
 	"k8s.io/client-go/kubernetes"
 )
@@ -3045,12 +3046,15 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 }
 
 // GetKubeResources get kube resources for component
-func (s *ServiceAction) GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) string {
+func (s *ServiceAction) GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error) {
+	if msgs := validation.IsDNS1123Label(customSetting.Namespace); len(msgs) > 0 {
+		return "", fmt.Errorf("invalid namespace name: %s", customSetting.Namespace)
+	}
 	selectors := []labels.Selector{
 		labels.SelectorFromSet(labels.Set{"service_id": serviceID}),
 	}
 	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, selectors, &customSetting)
-	return resources
+	return resources, nil
 }
 
 // TransStatus trans service status

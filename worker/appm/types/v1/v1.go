@@ -20,13 +20,11 @@ package v1
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/builder"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/util/k8s"
@@ -986,38 +984,6 @@ type K8sResources struct {
 	Services  []*corev1.Service
 	Secrets   []*corev1.Secret
 	Ingresses []interface{}
-}
-
-// GetTCPMeshImageName get tcp mesh image name
-func GetTCPMeshImageName() string {
-	if d := os.Getenv("TCPMESH_DEFAULT_IMAGE_NAME"); d != "" {
-		return d
-	}
-	return builder.REGISTRYDOMAIN + "/wt-mesh-data-panel"
-}
-
-// GetOnlineTCPMeshImageName get online tcp mesh image name
-func GetOnlineTCPMeshImageName() string {
-	if d := os.Getenv("TCPMESH_DEFAULT_IMAGE_NAME"); d != "" {
-		return d
-	}
-	return builder.ONLINEREGISTRYDOMAIN + "/wt-mesh-data-panel:" + builder.CIVERSION
-}
-
-// GetProbeMeshImageName get probe init mesh image name
-func GetProbeMeshImageName() string {
-	if d := os.Getenv("PROBE_MESH_IMAGE_NAME"); d != "" {
-		return d
-	}
-	return builder.REGISTRYDOMAIN + "/wt-init-probe"
-}
-
-// GetOnlineProbeMeshImageName get online probe init mesh image name
-func GetOnlineProbeMeshImageName() string {
-	if d := os.Getenv("PROBE_MESH_IMAGE_NAME"); d != "" {
-		return d
-	}
-	return builder.ONLINEREGISTRYDOMAIN + "/wt-init-probe:" + builder.CIVERSION
 }
 
 // CalculatePodResource calculate pod resource

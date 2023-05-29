@@ -26,8 +26,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wutong-paas/wutong/builder/sources"
-
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/builder"
@@ -145,9 +143,6 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 	if imagename == "" {
 		if version.DeliveredType == "slug" {
 			imagename = builder.RUNNERIMAGENAME
-			if err := sources.ImagesPullAndPush(builder.RUNNERIMAGENAME, builder.ONLINERUNNERIMAGENAME, "", "", nil); err != nil {
-				logrus.Errorf("[getMainContainer] get runner image failed: %v", err)
-			}
 		} else {
 			imagename = version.DeliveredPath
 		}

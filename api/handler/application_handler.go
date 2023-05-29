@@ -32,6 +32,7 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/validation"
 	clientset "k8s.io/client-go/kubernetes"
 )
 
@@ -70,7 +71,7 @@ type ApplicationHandler interface {
 	ListAppStatuses(ctx context.Context, appIDs []string) ([]*model.AppStatus, error)
 	CheckGovernanceMode(ctx context.Context, governanceMode string) error
 	ChangeVolumes(app *dbmodel.Application) error
-	GetKubeResources(namespace string, serviceAliases []string, customSetting model.KubeResourceCustomSetting) string
+	GetKubeResources(namespace string, serviceAliases []string, customSetting model.KubeResourceCustomSetting) (string, error)
 }
 
 // NewApplicationHandler creates a new TenantEnv Application Handler.
@@ -844,11 +845,14 @@ func changeVolumeDirectoryNames(parentDir, newPath string) error {
 }
 
 // GetKubeResources get kube resources for application
-func (s *ApplicationAction) GetKubeResources(namespace string, servieAliases []string, customSetting model.KubeResourceCustomSetting) string {
+func (s *ApplicationAction) GetKubeResources(namespace string, servieAliases []string, customSetting model.KubeResourceCustomSetting) (string, error) {
+	if msgs := validation.IsDNS1123Label(customSetting.Namespace); len(msgs) > 0 {
+		return "", fmt.Errorf("invalid namespace name: %s", customSetting.Namespace)
+	}
 	var selectors []labels.Selector
 	for _, seviceAlias := range servieAliases {
 		selectors = append(selectors, labels.SelectorFromSet(labels.Set{"service_alias": seviceAlias}))
 	}
 	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, selectors, &customSetting)
-	return resources
+	return resources, nil
 }

@@ -433,7 +433,7 @@ func (container *ContainerLog) provideContainerdLoggerInfo() (*Info, error) {
 	var containerEnvs []string
 	if extraContainerInfo.Config != nil {
 		for _, ce := range extraContainerInfo.Config.Envs {
-			logrus.Infof("container [%s] env: %s=%s", container.ContainerStatus.GetId(), ce.Key, ce.Value)
+			logrus.Debugf("container [%s] env: %s=%s", container.ContainerStatus.GetId(), ce.Key, ce.Value)
 			containerEnvs = append(containerEnvs, fmt.Sprintf("%s=%s", ce.Key, ce.Value))
 		}
 	}

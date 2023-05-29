@@ -103,7 +103,7 @@ func Run(cfg *option.Conf) error {
 		}
 		defer kubecli.Stop()
 
-		if cfg.ImageRepositoryHost == constants.DefImageRepository {
+		if cfg.ImageRepositoryHost == constants.WutongHubImageRepository {
 			hostManager, err := initiate.NewHostManager(cfg, k8sDiscover)
 			if err != nil {
 				return fmt.Errorf("create new host manager: %v", err)

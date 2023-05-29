@@ -302,7 +302,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 		if err != nil {
 			logrus.Errorf("build from image error: %s", err.Error())
 			if n < 1 {
-				i.Logger.Error("The application task to build from the mirror failed to execute，will try", map[string]string{"step": "build-exector", "status": "failure"})
+				i.Logger.Error("The application task to build from the mirror failed to execute, will try", map[string]string{"step": "build-exector", "status": "failure"})
 			} else {
 				MetricErrorTaskNum++
 				i.Logger.Error(util.Translation("Check for log location imgae source errors"), map[string]string{"step": "callback", "status": "failure"})
@@ -435,14 +435,6 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 		}
 	}()
 
-}
-
-// rollingUpgradeTaskBody upgrade message body type
-type rollingUpgradeTaskBody struct {
-	TenantEnvID string   `json:"tenant_env_id"`
-	ServiceID   string   `json:"service_id"`
-	EventID     string   `json:"event_id"`
-	Strategy    []string `json:"strategy"`
 }
 
 func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion, actionType string, configs map[string]string, logger event.Logger) error {

@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,14 +32,13 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/wutong-paas/wutong-oam/pkg/export"
 	"github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
-	ramv1alpha1 "github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
 	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/event"
 )
 
-var re = regexp.MustCompile(`\s`)
+// var re = regexp.MustCompile(`\s`)
 
 // ExportApp Export app to specified format(wutong-app or dockercompose)
 type ExportApp struct {
@@ -73,11 +71,7 @@ func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 // Run Run
 func (i *ExportApp) Run(timeout time.Duration) error {
 	defer os.RemoveAll(i.SourceDir)
-	// disable Md5 checksum
-	// if ok := i.isLatest(); ok {
-	// 	i.updateStatus("success")
-	// 	return nil
-	// }
+
 	// Delete the old application group directory and then regenerate the application package
 	if i.Format != "helm_chart" && i.Format != "yaml" {
 		if err := i.CleanSourceDir(); err != nil {
@@ -226,27 +220,6 @@ func (i *ExportApp) GetLogger() event.Logger {
 	return i.Logger
 }
 
-// isLatest Returns true if the application is packaged and up to date
-func (i *ExportApp) isLatest() bool {
-	md5File := fmt.Sprintf("%s/metadata.json.md5", i.SourceDir)
-	if _, err := os.Stat(md5File); os.IsNotExist(err) {
-		logrus.Debug("The export app md5 file is not found: ", md5File)
-		return false
-	}
-	err := exec.Command("md5sum", "-c", md5File).Run()
-	if err != nil {
-		tarFile := i.SourceDir + ".tar"
-		if _, err := os.Stat(tarFile); os.IsNotExist(err) {
-			logrus.Debug("The export app tar file is not found. ")
-			return false
-		}
-		logrus.Info("The export app tar file is not latest.")
-		return false
-	}
-	logrus.Info("The export app tar file is latest.")
-	return true
-}
-
 // CleanSourceDir clean export dir
 func (i *ExportApp) CleanSourceDir() error {
 	logrus.Debug("Ready clean the source directory.")
@@ -268,14 +241,14 @@ func (i *ExportApp) CleanSourceDir() error {
 
 	return nil
 }
-func (i *ExportApp) parseRAM() (*ramv1alpha1.WutongApplicationConfig, error) {
+func (i *ExportApp) parseRAM() (*v1alpha1.WutongApplicationConfig, error) {
 	data, err := ioutil.ReadFile(fmt.Sprintf("%s/metadata.json", i.SourceDir))
 	if err != nil {
 		i.Logger.Error("导出应用失败，没有找到应用信息", map[string]string{"step": "read-metadata", "status": "failure"})
 		logrus.Error("Failed to read metadata file: ", err)
 		return nil, err
 	}
-	var ram ramv1alpha1.WutongApplicationConfig
+	var ram v1alpha1.WutongApplicationConfig
 	if err := json.Unmarshal(data, &ram); err != nil {
 		return nil, err
 	}

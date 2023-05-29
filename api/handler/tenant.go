@@ -48,6 +48,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -665,12 +666,15 @@ func (t *TenantEnvAction) GetKubeConfig(namespace string) (string, error) {
 }
 
 // GetKubeResources get kube resources for tenantEnv
-func (s *TenantEnvAction) GetKubeResources(namespace, tenantEnvID string, customSetting model.KubeResourceCustomSetting) string {
+func (s *TenantEnvAction) GetKubeResources(namespace, tenantEnvID string, customSetting model.KubeResourceCustomSetting) (string, error) {
+	if msgs := validation.IsDNS1123Label(customSetting.Namespace); len(msgs) > 0 {
+		return "", fmt.Errorf("invalid namespace name: %s", customSetting.Namespace)
+	}
 	selectors := []labels.Selector{
 		labels.SelectorFromSet(labels.Set{"tenant_env_id": tenantEnvID}),
 	}
 	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, selectors, &customSetting)
-	return resources
+	return resources, nil
 }
 
 // createTPServiceAccount create telepresence dev serviceaccount for specified namespace

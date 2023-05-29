@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -275,7 +276,7 @@ func (a *AppService) IsWaitting() bool {
 	}
 	var haveProbeInitContainer bool
 	for _, init := range initcontainer {
-		if init.Image == GetProbeMeshImageName() || init.Image == GetOnlineProbeMeshImageName() {
+		if init.Image == builder.PROBEMESHIMAGENAME {
 			haveProbeInitContainer = true
 			break
 		}
@@ -286,7 +287,7 @@ func (a *AppService) IsWaitting() bool {
 		}
 		firstPod := a.pods[0]
 		for _, initconteir := range firstPod.Status.InitContainerStatuses {
-			if initconteir.Image == GetProbeMeshImageName() || initconteir.Image == GetOnlineProbeMeshImageName() {
+			if initconteir.Image == builder.PROBEMESHIMAGENAME {
 				if initconteir.State.Terminated == nil || initconteir.State.Terminated.ExitCode != 0 {
 					return true
 				}
