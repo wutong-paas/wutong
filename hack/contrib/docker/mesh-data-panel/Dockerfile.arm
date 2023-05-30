@@ -2,8 +2,8 @@ FROM ubuntu:16.04
 ARG RELEASE_DESC
 
 RUN apt-get update && apt-get install -y bash curl net-tools wget vim && \
-    wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/env2file -O /usr/bin/env2file && \
-    wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/envoy -O /usr/local/bin/envoy && \
+    wget https://gitee.com/wutong-paas/files/raw/master/arm64/env2file -O /usr/bin/env2file && \
+    wget https://gitee.com/wutong-paas/files/raw/master/arm64/envoy -O /usr/local/bin/envoy && \
     chmod +x /usr/local/bin/envoy
 
 ADD . /root/
