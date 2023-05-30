@@ -10,9 +10,9 @@ ARG TARGETOS TARGETARCH TARGETPLATFORM
 
 RUN apt-get update && apt-get install -y bash curl net-tools wget vim && \
     if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
-        wget https://github.com/wutong-paas/files/raw/master/amd64/env2file -O /usr/bin/env2file; \
+        wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/amd/env2file -O /usr/bin/env2file; \
     else \
-        wget https://github.com/wutong-paas/files/raw/master/arm64/env2file -O /usr/bin/env2file; \
+        wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/env2file -O /usr/bin/env2file; \
     fi
       
 ADD . /root/

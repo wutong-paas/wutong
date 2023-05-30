@@ -10,10 +10,10 @@ exec ./upgrade.sql in region database
 
 ```bash
 # linux amd64
-wget https://github.com/wutong-paas/files/raw/master/upgraders/upgrader-v1.1.0-linux-amd64 -O upgrader-v1.1.0
+wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/upgraders/upgrader-v1.1.0-linux-amd64 -O upgrader-v1.1.0
 
 # linux arm64
-wget https://github.com/wutong-paas/files/raw/master/upgraders/upgrader-v1.1.0-linux-arm64 -O upgrader-v1.1.0
+wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/upgraders/upgrader-v1.1.0-linux-arm64 -O upgrader-v1.1.0
 
 chmod +x upgrader-v1.1.0
 ./upgrader-v1.1.0 --kubeconfig <your kubeconfig>
