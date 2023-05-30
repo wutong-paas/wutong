@@ -10,7 +10,7 @@ ADD . /run
 
 RUN set -eux; \
     if [ "${GOARCH}" = "arm64" ]; then \
-        wget https://gitee.com/wutong-paas/files/raw/master/arm64/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
+        wget https://github.com/wutong-paas/files/raw/master/arm64/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
     fi
 
 ENV NGINX_CONFIG_TMPL=/run/nginxtmp

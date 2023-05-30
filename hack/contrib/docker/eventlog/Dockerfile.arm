@@ -5,7 +5,7 @@ ARG RELEASE_DESC
       
 # RUN apt-get update && apt-get install -y ca-certificates openssl libssl-dev libsodium-dev libpgm-dev libnorm-dev libgssapi-krb5-2 wget
     
-# RUN wget https://gitee.com/wutong-paas/files/raw/master/arm64/libzmq.so.5 -O /usr/lib/libzmq.so.5
+# RUN wget https://github.com/wutong-paas/files/raw/master/arm64/libzmq.so.5 -O /usr/lib/libzmq.so.5
 
 RUN apk add --no-cache libstdc++ ca-certificates openssl openssl-dev zeromq-dev
     
