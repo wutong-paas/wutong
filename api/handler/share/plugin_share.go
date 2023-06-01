@@ -92,7 +92,8 @@ func (s *PluginShareHandle) Share(ss PluginShare) (*PluginResult, *util.APIHandl
 		// return nil, util.CreateAPIHandleErrorFromDBError("query plugin version error", err)
 	} else {
 		localImageName = version.BuildLocalImage
-		shareImageName, err = version.CreateShareImage(ss.Body.ImageInfo.HubURL, ss.Body.ImageInfo.Namespace)
+		// shareImageName, err = version.CreateShareImage(ss.Body.ImageInfo.HubURL, ss.Body.ImageInfo.Namespace)
+		shareImageName = version.BaseImage
 		if err != nil {
 			return nil, util.CreateAPIHandleErrorf(500, "create share image name error:%s", err.Error())
 		}

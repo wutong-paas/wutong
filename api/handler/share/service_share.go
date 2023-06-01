@@ -88,8 +88,9 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 		task.TaskType = "share-slug"
 		task.TaskBody = info
 	} else {
-		shareImageInfo := ss.Body.ImageInfo
-		shareImageName, err = version.CreateShareImage(shareImageInfo.HubURL, shareImageInfo.Namespace, ss.Body.AppVersion)
+		// shareImageInfo := ss.Body.ImageInfo
+		// shareImageName, err = version.CreateShareImage(shareImageInfo.HubURL, shareImageInfo.Namespace, ss.Body.AppVersion)
+		shareImageName = version.ImageName
 		if err != nil {
 			return nil, util.CreateAPIHandleError(500, err)
 		}
