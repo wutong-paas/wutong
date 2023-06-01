@@ -33,12 +33,14 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/cmd/worker/option"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	wutongversioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/pkg/generated/informers/externalversions"
+	"github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/constants"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/appm/componentdefinition"
@@ -309,7 +311,7 @@ func NewStore(
 	store.informers.ConfigMap.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Endpoints.AddEventHandlerWithResyncPeriod(epEventHandler, time.Second*10)
-	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store, time.Second*10)
+	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
 	store.informers.StorageClass.AddEventHandlerWithResyncPeriod(store, time.Second*300)
 	store.informers.Claims.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Events.AddEventHandlerWithResyncPeriod(store.evtEventHandler(), time.Second*10)
@@ -1377,6 +1379,29 @@ func (a *appRuntimeStore) nsEventHandler() cache.ResourceEventHandlerFuncs {
 	}
 }
 
+func (a *appRuntimeStore) nodeEventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			node := obj.(*corev1.Node)
+			if err := a.keepNodeShellPod(node.Name); err != nil {
+				logrus.Errorf("keep node-shell pod err: %v", err)
+			}
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			node := cur.(*corev1.Node)
+
+			if err := a.keepNodeShellPod(node.Name); err != nil {
+				logrus.Errorf("keep node-shell pod err: %v", err)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			node := obj.(*corev1.Node)
+			pod := fmt.Sprintf("wt-node-shell-%s", node.Name)
+			a.clientset.CoreV1().Pods(corev1.NamespaceAll).Delete(context.Background(), pod, metav1.DeleteOptions{})
+		},
+	}
+}
+
 func (a *appRuntimeStore) scalingRecordServiceAndRuleID(evt *corev1.Event) (string, string) {
 	var ruleID, serviceID string
 	switch evt.InvolvedObject.Kind {
@@ -1534,6 +1559,56 @@ func (a *appRuntimeStore) createOrUpdateImagePullSecret(ns string) error {
 
 func (a *appRuntimeStore) secretByKey(key types.NamespacedName) (*corev1.Secret, error) {
 	return a.listers.Secret.Secrets(key.Namespace).Get(key.Name)
+}
+
+// keepNodeShellPod 在目标节点上启动 node-shell 的 pod
+func (a *appRuntimeStore) keepNodeShellPod(node string) error {
+	podName := fmt.Sprintf("wt-cloud-shell-%s", node)
+	// 判断 pod 是否存在，不存在则创建
+	pod, err := a.listers.Pod.Pods(a.conf.WTNamespace).Get(podName)
+	if err == nil {
+		if pod.Status.Phase == corev1.PodRunning {
+			return nil
+		}
+
+		err = a.clientset.CoreV1().Pods(a.conf.WTNamespace).Delete(context.Background(), podName, metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return err
+	}
+	// pod 不存在，创建 pod
+	pod = &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: a.conf.WTNamespace,
+			Labels: map[string]string{
+				"creator": "Wutong",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    podName,
+					Image:   builder.NODESHELLIMAGENAME,
+					Command: []string{"nsenter", "-t", "1", "-m", "-u", "-i", "-n", "bash", "-c", "while true; do sleep 3600; done"},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: util.Bool(true),
+					},
+				},
+			},
+			RestartPolicy: corev1.RestartPolicyNever,
+			NodeName:      node,
+			HostNetwork:   true,
+			HostPID:       true,
+			HostIPC:       true,
+		},
+	}
+	_, err = a.clientset.CoreV1().Pods(a.conf.WTNamespace).Create(context.Background(), pod, metav1.CreateOptions{})
+	return err
 }
 
 func (a *appRuntimeStore) GetHelmApp(namespace, name string) (*v1alpha1.HelmApp, error) {

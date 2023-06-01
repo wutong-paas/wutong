@@ -357,6 +357,7 @@ func waitLogs(ctx context.Context, id string, w *fsnotify.Watcher, runtimeServic
 		return false, false, err
 	}
 	errRetry := 5
+	tC := time.After(logForceCheckPeriod)
 	for {
 		select {
 		case <-ctx.Done():
@@ -382,7 +383,7 @@ func waitLogs(ctx context.Context, id string, w *fsnotify.Watcher, runtimeServic
 				return false, false, err
 			}
 			errRetry--
-		case <-time.After(logForceCheckPeriod):
+		case <-tC:
 			return true, false, nil
 		}
 	}
