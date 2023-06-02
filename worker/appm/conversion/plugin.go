@@ -205,7 +205,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 }
 
 func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, envs []v1.EnvVar, pluginConfig *api_model.ResourceSpec) v1.Container {
-	envs = append(envs, v1.EnvVar{Name: "PLUGIN_ID", Value: pluginID})
+	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
 	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
@@ -258,7 +258,7 @@ func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container,
 }
 
 func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias string, envs []v1.EnvVar) v1.Container {
-	envs = append(envs, v1.EnvVar{Name: "PLUGIN_ID", Value: pluginID})
+	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
 	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
@@ -423,7 +423,7 @@ func createPluginEnvs(pluginID, tenantEnvID, serviceAlias string, mainEnvs []v1.
 		tenantEnvID,
 		serviceAlias,
 		pluginID)})
-	envs = append(envs, v1.EnvVar{Name: "PLUGIN_ID", Value: pluginID})
+	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	var config = make(map[string]string, len(envs))
 	for _, env := range envs {
 		config[env.Name] = env.Value

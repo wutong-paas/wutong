@@ -1158,11 +1158,11 @@ func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
 		var i = 0
 		container := pod.Spec.Containers[0]
 		for _, env := range container.Env {
-			if env.Name == "SERVICE_ID" {
+			if env.Name == "WT_SERVICE_ID" {
 				ai.ServiceID = env.Value
 				i++
 			}
-			if env.Name == "SERVICE_NAME" {
+			if env.Name == "WT_SERVICE_ALIAS" {
 				ai.ServiceAlias = env.Value
 				i++
 			}

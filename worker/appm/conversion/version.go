@@ -311,14 +311,17 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 	}
 
 	//set default env
-	envs = append(envs, corev1.EnvVar{Name: "NAMESPACE", Value: as.GetNamespace()})
-	envs = append(envs, corev1.EnvVar{Name: "TENANT_ID", Value: as.TenantEnvID})
+	envs = append(envs, corev1.EnvVar{Name: "POD_NAMESPACE", Value: as.GetNamespace()})
+	envs = append(envs, corev1.EnvVar{Name: "WT_TENANT_ID", Value: as.TenantEnvID})
 	envs = append(envs, corev1.EnvVar{Name: "WT_APP_NAME", Value: as.K8sApp})
-	envs = append(envs, corev1.EnvVar{Name: "COMPONENT_NAME", Value: as.K8sComponentName})
-	envs = append(envs, corev1.EnvVar{Name: "SERVICE_ID", Value: as.ServiceID})
-	envs = append(envs, corev1.EnvVar{Name: "MEMORY_SIZE", Value: envutil.GetMemoryType(as.ContainerMemory)})
-	envs = append(envs, corev1.EnvVar{Name: "SERVICE_NAME", Value: as.ServiceAlias})
-	envs = append(envs, corev1.EnvVar{Name: "SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)})
+	envs = append(envs, corev1.EnvVar{Name: "WT_COMPONENT_NAME", Value: as.K8sComponentName})
+	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_ID", Value: as.ServiceID})
+	envs = append(envs, corev1.EnvVar{Name: "WT_MEMORY_SIZE", Value: envutil.GetMemoryType(as.ContainerMemory)})
+	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_NAME", Value: as.GetK8sWorkloadName()})
+	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_ALIAS", Value: as.ServiceAlias})
+	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)})
+
+	// set HOST_IP and POD_IP env variable
 	envs = append(envs, corev1.EnvVar{Name: "HOST_IP", ValueFrom: &corev1.EnvVarSource{
 		FieldRef: &corev1.ObjectFieldSelector{
 			FieldPath: "status.hostIP",
@@ -329,6 +332,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 			FieldPath: "status.podIP",
 		},
 	}})
+
 	var config = make(map[string]string, len(envs))
 	for _, sec := range envVarSecrets {
 		for k, v := range sec.Data {

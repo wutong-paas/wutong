@@ -145,8 +145,8 @@ func New(ctx logger.Info) (logger.Logger, error) {
 			env[key] = value
 		}
 	}
-	tenantEnvID = env["TENANT_ID"]
-	serviceID = env["SERVICE_ID"]
+	tenantEnvID = env["WT_TENANT_ID"]
+	serviceID = env["WT_SERVICE_ID"]
 	if tenantEnvID == "" {
 		tenantEnvID = "default"
 	}
