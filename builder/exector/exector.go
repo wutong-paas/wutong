@@ -439,7 +439,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 
 func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion, actionType string, configs map[string]string, logger event.Logger) error {
 	// update build event complete status
-	logger.Info("Build success", map[string]string{"step": "last", "status": "success"})
+	logger.Info("Build complete", map[string]string{"step": "last", "status": "success"})
 	switch actionType {
 	case "upgrade":
 		//add upgrade event

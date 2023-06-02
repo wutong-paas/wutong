@@ -113,6 +113,8 @@ func (i *ImageBuildItem) Run(timeout time.Duration) error {
 				logrus.Errorf("remove image %s failure %s", i.Image, err.Error())
 			}
 		}
+	} else {
+		i.Logger.Info("Run the workload with the original image without a build", nil)
 	}
 
 	if err := i.StorageVersionInfo(image); err != nil {

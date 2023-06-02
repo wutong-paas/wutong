@@ -1804,10 +1804,8 @@ github.com/willf/bitset v1.1.11-0.20200630133818-d5bec3311243/go.mod h1:RjeCKbqT
 github.com/wonderflow/cert-manager-api v1.0.3/go.mod h1:1Se7MSg11/eNYlo4fWv6vOM55/jTBMOzg2DN1kVFiSc=
 github.com/wutong-paas/gorm-bulk-upsert v1.0.0 h1:Xl3wVHGvPjkz9ASLB0g4GdnAfakeIF9hrGnbHRKdFvY=
 github.com/wutong-paas/gorm-bulk-upsert v1.0.0/go.mod h1:/0dUoW982asTvHKfZpnOJW1nBMG2epY23aQyQLA/Iyc=
-github.com/wutong-paas/wutong-oam v1.1.4 h1:gTpJD+2kyIwSArscZIdW/z0jQ1hfJZ9h8wFm43QnXkw=
-github.com/wutong-paas/wutong-oam v1.1.4/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
-github.com/wutong-paas/wutong-oam v1.1.5 h1:lioxbuZF+wSIvsvM2iXw+jGfpCY48YpTdgmOTnZLoAc=
-github.com/wutong-paas/wutong-oam v1.1.5/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
+github.com/wutong-paas/wutong-oam v1.1.6 h1:+05QQ2LY5UFy79+XiiMiEdl9Ek304botZnVKBFFuVTc=
+github.com/wutong-paas/wutong-oam v1.1.6/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
 github.com/wutong-paas/wutong-operator v1.0.1 h1:BnnI+vJY9rUxm0rzJL5rKNjSqIude9HmBv2BZD0QUxI=
 github.com/wutong-paas/wutong-operator v1.0.1/go.mod h1:5778z6HUgaPIdQ/33rq7dEUcLpgYk/jUTQDqJRz++X0=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
