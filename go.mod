@@ -79,7 +79,7 @@ require (
 	github.com/tidwall/gjson v1.6.8
 	github.com/urfave/cli v1.22.2
 	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
-	github.com/wutong-paas/wutong-oam v1.1.6
+	github.com/wutong-paas/wutong-oam v1.1.7
 	github.com/wutong-paas/wutong-operator v1.0.1
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
