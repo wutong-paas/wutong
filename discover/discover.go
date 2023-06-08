@@ -31,7 +31,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
@@ -268,44 +267,44 @@ func (e *etcdDiscover) discover(name string, callback CallbackUpdate) {
 	}
 }
 
-func makeEndpointForKvs(kvs []*mvccpb.KeyValue) (res []*config.Endpoint) {
-	var ends = make(map[string]*config.Endpoint)
-	for _, kv := range kvs {
-		if strings.HasSuffix(string(kv.Key), "/url") { //获取服务地址
-			kstep := strings.Split(string(kv.Key), "/")
-			if len(kstep) > 2 {
-				serverName := kstep[len(kstep)-2]
-				serverURL := string(kv.Value)
-				if en, ok := ends[serverName]; ok {
-					en.URL = serverURL
-				} else {
-					ends[serverName] = &config.Endpoint{Name: serverName, URL: serverURL}
-				}
-			}
-		}
-		if strings.HasSuffix(string(kv.Key), "/weight") { //获取服务权重
-			kstep := strings.Split(string(kv.Key), "/")
-			if len(kstep) > 2 {
-				serverName := kstep[len(kstep)-2]
-				serverWeight := string(kv.Value)
-				if en, ok := ends[serverName]; ok {
-					var err error
-					en.Weight, err = strconv.Atoi(serverWeight)
-					if err != nil {
-						logrus.Error("get server weight error.", err.Error())
-					}
-				} else {
-					weight, err := strconv.Atoi(serverWeight)
-					if err != nil {
-						logrus.Error("get server weight error.", err.Error())
-					}
-					ends[serverName] = &config.Endpoint{Name: serverName, Weight: weight}
-				}
-			}
-		}
-	}
-	for _, v := range ends {
-		res = append(res, v)
-	}
-	return
-}
+// func makeEndpointForKvs(kvs []*mvccpb.KeyValue) (res []*config.Endpoint) {
+// 	var ends = make(map[string]*config.Endpoint)
+// 	for _, kv := range kvs {
+// 		if strings.HasSuffix(string(kv.Key), "/url") { //获取服务地址
+// 			kstep := strings.Split(string(kv.Key), "/")
+// 			if len(kstep) > 2 {
+// 				serverName := kstep[len(kstep)-2]
+// 				serverURL := string(kv.Value)
+// 				if en, ok := ends[serverName]; ok {
+// 					en.URL = serverURL
+// 				} else {
+// 					ends[serverName] = &config.Endpoint{Name: serverName, URL: serverURL}
+// 				}
+// 			}
+// 		}
+// 		if strings.HasSuffix(string(kv.Key), "/weight") { //获取服务权重
+// 			kstep := strings.Split(string(kv.Key), "/")
+// 			if len(kstep) > 2 {
+// 				serverName := kstep[len(kstep)-2]
+// 				serverWeight := string(kv.Value)
+// 				if en, ok := ends[serverName]; ok {
+// 					var err error
+// 					en.Weight, err = strconv.Atoi(serverWeight)
+// 					if err != nil {
+// 						logrus.Error("get server weight error.", err.Error())
+// 					}
+// 				} else {
+// 					weight, err := strconv.Atoi(serverWeight)
+// 					if err != nil {
+// 						logrus.Error("get server weight error.", err.Error())
+// 					}
+// 					ends[serverName] = &config.Endpoint{Name: serverName, Weight: weight}
+// 				}
+// 			}
+// 		}
+// 	}
+// 	for _, v := range ends {
+// 		res = append(res, v)
+// 	}
+// 	return
+// }

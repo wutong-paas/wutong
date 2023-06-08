@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"golang.org/x/net/context"
 
@@ -27,7 +26,7 @@ const name = "streamlog"
 const defaultClusterAddress = "http://wt-eventlog:6363/docker-instance"
 const defaultAddress = "wt-eventlog:6362"
 
-var etcdV3Endpoints = []string{"wt-etcd:2379"}
+// var etcdV3Endpoints = []string{"wt-etcd:2379"}
 var clusterAddress = []string{defaultClusterAddress}
 
 // Dis dis manage
@@ -110,18 +109,18 @@ func init() {
 
 // StreamLog 消息流log
 type StreamLog struct {
-	writer                         *Client
-	serviceID                      string
-	tenantEnvID                    string
-	containerID                    string
-	errorQueue                     [][]byte
-	reConnecting                   chan bool
-	serverAddress                  string
-	ctx                            context.Context
-	cancel                         context.CancelFunc
-	cacheSize                      int
-	cacheQueue                     chan string
-	lock                           sync.Mutex
+	writer      *Client
+	serviceID   string
+	tenantEnvID string
+	containerID string
+	// errorQueue                     [][]byte
+	reConnecting  chan bool
+	serverAddress string
+	ctx           context.Context
+	cancel        context.CancelFunc
+	cacheSize     int
+	cacheQueue    chan string
+	// lock                           sync.Mutex
 	config                         map[string]string
 	intervalSendMicrosecondTime    int64
 	minIntervalSendMicrosecondTime int64
@@ -147,6 +146,13 @@ func New(ctx logger.Info) (logger.Logger, error) {
 	}
 	tenantEnvID = env["WT_TENANT_ID"]
 	serviceID = env["WT_SERVICE_ID"]
+	// 兼容 v1.2.0 之前的版本
+	if tenantEnvID == "" {
+		tenantEnvID = env["TENANT_ID"]
+	}
+	if serviceID == "" {
+		serviceID = env["SERVICE_ID"]
+	}
 	if tenantEnvID == "" {
 		tenantEnvID = "default"
 	}
@@ -232,11 +238,9 @@ func (s *StreamLog) send() {
 	for {
 		select {
 		case msg := <-s.cacheQueue:
-			if msg == "" || msg == "\n" {
-				continue
+			if msg != "" && msg != "\n" {
+				s.sendMsg(msg)
 			}
-			s.sendMsg(msg)
-			break
 		case <-s.ctx.Done():
 			close(s.closedChan)
 			return
@@ -287,20 +291,20 @@ func (s *StreamLog) Log(msg *logger.Message) error {
 	return nil
 }
 
-func isConnectionClosed(err error) bool {
-	if err == errClosed || err == errNoConnect {
-		return true
-	}
-	if strings.HasSuffix(err.Error(), "i/o timeout") {
-		return true
-	}
-	errMsg := err.Error()
-	ok := strings.HasSuffix(errMsg, "connection refused") || strings.HasSuffix(errMsg, "use of closed network connection")
-	if !ok {
-		return strings.HasSuffix(errMsg, "broken pipe") || strings.HasSuffix(errMsg, "connection reset by peer")
-	}
-	return ok
-}
+// func isConnectionClosed(err error) bool {
+// 	if err == errClosed || err == errNoConnect {
+// 		return true
+// 	}
+// 	if strings.HasSuffix(err.Error(), "i/o timeout") {
+// 		return true
+// 	}
+// 	errMsg := err.Error()
+// 	ok := strings.HasSuffix(errMsg, "connection refused") || strings.HasSuffix(errMsg, "use of closed network connection")
+// 	if !ok {
+// 		return strings.HasSuffix(errMsg, "broken pipe") || strings.HasSuffix(errMsg, "connection reset by peer")
+// 	}
+// 	return ok
+// }
 
 func (s *StreamLog) reConect() {
 	s.reConnecting <- true
@@ -308,6 +312,9 @@ func (s *StreamLog) reConect() {
 		<-s.reConnecting
 		s.intervalSendMicrosecondTime = 1000 * 10
 	}()
+
+	ticker := time.NewTicker(time.Millisecond * 1)
+	defer ticker.Stop()
 	for {
 		logrus.Info("start reconnect stream log server.")
 		//step1 try reconnect current address
@@ -337,8 +344,9 @@ func (s *StreamLog) reConect() {
 			}
 		}
 
+		ticker.Reset(time.Second * 5)
 		select {
-		case <-time.NewTicker(time.Second * 5).C:
+		case <-ticker.C:
 		case <-s.ctx.Done():
 			return
 		}
@@ -399,65 +407,65 @@ func getLogAddress(clusterAddress []string) string {
 	return defaultAddress
 }
 
-func ffjsonWriteJSONBytesAsString(buf *bytes.Buffer, s []byte) {
-	const hex = "0123456789abcdef"
+// func ffjsonWriteJSONBytesAsString(buf *bytes.Buffer, s []byte) {
+// 	const hex = "0123456789abcdef"
 
-	buf.WriteByte('"')
-	start := 0
-	for i := 0; i < len(s); {
-		if b := s[i]; b < utf8.RuneSelf {
-			if 0x20 <= b && b != '\\' && b != '"' && b != '<' && b != '>' && b != '&' {
-				i++
-				continue
-			}
-			if start < i {
-				buf.Write(s[start:i])
-			}
-			switch b {
-			case '\\', '"':
-				buf.WriteByte('\\')
-				buf.WriteByte(b)
-			case '\n':
-				buf.WriteByte('\\')
-				buf.WriteByte('n')
-			case '\r':
-				buf.WriteByte('\\')
-				buf.WriteByte('r')
-			default:
+// 	buf.WriteByte('"')
+// 	start := 0
+// 	for i := 0; i < len(s); {
+// 		if b := s[i]; b < utf8.RuneSelf {
+// 			if 0x20 <= b && b != '\\' && b != '"' && b != '<' && b != '>' && b != '&' {
+// 				i++
+// 				continue
+// 			}
+// 			if start < i {
+// 				buf.Write(s[start:i])
+// 			}
+// 			switch b {
+// 			case '\\', '"':
+// 				buf.WriteByte('\\')
+// 				buf.WriteByte(b)
+// 			case '\n':
+// 				buf.WriteByte('\\')
+// 				buf.WriteByte('n')
+// 			case '\r':
+// 				buf.WriteByte('\\')
+// 				buf.WriteByte('r')
+// 			default:
 
-				buf.WriteString(`\u00`)
-				buf.WriteByte(hex[b>>4])
-				buf.WriteByte(hex[b&0xF])
-			}
-			i++
-			start = i
-			continue
-		}
-		c, size := utf8.DecodeRune(s[i:])
-		if c == utf8.RuneError && size == 1 {
-			if start < i {
-				buf.Write(s[start:i])
-			}
-			buf.WriteString(`\ufffd`)
-			i += size
-			start = i
-			continue
-		}
+// 				buf.WriteString(`\u00`)
+// 				buf.WriteByte(hex[b>>4])
+// 				buf.WriteByte(hex[b&0xF])
+// 			}
+// 			i++
+// 			start = i
+// 			continue
+// 		}
+// 		c, size := utf8.DecodeRune(s[i:])
+// 		if c == utf8.RuneError && size == 1 {
+// 			if start < i {
+// 				buf.Write(s[start:i])
+// 			}
+// 			buf.WriteString(`\ufffd`)
+// 			i += size
+// 			start = i
+// 			continue
+// 		}
 
-		if c == '\u2028' || c == '\u2029' {
-			if start < i {
-				buf.Write(s[start:i])
-			}
-			buf.WriteString(`\u202`)
-			buf.WriteByte(hex[c&0xF])
-			i += size
-			start = i
-			continue
-		}
-		i += size
-	}
-	if start < len(s) {
-		buf.Write(s[start:])
-	}
-	buf.WriteByte('"')
-}
+// 		if c == '\u2028' || c == '\u2029' {
+// 			if start < i {
+// 				buf.Write(s[start:i])
+// 			}
+// 			buf.WriteString(`\u202`)
+// 			buf.WriteByte(hex[c&0xF])
+// 			i += size
+// 			start = i
+// 			continue
+// 		}
+// 		i += size
+// 	}
+// 	if start < len(s) {
+// 		buf.Write(s[start:])
+// 	}
+// 	buf.WriteByte('"')
+// }

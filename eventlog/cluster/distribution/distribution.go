@@ -95,6 +95,7 @@ func (d *Distribution) Update(m db.MonitorData) {
 
 func (d *Distribution) checkHealth() {
 	tick := time.NewTicker(time.Second * 5)
+	defer tick.Stop()
 	for {
 		select {
 		case <-tick.C:

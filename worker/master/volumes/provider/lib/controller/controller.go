@@ -1186,6 +1186,9 @@ func logOperation(operation, format string, a ...interface{}) string {
 func getInClusterNamespace() string {
 	if ns := os.Getenv("POD_NAMESPACE"); ns != "" {
 		return ns
+	} else if ns := os.Getenv("NAMESPACE"); ns != "" {
+		// 兼容 v1.2.0 之前的版本
+		return ns
 	}
 
 	// Fall back to the namespace associated with the service account token, if available

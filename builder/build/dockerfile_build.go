@@ -203,6 +203,7 @@ func (d *dockerfileBuild) waitingComplete(re *Request, reChan *channels.RingChan
 	var logComplete = false
 	var jobComplete = false
 	timeout := time.NewTimer(time.Minute * 60)
+	defer timeout.Stop()
 	for {
 		select {
 		case <-timeout.C:

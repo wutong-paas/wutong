@@ -135,13 +135,13 @@ func (h *dockerLogStore) GetMonitorData() *db.MonitorData {
 }
 func (h *dockerLogStore) Gc() {
 	tiker := time.NewTicker(time.Second * 30)
+	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
 			h.gcRun()
 		case <-h.ctx.Done():
 			h.log.Debug("docker log store gc stop.")
-			tiker.Stop()
 			return
 		}
 	}

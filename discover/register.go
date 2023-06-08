@@ -24,7 +24,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	client "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/util"
@@ -39,7 +38,7 @@ type KeepAlive struct {
 	HostName      string
 	Endpoint      string
 	TTL           int64
-	LID           clientv3.LeaseID
+	LID           client.LeaseID
 	Done          chan struct{}
 	etcdClient    *client.Client
 }
@@ -76,17 +75,22 @@ func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, serverName string, hos
 
 // Start 开始
 func (k *KeepAlive) Start() error {
-	duration := time.Duration(k.TTL) * time.Second
-	timer := time.NewTimer(duration)
+	// duration := time.Duration(k.TTL) * time.Second
+	// timer := time.NewTimer(duration)
+	// defer timer.Stop()
 	ctx, cancel := context.WithCancel(context.Background())
 	// defer cancel()
 	etcdclient, err := etcdutil.NewClient(ctx, k.EtcdClentArgs)
 	if err != nil {
+		cancel()
 		return err
 	}
 	k.etcdClient = etcdclient
 	k.cancel = cancel
 	go func() {
+		duration := time.Duration(k.TTL) * time.Second
+		timer := time.NewTimer(duration)
+		defer timer.Stop()
 		for {
 			select {
 			case <-k.Done:
@@ -133,7 +137,7 @@ func (k *KeepAlive) reg() error {
 	if _, err := k.etcdClient.Put(ctx,
 		k.etcdKey(),
 		k.Endpoint,
-		clientv3.WithLease(resp.ID)); err != nil {
+		client.WithLease(resp.ID)); err != nil {
 		return err
 	}
 	logrus.Infof("Register a %s server endpoint %s to cluster", k.ServerName, k.Endpoint)

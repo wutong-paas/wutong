@@ -22,7 +22,7 @@ func TestStreamLog(t *testing.T) {
 				Config:       map[string]string{"stream-server": "192.168.2.203:6362"},
 			})
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
 				return
 			}
 			defer log.Close()
@@ -33,7 +33,7 @@ func TestStreamLog(t *testing.T) {
 					Source:    "stdout",
 				})
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
 				}
 				time.Sleep(time.Millisecond * 2)
 			}

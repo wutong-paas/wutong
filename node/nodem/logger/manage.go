@@ -175,6 +175,7 @@ func (c *ContainerLogManage) listContainer() []*runtimeapi.Container {
 
 func (c *ContainerLogManage) loollist() {
 	ticker := time.NewTicker(time.Minute * 10)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -183,7 +184,7 @@ func (c *ContainerLogManage) loollist() {
 		case <-ticker.C:
 			for _, container := range c.listContainer() {
 				cj, _ := c.getContainer(container.GetId())
-				if cj.GetLogPath() == "" {
+				if cj == nil || cj.GetLogPath() == "" {
 					continue
 				}
 				// loggerType := cj.HostConfig.LogConfig.Type

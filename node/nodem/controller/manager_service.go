@@ -326,6 +326,7 @@ func (m *ManagerService) StopSyncService() {
 func (m *ManagerService) WaitStart(name string, duration time.Duration) bool {
 	max := time.Now().Add(duration)
 	t := time.NewTicker(time.Second * 3)
+	defer t.Stop()
 	for {
 		if time.Now().After(max) {
 			return false

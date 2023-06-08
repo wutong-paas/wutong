@@ -1152,71 +1152,85 @@ func isClosedStatus(curStatus string) bool {
 	return curStatus == v1.BUILDEFAILURE || curStatus == v1.CLOSED || curStatus == v1.UNDEPLOY || curStatus == v1.BUILDING || curStatus == v1.UNKNOW
 }
 
-func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
-	var ai v1.AbnormalInfo
-	if len(pod.Spec.Containers) > 0 {
-		var i = 0
-		container := pod.Spec.Containers[0]
-		for _, env := range container.Env {
-			if env.Name == "WT_SERVICE_ID" {
-				ai.ServiceID = env.Value
-				i++
-			}
-			if env.Name == "WT_SERVICE_ALIAS" {
-				ai.ServiceAlias = env.Value
-				i++
-			}
-			if i == 2 {
-				break
-			}
-		}
-	}
-	ai.PodName = pod.Name
-	ai.TenantEnvID = pod.Namespace
-	return ai
-}
+// func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
+// 	var ai v1.AbnormalInfo
+// 	if len(pod.Spec.Containers) > 0 {
+// 		var i = 0
+// 		container := pod.Spec.Containers[0]
+// 		for _, env := range container.Env {
+// 			if env.Name == "WT_SERVICE_ID" {
+// 				ai.ServiceID = env.Value
+// 				i++
+// 			}
+// 			if env.Name == "WT_SERVICE_ALIAS" {
+// 				ai.ServiceAlias = env.Value
+// 				i++
+// 			}
+// 			// 兼容 v1.2.0 之前的版本
+// 			if ai.ServiceID == "" {
+// 				if env.Name == "SERVICE_ID" {
+// 					ai.ServiceID = env.Value
+// 					i++
+// 				}
+// 			}
+// 			if ai.ServiceAlias == "" {
+// 				if env.Name == "SERVICE_NAME" {
+// 					ai.ServiceAlias = env.Value
+// 					i++
+// 				}
+// 			}
 
-func (a *appRuntimeStore) analyzePodStatus(pod *corev1.Pod) {
-	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if containerStatus.LastTerminationState.Terminated != nil {
-			ai := getServiceInfoFromPod(pod)
-			ai.ContainerName = containerStatus.Name
-			ai.Reason = containerStatus.LastTerminationState.Terminated.Reason
-			ai.Message = containerStatus.LastTerminationState.Terminated.Message
-			ai.CreateTime = time.Now()
-			a.addAbnormalInfo(&ai)
-		}
-	}
-}
+// 			if i == 2 {
+// 				break
+// 			}
+// 		}
+// 	}
+// 	ai.PodName = pod.Name
+// 	ai.TenantEnvID = pod.Namespace
+// 	return ai
+// }
 
-func (a *appRuntimeStore) addAbnormalInfo(ai *v1.AbnormalInfo) {
-	switch ai.Reason {
-	case "OOMKilled":
-		a.dbmanager.NotificationEventDao().AddModel(&model.NotificationEvent{
-			Kind:          "service",
-			KindID:        ai.ServiceID,
-			Hash:          ai.Hash(),
-			Type:          "UnNormal",
-			Message:       fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
-			Reason:        "OOMKilled",
-			Count:         ai.Count,
-			ServiceName:   ai.ServiceAlias,
-			TenantEnvName: ai.TenantEnvID,
-		})
-	default:
-		db.GetManager().NotificationEventDao().AddModel(&model.NotificationEvent{
-			Kind:          "service",
-			KindID:        ai.ServiceID,
-			Hash:          ai.Hash(),
-			Type:          "UnNormal",
-			Message:       fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
-			Reason:        ai.Reason,
-			Count:         ai.Count,
-			ServiceName:   ai.ServiceAlias,
-			TenantEnvName: ai.TenantEnvID,
-		})
-	}
-}
+// func (a *appRuntimeStore) analyzePodStatus(pod *corev1.Pod) {
+// 	for _, containerStatus := range pod.Status.ContainerStatuses {
+// 		if containerStatus.LastTerminationState.Terminated != nil {
+// 			ai := getServiceInfoFromPod(pod)
+// 			ai.ContainerName = containerStatus.Name
+// 			ai.Reason = containerStatus.LastTerminationState.Terminated.Reason
+// 			ai.Message = containerStatus.LastTerminationState.Terminated.Message
+// 			ai.CreateTime = time.Now()
+// 			a.addAbnormalInfo(&ai)
+// 		}
+// 	}
+// }
+
+// func (a *appRuntimeStore) addAbnormalInfo(ai *v1.AbnormalInfo) {
+// 	switch ai.Reason {
+// 	case "OOMKilled":
+// 		a.dbmanager.NotificationEventDao().AddModel(&model.NotificationEvent{
+// 			Kind:          "service",
+// 			KindID:        ai.ServiceID,
+// 			Hash:          ai.Hash(),
+// 			Type:          "UnNormal",
+// 			Message:       fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
+// 			Reason:        "OOMKilled",
+// 			Count:         ai.Count,
+// 			ServiceName:   ai.ServiceAlias,
+// 			TenantEnvName: ai.TenantEnvID,
+// 		})
+// 	default:
+// 		db.GetManager().NotificationEventDao().AddModel(&model.NotificationEvent{
+// 			Kind:          "service",
+// 			KindID:        ai.ServiceID,
+// 			Hash:          ai.Hash(),
+// 			Type:          "UnNormal",
+// 			Message:       fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
+// 			Reason:        ai.Reason,
+// 			Count:         ai.Count,
+// 			ServiceName:   ai.ServiceAlias,
+// 			TenantEnvName: ai.TenantEnvID,
+// 		})
+// 	}
+// }
 
 // GetTenantEnvResource get tenant env resource
 func (a *appRuntimeStore) GetTenantEnvResource(tenantEnvID string) TenantEnvResource {
@@ -1563,7 +1577,7 @@ func (a *appRuntimeStore) secretByKey(key types.NamespacedName) (*corev1.Secret,
 
 // keepNodeShellPod 在目标节点上启动 node-shell 的 pod
 func (a *appRuntimeStore) keepNodeShellPod(node string) error {
-	podName := fmt.Sprintf("wt-cloud-shell-%s", node)
+	podName := fmt.Sprintf("wt-node-shell-%s", node)
 	// 判断 pod 是否存在，不存在则创建
 	pod, err := a.listers.Pod.Pods(a.conf.WTNamespace).Get(podName)
 	if err == nil {
@@ -1594,7 +1608,7 @@ func (a *appRuntimeStore) keepNodeShellPod(node string) error {
 				{
 					Name:    podName,
 					Image:   builder.NODESHELLIMAGENAME,
-					Command: []string{"nsenter", "-t", "1", "-m", "-u", "-i", "-n", "bash", "-c", "while true; do sleep 3600; done"},
+					Command: []string{"nsenter", "-t", "1", "-m", "-u", "-i", "-n", "bash", "-c", "sleep infinity"},
 					SecurityContext: &corev1.SecurityContext{
 						Privileged: util.Bool(true),
 					},

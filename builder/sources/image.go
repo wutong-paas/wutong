@@ -816,6 +816,7 @@ func WaitingComplete(reChan *channels.RingChannel) (err error) {
 	var logComplete = false
 	var jobComplete = false
 	timeOut := time.NewTimer(time.Minute * 60)
+	defer timeOut.Stop()
 	for {
 		select {
 		case <-timeOut.C:

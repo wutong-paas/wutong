@@ -1808,6 +1808,8 @@ github.com/wutong-paas/wutong-oam v1.1.6 h1:+05QQ2LY5UFy79+XiiMiEdl9Ek304botZnVK
 github.com/wutong-paas/wutong-oam v1.1.6/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
 github.com/wutong-paas/wutong-oam v1.1.7 h1:NFTaO0IJ6DX28EkX5xgCWtm2nnZTDr+FL9drwUY0mWY=
 github.com/wutong-paas/wutong-oam v1.1.7/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
+github.com/wutong-paas/wutong-oam v1.2.0 h1:AHU3hwR43IIWCr0rHyUgdrt8uqvnhT4yAk5i3hku3l0=
+github.com/wutong-paas/wutong-oam v1.2.0/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
 github.com/wutong-paas/wutong-operator v1.0.1 h1:BnnI+vJY9rUxm0rzJL5rKNjSqIude9HmBv2BZD0QUxI=
 github.com/wutong-paas/wutong-operator v1.0.1/go.mod h1:5778z6HUgaPIdQ/33rq7dEUcLpgYk/jUTQDqJRz++X0=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
