@@ -441,14 +441,14 @@ type clusterEventsCache struct {
 var cachedClusterEvents *clusterEventsCache
 
 func (c *clusterAction) GetClusterEvents(ctx context.Context) ([]model.ClusterEvent, error) {
-	events, err := c.clientset.CoreV1().Events("").List(ctx, metav1.ListOptions{
-		FieldSelector: "type=Warning",
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	if cachedClusterEvents == nil || time.Since(cachedClusterEvents.cacheTime) > time.Minute*10 {
+		events, err := c.clientset.CoreV1().Events("").List(ctx, metav1.ListOptions{
+			FieldSelector: "type=Warning",
+		})
+		if err != nil {
+			return nil, err
+		}
+
 		clusterEvents := make([]model.ClusterEvent, 0)
 		for _, event := range events.Items {
 			clusterEvent := model.ClusterEventFrom(&event, c.clientset)
