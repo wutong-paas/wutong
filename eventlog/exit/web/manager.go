@@ -465,7 +465,6 @@ func (s *SocketServer) listen() {
 			w.Write([]byte(`{"message":"service id can not be empty.","status":"failure"}`))
 			return
 		}
-		s.log.Info("ServiceID:" + ServiceID)
 		instance := s.cluster.GetSuitableInstance(ServiceID)
 		err := discover.SaveDockerLogInInstance(s.etcdClient, s.discoverConf, ServiceID, instance.HostID)
 		if err != nil {

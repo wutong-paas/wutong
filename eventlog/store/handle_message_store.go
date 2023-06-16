@@ -252,7 +252,7 @@ func (h *handleMessageStore) persistence(eventID string) {
 				h.log.Error("persistence barrel message error.", err.Error())
 				h.InsertGarbageMessage(ba.persistenceBarrel...)
 			}
-			h.log.Debugf("persistence barrel(%s) %d message  to db.", eventID, len(ba.persistenceBarrel))
+			h.log.Debugf("handleMessageStore.persistence: persistence barrel(%s) %d message  to db.", eventID, len(ba.persistenceBarrel))
 			ba.persistenceBarrel = ba.persistenceBarrel[:0]
 			ba.needPersistence = false
 		}

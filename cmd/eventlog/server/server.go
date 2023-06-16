@@ -56,7 +56,7 @@ func NewLogServer() *LogServer {
 	}
 }
 
-//AddFlags 添加参数
+// AddFlags 添加参数
 func (s *LogServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.Conf.Entry.EventLogServer.BindIP, "eventlog.bind.ip", "0.0.0.0", "Collect the log service to listen the IP")
 	fs.IntVar(&s.Conf.Entry.EventLogServer.BindPort, "eventlog.bind.port", 6366, "Collect the log service to listen the Port")
@@ -113,9 +113,10 @@ func (s *LogServer) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.Conf.Entry.NewMonitorMessageServerConf.ListenerPort, "monitor.udp.port", 6166, "receive new monitor udp server port")
 	fs.StringVar(&s.Conf.Cluster.Discover.NodeID, "node-id", "", "the unique ID for this node.")
 	fs.DurationVar(&s.Conf.Cluster.PubSub.PollingTimeout, "zmq4-polling-timeout", 200*time.Millisecond, "The timeout determines the time-out on the polling of sockets")
+	fs.BoolVar(&s.Conf.EnableDebugPprof, "enable-debug-pprof", false, "enable debug pprof")
 }
 
-//InitLog 初始化log
+// InitLog 初始化log
 func (s *LogServer) InitLog() {
 	log := logrus.New()
 	if l, err := logrus.ParseLevel(s.Conf.Log.LogLevel); err == nil {
@@ -155,7 +156,7 @@ func (s *LogServer) InitLog() {
 	s.Logger = log
 }
 
-//InitConf 初始化配置
+// InitConf 初始化配置
 func (s *LogServer) InitConf() {
 	s.Conf.Cluster.Discover.ClusterMode = s.Conf.ClusterMode
 	s.Conf.Cluster.PubSub.ClusterMode = s.Conf.ClusterMode
@@ -171,7 +172,7 @@ func (s *LogServer) InitConf() {
 	}
 }
 
-//Run 执行
+// Run 执行
 func (s *LogServer) Run() error {
 	s.Logger.Debug("Start run server.")
 	log := s.Logger

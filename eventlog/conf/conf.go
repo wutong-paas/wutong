@@ -22,14 +22,15 @@ import "time"
 
 // Conf conf
 type Conf struct {
-	Entry       EntryConf
-	EventStore  EventStoreConf
-	Log         LogConf
-	WebSocket   WebSocketConf
-	WebHook     WebHookConf
-	ClusterMode bool
-	Cluster     ClusterConf
-	Kubernetes  KubernetsConf
+	Entry            EntryConf
+	EventStore       EventStoreConf
+	Log              LogConf
+	WebSocket        WebSocketConf
+	WebHook          WebHookConf
+	ClusterMode      bool
+	Cluster          ClusterConf
+	Kubernetes       KubernetsConf
+	EnableDebugPprof bool
 }
 
 // WebHookConf webhook conf

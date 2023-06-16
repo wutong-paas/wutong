@@ -222,13 +222,9 @@ func ValidateLogOpt(cfg map[string]string) error {
 }
 
 func (s *StreamLog) cache(msg string) {
-	defer func() {
-		recover()
-	}()
 	select {
 	case s.cacheQueue <- msg:
 	default:
-		return
 	}
 }
 
@@ -255,9 +251,9 @@ func (s *StreamLog) sendMsg(msg string) {
 		if err != nil {
 			logrus.Debug("send log message to stream server error.", err.Error())
 			s.cache(msg)
-			if len(s.reConnecting) < 1 {
-				s.reConect()
-			}
+			// if len(s.reConnecting) < 1 {
+			// 	s.reConect()
+			// }
 		} else {
 			if s.intervalSendMicrosecondTime > s.minIntervalSendMicrosecondTime {
 				s.intervalSendMicrosecondTime -= 100
@@ -313,44 +309,45 @@ func (s *StreamLog) reConect() {
 		s.intervalSendMicrosecondTime = 1000 * 10
 	}()
 
-	ticker := time.NewTicker(time.Millisecond * 1)
-	defer ticker.Stop()
-	for {
-		logrus.Info("start reconnect stream log server.")
-		//step1 try reconnect current address
-		if s.writer != nil {
-			err := s.writer.ReConnect()
-			if err == nil {
-				return
-			}
-		}
-		//step2 get new server address and reconnect
-		server := getTCPConnConfig(s.serviceID, s.config["stream-server"])
-		if server == s.writer.server {
-			logrus.Warningf("stream log server address(%s) not change ,will reconnect", server)
-			err := s.writer.ReConnect()
-			if err != nil {
-				logrus.Error("stream log server connect error." + err.Error())
-			} else {
-				return
-			}
-		} else {
-			err := s.writer.ChangeAddress(server)
-			if err != nil {
-				logrus.Errorf("stream log server connect %s error. %v", server, err.Error())
-			} else {
-				s.serverAddress = server
-				return
-			}
-		}
+	// ticker := time.NewTicker(time.Second * 5)
+	// defer ticker.Stop()
+	// for {
 
-		ticker.Reset(time.Second * 5)
-		select {
-		case <-ticker.C:
-		case <-s.ctx.Done():
+	logrus.Info("StreamLog.reConect: start reconnect stream log server.")
+	//step1 try reconnect current address
+	if s.writer != nil {
+		err := s.writer.ReConnect()
+		if err == nil {
 			return
 		}
 	}
+	//step2 get new server address and reconnect
+	server := getTCPConnConfig(s.serviceID, s.config["stream-server"])
+	if server == s.writer.server {
+		logrus.Warningf("stream log server address(%s) not change ,will reconnect", server)
+		err := s.writer.ReConnect()
+		if err != nil {
+			logrus.Error("stream log server connect error." + err.Error())
+		} else {
+			return
+		}
+	} else {
+		err := s.writer.ChangeAddress(server)
+		if err != nil {
+			logrus.Errorf("stream log server connect %s error. %v", server, err.Error())
+		} else {
+			s.serverAddress = server
+			return
+		}
+	}
+
+	// select {
+	// case <-ticker.C:
+	// case <-s.ctx.Done():
+	// 	return
+	// }
+
+	// }
 }
 
 // Close 关闭
