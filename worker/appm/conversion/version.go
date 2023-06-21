@@ -310,28 +310,30 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 		envs = append(envs, corev1.EnvVar{Name: strings.TrimSpace(e.AttrName), Value: e.AttrValue})
 	}
 
-	//set default env
-	envs = append(envs, corev1.EnvVar{Name: "POD_NAMESPACE", Value: as.GetNamespace()})
-	envs = append(envs, corev1.EnvVar{Name: "WT_TENANT_ID", Value: as.TenantEnvID})
-	envs = append(envs, corev1.EnvVar{Name: "WT_APP_NAME", Value: as.K8sApp})
-	envs = append(envs, corev1.EnvVar{Name: "WT_COMPONENT_NAME", Value: as.K8sComponentName})
-	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_ID", Value: as.ServiceID})
-	envs = append(envs, corev1.EnvVar{Name: "WT_MEMORY_SIZE", Value: envutil.GetMemoryType(as.ContainerMemory)})
-	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_NAME", Value: as.GetK8sWorkloadName()})
-	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_ALIAS", Value: as.ServiceAlias})
-	envs = append(envs, corev1.EnvVar{Name: "WT_SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)})
+	builtinEnvs := []corev1.EnvVar{
+		{Name: "POD_NAMESPACE", Value: as.GetNamespace()},
+		{Name: "WT_TENANT_ID", Value: as.TenantEnvID},
+		{Name: "WT_APP_NAME", Value: as.K8sApp},
+		{Name: "WT_COMPONENT_NAME", Value: as.K8sComponentName},
+		{Name: "WT_SERVICE_ID", Value: as.ServiceID},
+		{Name: "WT_MEMORY_SIZE", Value: envutil.GetMemoryType(as.ContainerMemory)},
+		{Name: "WT_SERVICE_NAME", Value: as.GetK8sWorkloadName()},
+		{Name: "WT_SERVICE_ALIAS", Value: as.ServiceAlias},
+		{Name: "WT_SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)},
+		// set HOST_IP and POD_IP env variable
+		{Name: "HOST_IP", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "status.hostIP",
+			},
+		}},
+		{Name: "POD_IP", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "status.podIP",
+			},
+		}},
+	}
 
-	// set HOST_IP and POD_IP env variable
-	envs = append(envs, corev1.EnvVar{Name: "HOST_IP", ValueFrom: &corev1.EnvVarSource{
-		FieldRef: &corev1.ObjectFieldSelector{
-			FieldPath: "status.hostIP",
-		},
-	}})
-	envs = append(envs, corev1.EnvVar{Name: "POD_IP", ValueFrom: &corev1.EnvVarSource{
-		FieldRef: &corev1.ObjectFieldSelector{
-			FieldPath: "status.podIP",
-		},
-	}})
+	envs = append(builtinEnvs, envs...)
 
 	var config = make(map[string]string, len(envs))
 	for _, sec := range envVarSecrets {
