@@ -739,7 +739,18 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 	if err != nil {
 		return nil, err
 	}
+	apps, err := db.GetManager().ApplicationDao().ListByAppIDs(appIDs)
+	if err != nil {
+		return nil, err
+	}
+	k8sApps := make(map[string]string, len(apps))
+	for _, app := range apps {
+		k8sApps[app.AppID] = app.K8sApp
+	}
 	for _, appStatus := range appStatuses.AppStatuses {
+		if err != nil {
+			return nil, err
+		}
 		diskUsage := a.getDiskUsage(appStatus.AppId)
 		var cpu *int64
 		if appStatus.SetCPU {
@@ -749,16 +760,35 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 		if appStatus.SetMemory {
 			memory = commonutil.Int64(appStatus.Memory)
 		}
+
+		services := db.GetManager().TenantEnvServiceDao().GetServiceIDsByAppID(appStatus.AppId)
+		var ServiceRunningNum int
+		if len(services) > 0 {
+			serviceIDs := make([]string, 0, len(services))
+			for _, service := range services {
+				serviceIDs = append(serviceIDs, service.ServiceID)
+			}
+			serviceStatuses := a.statusCli.GetStatuss(strings.Join(serviceIDs, ","))
+			for _, serviceStatus := range serviceStatuses {
+				if a.statusCli.IsClosedStatus(serviceStatus) {
+					continue
+				}
+				ServiceRunningNum++
+			}
+		}
+
 		resp = append(resp, &model.AppStatus{
-			Status:    appStatus.Status,
-			CPU:       cpu,
-			Memory:    memory,
-			Disk:      int64(diskUsage),
-			Phase:     appStatus.Phase,
-			Overrides: appStatus.Overrides,
-			Version:   appStatus.Version,
-			AppID:     appStatus.AppId,
-			AppName:   appStatus.AppName,
+			Status:            appStatus.Status,
+			CPU:               cpu,
+			Memory:            memory,
+			Disk:              int64(diskUsage),
+			Phase:             appStatus.Phase,
+			Overrides:         appStatus.Overrides,
+			Version:           appStatus.Version,
+			AppID:             appStatus.AppId,
+			AppName:           appStatus.AppName,
+			ServiceRunningNum: ServiceRunningNum,
+			K8sApp:            k8sApps[appStatus.AppId],
 		})
 	}
 	return resp, nil
