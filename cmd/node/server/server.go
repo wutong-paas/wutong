@@ -36,8 +36,8 @@ import (
 	"github.com/wutong-paas/wutong/node/kubecache"
 	"github.com/wutong-paas/wutong/node/masterserver"
 	"github.com/wutong-paas/wutong/node/nodem"
-	"github.com/wutong-paas/wutong/node/nodem/docker"
 	"github.com/wutong-paas/wutong/node/nodem/envoy"
+	"github.com/wutong-paas/wutong/node/nodem/registry"
 	"github.com/wutong-paas/wutong/util/constants"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
@@ -111,15 +111,15 @@ func Run(cfg *option.Conf) error {
 			hostManager.Start()
 		}
 
-		logrus.Debugf("wt-namespace=%s; wt-docker-secret=%s", os.Getenv("WT_NAMESPACE"), os.Getenv("WT_DOCKER_SECRET"))
-		// sync docker inscure registries cert info into all wutong node
-		if err = docker.SyncDockerCertFromSecret(clientset, os.Getenv("WT_NAMESPACE"), os.Getenv("WT_DOCKER_SECRET")); err != nil { // TODO fanyangyang namespace secretname
-			return fmt.Errorf("sync docker cert from secret error: %s", err.Error())
+		logrus.Debugf("wt-namespace=%s; wt-registry-secret=%s", os.Getenv("WT_NAMESPACE"), os.Getenv("WT_REGISTRY_SECRET"))
+		// sync registry inscure registries cert info into all wutong node
+		if err = registry.SyncRegistryCertFromSecret(cfg.ContainerRuntime, clientset, os.Getenv("WT_NAMESPACE"), os.Getenv("WT_REGISTRY_SECRET")); err != nil { // TODO fanyangyang namespace secretname
+			return fmt.Errorf("sync registry cert from secret error: %s", err.Error())
 		}
 
 		// init etcd client
 		if err = store.NewClient(ctx, cfg, etcdClientArgs); err != nil {
-			return fmt.Errorf("Connect to ETCD %s failed: %s", cfg.EtcdEndpoints, err)
+			return fmt.Errorf("connect to ETCD %s failed: %s", cfg.EtcdEndpoints, err)
 		}
 		errChan := make(chan error, 3)
 		if err := nodemanager.Start(errChan); err != nil {

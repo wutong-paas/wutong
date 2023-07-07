@@ -148,6 +148,7 @@ func (c *ContainerLogManage) handleLogger() {
 					clog, okf := logger.(*ContainerLog)
 					if okf {
 						clog.Stop()
+						clog.Close()
 					}
 					c.containerLogs.Delete(cevent.Container.GetId())
 					logrus.Infof("remove copy container log for container %s", cevent.Container.GetMetadata().GetName())
@@ -509,6 +510,14 @@ func (container *ContainerLog) Close() {
 	if container.LogCopier != nil {
 		container.LogCopier.Close()
 	}
+	if container.reader != nil {
+		container.reader.Close()
+	}
+
+	for _, ld := range container.LogDriver {
+		ld.Close()
+	}
+	container.LogDriver = nil
 	container.cancel()
 	logrus.Debugf("wutong logger close for container %s", container.ContainerStatus.GetMetadata().GetName())
 }

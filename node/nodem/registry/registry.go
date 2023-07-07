@@ -1,7 +1,8 @@
-package docker
+package registry
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -14,10 +15,10 @@ import (
 )
 
 var defaultFileName = "server.crt"
-var defaultFilePath = "/etc/docker/certs.d/wutong.me"
+var defaultFilePath = "/newetc/%s/certs.d/wutong.me"
 
-// SyncDockerCertFromSecret sync docker cert from secret
-func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretName string) error {
+// SyncRegistryCertFromSecret sync registry cert from secret
+func SyncRegistryCertFromSecret(containerRuntime string, clientset kubernetes.Interface, namespace, secretName string) error {
 	namespace = strings.TrimSpace(namespace)
 	secretName = strings.TrimSpace(secretName)
 	if namespace == "" || secretName == "" {
@@ -28,18 +29,20 @@ func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretN
 		return err
 	}
 	if certInfo, ok := secretInfo.Data["cert"]; ok { // TODO fanyangyang key name
-		if err := saveORUpdateFile(certInfo); err != nil {
+		if err := saveORUpdateFile(containerRuntime, certInfo); err != nil {
 			return err
 		}
 
 	} else {
-		logrus.Warnf("docker secret: %s/%s do not contain cert info", secretName, namespace)
+		logrus.Warnf("registry secret: %s/%s do not contain cert info", secretName, namespace)
 	}
 	return nil
 }
 
-// sync as file saved int /etc/docker/wutong.me/server.crt
-func saveORUpdateFile(content []byte) error {
+// sync as file saved int /etc/docker/certs.d/wutong.me/server.crt or /etc/containerd/certs.d/wutong.me/server.crt
+func saveORUpdateFile(containerRuntime string, content []byte) error {
+	defaultFilePath = fmt.Sprintf(defaultFilePath, containerRuntime)
+
 	// If path is already a directory, MkdirAll does nothing and returns nil
 	if err := os.MkdirAll(defaultFilePath, 0666); err != nil {
 		logrus.Errorf("mkdir path(%s) error: %s", defaultFilePath, err.Error())
@@ -52,6 +55,7 @@ func saveORUpdateFile(content []byte) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	_, err = io.Copy(file, strings.NewReader(string(content)))
 	return err

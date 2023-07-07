@@ -20,16 +20,12 @@ package option
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"path"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
 	client "github.com/coreos/etcd/clientv3"
-	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/wutong-paas/wutong/builder/sources"
@@ -42,14 +38,13 @@ import (
 )
 
 var (
-	confFile = flag.String("conf",
-		"conf/files/base.json", "config file path")
+	// confFile = flag.String("conf", "conf/files/base.json", "config file path")
 	//Config config
 	Config      = new(Conf)
 	initialized bool
 
-	watcher  *fsnotify.Watcher
-	exitChan = make(chan struct{})
+	// watcher  *fsnotify.Watcher
+	// exitChan = make(chan struct{})
 )
 
 // Init  init config
@@ -226,20 +221,20 @@ func (a *Conf) SetLog() {
 	}
 }
 
-func newClient(namespace, address string, opts ...containerd.ClientOpt) (*containerd.Client, context.Context, context.CancelFunc, error) {
-	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	client, err := containerd.New(address, opts...)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
-	return client, ctx, cancel, nil
-}
+// func newClient(namespace, address string, opts ...containerd.ClientOpt) (*containerd.Client, context.Context, context.CancelFunc, error) {
+// 	ctx := namespaces.WithNamespace(context.Background(), namespace)
+// 	client, err := containerd.New(address, opts...)
+// 	if err != nil {
+// 		return nil, nil, nil, err
+// 	}
+// 	var cancel context.CancelFunc
+// 	ctx, cancel = context.WithCancel(ctx)
+// 	return client, ctx, cancel, nil
+// }
 
 // ParseClient handle config and create some api
 func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientArgs) (err error) {
-	logrus.Infof("begin create container image client, runtime [%s] runtime endpoint [%s]", a.ContainerRuntime, a.RuntimeEndpoint, a.EtcdEndpoints)
+	logrus.Infof("begin create container image client, runtime [%s] runtime endpoint [%s]", a.ContainerRuntime, a.RuntimeEndpoint)
 	containerImageCli, err := sources.NewContainerImageClient(a.ContainerRuntime, a.RuntimeEndpoint, time.Second*3)
 	if err != nil {
 		logrus.Errorf("new client failed %v", err)
@@ -258,6 +253,12 @@ func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientA
 		time.Sleep(time.Second * 3)
 	}
 	logrus.Infof("create etcd client success")
+
+	// set defult container runtime
+	if a.ContainerRuntime == "" {
+		a.ContainerRuntime = sources.ContainerRuntimeDocker
+		a.RuntimeEndpoint = sources.RuntimeEndpointDocker
+	}
 	return nil
 }
 

@@ -1,4 +1,4 @@
-package docker
+package registry
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 func Test_saveORUpdateFile(t *testing.T) {
-	t.Log(saveORUpdateFile([]byte("123")))
+	t.Log(saveORUpdateFile("docker", []byte("123")))
 }
 
 func TestSync(t *testing.T) {
@@ -50,7 +50,7 @@ OIBrj5fMeg27zqsV/2Qr1YuzfMZcgQG9KtPSe57RZH9kF7pCl+cqetc=
 	if _, err := cli.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{}); err != nil {
 		t.Fatalf("create secret error: %s", err.Error())
 	}
-	if err := SyncDockerCertFromSecret(cli, namespace, secretName); err != nil {
+	if err := SyncRegistryCertFromSecret("docker", cli, namespace, secretName); err != nil {
 		t.Fatalf("sync secret error: %s", err.Error())
 	}
 	cli.CoreV1().Secrets(namespace).Delete(context.Background(), secretName, metav1.DeleteOptions{})
