@@ -108,6 +108,8 @@ func (m *Manager) SetMiddleware() {
 	//simple api version
 	r.Use(apimiddleware.APIVersion)
 	r.Use(apimiddleware.Proxy)
+	// license
+	r.Use(apimiddleware.License)
 }
 
 // Start manager
