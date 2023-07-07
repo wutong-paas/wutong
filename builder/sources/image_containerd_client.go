@@ -159,7 +159,7 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 		return nil, err
 	}
 	<-progress
-	printLog(logger, "info", fmt.Sprintf("Success Pull Image：%s", reference), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("Success Pull Image: %s", reference), map[string]string{"step": "pullimage"})
 	return getImageConfig(ctx, img)
 }
 
@@ -202,7 +202,7 @@ func getImageConfig(ctx context.Context, image containerd.Image) (*ocispec.Image
 }
 
 func (c *containerdImageCliImpl) ImagePush(image, user, pass string, logger event.Logger, timeout int) error {
-	printLog(logger, "info", fmt.Sprintf("start push image：%s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("start push image: %s", image), map[string]string{"step": "pushimage"})
 	named, err := refdocker.ParseDockerRef(image)
 	if err != nil {
 		return err
@@ -287,8 +287,14 @@ func (c *containerdImageCliImpl) ImagePush(image, user, pass string, logger even
 			}
 		}
 	})
+	// wait all goroutines
+	waitErr := eg.Wait()
+	if waitErr != nil {
+		printLog(logger, "error", fmt.Sprintf("push image %s failed %v", reference, waitErr), map[string]string{"step": "pushimage"})
+		return waitErr
+	}
 	// create a container
-	printLog(logger, "info", fmt.Sprintf("success push image：%s", reference), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("success push image: %s", reference), map[string]string{"step": "pushimage"})
 	return nil
 }
 
@@ -304,8 +310,8 @@ func (c *containerdImageCliImpl) ImageTag(source, target string, logger event.Lo
 		return err
 	}
 	targetImage := targetNamed.String()
-	logrus.Infof(fmt.Sprintf("change image tag：%s -> %s", srcImage, targetImage))
-	printLog(logger, "info", fmt.Sprintf("change image tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
+	logrus.Infof(fmt.Sprintf("change image tag: %s -> %s", srcImage, targetImage))
+	printLog(logger, "info", fmt.Sprintf("change image tag: %s -> %s", source, target), map[string]string{"step": "changetag"})
 	ctx := namespaces.WithNamespace(context.Background(), Namespace)
 	imageService := c.client.ImageService()
 	image, err := imageService.Get(ctx, srcImage)
