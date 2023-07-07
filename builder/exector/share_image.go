@@ -80,12 +80,12 @@ func NewImageShareItem(in []byte, imageClient sources.ImageClient, EtcdCli *clie
 // ShareService ShareService
 func (i *ImageShareItem) ShareService() error {
 	var syncImage = true
-	if strings.HasPrefix(i.LocalImageName, builder.REGISTRYDOMAIN) {
+	if strings.HasPrefix(i.LocalImageName, builder.REGISTRYDOMAIN) ||
+		i.ShareInfo.ImageInfo.HubUser == "" ||
+		i.LocalImageName == i.ImageName {
 		syncImage = false
 	}
-	if i.ShareInfo.ImageInfo.HubUser == "" {
-		syncImage = false
-	}
+
 	if syncImage {
 		hubuser, hubpass := builder.GetImageUserInfoV2(i.LocalImageName, i.LocalImageUsername, i.LocalImagePassword)
 		_, err := i.ImageClient.ImagePull(i.LocalImageName, hubuser, hubpass, i.Logger, 20)
