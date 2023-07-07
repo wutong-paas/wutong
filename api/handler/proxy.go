@@ -82,15 +82,15 @@ func GetFileBrowserProxy(serviceID string) proxy.Proxy {
 	fbProxy, ok := filebrowserProxies[serviceID]
 	if !ok {
 		// get serviceID and fb plugin
-		service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+		service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 		if err != nil {
 			return proxy.CreateProxy("filebrowser", "http", nil)
 		}
-		tenant, err := db.GetManager().TenantDao().GetTenantByUUID(service.TenantID)
+		tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(service.TenantEnvID)
 		if err != nil {
 			return proxy.CreateProxy("filebrowser", "http", nil)
 		}
-		k8sSvc := fmt.Sprintf("%s-6173.%s:6173", service.ServiceAlias, tenant.Namespace)
+		k8sSvc := fmt.Sprintf("%s-6173.%s:6173", service.ServiceAlias, tenantEnv.Namespace)
 		fbProxy = proxy.CreateProxy("filebrowser", "http", []string{k8sSvc})
 		filebrowserProxies[serviceID] = fbProxy
 	}
@@ -102,15 +102,15 @@ func GetDbgateProxy(serviceID string) proxy.Proxy {
 	dbgateProxy, ok := dbgateProxies[serviceID]
 	if !ok {
 		// get serviceID and fb plugin
-		service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+		service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 		if err != nil {
 			return proxy.CreateProxy("dbgate", "http", nil)
 		}
-		tenant, err := db.GetManager().TenantDao().GetTenantByUUID(service.TenantID)
+		tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(service.TenantEnvID)
 		if err != nil {
 			return proxy.CreateProxy("dbgate", "http", nil)
 		}
-		k8sSvc := fmt.Sprintf("%s-3000.%s:3000", service.ServiceAlias, tenant.Namespace)
+		k8sSvc := fmt.Sprintf("%s-3000.%s:3000", service.ServiceAlias, tenantEnv.Namespace)
 		dbgateProxy = proxy.CreateProxy("dbgate", "http", []string{k8sSvc})
 		dbgateProxies[serviceID] = dbgateProxy
 	}

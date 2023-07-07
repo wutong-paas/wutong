@@ -9,8 +9,8 @@ service AppRuntimeSync {
   rpc GetMultiAppPods (ServicesRequest) returns (MultiServiceAppPodList) {}
   rpc GetComponentPodNums (ServicesRequest) returns (ComponentPodNums) {}
   rpc GetDeployInfo (ServiceRequest) returns (DeployInfo) {}
-  rpc GetTenantResource (TenantRequest) returns (TenantResource) {}
-  rpc GetTenantResources (Empty) returns (TenantResourceList) {}
+  rpc GetTenantEnvResource (TenantEnvRequest) returns (TenantEnvResource) {}
+  rpc GetTenantEnvResources (Empty) returns (TenantEnvResourceList) {}
   rpc ListThirdPartyEndpoints (ServiceRequest) returns (ThirdPartyEndpoints) {}
   rpc AddThirdPartyEndpoint (AddThirdPartyEndpointsReq) returns (Empty) {}
   rpc UpdThirdPartyEndpoint (UpdThirdPartyEndpointsReq) returns (Empty) {}
@@ -39,8 +39,8 @@ message ServiceRequest {
 message ServicesRequest {
   string service_ids = 1;
 }
-message TenantRequest {
-  string tenant_id = 1;
+message TenantEnvRequest {
+  string tenant_env_id = 1;
 }
 
 message StatusMessage {
@@ -96,7 +96,7 @@ message DeployInfo {
   string status = 11;
 }
 
-message TenantResource {
+message TenantEnvResource {
   int64 cpu_request = 1;
   int64 cpu_limit = 2;
   int64 memory_request = 3;
@@ -106,8 +106,8 @@ message TenantResource {
   int64 running_app_internal_num = 11;
 }
 
-message TenantResourceList {
-  map<string, TenantResource> resources = 1;
+message TenantEnvResourceList {
+  map<string, TenantEnvResource> resources = 1;
 }
 
 message AddThirdPartyEndpointsReq {

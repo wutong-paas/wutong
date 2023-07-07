@@ -2,7 +2,7 @@ package model
 
 import dbmodel "github.com/wutong-paas/wutong/db/model"
 
-//AddServiceMonitorRequestStruct add service monitor request
+// AddServiceMonitorRequestStruct add service monitor request
 type AddServiceMonitorRequestStruct struct {
 	// name
 	// in: body
@@ -27,10 +27,10 @@ type AddServiceMonitorRequestStruct struct {
 }
 
 // DbModel return database model
-func (a *AddServiceMonitorRequestStruct) DbModel(tenantID, serviceID string) *dbmodel.TenantServiceMonitor {
-	return &dbmodel.TenantServiceMonitor{
+func (a *AddServiceMonitorRequestStruct) DbModel(tenantEnvID, serviceID string) *dbmodel.TenantEnvServiceMonitor {
+	return &dbmodel.TenantEnvServiceMonitor{
 		Name:            a.Name,
-		TenantID:        tenantID,
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       serviceID,
 		ServiceShowName: a.ServiceShowName,
 		Port:            a.Port,
@@ -39,7 +39,7 @@ func (a *AddServiceMonitorRequestStruct) DbModel(tenantID, serviceID string) *db
 	}
 }
 
-//UpdateServiceMonitorRequestStruct update service monitor request
+// UpdateServiceMonitorRequestStruct update service monitor request
 type UpdateServiceMonitorRequestStruct struct {
 	// service_show_name
 	// in: body

@@ -33,27 +33,27 @@ import (
 	// pb "github.com/wutong-paas/wutong/worker/server/pb"
 )
 
-//VolumeTypeHandler LicenseAction
+// VolumeTypeHandler LicenseAction
 type VolumeTypeHandler interface {
-	VolumeTypeVar(action string, vtm *dbmodel.TenantServiceVolumeType) error
+	VolumeTypeVar(action string, vtm *dbmodel.TenantEnvServiceVolumeType) error
 	GetAllVolumeTypes() ([]*api_model.VolumeTypeStruct, error)
 	GetAllVolumeTypesByPage(page int, pageSize int) ([]*api_model.VolumeTypeStruct, error)
-	GetVolumeTypeByType(volumeType string) (*dbmodel.TenantServiceVolumeType, error)
+	GetVolumeTypeByType(volumeType string) (*dbmodel.TenantEnvServiceVolumeType, error)
 	GetAllStorageClasses() ([]*pb.StorageClassDetail, error)
 	VolumeTypeAction(action, volumeTypeID string) error
 	DeleteVolumeType(volumeTypeID string) error
 	SetVolumeType(vtm *api_model.VolumeTypeStruct) error
-	UpdateVolumeType(dbVolume *dbmodel.TenantServiceVolumeType, vol *api_model.VolumeTypeStruct) error
+	UpdateVolumeType(dbVolume *dbmodel.TenantEnvServiceVolumeType, vol *api_model.VolumeTypeStruct) error
 }
 
 var defaultVolumeTypeHandler VolumeTypeHandler
 
-//CreateVolumeTypeManger create VolumeType manager
+// CreateVolumeTypeManger create VolumeType manager
 func CreateVolumeTypeManger(statusCli *client.AppRuntimeSyncClient) *VolumeTypeAction {
 	return &VolumeTypeAction{statusCli: statusCli}
 }
 
-//GetVolumeTypeHandler get volumeType handler
+// GetVolumeTypeHandler get volumeType handler
 func GetVolumeTypeHandler() VolumeTypeHandler {
 	return defaultVolumeTypeHandler
 }
@@ -64,7 +64,7 @@ type VolumeTypeAction struct {
 }
 
 // VolumeTypeVar volume type crud
-func (vta *VolumeTypeAction) VolumeTypeVar(action string, vtm *dbmodel.TenantServiceVolumeType) error {
+func (vta *VolumeTypeAction) VolumeTypeVar(action string, vtm *dbmodel.TenantEnvServiceVolumeType) error {
 	switch action {
 	case "add":
 		logrus.Debug("add volumeType")
@@ -77,7 +77,7 @@ func (vta *VolumeTypeAction) VolumeTypeVar(action string, vtm *dbmodel.TenantSer
 // GetAllVolumeTypes get all volume types
 func (vta *VolumeTypeAction) GetAllVolumeTypes() ([]*api_model.VolumeTypeStruct, error) {
 	var optionList []*api_model.VolumeTypeStruct
-	volumeTypeMap := make(map[string]*dbmodel.TenantServiceVolumeType)
+	volumeTypeMap := make(map[string]*dbmodel.TenantEnvServiceVolumeType)
 	volumeTypes, err := db.GetManager().VolumeTypeDao().GetAllVolumeTypes()
 	if err != nil {
 		logrus.Errorf("get all volumeTypes error: %s", err.Error())
@@ -129,7 +129,7 @@ func (vta *VolumeTypeAction) GetAllVolumeTypes() ([]*api_model.VolumeTypeStruct,
 func (vta *VolumeTypeAction) GetAllVolumeTypesByPage(page int, pageSize int) ([]*api_model.VolumeTypeStruct, error) {
 
 	var optionList []*api_model.VolumeTypeStruct
-	volumeTypeMap := make(map[string]*dbmodel.TenantServiceVolumeType)
+	volumeTypeMap := make(map[string]*dbmodel.TenantEnvServiceVolumeType)
 	volumeTypes, err := db.GetManager().VolumeTypeDao().GetAllVolumeTypesByPage(page, pageSize)
 	if err != nil {
 		logrus.Errorf("get all volumeTypes error: %s", err.Error())
@@ -177,7 +177,7 @@ func (vta *VolumeTypeAction) GetAllVolumeTypesByPage(page int, pageSize int) ([]
 }
 
 // GetVolumeTypeByType get volume type by type
-func (vta *VolumeTypeAction) GetVolumeTypeByType(volumtType string) (*dbmodel.TenantServiceVolumeType, error) {
+func (vta *VolumeTypeAction) GetVolumeTypeByType(volumtType string) (*dbmodel.TenantEnvServiceVolumeType, error) {
 	return db.GetManager().VolumeTypeDao().GetVolumeTypeByType(volumtType)
 }
 
@@ -225,7 +225,7 @@ func (vta *VolumeTypeAction) SetVolumeType(vol *api_model.VolumeTypeStruct) erro
 		backupPolicy = vol.BackupPolicy
 	}
 
-	dbVolume := dbmodel.TenantServiceVolumeType{}
+	dbVolume := dbmodel.TenantEnvServiceVolumeType{}
 	dbVolume.VolumeType = vol.VolumeType
 	dbVolume.NameShow = vol.NameShow
 	dbVolume.CapacityValidation = string(jsonCapacityValidationStr)
@@ -244,7 +244,7 @@ func (vta *VolumeTypeAction) SetVolumeType(vol *api_model.VolumeTypeStruct) erro
 }
 
 // UpdateVolumeType update volume type
-func (vta *VolumeTypeAction) UpdateVolumeType(dbVolume *dbmodel.TenantServiceVolumeType, vol *api_model.VolumeTypeStruct) error {
+func (vta *VolumeTypeAction) UpdateVolumeType(dbVolume *dbmodel.TenantEnvServiceVolumeType, vol *api_model.VolumeTypeStruct) error {
 	var accessMode []string
 	var sharePolicy []string
 	var backupPolicy []string

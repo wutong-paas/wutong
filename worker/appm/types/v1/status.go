@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -32,7 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-//IsEmpty is empty
+// IsEmpty is empty
 func (a *AppService) IsEmpty() bool {
 	empty := len(a.pods) == 0
 	if !empty {
@@ -47,7 +48,7 @@ func (a *AppService) IsEmpty() bool {
 	return empty
 }
 
-//IsClosed is closed
+// IsClosed is closed
 func (a *AppService) IsClosed() bool {
 	if a.IsCustomComponent() {
 		return a.workload == nil
@@ -111,7 +112,7 @@ func conversionThirdComponent(obj runtime.Object) *v1alpha1.ThirdComponent {
 	return nil
 }
 
-//GetServiceStatus get service status
+// GetServiceStatus get service status
 func (a *AppService) GetServiceStatus() string {
 	//TODO: support custom component status
 	if a.IsCustomComponent() {
@@ -242,7 +243,7 @@ func isHaveNormalTerminatedContainer(pods []*corev1.Pod) bool {
 	return false
 }
 
-//Ready Whether ready
+// Ready Whether ready
 func (a *AppService) Ready() bool {
 	if a.statefulset != nil {
 		if a.statefulset.Status.ReadyReplicas >= int32(a.Replicas) {
@@ -257,8 +258,8 @@ func (a *AppService) Ready() bool {
 	return false
 }
 
-//IsWaitting service status is waitting
-//init container init-probe is running
+// IsWaitting service status is waitting
+// init container init-probe is running
 func (a *AppService) IsWaitting() bool {
 	var initcontainer []corev1.Container
 	if a.statefulset != nil {
@@ -275,7 +276,7 @@ func (a *AppService) IsWaitting() bool {
 	}
 	var haveProbeInitContainer bool
 	for _, init := range initcontainer {
-		if init.Image == GetProbeMeshImageName() || init.Image == GetOnlineProbeMeshImageName() {
+		if init.Image == builder.PROBEMESHIMAGENAME {
 			haveProbeInitContainer = true
 			break
 		}
@@ -286,7 +287,7 @@ func (a *AppService) IsWaitting() bool {
 		}
 		firstPod := a.pods[0]
 		for _, initconteir := range firstPod.Status.InitContainerStatuses {
-			if initconteir.Image == GetProbeMeshImageName() || initconteir.Image == GetOnlineProbeMeshImageName() {
+			if initconteir.Image == builder.PROBEMESHIMAGENAME {
 				if initconteir.State.Terminated == nil || initconteir.State.Terminated.ExitCode != 0 {
 					return true
 				}
@@ -296,7 +297,7 @@ func (a *AppService) IsWaitting() bool {
 	return false
 }
 
-//GetReadyReplicas get already ready pod number
+// GetReadyReplicas get already ready pod number
 func (a *AppService) GetReadyReplicas() int32 {
 	if a.statefulset != nil {
 		return a.statefulset.Status.ReadyReplicas
@@ -307,7 +308,7 @@ func (a *AppService) GetReadyReplicas() int32 {
 	return 0
 }
 
-//GetRunningVersion get running version
+// GetRunningVersion get running version
 func (a *AppService) GetRunningVersion() string {
 	if a.statefulset != nil {
 		return a.statefulset.Labels["version"]
@@ -318,7 +319,7 @@ func (a *AppService) GetRunningVersion() string {
 	return ""
 }
 
-//UpgradeComlete upgrade comlete
+// UpgradeComlete upgrade comlete
 func (a *AppService) UpgradeComlete() bool {
 	for _, pod := range a.pods {
 		if pod.Labels["version"] != a.DeployVersion {
@@ -328,11 +329,11 @@ func (a *AppService) UpgradeComlete() bool {
 	return a.Ready()
 }
 
-//AbnormalInfo pod Abnormal info
-//Record the container exception exit information in pod.
+// AbnormalInfo pod Abnormal info
+// Record the container exception exit information in pod.
 type AbnormalInfo struct {
 	ServiceID     string    `json:"service_id"`
-	TenantID      string    `json:"tenant_id"`
+	TenantEnvID   string    `json:"tenant_env_id"`
 	ServiceAlias  string    `json:"service_alias"`
 	PodName       string    `json:"pod_name"`
 	ContainerName string    `json:"container_name"`
@@ -342,7 +343,7 @@ type AbnormalInfo struct {
 	Count         int       `json:"count"`
 }
 
-//Hash get AbnormalInfo hash
+// Hash get AbnormalInfo hash
 func (a AbnormalInfo) Hash() string {
 	hash := sha256.New()
 	hash.Write([]byte(a.ServiceID + a.ServiceAlias))

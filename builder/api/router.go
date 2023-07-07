@@ -35,9 +35,9 @@ import (
 func APIServer() *chi.Mux {
 	r := chi.NewRouter()
 	r.Route("/v2/builder", func(r chi.Router) {
-		r.Get("/publickey/{tenant_id}", func(w http.ResponseWriter, r *http.Request) {
-			tenantId := strings.TrimSpace(chi.URLParam(r, "tenant_id"))
-			key := sources.GetPublicKey(tenantId)
+		r.Get("/publickey/{tenant_env_id}", func(w http.ResponseWriter, r *http.Request) {
+			tenantEnvId := strings.TrimSpace(chi.URLParam(r, "tenant_env_id"))
+			key := sources.GetPublicKey(tenantEnvId)
 			bean := struct {
 				Key string `json:"public_key"`
 			}{

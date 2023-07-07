@@ -29,13 +29,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-//ErrWaitTimeOut wait time out
+// ErrWaitTimeOut wait time out
 var ErrWaitTimeOut = fmt.Errorf("Wait time out")
 
-//ErrWaitCancel wait cancel
+// ErrWaitCancel wait cancel
 var ErrWaitCancel = fmt.Errorf("Wait cancel")
 
-//WaitReady wait ready
+// WaitReady wait ready
 func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) error {
 	if timeout < 80 {
 		timeout = time.Second * 80
@@ -44,6 +44,7 @@ func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logg
 	logrus.Debugf("waiting app ready timeout %ds", int(timeout.Seconds()))
 	ticker := time.NewTicker(timeout / 10)
 	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 	defer ticker.Stop()
 	var i int
 	for {
@@ -69,7 +70,7 @@ func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logg
 	}
 }
 
-//WaitStop wait service stop complete
+// WaitStop wait service stop complete
 func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) error {
 	if a == nil {
 		return nil
@@ -81,6 +82,7 @@ func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logge
 	logrus.Debugf("waiting app closed timeout %ds", int(timeout.Seconds()))
 	ticker := time.NewTicker(timeout / 10)
 	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 	defer ticker.Stop()
 	var i int
 	for {
@@ -102,7 +104,7 @@ func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logge
 	}
 }
 
-//WaitUpgradeReady wait upgrade success
+// WaitUpgradeReady wait upgrade success
 func WaitUpgradeReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) error {
 	if a == nil {
 		return nil
@@ -114,6 +116,7 @@ func WaitUpgradeReady(store store.Storer, a *v1.AppService, timeout time.Duratio
 	logrus.Debugf("waiting app upgrade complete timeout %ds", int(timeout.Seconds()))
 	ticker := time.NewTicker(timeout / 10)
 	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 	defer ticker.Stop()
 	for {
 		if a.UpgradeComlete() {

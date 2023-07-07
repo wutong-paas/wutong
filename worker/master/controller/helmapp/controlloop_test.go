@@ -53,7 +53,6 @@ var _ = Describe("ControlLoop", func() {
 				},
 			},
 			Spec: wutongv1alpha1.HelmAppSpec{
-				EID:          "5bfba91b0ead72f612732535ef802217",
 				TemplateName: "phpmyadmin",
 				Version:      "8.2.0",
 				AppStore: &wutongv1alpha1.HelmAppStore{

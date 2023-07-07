@@ -64,7 +64,7 @@ func TestUploadPkg2(t *testing.T) {
 }
 
 func TestBackupServiceVolume(t *testing.T) {
-	volume := dbmodel.TenantServiceVolume{}
+	volume := dbmodel.TenantEnvServiceVolume{}
 	sourceDir := ""
 	serviceID := ""
 	dstDir := fmt.Sprintf("%s/data_%s/%s.zip", sourceDir, serviceID, strings.Replace(volume.VolumeName, "/", "", -1))

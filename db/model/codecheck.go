@@ -18,12 +18,12 @@
 
 package model
 
-//TableName 表名
+// TableName 表名
 func (t *CodeCheckResult) TableName() string {
-	return "tenant_services_codecheck"
+	return "tenant_env_services_codecheck"
 }
 
-//CodeCheckResult codecheck result struct
+// CodeCheckResult codecheck result struct
 type CodeCheckResult struct {
 	Model
 	ServiceID       string `gorm:"column:service_id;size:70"`

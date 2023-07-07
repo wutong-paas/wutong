@@ -1,23 +1,23 @@
 package handler
 
 import (
+	"github.com/jinzhu/gorm"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
-	"github.com/jinzhu/gorm"
 )
 
-//UpdateServiceMonitor update service monitor
-func (s *ServiceAction) UpdateServiceMonitor(tenantID, serviceID, name string, update api_model.UpdateServiceMonitorRequestStruct) (*dbmodel.TenantServiceMonitor, error) {
-	sm, err := db.GetManager().TenantServiceMonitorDao().GetByName(serviceID, name)
+// UpdateServiceMonitor update service monitor
+func (s *ServiceAction) UpdateServiceMonitor(tenantEnvID, serviceID, name string, update api_model.UpdateServiceMonitorRequestStruct) (*dbmodel.TenantEnvServiceMonitor, error) {
+	sm, err := db.GetManager().TenantEnvServiceMonitorDao().GetByName(serviceID, name)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, bcode.ErrServiceMonitorNotFound
 		}
 		return nil, err
 	}
-	_, err = db.GetManager().TenantServicesPortDao().GetPort(serviceID, update.Port)
+	_, err = db.GetManager().TenantEnvServicesPortDao().GetPort(serviceID, update.Port)
 	if err != nil {
 		return nil, bcode.ErrPortNotFound
 	}
@@ -25,44 +25,44 @@ func (s *ServiceAction) UpdateServiceMonitor(tenantID, serviceID, name string, u
 	sm.Port = update.Port
 	sm.Path = update.Path
 	sm.Interval = update.Interval
-	return sm, db.GetManager().TenantServiceMonitorDao().UpdateModel(sm)
+	return sm, db.GetManager().TenantEnvServiceMonitorDao().UpdateModel(sm)
 }
 
-//DeleteServiceMonitor delete
-func (s *ServiceAction) DeleteServiceMonitor(tenantID, serviceID, name string) (*dbmodel.TenantServiceMonitor, error) {
-	sm, err := db.GetManager().TenantServiceMonitorDao().GetByName(serviceID, name)
+// DeleteServiceMonitor delete
+func (s *ServiceAction) DeleteServiceMonitor(tenantEnvID, serviceID, name string) (*dbmodel.TenantEnvServiceMonitor, error) {
+	sm, err := db.GetManager().TenantEnvServiceMonitorDao().GetByName(serviceID, name)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, bcode.ErrServiceMonitorNotFound
 		}
 		return nil, err
 	}
-	return sm, db.GetManager().TenantServiceMonitorDao().DeleteServiceMonitor(sm)
+	return sm, db.GetManager().TenantEnvServiceMonitorDao().DeleteServiceMonitor(sm)
 }
 
-//AddServiceMonitor add service monitor
-func (s *ServiceAction) AddServiceMonitor(tenantID, serviceID string, add api_model.AddServiceMonitorRequestStruct) (*dbmodel.TenantServiceMonitor, error) {
-	_, err := db.GetManager().TenantServicesPortDao().GetPort(serviceID, add.Port)
+// AddServiceMonitor add service monitor
+func (s *ServiceAction) AddServiceMonitor(tenantEnvID, serviceID string, add api_model.AddServiceMonitorRequestStruct) (*dbmodel.TenantEnvServiceMonitor, error) {
+	_, err := db.GetManager().TenantEnvServicesPortDao().GetPort(serviceID, add.Port)
 	if err != nil {
 		return nil, bcode.ErrPortNotFound
 	}
-	sm := dbmodel.TenantServiceMonitor{
+	sm := dbmodel.TenantEnvServiceMonitor{
 		Name:            add.Name,
-		TenantID:        tenantID,
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       serviceID,
 		ServiceShowName: add.ServiceShowName,
 		Port:            add.Port,
 		Path:            add.Path,
 		Interval:        add.Interval,
 	}
-	return &sm, db.GetManager().TenantServiceMonitorDao().AddModel(&sm)
+	return &sm, db.GetManager().TenantEnvServiceMonitorDao().AddModel(&sm)
 }
 
 // SyncComponentMonitors -
 func (s *ServiceAction) SyncComponentMonitors(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
 	var (
 		componentIDs []string
-		monitors     []*dbmodel.TenantServiceMonitor
+		monitors     []*dbmodel.TenantEnvServiceMonitor
 	)
 	for _, component := range components {
 		if component.Monitors == nil {
@@ -70,11 +70,11 @@ func (s *ServiceAction) SyncComponentMonitors(tx *gorm.DB, app *dbmodel.Applicat
 		}
 		componentIDs = append(componentIDs, component.ComponentBase.ComponentID)
 		for _, monitor := range component.Monitors {
-			monitors = append(monitors, monitor.DbModel(app.TenantID, component.ComponentBase.ComponentID))
+			monitors = append(monitors, monitor.DbModel(app.TenantEnvID, component.ComponentBase.ComponentID))
 		}
 	}
-	if err := db.GetManager().TenantServiceMonitorDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceMonitorDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	return db.GetManager().TenantServiceMonitorDaoTransactions(tx).CreateOrUpdateMonitorInBatch(monitors)
+	return db.GetManager().TenantEnvServiceMonitorDaoTransactions(tx).CreateOrUpdateMonitorInBatch(monitors)
 }

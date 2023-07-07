@@ -23,9 +23,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 )
@@ -76,9 +76,9 @@ func TestABCService(t *testing.T) {
 		"service_id":"55c60b74a506261608f5c36f0f45068c",
 		"code_from":"gitlab_manual",
 		"volume_mount_path":"/data",
-		"tenant_id":"3000bf47672b40c19529504651697b29",
+		"tenant_env_id":"3000bf47672b40c19529504651697b29",
 		"container_cmd":"start web",
-		"host_path":"/wtdata/tenant/3000bf47672b40c19529504651697b29/service/55c60b74a506261608f5c36f0f45068c",
+		"host_path":"/wtdata/tenantEnv/3000bf47672b40c19529504651697b29/service/55c60b74a506261608f5c36f0f45068c",
 		"envs_info":[
 	
 		],
@@ -95,7 +95,7 @@ func TestABCService(t *testing.T) {
 }
 
 func TestUUID(t *testing.T) {
-	id := fmt.Sprintf("%s", uuid.NewV4())
+	id := fmt.Sprintf("%s", uuid.New())
 	uid := strings.Replace(id, "-", "", -1)
 	logrus.Debugf("uuid is %v", uid)
 	name := strings.Split(id, "-")[0]

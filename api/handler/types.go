@@ -21,8 +21,8 @@ package handler
 import "errors"
 
 var (
-	// ErrTenantStillHasServices -
-	ErrTenantStillHasServices = errors.New("tenant still has services")
-	// ErrTenantStillHasPlugins -
-	ErrTenantStillHasPlugins = errors.New("tenant still has plugins")
+	// ErrTenantEnvStillHasServices -
+	ErrTenantEnvStillHasServices = errors.New("tenant env still has services")
+	// ErrTenantEnvStillHasPlugins -
+	ErrTenantEnvStillHasPlugins = errors.New("tenant env still has plugins")
 )

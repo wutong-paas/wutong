@@ -135,13 +135,13 @@ func (h *dockerLogStore) GetMonitorData() *db.MonitorData {
 }
 func (h *dockerLogStore) Gc() {
 	tiker := time.NewTicker(time.Second * 30)
+	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
 			h.gcRun()
 		case <-h.ctx.Done():
 			h.log.Debug("docker log store gc stop.")
-			tiker.Stop()
 			return
 		}
 	}
@@ -186,7 +186,7 @@ func (h *dockerLogStore) gcRun() {
 			h.log.Debugf("docker log barrel(%s) gc complete", id)
 		}
 	}
-	useTime := time.Now().UnixNano() - t.UnixNano()
+	useTime := time.Since(t).Nanoseconds()
 	h.log.Debugf("Docker log message store complete gc in %d ns", useTime)
 }
 func (h *dockerLogStore) stop() {
@@ -207,7 +207,7 @@ func (h *dockerLogStore) saveBeforeGc(eventID string, v *dockerLogEventBarrel) {
 			h.log.Error("persistence barrel message error.", err.Error())
 			h.InsertGarbageMessage(v.persistenceBarrel...)
 		}
-		h.log.Infof("persistence barrel(%s) %d log message to file.", eventID, len(v.persistenceBarrel))
+		h.log.Debugf("dockerLogStore.saveBeforeGc: persistence barrel(%s) %d log message to file.", eventID, len(v.persistenceBarrel))
 	}
 	v.persistenceBarrel = nil
 	v.persistencelock.Unlock()
@@ -243,7 +243,7 @@ func (h *dockerLogStore) persistence(event []string) {
 					h.log.Error("persistence barrel message error.", err.Error())
 					h.InsertGarbageMessage(ba.persistenceBarrel...)
 				}
-				h.log.Infof("persistence barrel(%s) %d log message to file.", eventID, len(ba.persistenceBarrel))
+				h.log.Debugf("dockerLogStore.persistence: persistence barrel(%s) %d log message to file.", eventID, len(ba.persistenceBarrel))
 				ba.persistenceBarrel = ba.persistenceBarrel[:0]
 				ba.needPersistence = false
 			}

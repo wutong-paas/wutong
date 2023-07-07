@@ -38,7 +38,7 @@ func CreateLocalVolume(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	tenantID := requestopt["tenant_id"]
+	tenantEnvID := requestopt["tenant_env_id"]
 	serviceID := requestopt["service_id"]
 	pvcName := requestopt["pvcname"]
 	localPath := os.Getenv("LOCAL_DATA_PATH")
@@ -51,11 +51,11 @@ func CreateLocalVolume(w http.ResponseWriter, r *http.Request) {
 			localPath = "/wtlocaldata"
 		}
 	}
-	volumeHostPath := path.Join(localPath, "tenant", tenantID, "service", serviceID, pvcName)
+	volumeHostPath := path.Join(localPath, "tenant_env", tenantEnvID, "service", serviceID, pvcName)
 	volumePath, volumeok := requestopt["volume_path"]
 	podName, podok := requestopt["pod_name"]
 	if volumeok && podok {
-		volumeHostPath = path.Join(localPath, "tenant", tenantID, "service", serviceID, volumePath, podName)
+		volumeHostPath = path.Join(localPath, "tenant_env", tenantEnvID, "service", serviceID, volumePath, podName)
 	}
 	if err := util.CheckAndCreateDirByMode(volumeHostPath, 0777); err != nil {
 		logrus.Errorf("check and create dir %s error %s", volumeHostPath, err.Error())

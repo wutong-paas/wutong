@@ -30,9 +30,9 @@ import (
 
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/pebbe/zmq4"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 )
 
 const (
@@ -78,7 +78,7 @@ func TestContinuousServer(t *testing.T) {
 			client, _ := zmq4.NewSocket(zmq4.REQ)
 			client.Connect(en)
 			defer client.Close()
-			id := uuid.NewV4()
+			id := uuid.New()
 		Continuous:
 			for {
 				request := []string{fmt.Sprintf(`{"event_id":"%s","message":"hello word2","time":"%s"}`, id, time.Now().Format(time.RFC3339))}
@@ -117,7 +117,7 @@ func TestContinuousServer(t *testing.T) {
 	wait.Wait()
 }
 
-//go test -v -bench=“.”
+// go test -v -bench=“.”
 func BenchmarkServer(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		request := []string{fmt.Sprintf(`{"event_id":"qwertyuiuiosadfkbjasdv","message":"hello word","step":"%d"}`, i)}

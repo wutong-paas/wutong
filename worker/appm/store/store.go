@@ -33,12 +33,14 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/util/bcode"
+	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/cmd/worker/option"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	wutongversioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/pkg/generated/informers/externalversions"
+	"github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/constants"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/appm/componentdefinition"
@@ -71,7 +73,7 @@ var rc2RecordType = map[string]string{
 	"HorizontalPodAutoscaler": "hpa",
 }
 
-//Storer app runtime store interface
+// Storer app runtime store interface
 type Storer interface {
 	Start() error
 	Ready() bool
@@ -83,14 +85,14 @@ type Storer interface {
 	GetAppServiceStatus(serviceID string) string
 	GetAppServiceStatuses(serviceIDs []string) map[string]string
 	GetAppServicesStatus(serviceIDs []string) map[string]string
-	GetTenantResource(tenantID string) TenantResource
-	GetTenantResourceList() []TenantResource
-	GetTenantRunningApp(tenantID string) []*v1.AppService
+	GetTenantEnvResource(tenantEnvID string) TenantEnvResource
+	GetTenantEnvResourceList() []TenantEnvResource
+	GetTenantEnvRunningApp(tenantEnvID string) []*v1.AppService
 	GetNeedBillingStatus(serviceIDs []string) map[string]string
 	OnDeletes(obj ...interface{})
 	RegistPodUpdateListener(string, chan<- *corev1.Pod)
 	UnRegistPodUpdateListener(string)
-	RegisterVolumeTypeListener(string, chan<- *model.TenantServiceVolumeType)
+	RegisterVolumeTypeListener(string, chan<- *model.TenantEnvServiceVolumeType)
 	UnRegisterVolumeTypeListener(string)
 	GetCrds() ([]*apiextensions.CustomResourceDefinition, error)
 	GetCrd(name string) (*apiextensions.CustomResourceDefinition, error)
@@ -124,8 +126,8 @@ type Event struct {
 	Obj  interface{}
 }
 
-//appRuntimeStore app runtime store
-//cache all kubernetes object and appservice
+// appRuntimeStore app runtime store
+// cache all kubernetes object and appservice
 type appRuntimeStore struct {
 	kubeconfig             *rest.Config
 	clientset              kubernetes.Interface
@@ -144,12 +146,12 @@ type appRuntimeStore struct {
 	stopch                 chan struct{}
 	podUpdateListeners     map[string]chan<- *corev1.Pod
 	podUpdateListenerLock  sync.Mutex
-	volumeTypeListeners    map[string]chan<- *model.TenantServiceVolumeType
+	volumeTypeListeners    map[string]chan<- *model.TenantEnvServiceVolumeType
 	volumeTypeListenerLock sync.Mutex
 	resourceCache          *ResourceCache
 }
 
-//NewStore new app runtime store
+// NewStore new app runtime store
 func NewStore(
 	kubeconfig *rest.Config,
 	clientset kubernetes.Interface,
@@ -171,7 +173,7 @@ func NewStore(
 		crClients:           make(map[string]interface{}),
 		resourceCache:       NewResourceCache(),
 		podUpdateListeners:  make(map[string]chan<- *corev1.Pod, 1),
-		volumeTypeListeners: make(map[string]chan<- *model.TenantServiceVolumeType, 1),
+		volumeTypeListeners: make(map[string]chan<- *model.TenantEnvServiceVolumeType, 1),
 	}
 	crdClient, err := internalclientset.NewForConfig(kubeconfig)
 	if err != nil {
@@ -309,7 +311,7 @@ func NewStore(
 	store.informers.ConfigMap.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Endpoints.AddEventHandlerWithResyncPeriod(epEventHandler, time.Second*10)
-	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store, time.Second*10)
+	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
 	store.informers.StorageClass.AddEventHandlerWithResyncPeriod(store, time.Second*300)
 	store.informers.Claims.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Events.AddEventHandlerWithResyncPeriod(store.evtEventHandler(), time.Second*10)
@@ -364,12 +366,12 @@ func (a *appRuntimeStore) Start() error {
 	return nil
 }
 
-//Ready if all kube informers is syncd, store is ready
+// Ready if all kube informers is syncd, store is ready
 func (a *appRuntimeStore) Ready() bool {
 	return a.informers.Ready()
 }
 
-//checkReplicasetWhetherDelete if rs is old version,if it is old version and it always delete all pod.
+// checkReplicasetWhetherDelete if rs is old version,if it is old version and it always delete all pod.
 // will delete it
 func (a *appRuntimeStore) checkReplicasetWhetherDelete(app *v1.AppService, rs *appsv1.ReplicaSet) {
 	current := app.GetCurrentReplicaSet()
@@ -584,7 +586,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 	}
 }
 
-//getAppService if  creator is true, will create new app service where not found in store
+// getAppService if  creator is true, will create new app service where not found in store
 func (a *appRuntimeStore) getAppService(serviceID, version, createrID string, creator bool) (*v1.AppService, error) {
 	var appservice *v1.AppService
 	appservice = a.GetAppService(serviceID)
@@ -805,7 +807,7 @@ func (a *appRuntimeStore) OnDeletes(objs ...interface{}) {
 	}
 }
 
-//RegistAppService regist a app model to store.
+// RegistAppService regist a app model to store.
 func (a *appRuntimeStore) RegistAppService(app *v1.AppService) {
 	a.appServices.Store(v1.GetCacheKeyOnlyServiceID(app.ServiceID), app)
 	a.appCount++
@@ -816,14 +818,14 @@ func (a *appRuntimeStore) GetPod(namespace, name string) (*corev1.Pod, error) {
 	return a.listers.Pod.Pods(namespace).Get(name)
 }
 
-//DeleteAppService delete cache app service
+// DeleteAppService delete cache app service
 func (a *appRuntimeStore) DeleteAppService(app *v1.AppService) {
 	//a.appServices.Delete(v1.GetCacheKeyOnlyServiceID(app.ServiceID))
 	//a.appCount--
 	//logrus.Debugf("current have %d app after delete \n", a.appCount)
 }
 
-//DeleteAppServiceByKey delete cache app service
+// DeleteAppServiceByKey delete cache app service
 func (a *appRuntimeStore) DeleteAppServiceByKey(key v1.CacheKey) {
 	a.appServices.Delete(key)
 	a.appCount--
@@ -936,7 +938,7 @@ func (a *appRuntimeStore) GetAllAppServices() (apps []*v1.AppService) {
 func (a *appRuntimeStore) GetAppServiceStatus(serviceID string) string {
 	app := a.GetAppService(serviceID)
 	if app == nil {
-		component, _ := a.dbmanager.TenantServiceDao().GetServiceByID(serviceID)
+		component, _ := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
 		if component == nil {
 			return v1.UNKNOW
 		}
@@ -986,7 +988,7 @@ func (a *appRuntimeStore) GetAppServiceStatuses(serviceIDs []string) map[string]
 		}
 		statusMap[serviceID] = status
 	}
-	components, err := a.dbmanager.TenantServiceDao().GetServiceByIDs(queryComponentIDs)
+	components, err := a.dbmanager.TenantEnvServiceDao().GetServiceByIDs(queryComponentIDs)
 	if err != nil {
 		logrus.Errorf("get components by serviceIDs failed: %s", err.Error())
 	}
@@ -994,7 +996,7 @@ func (a *appRuntimeStore) GetAppServiceStatuses(serviceIDs []string) map[string]
 	if err != nil {
 		logrus.Errorf("get component versions by serviceIDs failed: %s", err.Error())
 	}
-	existComponents := make(map[string]*model.TenantServices)
+	existComponents := make(map[string]*model.TenantEnvServices)
 	for _, component := range components {
 		existComponents[component.ServiceID] = component
 	}
@@ -1036,7 +1038,7 @@ func (a *appRuntimeStore) GetAppServicesStatus(serviceIDs []string) map[string]s
 }
 
 func (a *appRuntimeStore) GetAppStatus(appID string) (pb.AppStatus_Status, error) {
-	services, err := db.GetManager().TenantServiceDao().ListByAppID(appID)
+	services, err := db.GetManager().TenantEnvServiceDao().ListByAppID(appID)
 	if err != nil || len(services) == 0 {
 		return pb.AppStatus_NIL, err
 	}
@@ -1150,87 +1152,101 @@ func isClosedStatus(curStatus string) bool {
 	return curStatus == v1.BUILDEFAILURE || curStatus == v1.CLOSED || curStatus == v1.UNDEPLOY || curStatus == v1.BUILDING || curStatus == v1.UNKNOW
 }
 
-func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
-	var ai v1.AbnormalInfo
-	if len(pod.Spec.Containers) > 0 {
-		var i = 0
-		container := pod.Spec.Containers[0]
-		for _, env := range container.Env {
-			if env.Name == "SERVICE_ID" {
-				ai.ServiceID = env.Value
-				i++
-			}
-			if env.Name == "SERVICE_NAME" {
-				ai.ServiceAlias = env.Value
-				i++
-			}
-			if i == 2 {
-				break
-			}
-		}
-	}
-	ai.PodName = pod.Name
-	ai.TenantID = pod.Namespace
-	return ai
+// func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
+// 	var ai v1.AbnormalInfo
+// 	if len(pod.Spec.Containers) > 0 {
+// 		var i = 0
+// 		container := pod.Spec.Containers[0]
+// 		for _, env := range container.Env {
+// 			if env.Name == "WT_SERVICE_ID" {
+// 				ai.ServiceID = env.Value
+// 				i++
+// 			}
+// 			if env.Name == "WT_SERVICE_ALIAS" {
+// 				ai.ServiceAlias = env.Value
+// 				i++
+// 			}
+// 			// 兼容 v1.2.0 之前的版本
+// 			if ai.ServiceID == "" {
+// 				if env.Name == "SERVICE_ID" {
+// 					ai.ServiceID = env.Value
+// 					i++
+// 				}
+// 			}
+// 			if ai.ServiceAlias == "" {
+// 				if env.Name == "SERVICE_NAME" {
+// 					ai.ServiceAlias = env.Value
+// 					i++
+// 				}
+// 			}
+
+// 			if i == 2 {
+// 				break
+// 			}
+// 		}
+// 	}
+// 	ai.PodName = pod.Name
+// 	ai.TenantEnvID = pod.Namespace
+// 	return ai
+// }
+
+// func (a *appRuntimeStore) analyzePodStatus(pod *corev1.Pod) {
+// 	for _, containerStatus := range pod.Status.ContainerStatuses {
+// 		if containerStatus.LastTerminationState.Terminated != nil {
+// 			ai := getServiceInfoFromPod(pod)
+// 			ai.ContainerName = containerStatus.Name
+// 			ai.Reason = containerStatus.LastTerminationState.Terminated.Reason
+// 			ai.Message = containerStatus.LastTerminationState.Terminated.Message
+// 			ai.CreateTime = time.Now()
+// 			a.addAbnormalInfo(&ai)
+// 		}
+// 	}
+// }
+
+// func (a *appRuntimeStore) addAbnormalInfo(ai *v1.AbnormalInfo) {
+// 	switch ai.Reason {
+// 	case "OOMKilled":
+// 		a.dbmanager.NotificationEventDao().AddModel(&model.NotificationEvent{
+// 			Kind:          "service",
+// 			KindID:        ai.ServiceID,
+// 			Hash:          ai.Hash(),
+// 			Type:          "UnNormal",
+// 			Message:       fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
+// 			Reason:        "OOMKilled",
+// 			Count:         ai.Count,
+// 			ServiceName:   ai.ServiceAlias,
+// 			TenantEnvName: ai.TenantEnvID,
+// 		})
+// 	default:
+// 		db.GetManager().NotificationEventDao().AddModel(&model.NotificationEvent{
+// 			Kind:          "service",
+// 			KindID:        ai.ServiceID,
+// 			Hash:          ai.Hash(),
+// 			Type:          "UnNormal",
+// 			Message:       fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
+// 			Reason:        ai.Reason,
+// 			Count:         ai.Count,
+// 			ServiceName:   ai.ServiceAlias,
+// 			TenantEnvName: ai.TenantEnvID,
+// 		})
+// 	}
+// }
+
+// GetTenantEnvResource get tenant env resource
+func (a *appRuntimeStore) GetTenantEnvResource(tenantEnvID string) TenantEnvResource {
+	return a.resourceCache.GetTenantEnvResource(tenantEnvID)
 }
 
-func (a *appRuntimeStore) analyzePodStatus(pod *corev1.Pod) {
-	for _, containerStatus := range pod.Status.ContainerStatuses {
-		if containerStatus.LastTerminationState.Terminated != nil {
-			ai := getServiceInfoFromPod(pod)
-			ai.ContainerName = containerStatus.Name
-			ai.Reason = containerStatus.LastTerminationState.Terminated.Reason
-			ai.Message = containerStatus.LastTerminationState.Terminated.Message
-			ai.CreateTime = time.Now()
-			a.addAbnormalInfo(&ai)
-		}
-	}
+// GetTenantEnvResource get tenant env resource
+func (a *appRuntimeStore) GetTenantEnvResourceList() []TenantEnvResource {
+	return a.resourceCache.GetAllTenantEnvResource()
 }
 
-func (a *appRuntimeStore) addAbnormalInfo(ai *v1.AbnormalInfo) {
-	switch ai.Reason {
-	case "OOMKilled":
-		a.dbmanager.NotificationEventDao().AddModel(&model.NotificationEvent{
-			Kind:        "service",
-			KindID:      ai.ServiceID,
-			Hash:        ai.Hash(),
-			Type:        "UnNormal",
-			Message:     fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
-			Reason:      "OOMKilled",
-			Count:       ai.Count,
-			ServiceName: ai.ServiceAlias,
-			TenantName:  ai.TenantID,
-		})
-	default:
-		db.GetManager().NotificationEventDao().AddModel(&model.NotificationEvent{
-			Kind:        "service",
-			KindID:      ai.ServiceID,
-			Hash:        ai.Hash(),
-			Type:        "UnNormal",
-			Message:     fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
-			Reason:      ai.Reason,
-			Count:       ai.Count,
-			ServiceName: ai.ServiceAlias,
-			TenantName:  ai.TenantID,
-		})
-	}
-}
-
-//GetTenantResource get tenant resource
-func (a *appRuntimeStore) GetTenantResource(tenantID string) TenantResource {
-	return a.resourceCache.GetTenantResource(tenantID)
-}
-
-//GetTenantResource get tenant resource
-func (a *appRuntimeStore) GetTenantResourceList() []TenantResource {
-	return a.resourceCache.GetAllTenantResource()
-}
-
-//GetTenantRunningApp get running app by tenant
-func (a *appRuntimeStore) GetTenantRunningApp(tenantID string) (list []*v1.AppService) {
+// GetTenantEnvRunningApp get running app by tenantEnv
+func (a *appRuntimeStore) GetTenantEnvRunningApp(tenantEnvID string) (list []*v1.AppService) {
 	a.appServices.Range(func(k, v interface{}) bool {
 		appService, _ := v.(*v1.AppService)
-		if appService != nil && (appService.TenantID == tenantID || tenantID == corev1.NamespaceAll || appService.GetNamespace() == tenantID) && !appService.IsClosed() {
+		if appService != nil && (appService.TenantEnvID == tenantEnvID || tenantEnvID == corev1.NamespaceAll || appService.GetNamespace() == tenantEnvID) && !appService.IsClosed() {
 			list = append(list, appService)
 		}
 		return true
@@ -1304,7 +1320,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			if serviceID == "" || ruleID == "" {
 				return
 			}
-			record := &model.TenantServiceScalingRecords{
+			record := &model.TenantEnvServiceScalingRecords{
 				ServiceID:   serviceID,
 				RuleID:      ruleID,
 				EventName:   evt.GetName(),
@@ -1317,7 +1333,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			}
 			logrus.Debugf("received add record: %#v", record)
 
-			if err := db.GetManager().TenantServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
+			if err := db.GetManager().TenantEnvServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
 				logrus.Warningf("update or create scaling record: %v", err)
 			}
 		},
@@ -1337,7 +1353,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			if serviceID == "" || ruleID == "" {
 				return
 			}
-			record := &model.TenantServiceScalingRecords{
+			record := &model.TenantEnvServiceScalingRecords{
 				ServiceID:   serviceID,
 				RuleID:      ruleID,
 				EventName:   cevt.GetName(),
@@ -1349,7 +1365,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 			}
 			logrus.Debugf("received update record: %#v", record)
 
-			if err := db.GetManager().TenantServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
+			if err := db.GetManager().TenantEnvServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
 				logrus.Warningf("update or create scaling record: %v", err)
 			}
 		},
@@ -1373,6 +1389,29 @@ func (a *appRuntimeStore) nsEventHandler() cache.ResourceEventHandlerFuncs {
 			if err := a.createOrUpdateImagePullSecret(ns.Name); err != nil {
 				logrus.Errorf("create or update imagepullsecret: %v", err)
 			}
+		},
+	}
+}
+
+func (a *appRuntimeStore) nodeEventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			node := obj.(*corev1.Node)
+			if err := a.keepNodeShellPod(node.Name); err != nil {
+				logrus.Errorf("keep node-shell pod err: %v", err)
+			}
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			node := cur.(*corev1.Node)
+
+			if err := a.keepNodeShellPod(node.Name); err != nil {
+				logrus.Errorf("keep node-shell pod err: %v", err)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			node := obj.(*corev1.Node)
+			pod := fmt.Sprintf("wt-node-shell-%s", node.Name)
+			a.clientset.CoreV1().Pods(corev1.NamespaceAll).Delete(context.Background(), pod, metav1.DeleteOptions{})
 		},
 	}
 }
@@ -1427,7 +1466,7 @@ func (a *appRuntimeStore) UnRegistPodUpdateListener(name string) {
 }
 
 // RegisterVolumeTypeListener -
-func (a *appRuntimeStore) RegisterVolumeTypeListener(name string, ch chan<- *model.TenantServiceVolumeType) {
+func (a *appRuntimeStore) RegisterVolumeTypeListener(name string, ch chan<- *model.TenantEnvServiceVolumeType) {
 	a.volumeTypeListenerLock.Lock()
 	defer a.volumeTypeListenerLock.Unlock()
 	a.volumeTypeListeners[name] = ch
@@ -1460,7 +1499,7 @@ func (a *appRuntimeStore) GetAppResources(appID string) (int64, int64, error) {
 // Compatible with the old version.
 // Versions prior to 5.3.0 have no app_id in the label, only service_id.
 func (a *appRuntimeStore) listPodsByAppIDLegacy(appID string) ([]*corev1.Pod, error) {
-	services, err := a.dbmanager.TenantServiceDao().ListByAppID(appID)
+	services, err := a.dbmanager.TenantEnvServiceDao().ListByAppID(appID)
 	if err != nil {
 		return nil, err
 	}
@@ -1534,6 +1573,56 @@ func (a *appRuntimeStore) createOrUpdateImagePullSecret(ns string) error {
 
 func (a *appRuntimeStore) secretByKey(key types.NamespacedName) (*corev1.Secret, error) {
 	return a.listers.Secret.Secrets(key.Namespace).Get(key.Name)
+}
+
+// keepNodeShellPod 在目标节点上启动 node-shell 的 pod
+func (a *appRuntimeStore) keepNodeShellPod(node string) error {
+	podName := fmt.Sprintf("wt-node-shell-%s", node)
+	// 判断 pod 是否存在，不存在则创建
+	pod, err := a.listers.Pod.Pods(a.conf.WTNamespace).Get(podName)
+	if err == nil {
+		if pod.Status.Phase == corev1.PodRunning {
+			return nil
+		}
+
+		err = a.clientset.CoreV1().Pods(a.conf.WTNamespace).Delete(context.Background(), podName, metav1.DeleteOptions{})
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return err
+	}
+	// pod 不存在，创建 pod
+	pod = &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: a.conf.WTNamespace,
+			Labels: map[string]string{
+				"creator": "Wutong",
+			},
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    podName,
+					Image:   builder.NODESHELLIMAGENAME,
+					Command: []string{"nsenter", "-t", "1", "-m", "-u", "-i", "-n", "bash", "-c", "sleep infinity"},
+					SecurityContext: &corev1.SecurityContext{
+						Privileged: util.Bool(true),
+					},
+				},
+			},
+			RestartPolicy: corev1.RestartPolicyNever,
+			NodeName:      node,
+			HostNetwork:   true,
+			HostPID:       true,
+			HostIPC:       true,
+		},
+	}
+	_, err = a.clientset.CoreV1().Pods(a.conf.WTNamespace).Create(context.Background(), pod, metav1.CreateOptions{})
+	return err
 }
 
 func (a *appRuntimeStore) GetHelmApp(namespace, name string) (*v1alpha1.HelmApp, error) {

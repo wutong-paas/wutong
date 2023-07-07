@@ -1,17 +1,17 @@
 package handler
 
 import (
+	"github.com/jinzhu/gorm"
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
-	"github.com/jinzhu/gorm"
-	"github.com/sirupsen/logrus"
 )
 
 // AddConfigGroup -
 func (a *ApplicationAction) AddConfigGroup(appID string, req *model.ApplicationConfigGroup) (*model.ApplicationConfigGroupResp, error) {
-	services, err := db.GetManager().TenantServiceDao().GetServicesByServiceIDs(req.ServiceIDs)
+	services, err := db.GetManager().TenantEnvServiceDao().GetServicesByServiceIDs(req.ServiceIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (a *ApplicationAction) UpdateConfigGroup(appID, configGroupName string, req
 	if err != nil {
 		return nil, err
 	}
-	services, err := db.GetManager().TenantServiceDao().GetServicesByServiceIDs(req.ServiceIDs)
+	services, err := db.GetManager().TenantEnvServiceDao().GetServicesByServiceIDs(req.ServiceIDs)
 	if err != nil {
 		return nil, err
 	}

@@ -33,12 +33,12 @@ import (
 	dmodel "github.com/wutong-paas/wutong/worker/discover/model"
 )
 
-//OperationHandler operation handler
+// OperationHandler operation handler
 type OperationHandler struct {
 	mqCli gclient.MQClient
 }
 
-//OperationResult batch operation result
+// OperationResult batch operation result
 type OperationResult struct {
 	ServiceID     string `json:"service_id"`
 	Operation     string `json:"operation"`
@@ -48,15 +48,15 @@ type OperationResult struct {
 	DeployVersion string `json:"deploy_version"`
 }
 
-//CreateOperationHandler create  operation handler
+// CreateOperationHandler create  operation handler
 func CreateOperationHandler(mqCli gclient.MQClient) *OperationHandler {
 	return &OperationHandler{
 		mqCli: mqCli,
 	}
 }
 
-//Build service build,will create new version
-//if deploy version not define, will create by time
+// Build service build,will create new version
+// if deploy version not define, will create by time
 func (o *OperationHandler) Build(batchOpReq model.ComponentOpReq) (*model.ComponentOpResult, error) {
 	res := batchOpReq.BatchOpFailureItem()
 	if err := o.build(batchOpReq); err != nil {
@@ -72,7 +72,7 @@ func (o *OperationHandler) build(batchOpReq model.ComponentOpReq) error {
 		util.Elapsed(fmt.Sprintf("build component(%s)", batchOpReq.GetComponentID()))()
 	}
 
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(batchOpReq.GetComponentID())
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(batchOpReq.GetComponentID())
 	if err != nil {
 		return err
 	}
@@ -124,9 +124,9 @@ func (o *OperationHandler) build(batchOpReq model.ComponentOpReq) error {
 	return nil
 }
 
-//Stop service stop
+// Stop service stop
 func (o *OperationHandler) Stop(batchOpReq model.ComponentOpReq) error {
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(batchOpReq.GetComponentID())
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(batchOpReq.GetComponentID())
 	if err != nil {
 		return err
 	}
@@ -142,9 +142,9 @@ func (o *OperationHandler) Stop(batchOpReq model.ComponentOpReq) error {
 	return nil
 }
 
-//Start service start
+// Start service start
 func (o *OperationHandler) Start(batchOpReq model.ComponentOpReq) error {
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(batchOpReq.GetComponentID())
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(batchOpReq.GetComponentID())
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func (o *OperationHandler) Start(batchOpReq model.ComponentOpReq) error {
 	return nil
 }
 
-//Upgrade service upgrade
+// Upgrade service upgrade
 func (o *OperationHandler) Upgrade(batchOpReq model.ComponentOpReq) (*model.ComponentOpResult, error) {
 	res := batchOpReq.BatchOpFailureItem()
 	if err := o.upgrade(batchOpReq); err != nil {
@@ -172,7 +172,7 @@ func (o *OperationHandler) Upgrade(batchOpReq model.ComponentOpReq) (*model.Comp
 	return res, nil
 }
 func (o *OperationHandler) upgrade(batchOpReq model.ComponentOpReq) error {
-	component, err := db.GetManager().TenantServiceDao().GetServiceByID(batchOpReq.GetComponentID())
+	component, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(batchOpReq.GetComponentID())
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (o *OperationHandler) upgrade(batchOpReq model.ComponentOpReq) error {
 	oldDeployVersion := component.DeployVersion
 	var rollback = func() {
 		component.DeployVersion = oldDeployVersion
-		_ = db.GetManager().TenantServiceDao().UpdateModel(component)
+		_ = db.GetManager().TenantEnvServiceDao().UpdateModel(component)
 	}
 
 	if version != nil {
@@ -194,7 +194,7 @@ func (o *OperationHandler) upgrade(batchOpReq model.ComponentOpReq) error {
 			logrus.Warnf("deploy version %s is not build success,can not change deploy version in this upgrade event", batchOpReq.GetVersion())
 		} else {
 			component.DeployVersion = batchOpReq.GetVersion()
-			err = db.GetManager().TenantServiceDao().UpdateModel(component)
+			err = db.GetManager().TenantEnvServiceDao().UpdateModel(component)
 			if err != nil {
 				return err
 			}
@@ -214,13 +214,13 @@ func (o *OperationHandler) upgrade(batchOpReq model.ComponentOpReq) error {
 	return nil
 }
 
-//RollBack service rollback
+// RollBack service rollback
 func (o *OperationHandler) RollBack(rollback model.RollbackInfoRequestStruct) (re OperationResult) {
 	re.Operation = "rollback"
 	re.ServiceID = rollback.ServiceID
 	re.EventID = rollback.EventID
 	re.Status = "failure"
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(rollback.ServiceID)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(rollback.ServiceID)
 	if err != nil {
 		logrus.Errorf("find service %s failure %s", rollback.ServiceID, err.Error())
 		re.ErrMsg = fmt.Sprintf("find service %s failure", rollback.ServiceID)
@@ -233,21 +233,21 @@ func (o *OperationHandler) RollBack(rollback model.RollbackInfoRequestStruct) (r
 	oldDeployVersion := service.DeployVersion
 	var rollbackFunc = func() {
 		service.DeployVersion = oldDeployVersion
-		_ = db.GetManager().TenantServiceDao().UpdateModel(service)
+		_ = db.GetManager().TenantEnvServiceDao().UpdateModel(service)
 	}
 
 	if service.DeployVersion == rollback.RollBackVersion {
 		logrus.Warningf("rollback version is same of current version")
 	}
 	service.DeployVersion = rollback.RollBackVersion
-	if err := db.GetManager().TenantServiceDao().UpdateModel(service); err != nil {
+	if err := db.GetManager().TenantEnvServiceDao().UpdateModel(service); err != nil {
 		logrus.Errorf("update service %s version failure %s", rollback.ServiceID, err.Error())
 		re.ErrMsg = fmt.Sprintf("update service %s version failure", rollback.ServiceID)
 		return
 	}
 	err = o.mqCli.SendBuilderTopic(gclient.TaskStruct{
 		TaskBody: dmodel.RollingUpgradeTaskBody{
-			TenantID:         service.TenantID,
+			TenantEnvID:      service.TenantEnvID,
 			ServiceID:        service.ServiceID,
 			NewDeployVersion: rollback.RollBackVersion,
 			EventID:          rollback.EventID,
@@ -265,13 +265,13 @@ func (o *OperationHandler) RollBack(rollback model.RollbackInfoRequestStruct) (r
 	return
 }
 
-func (o *OperationHandler) buildFromMarketSlug(r *model.ComponentBuildReq, service *dbmodel.TenantServices) error {
+func (o *OperationHandler) buildFromMarketSlug(r *model.ComponentBuildReq, service *dbmodel.TenantEnvServices) error {
 	body := make(map[string]interface{})
 	body["deploy_version"] = r.DeployVersion
 	body["event_id"] = r.GetEventID()
 	body["action"] = r.Action
-	body["tenant_name"] = r.TenantName
-	body["tenant_id"] = service.TenantID
+	body["tenant_env_name"] = r.TenantEnvName
+	body["tenant_env_id"] = service.TenantEnvID
 	body["service_id"] = service.ServiceID
 	body["service_alias"] = service.ServiceAlias
 	body["slug_info"] = r.SlugInfo
@@ -291,7 +291,7 @@ func (o *OperationHandler) sendBuildTopic(serviceID, taskType string, body map[s
 	})
 }
 
-func (o *OperationHandler) buildFromImage(r *model.ComponentBuildReq, service *dbmodel.TenantServices) error {
+func (o *OperationHandler) buildFromImage(r *model.ComponentBuildReq, service *dbmodel.TenantEnvServices) error {
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
 		util.Elapsed(fmt.Sprintf("[buildFromImage] build component(%s)", r.GetComponentID()))()
 	}
@@ -305,7 +305,7 @@ func (o *OperationHandler) buildFromImage(r *model.ComponentBuildReq, service *d
 	body["deploy_version"] = r.DeployVersion
 	body["namespace"] = service.Namespace
 	body["event_id"] = r.GetEventID()
-	body["tenant_name"] = r.TenantName
+	body["tenant_env_name"] = r.TenantEnvName
 	body["service_alias"] = service.ServiceAlias
 	body["action"] = r.Action
 	body["code_from"] = "image_manual"
@@ -317,12 +317,12 @@ func (o *OperationHandler) buildFromImage(r *model.ComponentBuildReq, service *d
 	return o.sendBuildTopic(service.ServiceID, "build_from_image", body)
 }
 
-func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, service *dbmodel.TenantServices) error {
+func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, service *dbmodel.TenantEnvServices) error {
 	if r.CodeInfo.RepoURL == "" || r.CodeInfo.Branch == "" || r.DeployVersion == "" {
 		return fmt.Errorf("build from code failure, args error")
 	}
 	body := make(map[string]interface{})
-	body["tenant_id"] = service.TenantID
+	body["tenant_env_id"] = service.TenantEnvID
 	body["service_id"] = service.ServiceID
 	body["repo_url"] = r.CodeInfo.RepoURL
 	body["action"] = r.Action
@@ -331,7 +331,7 @@ func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, servi
 	body["deploy_version"] = r.DeployVersion
 	body["event_id"] = r.GetEventID()
 	body["envs"] = r.BuildENVs
-	body["tenant_name"] = r.TenantName
+	body["tenant_env_name"] = r.TenantEnvName
 	body["branch"] = r.CodeInfo.Branch
 	body["server_type"] = r.CodeInfo.ServerType
 	body["service_alias"] = service.ServiceAlias
@@ -345,7 +345,7 @@ func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, servi
 }
 
 func (o *OperationHandler) isWindowsService(serviceID string) bool {
-	label, err := db.GetManager().TenantServiceLabelDao().GetLabelByNodeSelectorKey(serviceID, "windows")
+	label, err := db.GetManager().TenantEnvServiceLabelDao().GetLabelByNodeSelectorKey(serviceID, "windows")
 	if label == nil || err != nil {
 		return false
 	}

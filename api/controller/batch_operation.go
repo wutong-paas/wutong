@@ -31,8 +31,63 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//BatchOperation batch operation for tenant
-//support operation is : start,build,stop,update
+// // BatchOperation batch operation for tenant env
+// // support operation is : start,build,stop,update
+// func BatchOperation(w http.ResponseWriter, r *http.Request) {
+// 	var build model.BatchOperationReq
+// 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build.Body, nil)
+// 	if !ok {
+// 		logrus.Errorf("start batch operation validate request body failure")
+// 		return
+// 	}
+
+// 	// tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+
+// 	// var batchOpReqs []model.ComponentOpReq
+// 	// var f func(ctx context.Context, tenant env *dbmodel.TenantEnvs, operator string, batchOpReqs model.BatchOpRequesters) (model.BatchOpResult, error)
+// 	// switch build.Body.Operation {
+// 	// case "build":
+// 	// 	for _, build := range build.Body.Builds {
+// 	// 		build.TenantEnvName = tenantEnv.Name
+// 	// 		batchOpReqs = append(batchOpReqs, build)
+// 	// 	}
+// 	// 	f = handler.GetBatchOperationHandler().Build
+// 	// case "start":
+// 	// 	for _, start := range build.Body.Starts {
+// 	// 		batchOpReqs = append(batchOpReqs, start)
+// 	// 	}
+// 	// 	f = handler.GetBatchOperationHandler().Start
+// 	// case "stop":
+// 	// 	for _, stop := range build.Body.Stops {
+// 	// 		batchOpReqs = append(batchOpReqs, stop)
+// 	// 	}
+// 	// 	f = handler.GetBatchOperationHandler().Stop
+// 	// case "upgrade":
+// 	// 	for _, upgrade := range build.Body.Upgrades {
+// 	// 		batchOpReqs = append(batchOpReqs, upgrade)
+// 	// 	}
+// 	// 	f = handler.GetBatchOperationHandler().Upgrade
+// 	// default:
+// 	// 	httputil.ReturnError(r, w, 400, fmt.Sprintf("operation %s do not support batch", build.Body.Operation))
+// 	// 	return
+// 	// }
+// 	// if len(batchOpReqs) > 1024 {
+// 	// 	batchOpReqs = batchOpReqs[0:1024]
+// 	// }
+// 	// res, err := f(r.Context(), tenantEnv, build.Operator, batchOpReqs)
+// 	// if err != nil {
+// 	// 	httputil.ReturnBcodeError(r, w, err)
+// 	// 	return
+// 	// }
+
+//		// // append every create event result to re and then return
+//		// httputil.ReturnSuccess(r, w, map[string]interface{}{
+//		// 	"batch_result": res,
+//		// })
+//	}
+//
+// BatchOperation batch operation for tenant
+// support operation is : start,build,stop,update
 func BatchOperation(w http.ResponseWriter, r *http.Request) {
 	var build model.BatchOperationReq
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build.Body, nil)
@@ -41,14 +96,14 @@ func BatchOperation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 
 	var batchOpReqs []model.ComponentOpReq
-	var f func(ctx context.Context, tenant *dbmodel.Tenants, operator string, batchOpReqs model.BatchOpRequesters) (model.BatchOpResult, error)
+	var f func(ctx context.Context, tenantEnv *dbmodel.TenantEnvs, operator string, batchOpReqs model.BatchOpRequesters) (model.BatchOpResult, error)
 	switch build.Body.Operation {
 	case "build":
 		for _, build := range build.Body.Builds {
-			build.TenantName = tenant.Name
+			build.TenantEnvName = tenantEnv.Name
 			batchOpReqs = append(batchOpReqs, build)
 		}
 		f = handler.GetBatchOperationHandler().Build
@@ -74,7 +129,7 @@ func BatchOperation(w http.ResponseWriter, r *http.Request) {
 	if len(batchOpReqs) > 1024 {
 		batchOpReqs = batchOpReqs[0:1024]
 	}
-	res, err := f(r.Context(), tenant, build.Operator, batchOpReqs)
+	res, err := f(r.Context(), tenantEnv, build.Operator, batchOpReqs)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return

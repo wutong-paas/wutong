@@ -28,13 +28,15 @@ import (
 
 // Config -
 type Config struct {
-	L4Enable         bool
-	L4Host           string
-	L4Port           int
-	KeepaliveEnabled bool
-	KeepaliveIdle    string // default 30m
-	KeepaliveIntvl   string // deafult 75s
-	KeepaliveCnt     string // default 9
+	L4Enable                       bool
+	L4Host                         string
+	L4Port                         int
+	KeepaliveEnabled               bool
+	KeepaliveIdle                  string // default 30m
+	KeepaliveIntvl                 string // deafult 75s
+	KeepaliveCnt                   string // default 9
+	ProxyStreamTimeout             string // default 600s
+	ProxyStreamNextUpstreamTimeout string // default 600s
 }
 
 type l4 struct {
@@ -62,14 +64,24 @@ func (l l4) Parse(meta *metav1.ObjectMeta) (interface{}, error) {
 	keepaliveIdle, _ := parser.GetStringAnnotation("keepalive-idle", meta)
 	keepaliveIntvl, _ := parser.GetStringAnnotation("keepalive-intvl", meta)
 	keepaliveCnt, _ := parser.GetStringAnnotation("keepalive-cnt", meta)
+	proxyStreamTimeout, _ := parser.GetStringAnnotation("proxy-stream-timeout", meta)
+	if proxyStreamTimeout == "" {
+		proxyStreamTimeout = "600s"
+	}
+	proxyStreamNextUpstreamTimeout, _ := parser.GetStringAnnotation("proxy-stream-next-upstream-timeout", meta)
+	if proxyStreamNextUpstreamTimeout == "" {
+		proxyStreamNextUpstreamTimeout = "600s"
+	}
 
 	return &Config{
-		L4Enable:         l4Enable,
-		L4Host:           l4Host,
-		L4Port:           l4Port,
-		KeepaliveEnabled: keepaliveEnabled,
-		KeepaliveIdle:    keepaliveIdle,
-		KeepaliveIntvl:   keepaliveIntvl,
-		KeepaliveCnt:     keepaliveCnt,
+		L4Enable:                       l4Enable,
+		L4Host:                         l4Host,
+		L4Port:                         l4Port,
+		KeepaliveEnabled:               keepaliveEnabled,
+		KeepaliveIdle:                  keepaliveIdle,
+		KeepaliveIntvl:                 keepaliveIntvl,
+		KeepaliveCnt:                   keepaliveCnt,
+		ProxyStreamTimeout:             proxyStreamTimeout,
+		ProxyStreamNextUpstreamTimeout: proxyStreamNextUpstreamTimeout,
 	}, nil
 }

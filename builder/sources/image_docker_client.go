@@ -84,7 +84,7 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 		auth, err := EncodeAuthToBase64(dtypes.AuthConfig{Username: username, Password: password})
 		if err != nil {
 			logrus.Errorf("make auth base63 push image error: %s", err.Error())
-			printLog(logger, "error", fmt.Sprintf("Failed to generate a Token to get the image"), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", "Failed to generate a Token to get the image", map[string]string{"step": "builder-exector", "status": "failure"})
 			return nil, err
 		}
 		pullipo.RegistryAuth = auth
@@ -130,7 +130,7 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 			logrus.Debugf("error pulling image: %v", jm.Error)
 			return nil, jm.Error
 		}
-		printLog(logger, "debug", fmt.Sprintf(jm.JSONString()), map[string]string{"step": "progress"})
+		printLog(logger, "debug", jm.JSONString(), map[string]string{"step": "progress"})
 		logrus.Debug(jm.JSONString())
 	}
 	printLog(logger, "debug", "Get the image information and its raw representation", map[string]string{"step": "progress"})
@@ -139,7 +139,7 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 		printLog(logger, "debug", "Fail to get the image information and its raw representation", map[string]string{"step": "progress"})
 		return nil, err
 	}
-	printLog(logger, "info", fmt.Sprintf("Success Pull Image：%s", image), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("Success Pull Image: %s", image), map[string]string{"step": "pullimage"})
 	exportPorts := make(map[string]struct{})
 	for port := range ins.Config.ExposedPorts {
 		exportPorts[string(port)] = struct{}{}
@@ -158,7 +158,7 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 }
 
 func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Logger, timeout int) error {
-	printLog(logger, "info", fmt.Sprintf("start push image：%s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("start push image: %s", image), map[string]string{"step": "pushimage"})
 	if timeout < 1 {
 		timeout = 1
 	}
@@ -181,7 +181,7 @@ func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Lo
 	if err != nil {
 		logrus.Errorf("make auth base63 push image error: %s", err.Error())
 		if logger != nil {
-			logger.Error(fmt.Sprintf("Failed to generate a token to get the image"), map[string]string{"step": "builder-exector", "status": "failure"})
+			logger.Error("failed to generate a token to get the image", map[string]string{"step": "builder-exector", "status": "failure"})
 		}
 		return err
 	}
@@ -218,14 +218,14 @@ func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Lo
 			printLog(logger, "debug", jm.JSONString(), map[string]string{"step": "progress"})
 		}
 	}
-	printLog(logger, "info", fmt.Sprintf("success push image：%s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("success push image: %s", image), map[string]string{"step": "pushimage"})
 	return nil
 }
 
 // ImageTag change docker image tag
 func (d *dockerImageCliImpl) ImageTag(source, target string, logger event.Logger, timeout int) error {
-	logrus.Debugf(fmt.Sprintf("change image tag：%s -> %s", source, target))
-	printLog(logger, "info", fmt.Sprintf("change image tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
+	logrus.Debugf(fmt.Sprintf("change image tag: %s -> %s", source, target))
+	printLog(logger, "info", fmt.Sprintf("change image tag: %s -> %s", source, target), map[string]string{"step": "changetag"})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*time.Duration(timeout))
 	defer cancel()
 	err := d.client.ImageTag(ctx, source, target)

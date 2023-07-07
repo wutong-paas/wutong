@@ -18,16 +18,16 @@
 
 package model
 
-//TypeStatefulSet typestateful
+// TypeStatefulSet typestateful
 var TypeStatefulSet = "statefulset"
 
-//TypeDeployment typedeployment
+// TypeDeployment typedeployment
 var TypeDeployment = "deployment"
 
-//TypeReplicationController type rc
+// TypeReplicationController type rc
 var TypeReplicationController = "replicationcontroller"
 
-//LocalScheduler 本地调度暂存信息
+// LocalScheduler 本地调度暂存信息
 type LocalScheduler struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32"`
@@ -35,13 +35,13 @@ type LocalScheduler struct {
 	PodName   string `gorm:"column:pod_name;size:32"`
 }
 
-//TableName 表名
+// TableName 表名
 func (t *LocalScheduler) TableName() string {
 	return "local_scheduler"
 }
 
-//ServiceSourceConfig service source config info
-//such as deployment、statefulset、configmap
+// ServiceSourceConfig service source config info
+// such as deployment、statefulset、configmap
 type ServiceSourceConfig struct {
 	Model
 	ServiceID  string `gorm:"column:service_id;size:32"`
@@ -49,7 +49,7 @@ type ServiceSourceConfig struct {
 	SourceBody string `gorm:"column:source_body;size:2000"`
 }
 
-//TableName 表名
+// TableName 表名
 func (t *ServiceSourceConfig) TableName() string {
-	return "tenant_services_source"
+	return "tenant_env_services_source"
 }

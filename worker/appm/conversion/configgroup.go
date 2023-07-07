@@ -2,19 +2,20 @@ package conversion
 
 import (
 	"fmt"
+
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/db"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// TenantServiceConfigGroup -
-func TenantServiceConfigGroup(as *v1.AppService, dbm db.Manager) error {
+// TenantEnvServiceConfigGroup -
+func TenantEnvServiceConfigGroup(as *v1.AppService, dbm db.Manager) error {
 	logrus.Infof("service id: %s; create config group for service.", as.ServiceID)
 	groups, err := dbm.AppConfigGroupDao().ListByServiceID(as.ServiceID)
 	if err != nil {
-		return fmt.Errorf("[TenantServiceConfigGroup] list config groups: %v", err)
+		return fmt.Errorf("[TenantEnvServiceConfigGroup] list config groups: %v", err)
 	}
 
 	var secrets []*corev1.Secret

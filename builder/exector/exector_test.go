@@ -61,7 +61,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	etcdCli, err := clientv3.New(clientv3.Config{
+	etcdCli, _ := clientv3.New(clientv3.Config{
 		Endpoints:   conf.EtcdEndPoints,
 		DialTimeout: 10 * time.Second,
 	})
@@ -90,7 +90,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 	taskBodym := make(map[string]interface{})
 	taskBodym["repo_url"] = "https://github.com/wutong/java-maven-demo.git"
 	taskBodym["branch"] = "master"
-	taskBodym["tenant_id"] = "5d7bd886e6dc4425bb6c2ac5fc9fa593"
+	taskBodym["tenant_env_id"] = "5d7bd886e6dc4425bb6c2ac5fc9fa593"
 	taskBodym["service_id"] = "4eaa41ccf145b8e43a6aeb1a5efeab53"
 	taskBodym["deploy_version"] = "20200115193617"
 	taskBodym["lang"] = code.JavaMaven

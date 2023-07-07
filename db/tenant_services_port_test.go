@@ -30,7 +30,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
+func TestTenantEnvServicesDao_GetOpenedPort(t *testing.T) {
 	dbname := "region"
 	rootpw := "wutong"
 
@@ -84,7 +84,7 @@ func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 	sid := util.NewUUID()
 	trueVal := true
 	falseVal := true
-	err = GetManager().TenantServicesPortDao().AddModel(&model.TenantServicesPort{
+	err = GetManager().TenantEnvServicesPortDao().AddModel(&model.TenantEnvServicesPort{
 		ServiceID:      sid,
 		ContainerPort:  1111,
 		MappingPort:    1111,
@@ -94,7 +94,7 @@ func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = GetManager().TenantServicesPortDao().AddModel(&model.TenantServicesPort{
+	err = GetManager().TenantEnvServicesPortDao().AddModel(&model.TenantEnvServicesPort{
 		ServiceID:      sid,
 		ContainerPort:  2222,
 		MappingPort:    2222,
@@ -104,7 +104,7 @@ func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = GetManager().TenantServicesPortDao().AddModel(&model.TenantServicesPort{
+	err = GetManager().TenantEnvServicesPortDao().AddModel(&model.TenantEnvServicesPort{
 		ServiceID:      sid,
 		ContainerPort:  3333,
 		MappingPort:    3333,
@@ -114,7 +114,7 @@ func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = GetManager().TenantServicesPortDao().AddModel(&model.TenantServicesPort{
+	err = GetManager().TenantEnvServicesPortDao().AddModel(&model.TenantEnvServicesPort{
 		ServiceID:      sid,
 		ContainerPort:  5555,
 		MappingPort:    5555,
@@ -124,7 +124,7 @@ func TestTenantServicesDao_GetOpenedPort(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ports, err := GetManager().TenantServicesPortDao().GetOpenedPorts(sid)
+	ports, err := GetManager().TenantEnvServicesPortDao().GetOpenedPorts(sid)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,7 +187,7 @@ func TestListInnerPorts(t *testing.T) {
 	sid := util.NewUUID()
 	trueVal := true
 	falseVal := false
-	err = GetManager().TenantServicesPortDao().AddModel(&model.TenantServicesPort{
+	err = GetManager().TenantEnvServicesPortDao().AddModel(&model.TenantEnvServicesPort{
 		ServiceID:      sid,
 		ContainerPort:  1111,
 		MappingPort:    1111,
@@ -197,7 +197,7 @@ func TestListInnerPorts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = GetManager().TenantServicesPortDao().AddModel(&model.TenantServicesPort{
+	err = GetManager().TenantEnvServicesPortDao().AddModel(&model.TenantEnvServicesPort{
 		ServiceID:      sid,
 		ContainerPort:  2222,
 		MappingPort:    2222,
@@ -208,7 +208,7 @@ func TestListInnerPorts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ports, err := GetManager().TenantServicesPortDao().ListInnerPortsByServiceIDs([]string{sid})
+	ports, err := GetManager().TenantEnvServicesPortDao().ListInnerPortsByServiceIDs([]string{sid})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -34,17 +34,17 @@ import (
 	gclient "github.com/wutong-paas/wutong/mq/client"
 )
 
-//GetTenantServicePluginRelation GetTenantServicePluginRelation
-func (s *ServiceAction) GetTenantServicePluginRelation(serviceID string) ([]*dbmodel.TenantServicePluginRelation, *util.APIHandleError) {
-	gps, err := db.GetManager().TenantServicePluginRelationDao().GetALLRelationByServiceID(serviceID)
+// GetTenantEnvServicePluginRelation GetTenantEnvServicePluginRelation
+func (s *ServiceAction) GetTenantEnvServicePluginRelation(serviceID string) ([]*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError) {
+	gps, err := db.GetManager().TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(serviceID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get service relation by ID", err)
 	}
 	return gps, nil
 }
 
-//TenantServiceDeletePluginRelation uninstall plugin for app
-func (s *ServiceAction) TenantServiceDeletePluginRelation(tenantID, serviceID, pluginID string) *util.APIHandleError {
+// TenantEnvServiceDeletePluginRelation uninstall plugin for app
+func (s *ServiceAction) TenantEnvServiceDeletePluginRelation(tenantEnvID, serviceID, pluginID string) *util.APIHandleError {
 	tx := db.GetManager().Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -53,9 +53,9 @@ func (s *ServiceAction) TenantServiceDeletePluginRelation(tenantID, serviceID, p
 		}
 	}()
 	deleteFunclist := []func(serviceID, pluginID string) error{
-		db.GetManager().TenantServicePluginRelationDaoTransactions(tx).DeleteRelationByServiceIDAndPluginID,
-		db.GetManager().TenantPluginVersionENVDaoTransactions(tx).DeleteEnvByPluginID,
-		db.GetManager().TenantPluginVersionConfigDaoTransactions(tx).DeletePluginConfig,
+		db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).DeleteRelationByServiceIDAndPluginID,
+		db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).DeleteEnvByPluginID,
+		db.GetManager().TenantEnvPluginVersionConfigDaoTransactions(tx).DeletePluginConfig,
 	}
 	for _, del := range deleteFunclist {
 		if err := del(serviceID, pluginID); err != nil {
@@ -69,9 +69,9 @@ func (s *ServiceAction) TenantServiceDeletePluginRelation(tenantID, serviceID, p
 		tx.Rollback()
 		return util.CreateAPIHandleErrorFromDBError("delete service plugin config failure", err)
 	}
-	plugin, _ := db.GetManager().TenantPluginDao().GetPluginByID(pluginID, tenantID)
+	plugin, _ := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, tenantEnvID)
 	if plugin != nil && checkPluginHaveInbound(plugin.PluginModel) {
-		if err := db.GetManager().TenantServicesStreamPluginPortDaoTransactions(tx).DeleteAllPluginMappingPortByServiceID(serviceID); err != nil {
+		if err := db.GetManager().TenantEnvServicesStreamPluginPortDaoTransactions(tx).DeleteAllPluginMappingPortByServiceID(serviceID); err != nil {
 			if err != gorm.ErrRecordNotFound {
 				tx.Rollback()
 				return util.CreateAPIHandleErrorFromDBError("delete upstream plugin mapping port", err)
@@ -85,13 +85,13 @@ func (s *ServiceAction) TenantServiceDeletePluginRelation(tenantID, serviceID, p
 	return nil
 }
 
-//SetTenantServicePluginRelation SetTenantServicePluginRelation
-func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantServicePluginRelation, *util.APIHandleError) {
-	plugin, err := db.GetManager().TenantPluginDao().GetPluginByID(pss.Body.PluginID, tenantID)
+// SetTenantEnvServicePluginRelation SetTenantEnvServicePluginRelation
+func (s *ServiceAction) SetTenantEnvServicePluginRelation(tenantEnvID, serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError) {
+	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pss.Body.PluginID, tenantEnvID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get plugin by plugin id", err)
 	}
-	// crt, err := db.GetManager().TenantServicePluginRelationDao().CheckSomeModelLikePluginByServiceID(
+	// crt, err := db.GetManager().TenantEnvServicePluginRelationDao().CheckSomeModelLikePluginByServiceID(
 	// 	serviceID,
 	// 	plugin.PluginModel,
 	// )
@@ -102,7 +102,7 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 	// 	return nil, util.CreateAPIHandleError(400, fmt.Errorf("can not add this kind plugin, a same kind plugin has been linked"))
 	// }
 
-	crt, err := db.GetManager().TenantServicePluginRelationDao().CheckPluginBeforeInstall(
+	crt, err := db.GetManager().TenantEnvServicePluginRelationDao().CheckPluginBeforeInstall(
 		serviceID,
 		plugin.PluginModel,
 	)
@@ -112,13 +112,13 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 	if !crt {
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("can not add this kind plugin, a same kind plugin has been linked"))
 	}
-	pluginversion, err := db.GetManager().TenantPluginBuildVersionDao().GetBuildVersionByVersionID(plugin.PluginID, pss.Body.VersionID)
+	pluginversion, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByVersionID(plugin.PluginID, pss.Body.VersionID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("plugin version get error ", err)
 	}
 	var openPorts = make(map[int]bool)
 	if checkPluginHaveInbound(plugin.PluginModel) {
-		ports, err := db.GetManager().TenantServicesPortDao().GetPortsByServiceID(serviceID)
+		ports, err := db.GetManager().TenantEnvServicesPortDao().GetPortsByServiceID(serviceID)
 		if err != nil {
 			return nil, util.CreateAPIHandleErrorFromDBError("get ports by service id", err)
 		}
@@ -138,8 +138,8 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 	if configs := pss.Body.ConfigEnvs.ComplexEnvs; configs != nil {
 		if configs.BasePorts != nil && checkPluginHaveInbound(plugin.PluginModel) {
 			for _, p := range configs.BasePorts {
-				pluginPort, err := db.GetManager().TenantServicesStreamPluginPortDaoTransactions(tx).SetPluginMappingPort(
-					tenantID,
+				pluginPort, err := db.GetManager().TenantEnvServicesStreamPluginPortDaoTransactions(tx).SetPluginMappingPort(
+					tenantEnvID,
 					serviceID,
 					dbmodel.InBoundNetPlugin,
 					p.Port,
@@ -173,7 +173,7 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 	if pss.Body.PluginMemory >= 0 {
 		tsprMemory = pss.Body.PluginMemory
 	}
-	relation := &dbmodel.TenantServicePluginRelation{
+	relation := &dbmodel.TenantEnvServicePluginRelation{
 		VersionID:       pss.Body.VersionID,
 		ServiceID:       serviceID,
 		PluginID:        pss.Body.PluginID,
@@ -182,7 +182,7 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 		ContainerCPU:    tsprCPU,
 		ContainerMemory: tsprMemory,
 	}
-	if err := db.GetManager().TenantServicePluginRelationDaoTransactions(tx).AddModel(relation); err != nil {
+	if err := db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).AddModel(relation); err != nil {
 		tx.Rollback()
 		return nil, util.CreateAPIHandleErrorFromDBError("set service plugin relation", err)
 	}
@@ -193,9 +193,9 @@ func (s *ServiceAction) SetTenantServicePluginRelation(tenantID, serviceID strin
 	return relation, nil
 }
 
-//UpdateTenantServicePluginRelation UpdateTenantServicePluginRelation
-func (s *ServiceAction) UpdateTenantServicePluginRelation(serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantServicePluginRelation, *util.APIHandleError) {
-	relation, err := db.GetManager().TenantServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(serviceID, pss.Body.PluginID)
+// UpdateTenantEnvServicePluginRelation UpdateTenantEnvServicePluginRelation
+func (s *ServiceAction) UpdateTenantEnvServicePluginRelation(serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError) {
+	relation, err := db.GetManager().TenantEnvServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(serviceID, pss.Body.PluginID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("get relation by serviceid and pluginid", err)
 	}
@@ -207,7 +207,7 @@ func (s *ServiceAction) UpdateTenantServicePluginRelation(serviceID string, pss 
 	if pss.Body.PluginMemory >= 0 {
 		relation.ContainerMemory = pss.Body.PluginMemory
 	}
-	err = db.GetManager().TenantServicePluginRelationDao().UpdateModel(relation)
+	err = db.GetManager().TenantEnvServicePluginRelationDao().UpdateModel(relation)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("update relation between plugin and service", err)
 	}
@@ -216,13 +216,13 @@ func (s *ServiceAction) UpdateTenantServicePluginRelation(serviceID string, pss 
 
 func (s *ServiceAction) normalEnvs(tx *gorm.DB, serviceID, pluginID string, envs []*api_model.VersionEnv) error {
 	for _, env := range envs {
-		tpv := &dbmodel.TenantPluginVersionEnv{
+		tpv := &dbmodel.TenantEnvPluginVersionEnv{
 			PluginID:  pluginID,
 			ServiceID: serviceID,
 			EnvName:   env.EnvName,
 			EnvValue:  env.EnvValue,
 		}
-		if err := db.GetManager().TenantPluginVersionENVDaoTransactions(tx).AddModel(tpv); err != nil {
+		if err := db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).AddModel(tpv); err != nil {
 			return err
 		}
 	}
@@ -232,9 +232,9 @@ func checkPluginHaveInbound(model string) bool {
 	return model == dbmodel.InBoundNetPlugin || model == dbmodel.InBoundAndOutBoundNetPlugin
 }
 
-//UpdateVersionEnv UpdateVersionEnv
+// UpdateVersionEnv UpdateVersionEnv
 func (s *ServiceAction) UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.APIHandleError {
-	plugin, err := db.GetManager().TenantPluginDao().GetPluginByID(uve.PluginID, uve.Body.TenantID)
+	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(uve.PluginID, uve.Body.TenantEnvID)
 	if err != nil {
 		return util.CreateAPIHandleErrorFromDBError("get plugin by plugin id", err)
 	}
@@ -254,8 +254,8 @@ func (s *ServiceAction) UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.API
 	if uve.Body.ConfigEnvs.ComplexEnvs != nil {
 		if uve.Body.ConfigEnvs.ComplexEnvs.BasePorts != nil && checkPluginHaveInbound(plugin.PluginModel) {
 			for _, p := range uve.Body.ConfigEnvs.ComplexEnvs.BasePorts {
-				pluginPort, err := db.GetManager().TenantServicesStreamPluginPortDaoTransactions(tx).SetPluginMappingPort(
-					uve.Body.TenantID,
+				pluginPort, err := db.GetManager().TenantEnvServicesStreamPluginPortDaoTransactions(tx).SetPluginMappingPort(
+					uve.Body.TenantEnvID,
 					uve.Body.ServiceID,
 					dbmodel.InBoundNetPlugin,
 					p.Port,
@@ -289,7 +289,7 @@ func (s *ServiceAction) UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.API
 }
 
 func (s *ServiceAction) upNormalEnvs(tx *gorm.DB, uve *api_model.SetVersionEnv) *util.APIHandleError {
-	err := db.GetManager().TenantPluginVersionENVDaoTransactions(tx).DeleteEnvByPluginID(uve.Body.ServiceID, uve.PluginID)
+	err := db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).DeleteEnvByPluginID(uve.Body.ServiceID, uve.PluginID)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return util.CreateAPIHandleErrorFromDBError("delete version env", err)
@@ -301,7 +301,7 @@ func (s *ServiceAction) upNormalEnvs(tx *gorm.DB, uve *api_model.SetVersionEnv) 
 	return nil
 }
 
-//SavePluginConfig save plugin dynamic discovery config
+// SavePluginConfig save plugin dynamic discovery config
 func (s *ServiceAction) SavePluginConfig(serviceID, pluginID string, config *api_model.ResourceSpec) *util.APIHandleError {
 	if config == nil {
 		return nil
@@ -311,7 +311,7 @@ func (s *ServiceAction) SavePluginConfig(serviceID, pluginID string, config *api
 		logrus.Errorf("mashal plugin config value error, %v", err)
 		return util.CreateAPIHandleError(500, err)
 	}
-	if err := db.GetManager().TenantPluginVersionConfigDao().AddModel(&dbmodel.TenantPluginVersionDiscoverConfig{
+	if err := db.GetManager().TenantEnvPluginVersionConfigDao().AddModel(&dbmodel.TenantEnvPluginVersionDiscoverConfig{
 		PluginID:  pluginID,
 		ServiceID: serviceID,
 		ConfigStr: string(v),
@@ -338,7 +338,7 @@ func (s *ServiceAction) SavePluginConfig(serviceID, pluginID string, config *api
 	return nil
 }
 
-//DeletePluginConfig delete service plugin dynamic discovery config
+// DeletePluginConfig delete service plugin dynamic discovery config
 func (s *ServiceAction) DeletePluginConfig(serviceID, pluginID string) *util.APIHandleError {
 	tx := db.GetManager().Begin()
 	err := s.deletePluginConfig(tx, serviceID, pluginID)
@@ -354,10 +354,10 @@ func (s *ServiceAction) DeletePluginConfig(serviceID, pluginID string) *util.API
 	return nil
 }
 
-//DeletePluginConfig delete service plugin dynamic discovery config
+// DeletePluginConfig delete service plugin dynamic discovery config
 func (s *ServiceAction) deletePluginConfig(tx *gorm.DB, serviceID, pluginID string) *util.APIHandleError {
 	if tx != nil {
-		if err := db.GetManager().TenantPluginVersionConfigDaoTransactions(tx).DeletePluginConfig(serviceID, pluginID); err != nil {
+		if err := db.GetManager().TenantEnvPluginVersionConfigDaoTransactions(tx).DeletePluginConfig(serviceID, pluginID); err != nil {
 			return util.CreateAPIHandleErrorFromDBError("delete plugin config failure", err)
 		}
 	}

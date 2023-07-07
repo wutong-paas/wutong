@@ -24,21 +24,21 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//PluginHandler plugin handler
+// PluginHandler plugin handler
 type PluginHandler interface {
 	CreatePluginAct(cps *api_model.CreatePluginStruct) *util.APIHandleError
-	UpdatePluginAct(pluginID, tenantID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError
-	DeletePluginAct(pluginID, tenantID string) *util.APIHandleError
-	GetPlugins(tenantID string) ([]*dbmodel.TenantPlugin, *util.APIHandleError)
+	UpdatePluginAct(pluginID, tenantEnvID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError
+	DeletePluginAct(pluginID, tenantEnvID string) *util.APIHandleError
+	GetPlugins(tenantEnvID string) ([]*dbmodel.TenantEnvPlugin, *util.APIHandleError)
 	AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError
 	UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError
 	DeleteDefaultEnv(pluginID, versionID, envName string) *util.APIHandleError
-	BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantPluginBuildVersion, *util.APIHandleError)
-	GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.TenantPluginBuildVersion, *util.APIHandleError)
-	GetPluginBuildVersion(pluginID, versionID string) (*dbmodel.TenantPluginBuildVersion, *util.APIHandleError)
+	BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
+	GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
+	GetPluginBuildVersion(pluginID, versionID string) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
 	DeletePluginBuildVersion(pluginID, versionID string) *util.APIHandleError
-	GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.TenantPluginDefaultENV, *util.APIHandleError)
+	GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.TenantEnvPluginDefaultENV, *util.APIHandleError)
 	GetEnvsWhichCanBeSet(serviceID, pluginID string) (interface{}, *util.APIHandleError)
-	BatchCreatePlugins(tenantID string, plugins []*api_model.Plugin) *util.APIHandleError
-	BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenantID string) *util.APIHandleError
+	BatchCreatePlugins(tenantEnvID string, plugins []*api_model.Plugin) *util.APIHandleError
+	BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenantEnvID string) *util.APIHandleError
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
@@ -22,40 +23,40 @@ type ApplicationController struct{}
 
 // CreateApp -
 func (a *ApplicationController) CreateApp(w http.ResponseWriter, r *http.Request) {
-	var tenantReq model.Application
-	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &tenantReq, nil) {
+	var tenantEnvReq model.Application
+	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &tenantEnvReq, nil) {
 		return
 	}
-	if tenantReq.AppType == model.AppTypeHelm {
-		if tenantReq.AppStoreName == "" {
+	if tenantEnvReq.AppType == model.AppTypeHelm {
+		if tenantEnvReq.AppStoreName == "" {
 			httputil.ReturnBcodeError(r, w, bcode.NewBadRequest("the field 'app_tore_name' is required"))
 			return
 		}
-		if tenantReq.AppTemplateName == "" {
+		if tenantEnvReq.AppTemplateName == "" {
 			httputil.ReturnBcodeError(r, w, bcode.NewBadRequest("the field 'app_template_name' is required"))
 			return
 		}
-		if tenantReq.AppName == "" {
+		if tenantEnvReq.AppName == "" {
 			httputil.ReturnBcodeError(r, w, bcode.NewBadRequest("the field 'helm_app_name' is required"))
 			return
 		}
-		if tenantReq.Version == "" {
+		if tenantEnvReq.Version == "" {
 			httputil.ReturnBcodeError(r, w, bcode.NewBadRequest("the field 'version' is required"))
 			return
 		}
-		tenantReq.K8sApp = tenantReq.AppTemplateName
+		tenantEnvReq.K8sApp = tenantEnvReq.AppTemplateName
 	}
-	if tenantReq.K8sApp != "" {
-		if len(k8svalidation.IsQualifiedName(tenantReq.K8sApp)) > 0 {
+	if tenantEnvReq.K8sApp != "" {
+		if len(k8svalidation.IsQualifiedName(tenantEnvReq.K8sApp)) > 0 {
 			httputil.ReturnBcodeError(r, w, bcode.ErrInvaildK8sApp)
 			return
 		}
 	}
-	// get current tenant
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	tenantReq.TenantID = tenant.UUID
+	// get current tenant env
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	tenantEnvReq.TenantEnvID = tenantEnv.UUID
 	// create app
-	app, err := handler.GetApplicationHandler().CreateApp(r.Context(), &tenantReq)
+	app, err := handler.GetApplicationHandler().CreateApp(r.Context(), &tenantEnvReq)
 	if err != nil {
 		logrus.Errorf("create app: %+v", err)
 		httputil.ReturnBcodeError(r, w, err)
@@ -72,9 +73,9 @@ func (a *ApplicationController) BatchCreateApp(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// get current tenant
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	respList, err := handler.GetApplicationHandler().BatchCreateApp(r.Context(), &apps, tenant.UUID)
+	// get current tenant env
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	respList, err := handler.GetApplicationHandler().BatchCreateApp(r.Context(), &apps, tenantEnv.UUID)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
@@ -125,11 +126,11 @@ func (a *ApplicationController) ListApps(w http.ResponseWriter, r *http.Request)
 		pageSize = 10
 	}
 
-	// get current tenantID
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	// get current tenantEnvID
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 
 	// List apps
-	resp, err := handler.GetApplicationHandler().ListApps(tenantID, appName, page, pageSize)
+	resp, err := handler.GetApplicationHandler().ListApps(tenantEnvID, appName, page, pageSize)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
@@ -315,11 +316,18 @@ func (a *ApplicationController) ChangeVolumes(w http.ResponseWriter, r *http.Req
 }
 
 // GetApplicationKubeResources get kube resources for application
-func (t *TenantStruct) GetApplicationKubeResources(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) GetApplicationKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting model.KubeResourceCustomSetting
-	customSetting.Namespace = r.URL.Query().Get("namespace")
+	customSetting.Namespace = strings.Trim(r.URL.Query().Get("namespace"), " ")
+	if customSetting.Namespace == "" {
+		customSetting.Namespace = "default"
+	}
 	serviceAliases := r.URL.Query()["service_aliases"]
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	resources := handler.GetApplicationHandler().GetKubeResources(tenant.Namespace, serviceAliases, customSetting)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	resources, err := handler.GetApplicationHandler().GetKubeResources(tenantEnv.Namespace, serviceAliases, customSetting)
+	if err != nil {
+		httputil.ReturnError(r, w, 400, err.Error())
+		return
+	}
 	httputil.ReturnSuccess(r, w, resources)
 }

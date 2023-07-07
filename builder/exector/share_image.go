@@ -21,6 +21,7 @@ package exector
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/wutong-paas/wutong/builder"
 
@@ -34,7 +35,7 @@ import (
 // ImageShareItem ImageShareItem
 type ImageShareItem struct {
 	Namespace          string `json:"namespace"`
-	TenantName         string `json:"tenant_name"`
+	TenantEnvName      string `json:"tenant_env_name"`
 	ServiceID          string `json:"service_id"`
 	ServiceAlias       string `json:"service_alias"`
 	ImageName          string `json:"image_name"`
@@ -78,33 +79,43 @@ func NewImageShareItem(in []byte, imageClient sources.ImageClient, EtcdCli *clie
 
 // ShareService ShareService
 func (i *ImageShareItem) ShareService() error {
-	hubuser, hubpass := builder.GetImageUserInfoV2(i.LocalImageName, i.LocalImageUsername, i.LocalImagePassword)
-	_, err := i.ImageClient.ImagePull(i.LocalImageName, hubuser, hubpass, i.Logger, 20)
-	if err != nil {
-		logrus.Errorf("pull image %s error: %s", i.LocalImageName, err.Error())
-		i.Logger.Error(fmt.Sprintf("拉取应用镜像: %s失败", i.LocalImageName), map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+	var syncImage = true
+	if strings.HasPrefix(i.LocalImageName, builder.REGISTRYDOMAIN) ||
+		i.ShareInfo.ImageInfo.HubUser == "" ||
+		i.LocalImageName == i.ImageName {
+		syncImage = false
 	}
-	if err := i.ImageClient.ImageTag(i.LocalImageName, i.ImageName, i.Logger, 1); err != nil {
-		logrus.Errorf("change image tag error: %s", err.Error())
-		i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.LocalImageName, i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
-	}
-	user, pass := builder.GetImageUserInfoV2(i.ImageName, i.ShareInfo.ImageInfo.HubUser, i.ShareInfo.ImageInfo.HubPassword)
-	if i.ShareInfo.ImageInfo.IsTrust {
-		err = i.ImageClient.TrustedImagePush(i.ImageName, user, pass, i.Logger, 30)
-	} else {
-		err = i.ImageClient.ImagePush(i.ImageName, user, pass, i.Logger, 30)
-	}
-	if err != nil {
-		if err.Error() == "authentication required" {
-			i.Logger.Error("镜像仓库授权失败", map[string]string{"step": "builder-exector", "status": "failure"})
+
+	if syncImage {
+		hubuser, hubpass := builder.GetImageUserInfoV2(i.LocalImageName, i.LocalImageUsername, i.LocalImagePassword)
+		_, err := i.ImageClient.ImagePull(i.LocalImageName, hubuser, hubpass, i.Logger, 20)
+		if err != nil {
+			logrus.Errorf("pull image %s error: %s", i.LocalImageName, err.Error())
+			i.Logger.Error(fmt.Sprintf("拉取应用镜像: %s失败", i.LocalImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
-		logrus.Errorf("push image into registry error: %s", err.Error())
-		i.Logger.Error("推送镜像至镜像仓库失败", map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+		if err := i.ImageClient.ImageTag(i.LocalImageName, i.ImageName, i.Logger, 1); err != nil {
+			logrus.Errorf("change image tag error: %s", err.Error())
+			i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.LocalImageName, i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
+		user, pass := builder.GetImageUserInfoV2(i.ImageName, i.ShareInfo.ImageInfo.HubUser, i.ShareInfo.ImageInfo.HubPassword)
+		if i.ShareInfo.ImageInfo.IsTrust {
+			err = i.ImageClient.TrustedImagePush(i.ImageName, user, pass, i.Logger, 30)
+		} else {
+			err = i.ImageClient.ImagePush(i.ImageName, user, pass, i.Logger, 30)
+		}
+		if err != nil {
+			if err.Error() == "authentication required" {
+				i.Logger.Error("镜像仓库授权失败", map[string]string{"step": "builder-exector", "status": "failure"})
+				return err
+			}
+			logrus.Errorf("push image into registry error: %s", err.Error())
+			i.Logger.Error("推送镜像至镜像仓库失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
 	}
+
 	return nil
 }
 

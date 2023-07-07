@@ -9,7 +9,7 @@ elif [ "$1" = "run" ]; then
     /root/wutong-mesh-data-panel run || exit 1
 else
     env2file conversion -f /root/envoy_config.yaml
-    cluster_name=${NAMESPACE}_${PLUGIN_ID}_${SERVICE_NAME}
+    cluster_name=${POD_NAMESPACE}_${WT_PLUGIN_ID}_${WT_SERVICE_ALIAS}
     # start sidecar process
     /root/wutong-mesh-data-panel &
     # start envoy process

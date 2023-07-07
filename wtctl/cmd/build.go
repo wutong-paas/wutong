@@ -37,11 +37,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//NewSourceBuildCmd cmd for source build test
+// NewSourceBuildCmd cmd for source build test
 func NewSourceBuildCmd() cli.Command {
 	c := cli.Command{
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name:  "list",
 				Usage: "Lists the building tasks pod currently being performed",
 				Flags: []cli.Flag{
@@ -59,7 +59,7 @@ func NewSourceBuildCmd() cli.Command {
 					cmd.Run()
 				},
 			},
-			cli.Command{
+			{
 				Name:  "log",
 				Usage: "Displays a log of the build task",
 				Flags: []cli.Flag{
@@ -82,11 +82,11 @@ func NewSourceBuildCmd() cli.Command {
 					cmd.Run()
 				},
 			},
-			cli.Command{
+			{
 				Name:  "maven-setting",
 				Usage: "maven setting config file manage",
 				Subcommands: []cli.Command{
-					cli.Command{
+					{
 						Name: "list",
 						Flags: []cli.Flag{
 							cli.StringFlag{
@@ -121,7 +121,7 @@ func NewSourceBuildCmd() cli.Command {
 							fmt.Println(runtable.Render())
 						},
 					},
-					cli.Command{
+					{
 						Name: "get",
 						Flags: []cli.Flag{
 							cli.StringFlag{
@@ -145,7 +145,7 @@ func NewSourceBuildCmd() cli.Command {
 							fmt.Println(cm.Data["mavensetting"])
 						},
 					},
-					cli.Command{
+					{
 						Name:  "update",
 						Usage: "update maven setting config file manage",
 						Flags: []cli.Flag{
@@ -190,7 +190,7 @@ func NewSourceBuildCmd() cli.Command {
 							fmt.Println("Update Success")
 						},
 					},
-					cli.Command{
+					{
 						Name:  "add",
 						Usage: "add maven setting config file manage",
 						Flags: []cli.Flag{
@@ -244,7 +244,7 @@ func NewSourceBuildCmd() cli.Command {
 							fmt.Println("Add Success")
 						},
 					},
-					cli.Command{
+					{
 						Name:  "delete",
 						Usage: "delete maven setting config file manage",
 						Flags: []cli.Flag{

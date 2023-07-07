@@ -508,7 +508,7 @@ func (g *GatewayAction) DeleteTCPRule(req *apimodel.DeleteTCPRuleStruct) error {
 		return err
 	}
 	// delete LBMappingPort
-	err = db.GetManager().TenantServiceLBMappingPortDaoTransactions(tx).DELServiceLBMappingPortByServiceIDAndPort(
+	err = db.GetManager().TenantEnvServiceLBMappingPortDaoTransactions(tx).DELServiceLBMappingPortByServiceIDAndPort(
 		tcpRule.ServiceID, tcpRule.Port)
 	if err != nil {
 		tx.Rollback()
@@ -663,7 +663,7 @@ func (g *GatewayAction) TCPIPPortExists(host string, port int) bool {
 // SendTaskDeprecated sends apply rules task
 func (g *GatewayAction) SendTaskDeprecated(in map[string]interface{}) error {
 	sid := in["service_id"].(string)
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(sid)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(sid)
 	if err != nil {
 		return fmt.Errorf("unexpected error occurred while getting Service by ServiceID(%s): %v", sid, err)
 	}
@@ -814,21 +814,37 @@ func (g *GatewayAction) TCPRuleConfig(req *apimodel.TCPRuleConfigReq) error {
 		RuleID: req.RuleID,
 		Key:    "keepalive-enabled",
 		Value:  keepaliveEnabled,
-	})
-	configs = append(configs, &model.GwRuleConfig{
+	}, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "keepalive-idle",
 		Value:  fmt.Sprintf("%dm", req.Body.KeepaliveIdle),
-	})
-	configs = append(configs, &model.GwRuleConfig{
+	}, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "keepalive-intvl",
 		Value:  fmt.Sprintf("%ds", req.Body.KeepaliveIntvl),
-	})
-	configs = append(configs, &model.GwRuleConfig{
+	}, &model.GwRuleConfig{
 		RuleID: req.RuleID,
 		Key:    "keepalive-cnt",
 		Value:  fmt.Sprintf("%d", req.Body.KeepaliveCnt),
+	})
+
+	// proxy timeout
+	proxyStreamTimeout := "600s"
+	if req.Body.ProxyStreamTimeout > 0 {
+		proxyStreamTimeout = fmt.Sprintf("%ds", req.Body.ProxyStreamTimeout)
+	}
+	proxyStreamNextUpstreamTimeout := "600s"
+	if req.Body.ProxyStreamNextUpstreamTimeout > 0 {
+		proxyStreamNextUpstreamTimeout = fmt.Sprintf("%ds", req.Body.ProxyStreamNextUpstreamTimeout)
+	}
+	configs = append(configs, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "proxy-stream-timeout",
+		Value:  proxyStreamTimeout,
+	}, &model.GwRuleConfig{
+		RuleID: req.RuleID,
+		Key:    "proxy-stream-next-upstream-timeout",
+		Value:  proxyStreamNextUpstreamTimeout,
 	})
 
 	rule, err := g.dbmanager.TCPRuleDao().GetTCPRuleByID(req.RuleID)

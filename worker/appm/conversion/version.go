@@ -26,8 +26,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/wutong-paas/wutong/builder/sources"
-
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/builder"
@@ -45,8 +43,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-// TenantServiceVersion service deploy version conv. define pod spec
-func TenantServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
+// TenantEnvServiceVersion service deploy version conv. define pod spec
+func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 	version, err := dbmanager.VersionInfoDao().GetVersionByDeployVersion(as.DeployVersion, as.ServiceID)
 	if err != nil {
 		return fmt.Errorf("get service deploy version %s failure %s", as.DeployVersion, err.Error())
@@ -145,9 +143,6 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 	if imagename == "" {
 		if version.DeliveredType == "slug" {
 			imagename = builder.RUNNERIMAGENAME
-			if err := sources.ImagesPullAndPush(builder.RUNNERIMAGENAME, builder.ONLINERUNNERIMAGENAME, "", "", nil); err != nil {
-				logrus.Errorf("[getMainContainer] get runner image failed: %v", err)
-			}
 		} else {
 			imagename = version.DeliveredPath
 		}
@@ -166,7 +161,7 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 		Resources:      resources,
 	}
 
-	label, err := dbmanager.TenantServiceLabelDao().GetPrivilegedLabel(as.ServiceID)
+	label, err := dbmanager.TenantEnvServiceLabelDao().GetPrivilegedLabel(as.ServiceID)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, fmt.Errorf("get privileged label: %v", err)
 	}
@@ -195,7 +190,7 @@ func createArgs(version *dbmodel.VersionInfo, envs []corev1.EnvVar) (args []stri
 // createEnv create service container env
 func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.Secret) ([]corev1.EnvVar, error) {
 	var envs []corev1.EnvVar
-	var envsAll []*dbmodel.TenantServiceEnvVar
+	var envsAll []*dbmodel.TenantEnvServiceEnvVar
 	//set logger env
 	//todo: user define and set logger config
 	envs = append(envs, corev1.EnvVar{
@@ -208,7 +203,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 
 	//set relation app outer env
 	var relationIDs []string
-	relations, err := dbmanager.TenantServiceRelationDao().GetTenantServiceRelations(as.ServiceID)
+	relations, err := dbmanager.TenantEnvServiceRelationDao().GetTenantEnvServiceRelations(as.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +213,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 		}
 		//set service all dependces ids
 		as.Dependces = relationIDs
-		es, err := dbmanager.TenantServiceEnvVarDao().GetDependServiceEnvs(relationIDs, []string{"outer", "both"})
+		es, err := dbmanager.TenantEnvServiceEnvVarDao().GetDependServiceEnvs(relationIDs, []string{"outer", "both"})
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +221,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 			envsAll = append(envsAll, es...)
 		}
 
-		serviceAliases, err := dbmanager.TenantServiceDao().GetServiceAliasByIDs(relationIDs)
+		serviceAliases, err := dbmanager.TenantEnvServiceDao().GetServiceAliasByIDs(relationIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -252,7 +247,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 	}
 
 	//set app relation env
-	relations, err = dbmanager.TenantServiceRelationDao().GetTenantServiceRelationsByDependServiceID(as.ServiceID)
+	relations, err = dbmanager.TenantEnvServiceRelationDao().GetTenantEnvServiceRelationsByDependServiceID(as.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +256,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 		for _, r := range relations {
 			relationIDs = append(relationIDs, r.ServiceID)
 		}
-		serviceAliass, err := dbmanager.TenantServiceDao().GetServiceAliasByIDs(relationIDs)
+		serviceAliass, err := dbmanager.TenantEnvServiceDao().GetServiceAliasByIDs(relationIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +271,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 	}
 
 	//set app port and net env
-	ports, err := dbmanager.TenantServicesPortDao().GetPortsByServiceID(as.ServiceID)
+	ports, err := dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(as.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +299,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 	}
 
 	//set app custom envs
-	es, err := dbmanager.TenantServiceEnvVarDao().GetServiceEnvs(as.ServiceID, []string{"inner", "both", "outer"})
+	es, err := dbmanager.TenantEnvServiceEnvVarDao().GetServiceEnvs(as.ServiceID, []string{"inner", "both", "outer"})
 	if err != nil {
 		return nil, err
 	}
@@ -315,23 +310,31 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 		envs = append(envs, corev1.EnvVar{Name: strings.TrimSpace(e.AttrName), Value: e.AttrValue})
 	}
 
-	//set default env
-	envs = append(envs, corev1.EnvVar{Name: "NAMESPACE", Value: as.GetNamespace()})
-	envs = append(envs, corev1.EnvVar{Name: "TENANT_ID", Value: as.TenantID})
-	envs = append(envs, corev1.EnvVar{Name: "SERVICE_ID", Value: as.ServiceID})
-	envs = append(envs, corev1.EnvVar{Name: "MEMORY_SIZE", Value: envutil.GetMemoryType(as.ContainerMemory)})
-	envs = append(envs, corev1.EnvVar{Name: "SERVICE_NAME", Value: as.ServiceAlias})
-	envs = append(envs, corev1.EnvVar{Name: "SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)})
-	envs = append(envs, corev1.EnvVar{Name: "HOST_IP", ValueFrom: &corev1.EnvVarSource{
-		FieldRef: &corev1.ObjectFieldSelector{
-			FieldPath: "status.hostIP",
-		},
-	}})
-	envs = append(envs, corev1.EnvVar{Name: "POD_IP", ValueFrom: &corev1.EnvVarSource{
-		FieldRef: &corev1.ObjectFieldSelector{
-			FieldPath: "status.podIP",
-		},
-	}})
+	builtinEnvs := []corev1.EnvVar{
+		{Name: "POD_NAMESPACE", Value: as.GetNamespace()},
+		{Name: "WT_TENANT_ID", Value: as.TenantEnvID},
+		{Name: "WT_APP_NAME", Value: as.K8sApp},
+		{Name: "WT_COMPONENT_NAME", Value: as.K8sComponentName},
+		{Name: "WT_SERVICE_ID", Value: as.ServiceID},
+		{Name: "WT_MEMORY_SIZE", Value: envutil.GetMemoryType(as.ContainerMemory)},
+		{Name: "WT_SERVICE_NAME", Value: as.GetK8sWorkloadName()},
+		{Name: "WT_SERVICE_ALIAS", Value: as.ServiceAlias},
+		{Name: "WT_SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)},
+		// set HOST_IP and POD_IP env variable
+		{Name: "HOST_IP", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "status.hostIP",
+			},
+		}},
+		{Name: "POD_IP", ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{
+				FieldPath: "status.podIP",
+			},
+		}},
+	}
+
+	envs = append(builtinEnvs, envs...)
+
 	var config = make(map[string]string, len(envs))
 	for _, sec := range envVarSecrets {
 		for k, v := range sec.Data {
@@ -364,8 +367,8 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 	return envs, nil
 }
 
-func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmodel.TenantServicesPort) (re []corev1.EnvVar) {
-	defDomain := fmt.Sprintf(".%s.%s.", as.ServiceAlias, as.TenantName)
+func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmodel.TenantEnvServicesPort) (re []corev1.EnvVar) {
+	defDomain := fmt.Sprintf(".%s.%s.", as.ServiceAlias, as.TenantEnvName)
 	httpRules, _ := dbmanager.HTTPRuleDao().ListByServiceID(as.ServiceID)
 	portDomainEnv := make(map[int][]corev1.EnvVar)
 	portProtocolEnv := make(map[int][]corev1.EnvVar)
@@ -447,7 +450,7 @@ func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmode
 
 func createVolumes(as *v1.AppService, version *dbmodel.VersionInfo, envs []corev1.EnvVar, secrets []*corev1.Secret, dbmanager db.Manager) (*volume.Define, error) {
 	var define = &volume.Define{}
-	vs, err := dbmanager.TenantServiceVolumeDao().GetTenantServiceVolumesByServiceID(version.ServiceID)
+	vs, err := dbmanager.TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(version.ServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -462,14 +465,14 @@ func createVolumes(as *v1.AppService, version *dbmodel.VersionInfo, envs []corev
 	}
 
 	//handle Shared storage
-	tsmr, err := dbmanager.TenantServiceMountRelationDao().GetTenantServiceMountRelationsByService(version.ServiceID)
+	tsmr, err := dbmanager.TenantEnvServiceMountRelationDao().GetTenantEnvServiceMountRelationsByService(version.ServiceID)
 	if err != nil {
 		return nil, err
 	}
 
 	if vs != nil && len(tsmr) > 0 {
 		for _, t := range tsmr {
-			sv, err := dbmanager.TenantServiceVolumeDao().GetVolumeByServiceIDAndName(t.DependServiceID, t.VolumeName)
+			sv, err := dbmanager.TenantEnvServiceVolumeDao().GetVolumeByServiceIDAndName(t.DependServiceID, t.VolumeName)
 			if err != nil {
 				return nil, fmt.Errorf("service id: %s; volume name: %s; get dep volume: %v", t.DependServiceID, t.VolumeName, err)
 			}
@@ -521,7 +524,7 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 // }
 
 func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, error) {
-	inBoundOK, err := dbmanager.TenantServicePluginRelationDao().CheckSomeModelPluginByServiceID(
+	inBoundOK, err := dbmanager.TenantEnvServicePluginRelationDao().CheckSomeModelPluginByServiceID(
 		serviceID,
 		model.InBoundNetPlugin)
 	if err != nil {
@@ -530,15 +533,15 @@ func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, 
 	if inBoundOK {
 		return inBoundOK, nil
 	}
-	return dbmanager.TenantServicePluginRelationDao().CheckSomeModelPluginByServiceID(
+	return dbmanager.TenantEnvServicePluginRelationDao().CheckSomeModelPluginByServiceID(
 		serviceID,
 		model.InBoundAndOutBoundNetPlugin)
 }
 func createUpstreamPluginMappingPort(
-	ports []*dbmodel.TenantServicesPort,
-	pluginPorts []*dbmodel.TenantServicesStreamPluginPort,
+	ports []*dbmodel.TenantEnvServicesPort,
+	pluginPorts []*dbmodel.TenantEnvServicesStreamPluginPort,
 ) (
-	[]*dbmodel.TenantServicesPort,
+	[]*dbmodel.TenantEnvServicesPort,
 	error) {
 	//start from 65301
 	for i := range ports {
@@ -553,7 +556,7 @@ func createUpstreamPluginMappingPort(
 	return ports, nil
 }
 func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.ContainerPort) {
-	ps, err := dbmanager.TenantServicesPortDao().GetPortsByServiceID(as.ServiceID)
+	ps, err := dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(as.ServiceID)
 	if err == nil && ps != nil && len(ps) > 0 {
 		crt, err := checkUpstreamPluginRelation(as.ServiceID, dbmanager)
 		if err != nil {
@@ -561,7 +564,7 @@ func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.Contai
 			return
 		}
 		if crt {
-			pluginPorts, err := dbmanager.TenantServicesStreamPluginPortDao().GetPluginMappingPorts(
+			pluginPorts, err := dbmanager.TenantEnvServicesStreamPluginPortDao().GetPluginMappingPorts(
 				as.ServiceID)
 			if err != nil {
 				logrus.Warningf("find upstream plugin mapping port error, %s", err.Error())
@@ -640,7 +643,7 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 
 func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]string {
 	selector := make(map[string]string)
-	labels, err := dbmanager.TenantServiceLabelDao().GetTenantServiceNodeSelectorLabel(as.ServiceID)
+	labels, err := dbmanager.TenantEnvServiceLabelDao().GetTenantEnvServiceNodeSelectorLabel(as.ServiceID)
 	if err == nil && labels != nil && len(labels) > 0 {
 		for _, l := range labels {
 			if l.LabelValue == "windows" || l.LabelValue == "linux" {
@@ -667,7 +670,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	podAntAffinity := make([]corev1.PodAffinityTerm, 0)
 	osWindowsSelect := false
 	// enableGPU := as.ContainerGPUType != "" && as.ContainerGPU > 0
-	labels, err := dbmanager.TenantServiceLabelDao().GetTenantServiceAffinityLabel(as.ServiceID)
+	labels, err := dbmanager.TenantEnvServiceLabelDao().GetTenantEnvServiceAffinityLabel(as.ServiceID)
 	if err == nil && labels != nil && len(labels) > 0 {
 		for _, l := range labels {
 			if l.LabelKey == dbmodel.LabelKeyNodeSelector {

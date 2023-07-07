@@ -46,7 +46,7 @@ import (
 // SourceCodeBuildItem SouceCodeBuildItem
 type SourceCodeBuildItem struct {
 	Namespace     string       `json:"namespace"`
-	TenantName    string       `json:"tenant_name"`
+	TenantEnvName string       `json:"tenant_env_name"`
 	WTDataPVCName string       `json:"gr_data_pvc_name"`
 	CachePVCName  string       `json:"cache_pvc_name"`
 	CacheMode     string       `json:"cache_mode"`
@@ -63,7 +63,7 @@ type SourceCodeBuildItem struct {
 	KubeClient    kubernetes.Interface
 	WtNamespace   string
 	WtRepoName    string
-	TenantID      string
+	TenantEnvID   string
 	ServiceID     string
 	DeployVersion string
 	Lang          string
@@ -93,7 +93,7 @@ func NewSouceCodeBuildItem(in []byte) *SourceCodeBuildItem {
 		Branch:        gjson.GetBytes(in, "branch").String(),
 		User:          gjson.GetBytes(in, "user").String(),
 		Password:      gjson.GetBytes(in, "password").String(),
-		TenantID:      gjson.GetBytes(in, "tenant_id").String(),
+		TenantEnvID:   gjson.GetBytes(in, "tenant_env_id").String(),
 		ServiceID:     gjson.GetBytes(in, "service_id").String(),
 	}
 	envs := gjson.GetBytes(in, "envs").String()
@@ -102,10 +102,10 @@ func NewSouceCodeBuildItem(in []byte) *SourceCodeBuildItem {
 		logrus.Errorf("unmarshal build envs error: %s", err.Error())
 	}
 	scb := &SourceCodeBuildItem{
-		Namespace:     gjson.GetBytes(in, "tenant_id").String(),
-		TenantName:    gjson.GetBytes(in, "tenant_name").String(),
+		Namespace:     gjson.GetBytes(in, "tenant_env_id").String(),
+		TenantEnvName: gjson.GetBytes(in, "tenant_env_name").String(),
 		ServiceAlias:  gjson.GetBytes(in, "service_alias").String(),
-		TenantID:      gjson.GetBytes(in, "tenant_id").String(),
+		TenantEnvID:   gjson.GetBytes(in, "tenant_env_id").String(),
 		ServiceID:     gjson.GetBytes(in, "service_id").String(),
 		Action:        gjson.GetBytes(in, "action").String(),
 		DeployVersion: gjson.GetBytes(in, "deploy_version").String(),
@@ -117,9 +117,9 @@ func NewSouceCodeBuildItem(in []byte) *SourceCodeBuildItem {
 		Configs:       gjson.GetBytes(in, "configs").Map(),
 		BuildEnvs:     be,
 	}
-	scb.CacheDir = fmt.Sprintf("/cache/build/%s/cache/%s", scb.TenantID, scb.ServiceID)
+	scb.CacheDir = fmt.Sprintf("/cache/build/%s/cache/%s", scb.TenantEnvID, scb.ServiceID)
 	//scb.SourceDir = scb.CodeSouceInfo.GetCodeSourceDir()
-	scb.TGZDir = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s", scb.TenantID, scb.ServiceID)
+	scb.TGZDir = fmt.Sprintf("/wtdata/build/tenantEnv/%s/slug/%s", scb.TenantEnvID, scb.ServiceID)
 	return scb
 }
 
@@ -129,7 +129,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 	// 2.check dockerfile/ source_code
 	// 3.build
 	// 4.upload image /upload slug
-	rbi, err := sources.CreateRepostoryBuildInfo(i.CodeSouceInfo.RepositoryURL, i.CodeSouceInfo.ServerType, i.CodeSouceInfo.Branch, i.TenantID, i.ServiceID)
+	rbi, err := sources.CreateRepostoryBuildInfo(i.CodeSouceInfo.RepositoryURL, i.CodeSouceInfo.ServerType, i.CodeSouceInfo.Branch, i.TenantEnvID, i.ServiceID)
 	if err != nil {
 		i.Logger.Error("Git项目仓库地址格式错误", map[string]string{"step": "parse"})
 		return err
@@ -245,7 +245,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 		CodeSouceInfo: i.CodeSouceInfo,
 		ServiceAlias:  i.ServiceAlias,
 		ServiceID:     i.ServiceID,
-		TenantID:      i.TenantID,
+		TenantEnvID:   i.TenantEnvID,
 		ServerType:    i.CodeSouceInfo.ServerType,
 		Runtime:       i.Runtime,
 		Branch:        i.CodeSouceInfo.Branch,

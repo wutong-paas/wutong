@@ -83,6 +83,10 @@ type PodInfo struct {
 func GetPodDetails(kubeClient clientset.Interface) (*PodInfo, error) {
 	podName := os.Getenv("POD_NAME")
 	podNs := os.Getenv("POD_NAMESPACE")
+	// 兼容 v1.2.0 之前的版本
+	if podNs == "" {
+		podNs = os.Getenv("NAMESPACE")
+	}
 
 	if podName == "" || podNs == "" {
 		return nil, fmt.Errorf("unable to get POD information (missing POD_NAME or POD_NAMESPACE environment variable")

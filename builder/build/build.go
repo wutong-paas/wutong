@@ -87,7 +87,7 @@ type Request struct {
 	CachePVCName  string
 	CacheMode     string
 	CachePath     string
-	TenantID      string
+	TenantEnvID   string
 	SourceDir     string
 	CacheDir      string
 	TGZDir        string
@@ -137,7 +137,7 @@ func GetBuild(lang code.Lang) (Build, error) {
 // CreateImageName create image name
 func CreateImageName(serviceID, deployversion string) string {
 	imageName := strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, serviceID, deployversion))
-	component, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+	component, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 	if err != nil {
 		return imageName
 	}
@@ -145,21 +145,21 @@ func CreateImageName(serviceID, deployversion string) string {
 	if err != nil {
 		return imageName
 	}
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(component.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(component.TenantEnvID)
 	if err != nil {
 		return imageName
 	}
-	workloadName := fmt.Sprintf("%s-%s-%s", tenant.Namespace, app.K8sApp, component.K8sComponentName)
+	workloadName := fmt.Sprintf("%s-%s-%s", tenantEnv.Namespace, app.K8sApp, component.K8sComponentName)
 	return strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, workloadName, deployversion))
 }
 
-func GetTenantRegistryAuthSecrets(kcli kubernetes.Interface, ctx context.Context, tenantID string) map[string]types.AuthConfig {
+func GetTenantEnvRegistryAuthSecrets(kcli kubernetes.Interface, ctx context.Context, tenantEnvID string) map[string]types.AuthConfig {
 	auths := make(map[string]types.AuthConfig)
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(tenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
 	if err != nil {
 		return auths
 	}
-	registrySecrets, err := kcli.CoreV1().Secrets(tenant.Namespace).List(ctx, metav1.ListOptions{
+	registrySecrets, err := kcli.CoreV1().Secrets(tenantEnv.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "wutong.io/registry-auth-secret=true",
 	})
 	if err == nil {

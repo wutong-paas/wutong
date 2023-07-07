@@ -209,7 +209,7 @@ type ClusterResource struct {
 	AllNode                          int           `json:"all_node"`
 	NotReadyNode                     int           `json:"notready_node"`
 	ComputeNode                      int           `json:"compute_node"`
-	Tenant                           int           `json:"tenant"`
+	TenantEnv                        int           `json:"tenant_env"`
 	CapCPU                           int           `json:"cap_cpu"`          //可分配CPU总额
 	CapMem                           float32       `json:"cap_mem"`          //可分配Mem总额
 	HealthCapCPU                     int           `json:"health_cap_cpu"`   //健康可分配CPU
@@ -459,7 +459,7 @@ type Pods struct {
 	Namespace       string `json:"namespace"`
 	Id              string `json:"id"`
 	Name            string `json:"name"`
-	TenantName      string `json:"tenant_name"`
+	TenantEnvName   string `json:"tenant_env_name"`
 	CPURequests     string `json:"cpurequest"`
 	CPURequestsR    string `json:"cpurequestr"`
 	CPULimits       string `json:"cpulimits"`
@@ -511,9 +511,9 @@ type RulesConfig struct {
 
 // NotificationEvent NotificationEvent
 type NotificationEvent struct {
-	//Kind could be service, tenant, cluster, node
+	//Kind could be service, tenantEnv, cluster, node
 	Kind string `json:"Kind"`
-	//KindID could be service_id,tenant_id,cluster_id,node_id
+	//KindID could be service_id,tenant_env_id,cluster_id,node_id
 	KindID string `json:"KindID"`
 	Hash   string `json:"Hash"`
 	//Type could be Normal UnNormal Notification
@@ -526,5 +526,5 @@ type NotificationEvent struct {
 	IsHandle      bool   `json:"IsHandle"`
 	HandleMessage string `json:"HandleMessage"`
 	ServiceName   string `json:"ServiceName"`
-	TenantName    string `json:"TenantName"`
+	TenantEnvName string `json:"TenantEnvName"`
 }

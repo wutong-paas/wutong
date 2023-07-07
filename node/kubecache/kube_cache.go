@@ -324,6 +324,7 @@ func (k *kubeClient) evictPods(pods []v1.Pod, policyGroupVersion string, getPodF
 	//	//globalTimeout = Timeout
 	//	globalTimeout = 1000
 	//}
+	globalTimeoutC := time.After(globalTimeout)
 	for {
 		select {
 		case err := <-errCh:
@@ -333,8 +334,8 @@ func (k *kubeClient) evictPods(pods []v1.Pod, policyGroupVersion string, getPodF
 			if doneCount == len(pods) {
 				return nil
 			}
-		case <-time.After(globalTimeout):
-			return fmt.Errorf("Drain did not complete within %v", globalTimeout)
+		case <-globalTimeoutC:
+			return fmt.Errorf("drain did not complete within %v", globalTimeout)
 		}
 	}
 }

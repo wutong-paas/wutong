@@ -77,9 +77,9 @@ type ComponentBase struct {
 }
 
 // DbModel return database model
-func (c *ComponentBase) DbModel(tenantID, appID, deployVersion string) *dbmodel.TenantServices {
-	return &dbmodel.TenantServices{
-		TenantID:         tenantID,
+func (c *ComponentBase) DbModel(tenantEnvID, appID, deployVersion string) *dbmodel.TenantEnvServices {
+	return &dbmodel.TenantEnvServices{
+		TenantEnvID:      tenantEnvID,
 		ServiceID:        c.ComponentID,
 		ServiceAlias:     c.ComponentAlias,
 		ServiceName:      c.ComponentName,
@@ -94,7 +94,7 @@ func (c *ComponentBase) DbModel(tenantID, appID, deployVersion string) *dbmodel.
 		DeployVersion:    deployVersion,
 		Category:         c.Category,
 		EventID:          c.EventID,
-		Namespace:        tenantID,
+		Namespace:        tenantEnvID,
 		ServiceOrigin:    c.ServiceOrigin,
 		Kind:             c.Kind,
 		AppID:            appID,
@@ -103,17 +103,17 @@ func (c *ComponentBase) DbModel(tenantID, appID, deployVersion string) *dbmodel.
 	}
 }
 
-// TenantComponentRelation -
-type TenantComponentRelation struct {
+// TenantEnvComponentRelation -
+type TenantEnvComponentRelation struct {
 	DependServiceID   string `json:"dep_service_id"`
 	DependServiceType string `json:"dep_service_type"`
 	DependOrder       int    `json:"dep_order"`
 }
 
 // DbModel return database model
-func (t *TenantComponentRelation) DbModel(tenantID, componentID string) *dbmodel.TenantServiceRelation {
-	return &dbmodel.TenantServiceRelation{
-		TenantID:          tenantID,
+func (t *TenantEnvComponentRelation) DbModel(tenantEnvID, componentID string) *dbmodel.TenantEnvServiceRelation {
+	return &dbmodel.TenantEnvServiceRelation{
+		TenantEnvID:       tenantEnvID,
 		ServiceID:         componentID,
 		DependServiceID:   t.DependServiceID,
 		DependServiceType: t.DependServiceType,
@@ -128,8 +128,8 @@ type ComponentConfigFile struct {
 }
 
 // DbModel return database model
-func (c *ComponentConfigFile) DbModel(componentID string) *dbmodel.TenantServiceConfigFile {
-	return &dbmodel.TenantServiceConfigFile{
+func (c *ComponentConfigFile) DbModel(componentID string) *dbmodel.TenantEnvServiceConfigFile {
+	return &dbmodel.TenantEnvServiceConfigFile{
 		ServiceID:   componentID,
 		VolumeName:  c.VolumeName,
 		FileContent: c.FileContent,
@@ -149,9 +149,9 @@ func (v *VolumeRelation) Key() string {
 }
 
 // DbModel return database model
-func (v *VolumeRelation) DbModel(tenantID, componentID, hostPath, volumeType string) *dbmodel.TenantServiceMountRelation {
-	return &dbmodel.TenantServiceMountRelation{
-		TenantID:        tenantID,
+func (v *VolumeRelation) DbModel(tenantEnvID, componentID, hostPath, volumeType string) *dbmodel.TenantEnvServiceMountRelation {
+	return &dbmodel.TenantEnvServiceMountRelation{
+		TenantEnvID:     tenantEnvID,
 		ServiceID:       componentID,
 		DependServiceID: v.DependServiceID,
 		VolumePath:      v.MountPath,
@@ -185,8 +185,8 @@ func (v *ComponentVolume) Key(componentID string) string {
 }
 
 // DbModel return database model
-func (v *ComponentVolume) DbModel(componentID string) *dbmodel.TenantServiceVolume {
-	return &dbmodel.TenantServiceVolume{
+func (v *ComponentVolume) DbModel(componentID string) *dbmodel.TenantEnvServiceVolume {
+	return &dbmodel.TenantEnvServiceVolume{
 		ServiceID:          componentID,
 		Category:           v.Category,
 		VolumeType:         v.VolumeType,
@@ -212,15 +212,15 @@ type ComponentLabel struct {
 }
 
 // DbModel return database model
-func (l *ComponentLabel) DbModel(componentID string) *dbmodel.TenantServiceLable {
-	return &dbmodel.TenantServiceLable{
+func (l *ComponentLabel) DbModel(componentID string) *dbmodel.TenantEnvServiceLable {
+	return &dbmodel.TenantEnvServiceLable{
 		ServiceID:  componentID,
 		LabelKey:   l.LabelKey,
 		LabelValue: l.LabelValue,
 	}
 }
 
-//ComponentEnv  -
+// ComponentEnv  -
 type ComponentEnv struct {
 	ContainerPort int    `validate:"container_port|numeric_between:1,65535" json:"container_port"`
 	Name          string `validate:"name" json:"name"`
@@ -231,9 +231,9 @@ type ComponentEnv struct {
 }
 
 // DbModel return database model
-func (e *ComponentEnv) DbModel(tenantID, componentID string) *dbmodel.TenantServiceEnvVar {
-	return &dbmodel.TenantServiceEnvVar{
-		TenantID:      tenantID,
+func (e *ComponentEnv) DbModel(tenantEnvID, componentID string) *dbmodel.TenantEnvServiceEnvVar {
+	return &dbmodel.TenantEnvServiceEnvVar{
+		TenantEnvID:   tenantEnvID,
 		ServiceID:     componentID,
 		Name:          e.Name,
 		AttrName:      e.AttrName,
@@ -251,8 +251,8 @@ type Component struct {
 	TCPRules           []AddTCPRuleStruct               `json:"tcp_rules"`
 	HTTPRuleConfigs    []HTTPRuleConfig                 `json:"http_rule_configs"`
 	Monitors           []AddServiceMonitorRequestStruct `json:"monitors"`
-	Ports              []TenantServicesPort             `json:"ports"`
-	Relations          []TenantComponentRelation        `json:"relations"`
+	Ports              []TenantEnvServicesPort          `json:"ports"`
+	Relations          []TenantEnvComponentRelation     `json:"relations"`
 	Envs               []ComponentEnv                   `json:"envs"`
 	Probes             []ServiceProbe                   `json:"probes"`
 	AppConfigGroupRels []AppConfigGroupRelations        `json:"app_config_groups"`

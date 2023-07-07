@@ -148,6 +148,7 @@ func (c *ContainerLogManage) handleLogger() {
 					clog, okf := logger.(*ContainerLog)
 					if okf {
 						clog.Stop()
+						clog.Close()
 					}
 					c.containerLogs.Delete(cevent.Container.GetId())
 					logrus.Infof("remove copy container log for container %s", cevent.Container.GetMetadata().GetName())
@@ -175,6 +176,7 @@ func (c *ContainerLogManage) listContainer() []*runtimeapi.Container {
 
 func (c *ContainerLogManage) loollist() {
 	ticker := time.NewTicker(time.Minute * 10)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-c.ctx.Done():
@@ -183,7 +185,7 @@ func (c *ContainerLogManage) loollist() {
 		case <-ticker.C:
 			for _, container := range c.listContainer() {
 				cj, _ := c.getContainer(container.GetId())
-				if cj.GetLogPath() == "" {
+				if cj == nil || cj.GetLogPath() == "" {
 					continue
 				}
 				// loggerType := cj.HostConfig.LogConfig.Type
@@ -433,7 +435,7 @@ func (container *ContainerLog) provideContainerdLoggerInfo() (*Info, error) {
 	var containerEnvs []string
 	if extraContainerInfo.Config != nil {
 		for _, ce := range extraContainerInfo.Config.Envs {
-			logrus.Infof("container [%s] env: %s=%s", container.ContainerStatus.GetId(), ce.Key, ce.Value)
+			logrus.Debugf("container [%s] env: %s=%s", container.ContainerStatus.GetId(), ce.Key, ce.Value)
 			containerEnvs = append(containerEnvs, fmt.Sprintf("%s=%s", ce.Key, ce.Value))
 		}
 	}
@@ -458,8 +460,7 @@ func (container *ContainerLog) startLogger() ([]Logger, error) {
 	configs := getLoggerConfig(info.ContainerEnv)
 	var loggers []Logger
 	for _, config := range configs {
-		initDriver, err :=
-			GetLogDriver(config.Name)
+		initDriver, err := GetLogDriver(config.Name)
 		logrus.Infof("get log driver %s", config.Name)
 		if err != nil {
 			logrus.Warnf("get container log driver failure %s", err.Error())
@@ -509,6 +510,14 @@ func (container *ContainerLog) Close() {
 	if container.LogCopier != nil {
 		container.LogCopier.Close()
 	}
+	if container.reader != nil {
+		container.reader.Close()
+	}
+
+	for _, ld := range container.LogDriver {
+		ld.Close()
+	}
+	container.LogDriver = nil
 	container.cancel()
 	logrus.Debugf("wutong logger close for container %s", container.ContainerStatus.GetMetadata().GetName())
 }

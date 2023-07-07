@@ -29,7 +29,7 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 )
 
-func TestManager_TenantServiceScalingRecordsDaoImpl_UpdateOrCreate(t *testing.T) {
+func TestManager_TenantEnvServiceScalingRecordsDaoImpl_UpdateOrCreate(t *testing.T) {
 	dbname := "region"
 	rootpw := "wutong"
 
@@ -80,7 +80,7 @@ func TestManager_TenantServiceScalingRecordsDaoImpl_UpdateOrCreate(t *testing.T)
 		break
 	}
 
-	record := &model.TenantServiceScalingRecords{
+	record := &model.TenantEnvServiceScalingRecords{
 		ServiceID:   "45197f4936cf45efa2ac4831ce42025a",
 		RuleID:      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 		EventName:   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx.15d6ede119c8af35",
@@ -90,7 +90,7 @@ func TestManager_TenantServiceScalingRecordsDaoImpl_UpdateOrCreate(t *testing.T)
 		Count:       2,
 		LastTime:    time.Now(),
 	}
-	if err := GetManager().TenantServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
+	if err := GetManager().TenantEnvServiceScalingRecordsDao().UpdateOrCreate(record); err != nil {
 		t.Fatal(err)
 	}
 }

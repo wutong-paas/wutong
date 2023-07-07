@@ -12,16 +12,16 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//AddServiceMonitors add service monitor
-func (t *TenantStruct) AddServiceMonitors(w http.ResponseWriter, r *http.Request) {
+// AddServiceMonitors add service monitor
+func (t *TenantEnvStruct) AddServiceMonitors(w http.ResponseWriter, r *http.Request) {
 	var add api_model.AddServiceMonitorRequestStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &add, nil)
 	if !ok {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tsm, err := handler.GetServiceManager().AddServiceMonitor(tenantID, serviceID, add)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tsm, err := handler.GetServiceManager().AddServiceMonitor(tenantEnvID, serviceID, add)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
@@ -29,12 +29,12 @@ func (t *TenantStruct) AddServiceMonitors(w http.ResponseWriter, r *http.Request
 	httputil.ReturnSuccess(r, w, tsm)
 }
 
-//DeleteServiceMonitors delete service monitor
-func (t *TenantStruct) DeleteServiceMonitors(w http.ResponseWriter, r *http.Request) {
+// DeleteServiceMonitors delete service monitor
+func (t *TenantEnvStruct) DeleteServiceMonitors(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	name := chi.URLParam(r, "name")
-	tsm, err := handler.GetServiceManager().DeleteServiceMonitor(tenantID, serviceID, name)
+	tsm, err := handler.GetServiceManager().DeleteServiceMonitor(tenantEnvID, serviceID, name)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
@@ -42,8 +42,8 @@ func (t *TenantStruct) DeleteServiceMonitors(w http.ResponseWriter, r *http.Requ
 	httputil.ReturnSuccess(r, w, tsm)
 }
 
-//UpdateServiceMonitors update service monitor
-func (t *TenantStruct) UpdateServiceMonitors(w http.ResponseWriter, r *http.Request) {
+// UpdateServiceMonitors update service monitor
+func (t *TenantEnvStruct) UpdateServiceMonitors(w http.ResponseWriter, r *http.Request) {
 	var update api_model.UpdateServiceMonitorRequestStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &update, nil)
 	if !ok {
@@ -51,8 +51,8 @@ func (t *TenantStruct) UpdateServiceMonitors(w http.ResponseWriter, r *http.Requ
 	}
 	name := chi.URLParam(r, "name")
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tsm, err := handler.GetServiceManager().UpdateServiceMonitor(tenantID, serviceID, name, update)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tsm, err := handler.GetServiceManager().UpdateServiceMonitor(tenantEnvID, serviceID, name, update)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
@@ -60,18 +60,18 @@ func (t *TenantStruct) UpdateServiceMonitors(w http.ResponseWriter, r *http.Requ
 	httputil.ReturnSuccess(r, w, tsm)
 }
 
-//GetMonitorMetrics get monitor metrics
+// GetMonitorMetrics get monitor metrics
 func GetMonitorMetrics(w http.ResponseWriter, r *http.Request) {
 	target := r.FormValue("target")
 	var metricMetadatas []prometheus.Metadata
-	if target == "tenant" {
-		metricMetadatas = handler.GetMonitorHandle().GetTenantMonitorMetrics(r.FormValue("tenant"))
+	if target == "tenant_env" {
+		metricMetadatas = handler.GetMonitorHandle().GetTenantEnvMonitorMetrics(r.FormValue("tenant_env"))
 	}
 	if target == "app" {
-		metricMetadatas = handler.GetMonitorHandle().GetAppMonitorMetrics(r.FormValue("tenant"), r.FormValue("app"))
+		metricMetadatas = handler.GetMonitorHandle().GetAppMonitorMetrics(r.FormValue("tenant_env"), r.FormValue("app"))
 	}
 	if target == "component" {
-		metricMetadatas = handler.GetMonitorHandle().GetComponentMonitorMetrics(r.FormValue("tenant"), r.FormValue("component"))
+		metricMetadatas = handler.GetMonitorHandle().GetComponentMonitorMetrics(r.FormValue("tenant_env"), r.FormValue("component"))
 	}
 	httputil.ReturnSuccess(r, w, metricMetadatas)
 }

@@ -132,7 +132,7 @@ func (c *Builder) GetComponentProperties(as *v1.AppService, dbm db.Manager, cd *
 		}
 		properties.Endpoints = endpoints
 
-		ports, err := dbm.TenantServicesPortDao().GetPortsByServiceID(as.ServiceID)
+		ports, err := dbm.TenantEnvServicesPortDao().GetPortsByServiceID(as.ServiceID)
 		if err != nil {
 			logrus.Errorf("query component %s ports failure %s", as.ServiceID, err.Error())
 		}
@@ -199,8 +199,8 @@ func (c *Builder) BuildWorkloadResource(as *v1.AppService, dbm db.Manager) error
 	return nil
 }
 
-//InitCoreComponentDefinition init the built-in component type definition.
-//Should be called after the store is initialized.
+// InitCoreComponentDefinition init the built-in component type definition.
+// Should be called after the store is initialized.
 func (c *Builder) InitCoreComponentDefinition(wutongClient wutongversioned.Interface) {
 	coreComponentDefinition := []*v1alpha1.ComponentDefinition{&thirdComponentDefine}
 	for _, ccd := range coreComponentDefinition {
@@ -273,7 +273,7 @@ func (c *Builder) createProbe(componentID string) (*v1alpha1.Probe, error) {
 	return p, nil
 }
 
-func (c *Builder) createHTTPGetAction(probe *dbmodel.TenantServiceProbe) *v1alpha1.HTTPGetAction {
+func (c *Builder) createHTTPGetAction(probe *dbmodel.TenantEnvServiceProbe) *v1alpha1.HTTPGetAction {
 	action := &v1alpha1.HTTPGetAction{Path: probe.Path}
 	if probe.HTTPHeader != "" {
 		hds := strings.Split(probe.HTTPHeader, ",")
@@ -299,6 +299,6 @@ func (c *Builder) createHTTPGetAction(probe *dbmodel.TenantServiceProbe) *v1alph
 	return action
 }
 
-func (c *Builder) createTCPGetAction(probe *dbmodel.TenantServiceProbe) *v1alpha1.TCPSocketAction {
+func (c *Builder) createTCPGetAction(probe *dbmodel.TenantEnvServiceProbe) *v1alpha1.TCPSocketAction {
 	return &v1alpha1.TCPSocketAction{}
 }

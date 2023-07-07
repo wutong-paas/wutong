@@ -32,6 +32,7 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/util/validation"
 	clientset "k8s.io/client-go/kubernetes"
 )
 
@@ -43,12 +44,12 @@ type ApplicationAction struct {
 	kubeClient   clientset.Interface
 }
 
-// ApplicationHandler defines handler methods to TenantApplication.
+// ApplicationHandler defines handler methods to TenantEnvApplication.
 type ApplicationHandler interface {
 	CreateApp(ctx context.Context, req *model.Application) (*model.Application, error)
-	BatchCreateApp(ctx context.Context, req *model.CreateAppRequest, tenantID string) ([]model.CreateAppResponse, error)
+	BatchCreateApp(ctx context.Context, req *model.CreateAppRequest, tenantEnvID string) ([]model.CreateAppResponse, error)
 	UpdateApp(ctx context.Context, app *dbmodel.Application, req model.UpdateAppRequest) (*dbmodel.Application, error)
-	ListApps(tenantID, appName string, page, pageSize int) (*model.ListAppResponse, error)
+	ListApps(tenantEnvID, appName string, page, pageSize int) (*model.ListAppResponse, error)
 	GetAppByID(appID string) (*dbmodel.Application, error)
 	BatchBindService(appID string, req model.BindServiceRequest) error
 	DeleteApp(ctx context.Context, app *dbmodel.Application) error
@@ -70,10 +71,10 @@ type ApplicationHandler interface {
 	ListAppStatuses(ctx context.Context, appIDs []string) ([]*model.AppStatus, error)
 	CheckGovernanceMode(ctx context.Context, governanceMode string) error
 	ChangeVolumes(app *dbmodel.Application) error
-	GetKubeResources(namespace string, serviceAliases []string, customSetting model.KubeResourceCustomSetting) string
+	GetKubeResources(namespace string, serviceAliases []string, customSetting model.KubeResourceCustomSetting) (string, error)
 }
 
-// NewApplicationHandler creates a new Tenant Application Handler.
+// NewApplicationHandler creates a new TenantEnv Application Handler.
 func NewApplicationHandler(statusCli *client.AppRuntimeSyncClient, promClient prometheus.Interface, wutongClient versioned.Interface, kubeClient clientset.Interface) ApplicationHandler {
 	return &ApplicationAction{
 		statusCli:    statusCli,
@@ -90,8 +91,7 @@ func (a *ApplicationAction) CreateApp(ctx context.Context, req *model.Applicatio
 		req.K8sApp = fmt.Sprintf("app-%s", appID[:8])
 	}
 	appReq := &dbmodel.Application{
-		EID:             req.EID,
-		TenantID:        req.TenantID,
+		TenantEnvID:     req.TenantEnvID,
 		AppID:           appID,
 		AppName:         req.AppName,
 		AppType:         req.AppType,
@@ -104,14 +104,14 @@ func (a *ApplicationAction) CreateApp(ctx context.Context, req *model.Applicatio
 	req.AppID = appReq.AppID
 
 	err := db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
-		if db.GetManager().ApplicationDaoTransactions(tx).IsK8sAppDuplicate(appReq.TenantID, appID, appReq.K8sApp) {
+		if db.GetManager().ApplicationDaoTransactions(tx).IsK8sAppDuplicate(appReq.TenantEnvID, appID, appReq.K8sApp) {
 			return bcode.ErrK8sAppExists
 		}
 		if err := db.GetManager().ApplicationDaoTransactions(tx).AddModel(appReq); err != nil {
 			return err
 		}
 		if len(req.ServiceIDs) != 0 {
-			if err := db.GetManager().TenantServiceDaoTransactions(tx).BindAppByServiceIDs(appReq.AppID, req.ServiceIDs); err != nil {
+			if err := db.GetManager().TenantEnvServiceDaoTransactions(tx).BindAppByServiceIDs(appReq.AppID, req.ServiceIDs); err != nil {
 				return err
 			}
 		}
@@ -130,18 +130,17 @@ func (a *ApplicationAction) createHelmApp(ctx context.Context, app *dbmodel.Appl
 	labels := map[string]string{
 		constants.ResourceManagedByLabel: constants.Wutong,
 	}
-	tenant, err := GetTenantManager().GetTenantsByUUID(app.TenantID)
+	tenantEnv, err := GetTenantEnvManager().GetTenantEnvsByUUID(app.TenantEnvID)
 	if err != nil {
-		return errors.Wrap(err, "get tenant for helm app failed")
+		return errors.Wrap(err, "get tenant env for helm app failed")
 	}
 	helmApp := &v1alpha1.HelmApp{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      app.AppName,
-			Namespace: tenant.Namespace,
+			Namespace: tenantEnv.Namespace,
 			Labels:    labels,
 		},
 		Spec: v1alpha1.HelmAppSpec{
-			EID:          app.EID,
 			TemplateName: app.AppTemplateName,
 			Version:      app.Version,
 			AppStore: &v1alpha1.HelmAppStore{
@@ -153,7 +152,7 @@ func (a *ApplicationAction) createHelmApp(ctx context.Context, app *dbmodel.Appl
 	defer cancel()
 	_, err = a.kubeClient.CoreV1().Namespaces().Create(ctx1, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   tenant.Namespace,
+			Name:   tenantEnv.Namespace,
 			Labels: labels,
 		},
 	}, metav1.CreateOptions{})
@@ -174,13 +173,13 @@ func (a *ApplicationAction) createHelmApp(ctx context.Context, app *dbmodel.Appl
 }
 
 // BatchCreateApp -
-func (a *ApplicationAction) BatchCreateApp(ctx context.Context, apps *model.CreateAppRequest, tenantID string) ([]model.CreateAppResponse, error) {
+func (a *ApplicationAction) BatchCreateApp(ctx context.Context, apps *model.CreateAppRequest, tenantEnvID string) ([]model.CreateAppResponse, error) {
 	var (
 		resp     model.CreateAppResponse
 		respList []model.CreateAppResponse
 	)
 	for _, app := range apps.AppsInfo {
-		app.TenantID = tenantID
+		app.TenantEnvID = tenantEnvID
 		regionApp, err := GetApplicationHandler().CreateApp(ctx, &app)
 		if err != nil {
 			logrus.Errorf("Batch Create App [%v] error is [%v] ", app.AppName, err)
@@ -208,7 +207,7 @@ func (a *ApplicationAction) UpdateApp(ctx context.Context, app *dbmodel.Applicat
 	app.K8sApp = req.K8sApp
 
 	err := db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
-		if db.GetManager().ApplicationDaoTransactions(tx).IsK8sAppDuplicate(app.TenantID, app.AppID, req.K8sApp) {
+		if db.GetManager().ApplicationDaoTransactions(tx).IsK8sAppDuplicate(app.TenantEnvID, app.AppID, req.K8sApp) {
 			return bcode.ErrK8sAppExists
 		}
 		if err := db.GetManager().ApplicationDaoTransactions(tx).UpdateModel(app); err != nil {
@@ -227,13 +226,13 @@ func (a *ApplicationAction) UpdateApp(ctx context.Context, app *dbmodel.Applicat
 }
 
 func (a *ApplicationAction) updateHelmApp(ctx context.Context, app *dbmodel.Application, req model.UpdateAppRequest) error {
-	tenant, err := GetTenantManager().GetTenantsByUUID(app.TenantID)
+	tenantEnv, err := GetTenantEnvManager().GetTenantEnvsByUUID(app.TenantEnvID)
 	if err != nil {
-		return errors.Wrap(err, "get tenant for helm app failed")
+		return errors.Wrap(err, "get tenant env for helm app failed")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Get(ctx, app.AppName, metav1.GetOptions{})
+	helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(tenantEnv.Namespace).Get(ctx, app.AppName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return errors.Wrap(bcode.ErrApplicationNotFound, "update app")
@@ -247,14 +246,14 @@ func (a *ApplicationAction) updateHelmApp(ctx context.Context, app *dbmodel.Appl
 	if req.Revision != 0 {
 		helmApp.Spec.Revision = req.Revision
 	}
-	_, err = a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Update(ctx, helmApp, metav1.UpdateOptions{})
+	_, err = a.wutongClient.WutongV1alpha1().HelmApps(tenantEnv.Namespace).Update(ctx, helmApp, metav1.UpdateOptions{})
 	return err
 }
 
 // ListApps -
-func (a *ApplicationAction) ListApps(tenantID, appName string, page, pageSize int) (*model.ListAppResponse, error) {
+func (a *ApplicationAction) ListApps(tenantEnvID, appName string, page, pageSize int) (*model.ListAppResponse, error) {
 	var resp model.ListAppResponse
-	apps, total, err := db.GetManager().ApplicationDao().ListApps(tenantID, appName, page, pageSize)
+	apps, total, err := db.GetManager().ApplicationDao().ListApps(tenantEnvID, appName, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +300,7 @@ func (a *ApplicationAction) deleteWutongApp(app *dbmodel.Application) error {
 
 // isContainComponents checks if the app contains components.
 func (a *ApplicationAction) isContainComponents(appID string) error {
-	total, err := db.GetManager().TenantServiceDao().CountServiceByAppID(appID)
+	total, err := db.GetManager().TenantEnvServiceDao().CountServiceByAppID(appID)
 	if err != nil {
 		return err
 	}
@@ -314,16 +313,16 @@ func (a *ApplicationAction) isContainComponents(appID string) error {
 func (a *ApplicationAction) deleteHelmApp(ctx context.Context, app *dbmodel.Application) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	tenant, err := GetTenantManager().GetTenantsByUUID(app.TenantID)
+	tenantEnv, err := GetTenantEnvManager().GetTenantEnvsByUUID(app.TenantEnvID)
 	if err != nil {
-		return errors.Wrap(err, "get tenant for helm app failed")
+		return errors.Wrap(err, "get tenant env for helm app failed")
 	}
 	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
 		if err := a.deleteApp(tx, app); err != nil {
 			return err
 		}
 
-		if err := a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Delete(ctx, app.AppName, metav1.DeleteOptions{}); err != nil {
+		if err := a.wutongClient.WutongV1alpha1().HelmApps(tenantEnv.Namespace).Delete(ctx, app.AppName, metav1.DeleteOptions{}); err != nil {
 			if !k8sErrors.IsNotFound(err) {
 				return err
 			}
@@ -368,14 +367,14 @@ func (a *ApplicationAction) BatchUpdateComponentPorts(appID string, ports []*mod
 
 	// update port
 	for _, p := range ports {
-		port, err := db.GetManager().TenantServicesPortDaoTransactions(tx).GetPort(p.ServiceID, p.ContainerPort)
+		port, err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).GetPort(p.ServiceID, p.ContainerPort)
 		if err != nil {
 			tx.Rollback()
 			return err
 		}
 		port.PortAlias = p.PortAlias
 		port.K8sServiceName = p.K8sServiceName
-		err = db.GetManager().TenantServicesPortDaoTransactions(tx).UpdateModel(port)
+		err = db.GetManager().TenantEnvServicesPortDaoTransactions(tx).UpdateModel(port)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -392,7 +391,7 @@ func (a *ApplicationAction) BatchUpdateComponentPorts(appID string, ports []*mod
 
 func (a *ApplicationAction) checkPorts(appID string, ports []*model.AppPort) error {
 	// check if the ports are belong to the given appID
-	services, err := db.GetManager().TenantServiceDao().ListByAppID(appID)
+	services, err := db.GetManager().TenantEnvServiceDao().ListByAppID(appID)
 	if err != nil {
 		return err
 	}
@@ -412,7 +411,7 @@ func (a *ApplicationAction) checkPorts(appID string, ports []*model.AppPort) err
 	}
 
 	// check if k8s_service_name is unique
-	servicesPorts, err := db.GetManager().TenantServicesPortDao().ListByK8sServiceNames(k8sServiceNames)
+	servicesPorts, err := db.GetManager().TenantEnvServicesPortDao().ListByK8sServiceNames(k8sServiceNames)
 	if err != nil {
 		return err
 	}
@@ -480,11 +479,11 @@ func (a *ApplicationAction) GetStatus(ctx context.Context, app *dbmodel.Applicat
 func (a *ApplicationAction) Install(ctx context.Context, app *dbmodel.Application, overrides []string) error {
 	ctx1, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(app.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(app.TenantEnvID)
 	if err != nil {
 		return errors.Wrap(err, "install app")
 	}
-	helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Get(ctx1, app.AppName, metav1.GetOptions{})
+	helmApp, err := a.wutongClient.WutongV1alpha1().HelmApps(tenantEnv.Namespace).Get(ctx1, app.AppName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return errors.Wrap(bcode.ErrApplicationNotFound, "install app")
@@ -496,7 +495,7 @@ func (a *ApplicationAction) Install(ctx context.Context, app *dbmodel.Applicatio
 	defer cancel()
 	helmApp.Spec.Overrides = overrides
 	helmApp.Spec.PreStatus = v1alpha1.HelmAppPreStatusConfigured
-	_, err = a.wutongClient.WutongV1alpha1().HelmApps(tenant.Namespace).Update(ctx3, helmApp, metav1.UpdateOptions{})
+	_, err = a.wutongClient.WutongV1alpha1().HelmApps(tenantEnv.Namespace).Update(ctx3, helmApp, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -557,7 +556,7 @@ func (a *ApplicationAction) getDiskUsage(appID string) float64 {
 func (a *ApplicationAction) BatchBindService(appID string, req model.BindServiceRequest) error {
 	var serviceIDs []string
 	for _, sid := range req.ServiceIDs {
-		if _, err := db.GetManager().TenantServiceDao().GetServiceByID(sid); err != nil {
+		if _, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(sid); err != nil {
 			if err == gorm.ErrRecordNotFound {
 				continue
 			}
@@ -565,7 +564,7 @@ func (a *ApplicationAction) BatchBindService(appID string, req model.BindService
 		}
 		serviceIDs = append(serviceIDs, sid)
 	}
-	return db.GetManager().TenantServiceDao().BindAppByServiceIDs(appID, serviceIDs)
+	return db.GetManager().TenantEnvServiceDao().BindAppByServiceIDs(appID, serviceIDs)
 }
 
 // ListHelmAppReleases returns the list of the helm app.
@@ -661,7 +660,7 @@ func (a *ApplicationAction) SyncComponents(app *dbmodel.Application, components 
 }
 
 func (a *ApplicationAction) deleteByComponentIDs(tx *gorm.DB, app *dbmodel.Application, componentIDs []string) error {
-	if err := db.GetManager().TenantServiceDaoTransactions(tx).DeleteByComponentIDs(app.TenantID, app.AppID, componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceDaoTransactions(tx).DeleteByComponentIDs(app.TenantEnvID, app.AppID, componentIDs); err != nil {
 		return err
 	}
 	if err := db.GetManager().HTTPRuleDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
@@ -670,37 +669,37 @@ func (a *ApplicationAction) deleteByComponentIDs(tx *gorm.DB, app *dbmodel.Appli
 	if err := db.GetManager().TCPRuleDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceMonitorDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceMonitorDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServicesStreamPluginPortDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServicesStreamPluginPortDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantPluginVersionConfigDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvPluginVersionConfigDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServicePluginRelationDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServicePluginRelationDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantPluginVersionENVDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServicesPortDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceRelationDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceRelationDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceEnvVarDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceEnvVarDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceMountRelationDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceMountRelationDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceVolumeDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceConfigFileDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
 	if err := db.GetManager().ServiceProbeDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
@@ -709,13 +708,13 @@ func (a *ApplicationAction) deleteByComponentIDs(tx *gorm.DB, app *dbmodel.Appli
 	if err := db.GetManager().AppConfigGroupServiceDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	if err := db.GetManager().TenantServiceLabelDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err := db.GetManager().TenantEnvServiceLabelDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
 	if err := db.GetManager().ThirdPartySvcDiscoveryCfgDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	autoScaleRules, err := db.GetManager().TenantServceAutoscalerRulesDaoTransactions(tx).ListByComponentIDs(componentIDs)
+	autoScaleRules, err := db.GetManager().TenantEnvServceAutoscalerRulesDaoTransactions(tx).ListByComponentIDs(componentIDs)
 	if err != nil {
 		return err
 	}
@@ -723,10 +722,10 @@ func (a *ApplicationAction) deleteByComponentIDs(tx *gorm.DB, app *dbmodel.Appli
 	for _, rule := range autoScaleRules {
 		autoScaleRuleIDs = append(autoScaleRuleIDs, rule.RuleID)
 	}
-	if err = db.GetManager().TenantServceAutoscalerRulesDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+	if err = db.GetManager().TenantEnvServceAutoscalerRulesDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
 	}
-	return db.GetManager().TenantServceAutoscalerRuleMetricsDaoTransactions(tx).DeleteByRuleIDs(autoScaleRuleIDs)
+	return db.GetManager().TenantEnvServceAutoscalerRuleMetricsDaoTransactions(tx).DeleteByRuleIDs(autoScaleRuleIDs)
 }
 
 // ListAppStatuses -
@@ -740,7 +739,18 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 	if err != nil {
 		return nil, err
 	}
+	apps, err := db.GetManager().ApplicationDao().ListByAppIDs(appIDs)
+	if err != nil {
+		return nil, err
+	}
+	k8sApps := make(map[string]string, len(apps))
+	for _, app := range apps {
+		k8sApps[app.AppID] = app.K8sApp
+	}
 	for _, appStatus := range appStatuses.AppStatuses {
+		if err != nil {
+			return nil, err
+		}
 		diskUsage := a.getDiskUsage(appStatus.AppId)
 		var cpu *int64
 		if appStatus.SetCPU {
@@ -750,16 +760,35 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 		if appStatus.SetMemory {
 			memory = commonutil.Int64(appStatus.Memory)
 		}
+
+		services := db.GetManager().TenantEnvServiceDao().GetServiceIDsByAppID(appStatus.AppId)
+		var ServiceRunningNum int
+		if len(services) > 0 {
+			serviceIDs := make([]string, 0, len(services))
+			for _, service := range services {
+				serviceIDs = append(serviceIDs, service.ServiceID)
+			}
+			serviceStatuses := a.statusCli.GetStatuss(strings.Join(serviceIDs, ","))
+			for _, serviceStatus := range serviceStatuses {
+				if a.statusCli.IsClosedStatus(serviceStatus) {
+					continue
+				}
+				ServiceRunningNum++
+			}
+		}
+
 		resp = append(resp, &model.AppStatus{
-			Status:    appStatus.Status,
-			CPU:       cpu,
-			Memory:    memory,
-			Disk:      int64(diskUsage),
-			Phase:     appStatus.Phase,
-			Overrides: appStatus.Overrides,
-			Version:   appStatus.Version,
-			AppID:     appStatus.AppId,
-			AppName:   appStatus.AppName,
+			Status:            appStatus.Status,
+			CPU:               cpu,
+			Memory:            memory,
+			Disk:              int64(diskUsage),
+			Phase:             appStatus.Phase,
+			Overrides:         appStatus.Overrides,
+			Version:           appStatus.Version,
+			AppID:             appStatus.AppId,
+			AppName:           appStatus.AppName,
+			ServiceRunningNum: ServiceRunningNum,
+			K8sApp:            k8sApps[appStatus.AppId],
 		})
 	}
 	return resp, nil
@@ -783,7 +812,7 @@ func (a *ApplicationAction) CheckGovernanceMode(ctx context.Context, governanceM
 // ChangeVolumes Since the component name supports modification, the storage directory of stateful components will change.
 // This interface is used to modify the original directory name to the storage directory that will actually be used.
 func (a *ApplicationAction) ChangeVolumes(app *dbmodel.Application) error {
-	components, err := db.GetManager().TenantServiceDao().ListByAppID(app.AppID)
+	components, err := db.GetManager().TenantEnvServiceDao().ListByAppID(app.AppID)
 	if err != nil {
 		return err
 	}
@@ -801,18 +830,18 @@ func (a *ApplicationAction) ChangeVolumes(app *dbmodel.Application) error {
 		componentIDs = append(componentIDs, component.ServiceID)
 		k8sComponentNames[component.ServiceID] = component.K8sComponentName
 	}
-	volumes, err := db.GetManager().TenantServiceVolumeDao().ListVolumesByComponentIDs(componentIDs)
+	volumes, err := db.GetManager().TenantEnvServiceVolumeDao().ListVolumesByComponentIDs(componentIDs)
 	if err != nil {
 		return err
 	}
-	componentVolumes := make(map[string][]*dbmodel.TenantServiceVolume)
+	componentVolumes := make(map[string][]*dbmodel.TenantEnvServiceVolume)
 	for _, volume := range volumes {
 		componentVolumes[volume.ServiceID] = append(componentVolumes[volume.ServiceID], volume)
 	}
 
 	for componentID, singleComponentVols := range componentVolumes {
 		for _, componentVolume := range singleComponentVols {
-			parentDir := fmt.Sprintf("%s/tenant/%s/service/%s%s", sharePath, app.TenantID, componentID, componentVolume.VolumePath)
+			parentDir := fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", sharePath, app.TenantEnvID, componentID, componentVolume.VolumePath)
 			newPath := fmt.Sprintf("%s/%s-%s", parentDir, app.K8sApp, k8sComponentNames[componentID])
 			if err := changeVolumeDirectoryNames(parentDir, newPath); err != nil {
 				return err
@@ -846,11 +875,14 @@ func changeVolumeDirectoryNames(parentDir, newPath string) error {
 }
 
 // GetKubeResources get kube resources for application
-func (s *ApplicationAction) GetKubeResources(namespace string, servieAliases []string, customSetting model.KubeResourceCustomSetting) string {
+func (s *ApplicationAction) GetKubeResources(namespace string, servieAliases []string, customSetting model.KubeResourceCustomSetting) (string, error) {
+	if msgs := validation.IsDNS1123Label(customSetting.Namespace); len(msgs) > 0 {
+		return "", fmt.Errorf("invalid namespace name: %s", customSetting.Namespace)
+	}
 	var selectors []labels.Selector
 	for _, seviceAlias := range servieAliases {
 		selectors = append(selectors, labels.SelectorFromSet(labels.Set{"service_alias": seviceAlias}))
 	}
 	resources := kube.GetResourcesYamlFormat(s.kubeClient, namespace, selectors, &customSetting)
-	return resources
+	return resources, nil
 }

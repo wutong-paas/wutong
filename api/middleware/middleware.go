@@ -46,29 +46,30 @@ func init() {
 	}
 }
 
-// InitTenant 实现中间件
-func InitTenant(next http.Handler) http.Handler {
+// InitTenantEnv 实现中间件
+func InitTenantEnv(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		debugRequestBody(r)
 
 		tenantName := chi.URLParam(r, "tenant_name")
-		if tenantName == "" {
-			httputil.ReturnError(r, w, 404, "cant find tenant")
+		tenantEnvName := chi.URLParam(r, "tenant_env_name")
+		if tenantEnvName == "" {
+			httputil.ReturnError(r, w, 404, "cant find tenant env")
 			return
 		}
-		tenant, err := db.GetManager().TenantDao().GetTenantIDByName(tenantName)
+		tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvIDByName(tenantName, tenantEnvName)
 		if err != nil {
-			logrus.Errorf("get tenant by tenantName error: %s %v", tenantName, err)
+			logrus.Errorf("get tenant env by tenant env name error: %s %v", tenantEnvName, err)
 			if err.Error() == gorm.ErrRecordNotFound.Error() {
-				httputil.ReturnError(r, w, 404, "cant find tenant")
+				httputil.ReturnError(r, w, 404, "cant find tenantEnv")
 				return
 			}
-			httputil.ReturnError(r, w, 500, "get assign tenant uuid failed")
+			httputil.ReturnError(r, w, 500, "get assign tenant env uuid failed")
 			return
 		}
-		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("tenant_name"), tenantName)
-		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenant_id"), tenant.UUID)
-		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenant"), tenant)
+		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("tenant_env_name"), tenantEnvName)
+		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenant_env_id"), tenantEnv.UUID)
+		ctx = context.WithValue(ctx, ctxutil.ContextKey("tenant_env"), tenantEnv)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
@@ -82,14 +83,14 @@ func InitService(next http.Handler) http.Handler {
 			httputil.ReturnError(r, w, 404, "cant find service alias")
 			return
 		}
-		tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id"))
-		service, err := db.GetManager().TenantServiceDao().GetServiceByTenantIDAndServiceAlias(tenantID.(string), serviceAlias)
+		tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id"))
+		service, err := db.GetManager().TenantEnvServiceDao().GetServiceByTenantEnvIDAndServiceAlias(tenantEnvID.(string), serviceAlias)
 		if err != nil {
 			if err.Error() == gorm.ErrRecordNotFound.Error() {
 				httputil.ReturnError(r, w, 404, "cant find service")
 				return
 			}
-			logrus.Errorf("get service by tenant & service alias error, %v", err)
+			logrus.Errorf("get service by tenant env & service alias error, %v", err)
 			httputil.ReturnError(r, w, 500, "get service id error")
 			return
 		}
@@ -106,14 +107,14 @@ func InitService(next http.Handler) http.Handler {
 func InitApplication(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		appID := chi.URLParam(r, "app_id")
-		tenantApp, err := handler.GetApplicationHandler().GetAppByID(appID)
+		tenantEnvApp, err := handler.GetApplicationHandler().GetAppByID(appID)
 		if err != nil {
 			httputil.ReturnBcodeError(r, w, err)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("app_id"), tenantApp.AppID)
-		ctx = context.WithValue(ctx, ctxutil.ContextKey("application"), tenantApp)
+		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("app_id"), tenantEnvApp.AppID)
+		ctx = context.WithValue(ctx, ctxutil.ContextKey("application"), tenantEnvApp)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
@@ -125,12 +126,12 @@ func InitPlugin(next http.Handler) http.Handler {
 		debugRequestBody(r)
 
 		pluginID := chi.URLParam(r, "plugin_id")
-		tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+		tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 		if pluginID == "" {
 			httputil.ReturnError(r, w, 404, "need plugin id")
 			return
 		}
-		_, err := db.GetManager().TenantPluginDao().GetPluginByID(pluginID, tenantID)
+		_, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, tenantEnvID)
 		if err != nil {
 			if err.Error() == gorm.ErrRecordNotFound.Error() {
 				httputil.ReturnError(r, w, 404, "cant find plugin")
@@ -257,7 +258,7 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 		var serviceKind string
 		serviceObj := r.Context().Value(ctxutil.ContextKey("service"))
 		if serviceObj != nil {
-			service := serviceObj.(*dbmodel.TenantServices)
+			service := serviceObj.(*dbmodel.TenantEnvServices)
 			serviceKind = service.Kind
 		}
 
@@ -301,11 +302,11 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 				}
 			}
 
-			// tenantID can not null
-			tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+			// tenantEnvID can not null
+			tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 			var ctx context.Context
 
-			event, err := util.CreateEvent(target, optType, targetID, tenantID, string(body), operator, synType)
+			event, err := util.CreateEvent(target, optType, targetID, tenantEnvID, string(body), operator, synType)
 			if err != nil {
 				logrus.Error("create event error : ", err)
 				httputil.ReturnError(r, w, 500, "操作失败")

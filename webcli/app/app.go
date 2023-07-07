@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"strings"
 	"text/template"
 
@@ -47,7 +48,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	restclient "k8s.io/client-go/rest"
 )
 
 // ExecuteCommandTotal metric
@@ -65,9 +65,9 @@ type App struct {
 	titleTemplate *template.Template
 
 	onceMutex  *umutex.UnblockingMutex
-	restClient *restclient.RESTClient
+	restClient *rest.RESTClient
 	coreClient *kubernetes.Clientset
-	config     *restclient.Config
+	config     *rest.Config
 }
 
 // Options options
@@ -105,12 +105,13 @@ var DefaultOptions = Options{
 
 // InitMessage -
 type InitMessage struct {
-	TenantID      string `json:"T_id"`
-	ServiceID     string `json:"S_id"`
+	// TenantEnvID   string `json:"T_id"`
+	// ServiceID     string `json:"S_id"`
 	PodName       string `json:"C_id"`
 	ContainerName string `json:"containerName"`
 	Md5           string `json:"Md5"`
 	Namespace     string `json:"namespace"`
+	// NodeName      string `json:"nodeName"`
 }
 
 func checkSameOrigin(r *http.Request) bool {
@@ -160,6 +161,7 @@ func (app *App) Run() error {
 	wsMux.Handle("/docker_console", wsHandler)
 	wsMux.Handle("/health", health)
 	wsMux.Handle("/metrics", promhttp.Handler())
+	wsMux.HandleFunc("/debug/pprof/", pprof.Index)
 
 	siteHandler = (http.Handler(wsMux))
 
@@ -194,7 +196,7 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 	logrus.Printf("New client connected: %s", r.RemoteAddr)
 
 	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -225,18 +227,18 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 		return
 	}
-	key := init.TenantID + "_" + init.ServiceID + "_" + init.PodName
-	md5 := md5Func(key)
-	if md5 != init.Md5 {
-		logrus.Print("Auth is not allowed !")
-		conn.WriteMessage(websocket.TextMessage, []byte("Auth is not allowed!"))
-		conn.Close()
-		return
-	}
+	// key := init.TenantEnvID + "_" + init.ServiceID + "_" + init.PodName
+	// md5 := md5Func(key)
+	// if md5 != init.Md5 {
+	// 	logrus.Print("Auth is not allowed!")
+	// 	conn.WriteMessage(websocket.TextMessage, []byte("Auth is not allowed!"))
+	// 	conn.Close()
+	// 	return
+	// }
 	// base kubernetes api create exec slave
-	if init.Namespace == "" {
-		init.Namespace = init.TenantID
-	}
+	// if init.Namespace == "" {
+	// 	init.Namespace = init.TenantEnvID
+	// }
 	containerName, ip, args, err := app.GetContainerArgs(init.Namespace, init.PodName, init.ContainerName)
 	if err != nil {
 		logrus.Errorf("get default container failure %s", err.Error())
@@ -244,9 +246,10 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 		ExecuteCommandFailed++
 		return
 	}
-	request := app.NewRequest(init.PodName, init.Namespace, containerName, args)
-	var slave server.Slave
-	slave, err = NewExecContext(request, app.config)
+	slave, err := app.tryExecRequest(init.Namespace, init.PodName, containerName, args)
+	// request := app.NewRequest(init.PodName, init.Namespace, containerName, args)
+	// var slave server.Slave
+	// slave, err = NewExecContext(request, app.config)
 	if err != nil {
 		logrus.Errorf("open exec context failure %s", err.Error())
 		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
@@ -282,6 +285,20 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *App) tryExecRequest(ns, pod, c string, args []string) (server.Slave, error) {
+	request := app.NewRequest(pod, ns, c, args)
+	var slave server.Slave
+	slave, err := NewExecContext(request, app.config)
+	if err != nil {
+		// 如果是 /bin/bash 失败了，那么使用 /bin/sh 重试
+		if args[0] == "/bin/bash" {
+			args[0] = "/bin/sh"
+			return app.tryExecRequest(ns, pod, c, args)
+		}
+	}
+	return slave, err
+}
+
 // Exit -
 func (app *App) Exit() (firstCall bool) {
 	return true
@@ -299,7 +316,7 @@ func (app *App) createKubeClient() error {
 	}
 	SetConfigDefaults(config)
 	app.config = config
-	restClient, err := restclient.RESTClientFor(config)
+	restClient, err := rest.RESTClientFor(config)
 	if err != nil {
 		return err
 	}
@@ -323,7 +340,7 @@ func SetConfigDefaults(config *rest.Config) error {
 
 // GetContainerArgs get default container name
 func (app *App) GetContainerArgs(namespace, podname, containerName string) (string, string, []string, error) {
-	var args = []string{"/bin/sh"}
+	var args = []string{"/bin/bash"}
 	pod, err := app.coreClient.CoreV1().Pods(namespace).Get(context.Background(), podname, metav1.GetOptions{})
 	if err != nil {
 		return "", "", args, err
@@ -346,7 +363,7 @@ func (app *App) GetContainerArgs(namespace, podname, containerName string) (stri
 }
 
 // NewRequest new exec request
-func (app *App) NewRequest(podName, namespace, containerName string, command []string) *restclient.Request {
+func (app *App) NewRequest(podName, namespace, containerName string, command []string) *rest.Request {
 	// TODO: consider abstracting into a client invocation or client helper
 	req := app.restClient.Post().
 		Resource("pods").

@@ -33,7 +33,7 @@ import (
 
 // ServiceHandler service handler
 type ServiceHandler interface {
-	ServiceBuild(tenantID, serviceID string, r *api_model.BuildServiceStruct) error
+	ServiceBuild(tenantEnvID, serviceID string, r *api_model.BuildServiceStruct) error
 	AddLabel(l *api_model.LabelsStruct, serviceID string) error
 	DeleteLabel(l *api_model.LabelsStruct, serviceID string) error
 	UpdateLabel(l *api_model.LabelsStruct, serviceID string) error
@@ -44,52 +44,52 @@ type ServiceHandler interface {
 	ServiceCreate(ts *api_model.ServiceStruct) error
 	ServiceUpdate(sc map[string]interface{}) error
 	LanguageSet(langS *api_model.LanguageSet) error
-	GetService(tenantID string) ([]*dbmodel.TenantServices, error)
+	GetService(tenantEnvID string) ([]*dbmodel.TenantEnvServices, error)
 	GetServicesByAppID(appID string, page, pageSize int) (*api_model.ListServiceResponse, error)
-	GetPagedTenantRes(offset, len int) ([]*api_model.TenantResource, int, error)
-	GetTenantRes(uuid string) (*api_model.TenantResource, error)
+	GetPagedTenantEnvRes(offset, len int) ([]*api_model.TenantEnvResource, int, error)
+	GetTenantEnvRes(uuid string) (*api_model.TenantEnvResource, error)
 	CodeCheck(c *api_model.CheckCodeStruct) error
 	ServiceDepend(action string, ds *api_model.DependService) error
-	EnvAttr(action string, at *dbmodel.TenantServiceEnvVar) error
-	PortVar(action string, tenantID, serviceID string, vp *api_model.ServicePorts, oldPort int) error
-	CreatePorts(tenantID, serviceID string, vps *api_model.ServicePorts) error
-	PortOuter(tenantName, serviceID string, containerPort int, servicePort *api_model.ServicePortInnerOrOuter) (*dbmodel.TenantServiceLBMappingPort, string, error)
-	PortInner(tenantName, serviceID, operation string, port int) error
-	VolumnVar(avs *dbmodel.TenantServiceVolume, tenantID, fileContent, action string) *util.APIHandleError
+	EnvAttr(action string, at *dbmodel.TenantEnvServiceEnvVar) error
+	PortVar(action string, tenantEnvID, serviceID string, vp *api_model.ServicePorts, oldPort int) error
+	CreatePorts(tenantEnvID, serviceID string, vps *api_model.ServicePorts) error
+	PortOuter(tenantEnvName, serviceID string, containerPort int, servicePort *api_model.ServicePortInnerOrOuter) (*dbmodel.TenantEnvServiceLBMappingPort, string, error)
+	PortInner(tenantEnvName, serviceID, operation string, port int) error
+	VolumnVar(avs *dbmodel.TenantEnvServiceVolume, tenantEnvID, fileContent, action string) *util.APIHandleError
 	UpdVolume(sid string, req *api_model.UpdVolumeReq) error
-	VolumeDependency(tsr *dbmodel.TenantServiceMountRelation, action string) *util.APIHandleError
-	GetDepVolumes(serviceID string) ([]*dbmodel.TenantServiceMountRelation, *util.APIHandleError)
+	VolumeDependency(tsr *dbmodel.TenantEnvServiceMountRelation, action string) *util.APIHandleError
+	GetDepVolumes(serviceID string) ([]*dbmodel.TenantEnvServiceMountRelation, *util.APIHandleError)
 	GetVolumes(serviceID string) ([]*api_model.VolumeWithStatusStruct, *util.APIHandleError)
-	ServiceProbe(tsp *dbmodel.TenantServiceProbe, action string) error
+	ServiceProbe(tsp *dbmodel.TenantEnvServiceProbe, action string) error
 	RollBack(rs *api_model.RollbackStruct) error
 	GetStatus(serviceID string) (*api_model.StatusList, error)
-	GetServicesStatus(tenantID string, services []string) []map[string]interface{}
-	GetEnterpriseRunningServices(enterpriseID string) ([]string, *util.APIHandleError)
-	GetEntrepriseServicesStatus(enterpriseID string) (*ServicesStatus, *util.APIHandleError)
-	CreateTenant(*dbmodel.Tenants) error
-	CreateTenandIDAndName(eid string) (string, string, error)
+	GetServicesStatus(tenantEnvID string, services []string) []map[string]interface{}
+	GetAllRunningServices() ([]string, *util.APIHandleError)
+	GetAllServicesStatus() (*ServicesStatus, *util.APIHandleError)
+	CreateTenantEnv(*dbmodel.TenantEnvs) error
+	CreateTenantEnvIDAndName() (string, string, error)
 	GetPods(serviceID string) (*K8sPodInfos, error)
 	GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, error)
 	GetComponentPodNums(ctx context.Context, componentIDs []string) (map[string]int32, error)
-	TransServieToDelete(ctx context.Context, tenantID, serviceID string) error
-	TenantServiceDeletePluginRelation(tenantID, serviceID, pluginID string) *util.APIHandleError
-	GetTenantServicePluginRelation(serviceID string) ([]*dbmodel.TenantServicePluginRelation, *util.APIHandleError)
-	SetTenantServicePluginRelation(tenantID, serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantServicePluginRelation, *util.APIHandleError)
-	UpdateTenantServicePluginRelation(serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantServicePluginRelation, *util.APIHandleError)
+	TransServieToDelete(ctx context.Context, tenantEnvID, serviceID string) error
+	TenantEnvServiceDeletePluginRelation(tenantEnvID, serviceID, pluginID string) *util.APIHandleError
+	GetTenantEnvServicePluginRelation(serviceID string) ([]*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError)
+	SetTenantEnvServicePluginRelation(tenantEnvID, serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError)
+	UpdateTenantEnvServicePluginRelation(serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError)
 	UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.APIHandleError
 	DeletePluginConfig(serviceID, pluginID string) *util.APIHandleError
 	ServiceCheck(*api_model.ServiceCheckStruct) (string, string, *util.APIHandleError)
 	GetServiceCheckInfo(uuid string) (*exector.ServiceCheckResult, *util.APIHandleError)
-	GetServiceDeployInfo(tenantID, serviceID string) (*pb.DeployInfo, *util.APIHandleError)
+	GetServiceDeployInfo(tenantEnvID, serviceID string) (*pb.DeployInfo, *util.APIHandleError)
 	ListVersionInfo(serviceID string) (*api_model.BuildListRespVO, error)
 
 	AddAutoscalerRule(req *api_model.AutoscalerRuleReq) error
 	UpdAutoscalerRule(req *api_model.AutoscalerRuleReq) error
-	ListScalingRecords(serviceID string, page, pageSize int) ([]*dbmodel.TenantServiceScalingRecords, int, error)
+	ListScalingRecords(serviceID string, page, pageSize int) ([]*dbmodel.TenantEnvServiceScalingRecords, int, error)
 
-	UpdateServiceMonitor(tenantID, serviceID, name string, update api_model.UpdateServiceMonitorRequestStruct) (*dbmodel.TenantServiceMonitor, error)
-	DeleteServiceMonitor(tenantID, serviceID, name string) (*dbmodel.TenantServiceMonitor, error)
-	AddServiceMonitor(tenantID, serviceID string, add api_model.AddServiceMonitorRequestStruct) (*dbmodel.TenantServiceMonitor, error)
+	UpdateServiceMonitor(tenantEnvID, serviceID, name string, update api_model.UpdateServiceMonitorRequestStruct) (*dbmodel.TenantEnvServiceMonitor, error)
+	DeleteServiceMonitor(tenantEnvID, serviceID, name string) (*dbmodel.TenantEnvServiceMonitor, error)
+	AddServiceMonitor(tenantEnvID, serviceID string, add api_model.AddServiceMonitorRequestStruct) (*dbmodel.TenantEnvServiceMonitor, error)
 
 	SyncComponentBase(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
 	SyncComponentMonitors(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
@@ -105,7 +105,7 @@ type ServiceHandler interface {
 	SyncComponentScaleRules(tx *gorm.DB, components []*api_model.Component) error
 	SyncComponentEndpoints(tx *gorm.DB, components []*api_model.Component) error
 
-	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantServices, podName, containerName string, follow bool) error
+	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantEnvServices, podName, containerName string, follow bool) error
 
-	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) string
+	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
 }

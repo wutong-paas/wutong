@@ -176,8 +176,9 @@ func CmdRunWithTimeout(cmd *exec.Cmd, timeout time.Duration) (bool, error) {
 		done <- cmd.Wait()
 	}()
 	var err error
+	timtoutC := time.After(timeout)
 	select {
-	case <-time.After(timeout):
+	case <-timtoutC:
 		// timeout
 		if err = cmd.Process.Kill(); err != nil {
 			logrus.Errorf("failed to kill: %s, error: %s", cmd.Path, err.Error())

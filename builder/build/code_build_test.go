@@ -57,7 +57,7 @@ func TestCreateJob(t *testing.T) {
 		KubeClient:    clientset,
 		ServiceID:     "d9b8d718510dc53118af1e1219e36d3a",
 		DeployVersion: "123",
-		TenantID:      "7c89455140284fd7b263038b44dc65bc",
+		TenantEnvID:   "7c89455140284fd7b263038b44dc65bc",
 		Lang:          code.JavaMaven,
 		Runtime:       "1.8",
 		Logger:        logger,
@@ -67,9 +67,9 @@ func TestCreateJob(t *testing.T) {
 		"PROC_ENV": `{"procfile": "", "dependencies": {}, "language": "Java-maven", "runtimes": "1.8"}`,
 		"RUNTIME":  "1.8",
 	}
-	req.CacheDir = fmt.Sprintf("/cache/build/%s/cache/%s", req.TenantID, req.ServiceID)
-	req.TGZDir = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s", req.TenantID, req.ServiceID)
-	req.SourceDir = fmt.Sprintf("/cache/source/build/%s/%s", req.TenantID, req.ServiceID)
+	req.CacheDir = fmt.Sprintf("/cache/build/%s/cache/%s", req.TenantEnvID, req.ServiceID)
+	req.TGZDir = fmt.Sprintf("/wtdata/build/tenantEnv/%s/slug/%s", req.TenantEnvID, req.ServiceID)
+	req.SourceDir = fmt.Sprintf("/cache/source/build/%s/%s", req.TenantEnvID, req.ServiceID)
 	sb := slugBuild{tgzDir: "string"}
 	if err := sb.runBuildJob(&req); err != nil {
 		t.Fatal(err)
@@ -154,7 +154,7 @@ func TestBuildFromOSS(t *testing.T) {
 		Ctx:           context.Background(),
 		ServiceID:     "d9b8d718510dc53118af1e1219e36d3a",
 		DeployVersion: "123asdadsadsasdasd1",
-		TenantID:      "7c89455140284fd7b263038b44dc65bc",
+		TenantEnvID:   "7c89455140284fd7b263038b44dc65bc",
 		Lang:          code.OSS,
 		Logger:        logger,
 		WTDataPVCName: "wt-cpt-wtdata",

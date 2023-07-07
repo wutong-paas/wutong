@@ -21,6 +21,7 @@ package exector
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -35,14 +36,14 @@ import (
 // ImageBuildItem ImageBuildItem
 type ImageBuildItem struct {
 	Namespace     string       `json:"namespace"`
-	TenantName    string       `json:"tenant_name"`
+	TenantEnvName string       `json:"tenant_env_name"`
 	ServiceAlias  string       `json:"service_alias"`
 	Image         string       `json:"image"`
 	DestImage     string       `json:"dest_image"`
 	Logger        event.Logger `json:"logger"`
 	EventID       string       `json:"event_id"`
 	ImageClient   sources.ImageClient
-	TenantID      string
+	TenantEnvID   string
 	ServiceID     string
 	DeployVersion string
 	HubUser       string
@@ -57,7 +58,7 @@ func NewImageBuildItem(in []byte) *ImageBuildItem {
 	logger := event.GetManager().GetLogger(eventID)
 	return &ImageBuildItem{
 		Namespace:     gjson.GetBytes(in, "namespace").String(),
-		TenantName:    gjson.GetBytes(in, "tenant_name").String(),
+		TenantEnvName: gjson.GetBytes(in, "tenant_env_name").String(),
 		ServiceAlias:  gjson.GetBytes(in, "service_alias").String(),
 		ServiceID:     gjson.GetBytes(in, "service_id").String(),
 		Image:         gjson.GetBytes(in, "image").String(),
@@ -73,37 +74,50 @@ func NewImageBuildItem(in []byte) *ImageBuildItem {
 
 // Run Run
 func (i *ImageBuildItem) Run(timeout time.Duration) error {
-	user, pass := builder.GetImageUserInfoV2(i.Image, i.HubUser, i.HubPassword)
-	_, err := i.ImageClient.ImagePull(i.Image, user, pass, i.Logger, 30)
-	if err != nil {
-		logrus.Errorf("pull image %s error: %s", i.Image, err.Error())
-		i.Logger.Error(fmt.Sprintf("获取指定镜像: %s失败", i.Image), map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+	var syncImage = true
+	image := i.Image
+	if strings.HasPrefix(i.Image, builder.REGISTRYDOMAIN) {
+		syncImage = false
 	}
-
-	localImageURL := build.CreateImageName(i.ServiceID, i.DeployVersion)
-	if err := i.ImageClient.ImageTag(i.Image, localImageURL, i.Logger, 1); err != nil {
-		logrus.Errorf("change image tag error: %s", err.Error())
-		i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.Image, localImageURL), map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
+	if len(i.HubUser) == 0 {
+		syncImage = false
 	}
-	err = i.ImageClient.ImagePush(localImageURL, builder.REGISTRYUSER, builder.REGISTRYPASS, i.Logger, 30)
-	if err != nil {
-		logrus.Errorf("push image into registry error: %s", err.Error())
-		i.Logger.Error("推送镜像至镜像仓库失败", map[string]string{"step": "builder-exector", "status": "failure"})
-		return err
-	}
-
-	if err := i.ImageClient.ImageRemove(localImageURL); err != nil {
-		logrus.Errorf("remove image %s failure %s", localImageURL, err.Error())
-	}
-
-	if os.Getenv("DISABLE_IMAGE_CACHE") == "true" {
-		if err := i.ImageClient.ImageRemove(i.Image); err != nil {
-			logrus.Errorf("remove image %s failure %s", i.Image, err.Error())
+	if syncImage {
+		user, pass := builder.GetImageUserInfoV2(i.Image, i.HubUser, i.HubPassword)
+		_, err := i.ImageClient.ImagePull(i.Image, user, pass, i.Logger, 30)
+		if err != nil {
+			logrus.Errorf("pull image %s error: %s", i.Image, err.Error())
+			i.Logger.Error(fmt.Sprintf("获取指定镜像: %s失败", i.Image), map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
 		}
+
+		image = build.CreateImageName(i.ServiceID, i.DeployVersion)
+		if err := i.ImageClient.ImageTag(i.Image, image, i.Logger, 1); err != nil {
+			logrus.Errorf("change image tag error: %s", err.Error())
+			i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.Image, image), map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
+		err = i.ImageClient.ImagePush(image, builder.REGISTRYUSER, builder.REGISTRYPASS, i.Logger, 30)
+		if err != nil {
+			logrus.Errorf("push image into registry error: %s", err.Error())
+			i.Logger.Error("推送镜像至镜像仓库失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			return err
+		}
+
+		if err := i.ImageClient.ImageRemove(image); err != nil {
+			logrus.Errorf("remove image %s failure %s", image, err.Error())
+		}
+
+		if os.Getenv("DISABLE_IMAGE_CACHE") == "true" {
+			if err := i.ImageClient.ImageRemove(i.Image); err != nil {
+				logrus.Errorf("remove image %s failure %s", i.Image, err.Error())
+			}
+		}
+	} else {
+		i.Logger.Info("Run the workload with the original image without a build", nil)
 	}
-	if err := i.StorageVersionInfo(localImageURL); err != nil {
+
+	if err := i.StorageVersionInfo(image); err != nil {
 		logrus.Errorf("storage version info error, ignor it: %s", err.Error())
 		i.Logger.Error("更新应用版本信息失败", map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
@@ -112,14 +126,14 @@ func (i *ImageBuildItem) Run(timeout time.Duration) error {
 }
 
 // StorageVersionInfo 存储version信息
-func (i *ImageBuildItem) StorageVersionInfo(imageURL string) error {
+func (i *ImageBuildItem) StorageVersionInfo(image string) error {
 	version, err := db.GetManager().VersionInfoDao().GetVersionByDeployVersion(i.DeployVersion, i.ServiceID)
 	if err != nil {
 		return err
 	}
 	version.DeliveredType = "image"
-	version.DeliveredPath = imageURL
-	version.ImageName = imageURL
+	version.DeliveredPath = image
+	version.ImageName = image
 	version.RepoURL = i.Image
 	version.FinalStatus = "success"
 	version.FinishTime = time.Now()

@@ -21,6 +21,7 @@ package main
 import (
 	"os"
 
+	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/spf13/pflag"
@@ -37,6 +38,12 @@ func main() {
 	pflag.Parse()
 	s.InitConf()
 	s.InitLog()
+	if s.Conf.EnableDebugPprof {
+		go func() {
+			http.ListenAndServe(":6607", nil)
+		}()
+	}
+
 	if err := s.Run(); err != nil {
 		s.Logger.Error("server run error.", err.Error())
 		os.Exit(1)

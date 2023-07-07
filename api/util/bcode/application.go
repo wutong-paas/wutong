@@ -1,6 +1,6 @@
 package bcode
 
-// tenant application 11000~11099
+// tenant env application 11000~11099
 var (
 	//ErrApplicationNotFound -
 	ErrApplicationNotFound = newByMessage(404, 11001, "application not found")

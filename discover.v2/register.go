@@ -33,7 +33,7 @@ import (
 	"google.golang.org/grpc/naming"
 )
 
-//KeepAlive 服务注册
+// KeepAlive 服务注册
 type KeepAlive struct {
 	cancel         context.CancelFunc
 	EtcdClientArgs *etcdutil.ClientArgs
@@ -48,7 +48,7 @@ type KeepAlive struct {
 	once           sync.Once
 }
 
-//CreateKeepAlive create keepalive for server
+// CreateKeepAlive create keepalive for server
 func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, ServerName string, Protocol string, HostIP string, Port int) (*KeepAlive, error) {
 	if ServerName == "" || Port == 0 {
 		return nil, fmt.Errorf("servername or serverport can not be empty")
@@ -86,12 +86,16 @@ func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, ServerName string, Pro
 	return k, nil
 }
 
-//Start 开始
+// Start 开始
 func (k *KeepAlive) Start() error {
-	duration := time.Duration(k.TTL) * time.Second
-	timer := time.NewTimer(duration)
+	// duration := time.Duration(k.TTL) * time.Second
+	// timer := time.NewTimer(duration)
+	// defer timer.Stop()
 
 	go func() {
+		duration := time.Duration(k.TTL) * time.Second
+		timer := time.NewTimer(duration)
+		defer timer.Stop()
 		for {
 			select {
 			case <-k.Done:
@@ -143,7 +147,7 @@ func (k *KeepAlive) reg() error {
 	return nil
 }
 
-//Stop 结束
+// Stop 结束
 func (k *KeepAlive) Stop() {
 	k.once.Do(func() {
 		close(k.Done)

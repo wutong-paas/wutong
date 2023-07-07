@@ -23,11 +23,11 @@ import (
 	"github.com/wutong-paas/wutong/api/controller"
 )
 
-//PluginRouter plugin router
+// PluginRouter plugin router
 func (v2 *V2) rulesRouter() chi.Router {
 	r := chi.NewRouter()
 	// service rule
-	// url: v2/tenant/{tenant_name}/services/{service_alias}/net-rule/xxx
+	// url: v2/tenantEnv/{tenant_env_name}/services/{service_alias}/net-rule/xxx
 	// -- --
 	//downstream
 	r.Mount("/downstream", v2.downstreamRouter())

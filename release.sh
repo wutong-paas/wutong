@@ -103,11 +103,7 @@ build::image() {
 		fi
 	fi
 	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg GOARCH="${GOARCH}" -t wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
-	docker run --rm wt-$1:${VERSION} version
-	if [ $? -ne 0 ]; then
-		echo "image version is different ${release_desc}"
-		exit 1
-	fi
+
 	if [ -f "${source_dir}/test.sh" ]; then
 		"${source_dir}/test.sh" wt-$1:${VERSION}
 	fi

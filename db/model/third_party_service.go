@@ -33,7 +33,7 @@ type Endpoint struct {
 
 // TableName returns table name of Endpoint.
 func (Endpoint) TableName() string {
-	return "tenant_service_3rd_party_endpoints"
+	return "tenant_env_service_3rd_party_endpoints"
 }
 
 // GetAddress -
@@ -75,5 +75,5 @@ type ThirdPartySvcDiscoveryCfg struct {
 
 // TableName returns table name of ThirdPartySvcDiscoveryCfg.
 func (ThirdPartySvcDiscoveryCfg) TableName() string {
-	return "tenant_service_3rd_party_discovery_cfg"
+	return "tenant_env_service_3rd_party_discovery_cfg"
 }

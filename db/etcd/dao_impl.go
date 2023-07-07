@@ -22,38 +22,38 @@ import (
 	"github.com/wutong-paas/wutong/db/dao"
 )
 
-// TenantDao  tenantDao
-func (m *Manager) TenantDao() dao.TenantDao {
+// TenantEnvDao  tenantEnvDao
+func (m *Manager) TenantEnvDao() dao.TenantEnvDao {
 	return nil
 }
 
-// TenantServiceDao TenantServiceDao
-func (m *Manager) TenantServiceDao() dao.TenantServiceDao {
+// TenantEnvServiceDao TenantEnvServiceDao
+func (m *Manager) TenantEnvServiceDao() dao.TenantEnvServiceDao {
 	return nil
 }
 
-// TenantServicesPortDao TenantServicesPortDao
-func (m *Manager) TenantServicesPortDao() dao.TenantServicesPortDao {
+// TenantEnvServicesPortDao TenantEnvServicesPortDao
+func (m *Manager) TenantEnvServicesPortDao() dao.TenantEnvServicesPortDao {
 	return nil
 }
 
-// TenantServiceRelationDao TenantServiceRelationDao
-func (m *Manager) TenantServiceRelationDao() dao.TenantServiceRelationDao {
+// TenantEnvServiceRelationDao TenantEnvServiceRelationDao
+func (m *Manager) TenantEnvServiceRelationDao() dao.TenantEnvServiceRelationDao {
 	return nil
 }
 
-// TenantServiceEnvVarDao TenantServiceEnvVarDao
-func (m *Manager) TenantServiceEnvVarDao() dao.TenantServiceEnvVarDao {
+// TenantEnvServiceEnvVarDao TenantEnvServiceEnvVarDao
+func (m *Manager) TenantEnvServiceEnvVarDao() dao.TenantEnvServiceEnvVarDao {
 	return nil
 }
 
-// TenantServiceMountRelationDao TenantServiceMountRelationDao
-func (m *Manager) TenantServiceMountRelationDao() dao.TenantServiceMountRelationDao {
+// TenantEnvServiceMountRelationDao TenantEnvServiceMountRelationDao
+func (m *Manager) TenantEnvServiceMountRelationDao() dao.TenantEnvServiceMountRelationDao {
 	return nil
 }
 
-// TenantServiceVolumeDao TenantServiceVolumeDao
-func (m *Manager) TenantServiceVolumeDao() dao.TenantServiceVolumeDao {
+// TenantEnvServiceVolumeDao TenantEnvServiceVolumeDao
+func (m *Manager) TenantEnvServiceVolumeDao() dao.TenantEnvServiceVolumeDao {
 	return nil
 }
 

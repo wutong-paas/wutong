@@ -27,13 +27,15 @@ func (d *Deployments) Migrate(namespace string, seletcor labels.Selector) {
 func (d *Deployments) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for i := 0; i < len(d.Deployments); i++ {
 		labels := map[string]string{
-			"app":           d.Deployments[i].Labels["app"],
-			"app_id":        d.Deployments[i].Labels["app_id"],
-			"name":          d.Deployments[i].Labels["name"],
-			"service_alias": d.Deployments[i].Labels["service_alias"],
-			"service_id":    d.Deployments[i].Labels["service_id"],
-			"tenant_id":     d.Deployments[i].Labels["tenant_id"],
-			"tenant_name":   d.Deployments[i].Labels["tenant_name"],
+			"app":             d.Deployments[i].Labels["app"],
+			"app_id":          d.Deployments[i].Labels["app_id"],
+			"name":            d.Deployments[i].Labels["name"],
+			"service_alias":   d.Deployments[i].Labels["service_alias"],
+			"service_id":      d.Deployments[i].Labels["service_id"],
+			"tenant_id":       d.Deployments[i].Labels["tenant_id"],
+			"tenant_name":     d.Deployments[i].Labels["tenant_name"],
+			"tenant_env_id":   d.Deployments[i].Labels["tenant_env_id"],
+			"tenant_env_name": d.Deployments[i].Labels["tenant_env_name"],
 		}
 		if d.Deployments[i] != nil {
 			d.Deployments[i].APIVersion = "apps/v1"

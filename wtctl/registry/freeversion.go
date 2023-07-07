@@ -45,7 +45,7 @@ func NewFreeVersion(reg *registry.Registry) *FreeVersion {
 // List return a list of free images belong to free component versions.
 func (f *FreeVersion) List() ([]*FreeImage, error) {
 	// list components
-	components, err := db.GetManager().TenantServiceDao().GetAllServicesID()
+	components, err := db.GetManager().TenantEnvServiceDao().GetAllServicesID()
 	if err != nil {
 		return nil, err
 	}

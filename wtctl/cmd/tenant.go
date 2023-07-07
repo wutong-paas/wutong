@@ -34,39 +34,39 @@ import (
 	config "github.com/wutong-paas/wutong/cmd/wtctl/option"
 )
 
-//NewCmdTenant tenant cmd
-func NewCmdTenant() cli.Command {
+// NewCmdTenantEnv tenant env cmd
+func NewCmdTenantEnv() cli.Command {
 	c := cli.Command{
-		Name:  "tenant",
-		Usage: "wtctl tenant -h",
+		Name:  "tenant_env",
+		Usage: "wtctl tenant env -h",
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name:  "list",
-				Usage: "list all tenant info",
+				Usage: "list all tenant env info",
 				Action: func(c *cli.Context) error {
 					Common(c)
-					return getAllTenant(c)
+					return getAllTenantEnv(c)
 				},
 			},
-			cli.Command{
+			{
 				Name:  "get",
-				Usage: "get all app details by specified tenant name",
+				Usage: "get all app details by specified tenant env name",
 				Action: func(c *cli.Context) error {
 					Common(c)
-					return getTenantInfo(c)
+					return getTenantEnvInfo(c)
 				},
 			},
-			cli.Command{
+			{
 				Name:  "res",
-				Usage: "get tenant resource details by specified tenant name",
+				Usage: "get tenant env resource details by specified tenant env name",
 				Action: func(c *cli.Context) error {
 					Common(c)
-					return findTenantResourceUsage(c)
+					return findTenantEnvResourceUsage(c)
 				},
 			},
-			cli.Command{
+			{
 				Name:  "batchstop",
-				Usage: "batch stop app by specified tenant name",
+				Usage: "batch stop app by specified tenant env name",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
 						Name:  "f",
@@ -79,16 +79,16 @@ func NewCmdTenant() cli.Command {
 				},
 				Action: func(c *cli.Context) error {
 					Common(c)
-					return stopTenantService(c)
+					return stopTenantEnvService(c)
 				},
 			},
-			cli.Command{
+			{
 				Name:  "setdefname",
-				Usage: "set default tenant name",
+				Usage: "set default tenant env name",
 				Action: func(c *cli.Context) error {
-					err := CreateTenantFile(c.Args().First())
+					err := CreateTenantEnvFile(c.Args().First())
 					if err != nil {
-						logrus.Error("set default tenantname fail", err.Error())
+						logrus.Error("set default tenantEnvname fail", err.Error())
 					}
 					return nil
 				},
@@ -98,14 +98,14 @@ func NewCmdTenant() cli.Command {
 	return c
 }
 
-// wtctrl tenant TENANT_NAME
-func getTenantInfo(c *cli.Context) error {
-	tenantID := c.Args().First()
-	if tenantID == "" {
-		fmt.Println("Please provide tenant name")
+// wtctrl tenant env TENANT_NAME
+func getTenantEnvInfo(c *cli.Context) error {
+	tenantEnvID := c.Args().First()
+	if tenantEnvID == "" {
+		fmt.Println("Please provide tenant env name")
 		os.Exit(1)
 	}
-	services, err := clients.RegionClient.Tenants(tenantID).Services("").List()
+	services, err := clients.RegionClient.TenantEnvs(tenantEnvID).Services("").List()
 	handleErr(err)
 	if services != nil {
 		runtable := termtables.CreateTable()
@@ -116,7 +116,7 @@ func getTenantInfo(c *cli.Context) error {
 			if service.CurStatus != "closed" && service.CurStatus != "closing" && service.CurStatus != "undeploy" && service.CurStatus != "deploying" {
 				runtable.AddRow(service.ServiceAlias, service.CurStatus, service.DeployVersion, service.Replicas, fmt.Sprintf("%d Mb", service.ContainerMemory*service.Replicas))
 			} else {
-				closedtable.AddRow(service.TenantID, service.ServiceID, service.ServiceAlias, service.CurStatus, service.DeployVersion)
+				closedtable.AddRow(service.TenantEnvID, service.ServiceID, service.ServiceAlias, service.CurStatus, service.DeployVersion)
 			}
 		}
 		fmt.Println("运行中的应用：")
@@ -127,19 +127,18 @@ func getTenantInfo(c *cli.Context) error {
 	}
 	return nil
 }
-func findTenantResourceUsage(c *cli.Context) error {
-	tenantName := c.Args().First()
-	if tenantName == "" {
-		fmt.Println("Please provide tenant name")
+func findTenantEnvResourceUsage(c *cli.Context) error {
+	tenantEnvName := c.Args().First()
+	if tenantEnvName == "" {
+		fmt.Println("Please provide tenant env name")
 		os.Exit(1)
 	}
-	resources, err := clients.RegionClient.Resources().Tenants(tenantName).Get()
+	resources, err := clients.RegionClient.Resources().TenantEnvs(tenantEnvName).Get()
 	handleErr(err)
 	table := uitable.New()
 	table.Wrap = true // wrap columns
 	table.AddRow("租户名：", resources.Name)
 	table.AddRow("租户ID：", resources.UUID)
-	table.AddRow("企业ID：", resources.EID)
 	table.AddRow("正使用CPU资源：", fmt.Sprintf("%.2f Core", float64(resources.UsedCPU)/1000))
 	table.AddRow("正使用内存资源：", fmt.Sprintf("%d %s", resources.UsedMEM, "Mb"))
 	table.AddRow("正使用磁盘资源：", fmt.Sprintf("%.2f Mb", resources.UsedDisk/1024))
@@ -149,21 +148,21 @@ func findTenantResourceUsage(c *cli.Context) error {
 	return nil
 }
 
-func getAllTenant(c *cli.Context) error {
-	tenants, err := clients.RegionClient.Tenants("").List()
+func getAllTenantEnv(c *cli.Context) error {
+	tenantEnvs, err := clients.RegionClient.TenantEnvs("").List()
 	handleErr(err)
-	tenantsTable := termtables.CreateTable()
-	tenantsTable.AddHeaders("TenantAlias", "TenantID", "TenantLimit")
-	for _, t := range tenants {
-		tenantsTable.AddRow(t.Name, t.UUID, fmt.Sprintf("%d GB", t.LimitMemory))
+	tenantEnvsTable := termtables.CreateTable()
+	tenantEnvsTable.AddHeaders("TenantEnvAlias", "TenantEnvID", "TenantEnvLimit")
+	for _, t := range tenantEnvs {
+		tenantEnvsTable.AddRow(t.Name, t.UUID, fmt.Sprintf("%d GB", t.LimitMemory))
 	}
-	fmt.Print(tenantsTable.Render())
+	fmt.Print(tenantEnvsTable.Render())
 	return nil
 }
 
-//CreateTenantFile Create Tenant File
-func CreateTenantFile(tname string) error {
-	filename, err := config.GetTenantNamePath()
+// CreateTenantEnvFile Create TenantEnv File
+func CreateTenantEnvFile(tname string) error {
+	filename, err := config.GetTenantEnvNamePath()
 	if err != nil {
 		logrus.Warn("Load config file error.")
 		return errors.New("Load config file error")

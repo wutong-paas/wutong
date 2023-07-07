@@ -15,7 +15,7 @@ func TestTransStorageClass2RBDVolumeType(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *dbmodel.TenantServiceVolumeType
+		want *dbmodel.TenantEnvServiceVolumeType
 	}{
 		{
 			name: "without_annotation",

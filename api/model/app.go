@@ -12,19 +12,20 @@ type AppPort struct {
 
 // AppStatus -
 type AppStatus struct {
-	AppID      string                `json:"app_id"`
-	AppName    string                `json:"app_name"`
-	Status     string                `json:"status"`
-	CPU        *int64                `json:"cpu"`
-	GPUType    *string               `json:"gpu_type"`
-	GPU        *int64                `json:"gpu"`
-	Memory     *int64                `json:"memory"`
-	Disk       int64                 `json:"disk"`
-	Phase      string                `json:"phase"`
-	Version    string                `json:"version"`
-	Overrides  []string              `json:"overrides"`
-	Conditions []*AppStatusCondition `json:"conditions"`
-	K8sApp     string                `json:"k8s_app"`
+	AppID             string                `json:"app_id"`
+	AppName           string                `json:"app_name"`
+	Status            string                `json:"status"`
+	CPU               *int64                `json:"cpu"`
+	GPUType           *string               `json:"gpu_type"`
+	GPU               *int64                `json:"gpu"`
+	Memory            *int64                `json:"memory"`
+	Disk              int64                 `json:"disk"`
+	Phase             string                `json:"phase"`
+	Version           string                `json:"version"`
+	Overrides         []string              `json:"overrides"`
+	ServiceRunningNum int                   `json:"service_running_num"`
+	Conditions        []*AppStatusCondition `json:"conditions"`
+	K8sApp            string                `json:"k8s_app"`
 }
 
 // AppStatusCondition is the conditon of app status.

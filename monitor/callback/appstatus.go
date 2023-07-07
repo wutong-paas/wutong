@@ -101,7 +101,7 @@ func (e *Worker) toScrape() *prometheus.ScrapeConfig {
 		},
 		MetricRelabelConfigs: []*prometheus.RelabelConfig{
 			{
-				SourceLabels: model.LabelNames{model.LabelName("tenant_id")},
+				SourceLabels: model.LabelNames{model.LabelName("tenant_env_id")},
 				TargetLabel:  "namespace",
 			},
 		},

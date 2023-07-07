@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateMetricSpec(t *testing.T) {
-	metric := &model.TenantServiceAutoscalerRuleMetrics{
+	metric := &model.TenantEnvServiceAutoscalerRuleMetrics{
 		MetricsType:       "resource_metrics",
 		MetricsName:       "memory",
 		MetricTargetType:  "average_value",
@@ -22,13 +22,13 @@ func TestCreateMetricSpec(t *testing.T) {
 }
 
 func TestNewHPA(t *testing.T) {
-	rule := &model.TenantServiceAutoscalerRules{
+	rule := &model.TenantEnvServiceAutoscalerRules{
 		RuleID:      "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 		ServiceID:   "45197f4936cf45efa2ac4831ce42025a",
 		MinReplicas: 1,
 		MaxReplicas: 10,
 	}
-	metrics := []*model.TenantServiceAutoscalerRuleMetrics{
+	metrics := []*model.TenantEnvServiceAutoscalerRuleMetrics{
 		{
 			MetricsType:       "resource_metrics",
 			MetricsName:       "cpu",

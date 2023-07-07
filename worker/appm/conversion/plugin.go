@@ -32,6 +32,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/util"
@@ -39,8 +40,8 @@ import (
 	workerutil "github.com/wutong-paas/wutong/worker/util"
 )
 
-// TenantServicePlugin conv service all plugin
-func TenantServicePlugin(as *typesv1.AppService, dbmanager db.Manager) error {
+// TenantEnvServicePlugin conv service all plugin
+func TenantEnvServicePlugin(as *typesv1.AppService, dbmanager db.Manager) error {
 	initContainers, preContainers, postContainers, err := conversionServicePlugin(as, dbmanager)
 	if err != nil {
 		logrus.Errorf("create plugin containers for component %s failure: %s", as.ServiceID, err.Error())
@@ -63,7 +64,7 @@ func TenantServicePlugin(as *typesv1.AppService, dbmanager db.Manager) error {
 func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1.Container, []v1.Container, []v1.Container, error) {
 	var precontainers, postcontainers []v1.Container
 	var initContainers []v1.Container
-	appPlugins, err := dbmanager.TenantServicePluginRelationDao().GetALLRelationByServiceID(as.ServiceID)
+	appPlugins, err := dbmanager.TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(as.ServiceID)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		return nil, nil, nil, fmt.Errorf("find plugins error. %v", err.Error())
 	}
@@ -76,14 +77,14 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 	if as.GetPodTemplate() != nil && len(as.GetPodTemplate().Spec.Containers) > 0 {
 		mainContainer = as.GetPodTemplate().Spec.Containers[0]
 	}
-	var inBoundPlugin *model.TenantServicePluginRelation
+	var inBoundPlugin *model.TenantEnvServicePluginRelation
 	for _, pluginR := range appPlugins {
 		//if plugin not enable,ignore it
 		if !pluginR.Switch {
 			logrus.Debugf("plugin %s is disable in component %s", pluginR.PluginID, as.ServiceID)
 			continue
 		}
-		versionInfo, err := dbmanager.TenantPluginBuildVersionDao().GetLastBuildVersionByVersionID(pluginR.PluginID, pluginR.VersionID)
+		versionInfo, err := dbmanager.TenantEnvPluginBuildVersionDao().GetLastBuildVersionByVersionID(pluginR.PluginID, pluginR.VersionID)
 		if err != nil {
 			logrus.Errorf("do not found available plugin versions %s", pluginR.PluginID)
 			continue
@@ -124,7 +125,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 			pc.Args = []string{versionInfo.ContainerCMD}
 		}
 
-		pluginModel, err := getPluginModel(pluginR.PluginID, as.TenantID, dbmanager)
+		pluginModel, err := getPluginModel(pluginR.PluginID, as.TenantEnvID, dbmanager)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("get plugin model info failure %s", err.Error())
 		}
@@ -139,7 +140,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 			preconatiner = true
 		}
 		if netPlugin {
-			config, err := dbmanager.TenantPluginVersionConfigDao().GetPluginConfig(as.ServiceID, pluginR.PluginID)
+			config, err := dbmanager.TenantEnvPluginVersionConfigDao().GetPluginConfig(as.ServiceID, pluginR.PluginID)
 			if err != nil && err != gorm.ErrRecordNotFound {
 				logrus.Errorf("get service plugin config from db failure %s", err.Error())
 			}
@@ -168,7 +169,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 	var inboundPluginConfig *api_model.ResourceSpec
 	//apply plugin dynamic config
 	if inBoundPlugin != nil {
-		config, err := dbmanager.TenantPluginVersionConfigDao().GetPluginConfig(inBoundPlugin.ServiceID,
+		config, err := dbmanager.TenantEnvPluginVersionConfigDao().GetPluginConfig(inBoundPlugin.ServiceID,
 			inBoundPlugin.PluginID)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			logrus.Errorf("get service plugin config from db failure %s", err.Error())
@@ -204,7 +205,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 }
 
 func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, envs []v1.EnvVar, pluginConfig *api_model.ResourceSpec) v1.Container {
-	envs = append(envs, v1.EnvVar{Name: "PLUGIN_ID", Value: pluginID})
+	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
 	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
@@ -213,7 +214,7 @@ func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, en
 	container := v1.Container{
 		Name:      workerutil.KeepMaxLength("default-tcpmesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
-		Image:     typesv1.GetOnlineTCPMeshImageName(),
+		Image:     builder.TCPMESHIMAGENAME,
 		Resources: createTCPUDPMeshRecources(as),
 	}
 
@@ -257,7 +258,7 @@ func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container,
 }
 
 func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias string, envs []v1.EnvVar) v1.Container {
-	envs = append(envs, v1.EnvVar{Name: "PLUGIN_ID", Value: pluginID})
+	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
 	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
@@ -266,15 +267,15 @@ func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias
 	return v1.Container{
 		Name:      workerutil.KeepMaxLength("probe-mesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
-		Image:     typesv1.GetOnlineProbeMeshImageName(),
+		Image:     builder.PROBEMESHIMAGENAME,
 		Resources: createTCPUDPMeshRecources(as),
 	}
 }
 
 // ApplyPluginConfig applyPluginConfig
-func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.TenantServicePluginRelation,
+func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.TenantEnvServicePluginRelation,
 	dbmanager db.Manager, inboundPluginConfig *api_model.ResourceSpec) {
-	config, err := dbmanager.TenantPluginVersionConfigDao().GetPluginConfig(servicePluginRelation.ServiceID,
+	config, err := dbmanager.TenantEnvPluginVersionConfigDao().GetPluginConfig(servicePluginRelation.ServiceID,
 		servicePluginRelation.PluginID)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		logrus.Errorf("get service plugin config from db failure %s", err.Error())
@@ -317,16 +318,16 @@ func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.Tena
 // applyDefaultMeshPluginConfig applyDefaultMeshPluginConfig
 func applyDefaultMeshPluginConfig(as *typesv1.AppService, dbmanager db.Manager) (string, *api_model.ResourceSpec, error) {
 	var baseServices []*api_model.BaseService
-	deps, err := dbmanager.TenantServiceRelationDao().GetTenantServiceRelations(as.ServiceID)
+	deps, err := dbmanager.TenantEnvServiceRelationDao().GetTenantEnvServiceRelations(as.ServiceID)
 	if err != nil {
 		logrus.Errorf("get service depend service info failure %s", err.Error())
 	}
 	for _, dep := range deps {
-		ports, err := dbmanager.TenantServicesPortDao().GetPortsByServiceID(dep.DependServiceID)
+		ports, err := dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(dep.DependServiceID)
 		if err != nil {
 			logrus.Errorf("get service depend service port info failure %s", err.Error())
 		}
-		depService, err := dbmanager.TenantServiceDao().GetServiceByID(dep.DependServiceID)
+		depService, err := dbmanager.TenantEnvServiceDao().GetServiceByID(dep.DependServiceID)
 		if err != nil {
 			logrus.Errorf("get service depend service info failure %s", err.Error())
 		}
@@ -369,8 +370,8 @@ func applyDefaultMeshPluginConfig(as *typesv1.AppService, dbmanager db.Manager) 
 	return pluginID, res, nil
 }
 
-func getPluginModel(pluginID, tenantID string, dbmanager db.Manager) (string, error) {
-	plugin, err := dbmanager.TenantPluginDao().GetPluginByID(pluginID, tenantID)
+func getPluginModel(pluginID, tenantEnvID string, dbmanager db.Manager) (string, error) {
+	plugin, err := dbmanager.TenantEnvPluginDao().GetPluginByID(pluginID, tenantEnvID)
 	if err != nil {
 		return "", err
 	}
@@ -394,8 +395,8 @@ func getXDSHostIPAndPort() (string, string, string) {
 }
 
 // container envs
-func createPluginEnvs(pluginID, tenantID, serviceAlias string, mainEnvs []v1.EnvVar, versionID, serviceID string, dbmanager db.Manager) (*[]v1.EnvVar, error) {
-	versionEnvs, err := dbmanager.TenantPluginVersionENVDao().GetVersionEnvByServiceID(serviceID, pluginID)
+func createPluginEnvs(pluginID, tenantEnvID, serviceAlias string, mainEnvs []v1.EnvVar, versionID, serviceID string, dbmanager db.Manager) (*[]v1.EnvVar, error) {
+	versionEnvs, err := dbmanager.TenantEnvPluginVersionENVDao().GetVersionEnvByServiceID(serviceID, pluginID)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		return nil, err
 	}
@@ -413,16 +414,16 @@ func createPluginEnvs(pluginID, tenantID, serviceAlias string, mainEnvs []v1.Env
 	discoverURL := fmt.Sprintf(
 		"http://%s:6100/v1/resources/%s/%s/%s",
 		"${XDS_HOST_IP}",
-		tenantID,
+		tenantEnvID,
 		serviceAlias,
 		pluginID)
 	envs = append(envs, v1.EnvVar{Name: "DISCOVER_URL", Value: discoverURL})
 	envs = append(envs, v1.EnvVar{Name: "DISCOVER_URL_NOHOST", Value: fmt.Sprintf(
 		"/v1/resources/%s/%s/%s",
-		tenantID,
+		tenantEnvID,
 		serviceAlias,
 		pluginID)})
-	envs = append(envs, v1.EnvVar{Name: "PLUGIN_ID", Value: pluginID})
+	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	var config = make(map[string]string, len(envs))
 	for _, env := range envs {
 		config[env.Name] = env.Value

@@ -60,18 +60,18 @@ type CodeSourceInfo struct {
 	User          string `json:"user"`
 	Password      string `json:"password"`
 	//避免项目之间冲突，代码缓存目录提高到租户
-	TenantID  string `json:"tenant_id"`
-	ServiceID string `json:"service_id"`
+	TenantEnvID string `json:"tenant_env_id"`
+	ServiceID   string `json:"service_id"`
 }
 
 // GetCodeSourceDir get source storage directory
 func (c CodeSourceInfo) GetCodeSourceDir() string {
-	return GetCodeSourceDir(c.RepositoryURL, c.Branch, c.TenantID, c.ServiceID)
+	return GetCodeSourceDir(c.RepositoryURL, c.Branch, c.TenantEnvID, c.ServiceID)
 }
 
 // GetCodeSourceDir get source storage directory
 // it changes as gitrepostory address, branch, and service id change
-func GetCodeSourceDir(RepositoryURL, branch, tenantID string, ServiceID string) string {
+func GetCodeSourceDir(RepositoryURL, branch, tenantEnvID string, ServiceID string) string {
 	sourceDir := os.Getenv("SOURCE_DIR")
 	if sourceDir == "" {
 		sourceDir = "/wtdata/source"
@@ -80,7 +80,7 @@ func GetCodeSourceDir(RepositoryURL, branch, tenantID string, ServiceID string) 
 	h.Write([]byte(RepositoryURL + branch + ServiceID))
 	bs := h.Sum(nil)
 	bsStr := fmt.Sprintf("%x", bs)
-	return path.Join(sourceDir, "build", tenantID, bsStr)
+	return path.Join(sourceDir, "build", tenantEnvID, bsStr)
 }
 
 // CheckFileExist CheckFileExist
@@ -110,7 +110,7 @@ func getShowURL(rurl string) string {
 
 // GitClone git clone code
 func GitClone(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout int) (*git.Repository, error) {
-	GetPrivateFileParam := csi.TenantID
+	GetPrivateFileParam := csi.TenantEnvID
 	if !strings.HasSuffix(csi.RepositoryURL, ".git") {
 		csi.RepositoryURL = csi.RepositoryURL + ".git"
 	}
@@ -265,7 +265,7 @@ func retryAuth(ep *transport.Endpoint, csi CodeSourceInfo) (transport.AuthMethod
 
 // GitPull git pull code
 func GitPull(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout int) (*git.Repository, error) {
-	GetPrivateFileParam := csi.TenantID
+	GetPrivateFileParam := csi.TenantEnvID
 	flag := true
 Loop:
 	if logger != nil {
@@ -430,13 +430,13 @@ func GetLastCommit(re *git.Repository) (*object.Commit, error) {
 }
 
 // GetPrivateFile 获取私钥文件地址
-func GetPrivateFile(tenantID string) string {
+func GetPrivateFile(tenantEnvID string) string {
 	home, _ := Home()
 	if home == "" {
 		home = "/root"
 	}
-	if ok, _ := util.FileExists(path.Join(home, "/.ssh/"+tenantID)); ok {
-		return path.Join(home, "/.ssh/"+tenantID)
+	if ok, _ := util.FileExists(path.Join(home, "/.ssh/"+tenantEnvID)); ok {
+		return path.Join(home, "/.ssh/"+tenantEnvID)
 	} else {
 		if ok, _ := util.FileExists(path.Join(home, "/.ssh/builder_rsa")); ok {
 			return path.Join(home, "/.ssh/builder_rsa")
@@ -447,13 +447,13 @@ func GetPrivateFile(tenantID string) string {
 }
 
 // GetPublicKey 获取公钥
-func GetPublicKey(tenantID string) string {
+func GetPublicKey(tenantEnvID string) string {
 	home, _ := Home()
 	if home == "" {
 		home = "/root"
 	}
-	PublicKey := tenantID + ".pub"
-	PrivateKey := tenantID
+	PublicKey := tenantEnvID + ".pub"
+	PrivateKey := tenantEnvID
 
 	if ok, _ := util.FileExists(path.Join(home, "/.ssh/"+PublicKey)); ok {
 		body, _ := ioutil.ReadFile(path.Join(home, "/.ssh/"+PublicKey))

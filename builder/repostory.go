@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/wutong-paas/wutong/util/constants"
@@ -39,27 +40,19 @@ func init() {
 	}
 
 	// set runner image name
-	RUNNERIMAGENAME = "runner"
-	if os.Getenv("RUNNER_IMAGE_NAME") != "" {
-		RUNNERIMAGENAME = os.Getenv("RUNNER_IMAGE_NAME")
+	CIVERSION = "latest"
+	if runtime.GOARCH != "amd64" {
+		CIVERSION = fmt.Sprintf("%s-arm64", CIVERSION)
 	}
-
-	CIVERSION = "v1.0.0-stable"
 	if os.Getenv("CI_VERSION") != "" {
 		CIVERSION = os.Getenv("CI_VERSION")
 	}
 
-	RUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(REGISTRYDOMAIN, RUNNERIMAGENAME), CIVERSION)
-	ONLINERUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(ONLINEREGISTRYDOMAIN, "runner"), CIVERSION)
-
-	// set builder image name
-	BUILDERIMAGENAME = "builder"
-	if os.Getenv("BUILDER_IMAGE_NAME") != "" {
-		BUILDERIMAGENAME = os.Getenv("BUILDER_IMAGE_NAME")
-	}
-
-	BUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(REGISTRYDOMAIN, BUILDERIMAGENAME), CIVERSION)
-	ONLINEBUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(ONLINEREGISTRYDOMAIN, "builder"), CIVERSION)
+	RUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "runner"), CIVERSION)
+	BUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "builder"), CIVERSION)
+	PROBEMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-init-probe"), CIVERSION)
+	TCPMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-mesh-data-panel"), CIVERSION)
+	NODESHELLIMAGENAME = path.Join(constants.WutongOnlineImageRepository, "node-shell")
 }
 
 // GetImageUserInfoV2 -
@@ -82,7 +75,7 @@ func GetImageRepo(imageRepo string) string {
 }
 
 // REGISTRYDOMAIN REGISTRY_DOMAIN
-var REGISTRYDOMAIN = constants.DefImageRepository
+var REGISTRYDOMAIN = constants.WutongHubImageRepository
 
 // REGISTRYUSER REGISTRY USER NAME
 var REGISTRYUSER = ""
@@ -96,14 +89,14 @@ var RUNNERIMAGENAME string
 // BUILDERIMAGENAME builder image name
 var BUILDERIMAGENAME string
 
-// ONLINEREGISTRYDOMAIN online REGISTRY_DOMAIN
-var ONLINEREGISTRYDOMAIN = constants.DefOnlineImageRepository
+// PROBEMESHIMAGENAME probemesh image name
+var PROBEMESHIMAGENAME string
 
-// ONLINEBUILDERIMAGENAME online builder image name
-var ONLINEBUILDERIMAGENAME string
+// TCPMESHIMAGENAME tcpmesh image name
+var TCPMESHIMAGENAME string
 
-// ONLINERUNNERIMAGENAME online runner image name
-var ONLINERUNNERIMAGENAME string
+// NODESHELLIMAGENAME nodeshell image name
+var NODESHELLIMAGENAME string
 
 // CIVERSION -
 var CIVERSION string

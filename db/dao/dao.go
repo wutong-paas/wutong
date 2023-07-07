@@ -31,55 +31,50 @@ var (
 	ErrVolumeNotFound = errors.New("volume not found")
 )
 
-//Dao 数据持久化层接口
+// Dao 数据持久化层接口
 type Dao interface {
 	AddModel(model.Interface) error
 	UpdateModel(model.Interface) error
 }
 
-//DelDao 删除接口
+// DelDao 删除接口
 type DelDao interface {
 	DeleteModel(serviceID string, arg ...interface{}) error
 }
 
-// EnterpriseDao enterprise dao
-type EnterpriseDao interface {
-	GetEnterpriseTenants(enterpriseID string) ([]*model.Tenants, error)
-}
-
-//TenantDao tenant dao
-type TenantDao interface {
+// TenantEnvDao tenant env dao
+type TenantEnvDao interface {
 	Dao
-	GetTenantByUUID(uuid string) (*model.Tenants, error)
-	GetTenantIDByName(tenantName string) (*model.Tenants, error)
-	GetALLTenants(query string) ([]*model.Tenants, error)
-	GetTenantByEid(eid, query string) ([]*model.Tenants, error)
-	GetPagedTenants(offset, len int) ([]*model.Tenants, error)
-	GetTenantIDsByNames(names []string) ([]string, error)
-	GetTenantLimitsByNames(names []string) (map[string]int, error)
-	GetTenantByUUIDIsExist(uuid string) bool
-	DelByTenantID(tenantID string) error
+	GetAllTenantEnvs(query string) ([]*model.TenantEnvs, error)
+	GetTenantEnvByUUID(uuid string) (*model.TenantEnvs, error)
+	GetTenantEnvIDByName(tenantName, tenantEnvName string) (*model.TenantEnvs, error)
+	GetTenantEnvs(tenantName, query string) ([]*model.TenantEnvs, error)
+	GetPagedTenantEnvs(offset, len int) ([]*model.TenantEnvs, error)
+	GetTenantEnvIDsByNames(tenantName string, tenantEnvNames []string) ([]string, error)
+	GetTenantEnvLimitsByNames(tenantName string, tenantEnvNames []string) (map[string]int, error)
+	GetTenantEnvByUUIDIsExist(uuid string) bool
+	DelByTenantEnvID(tenantEnvID string) error
 }
 
-//AppDao tenant dao
+// AppDao tenant env dao
 type AppDao interface {
 	Dao
 	GetByEventId(eventID string) (*model.AppStatus, error)
 	DeleteModelByEventId(eventID string) error
 }
 
-//ApplicationDao tenant Application Dao
+// ApplicationDao tenant env Application Dao
 type ApplicationDao interface {
 	Dao
-	ListApps(tenantID, appName string, page, pageSize int) ([]*model.Application, int64, error)
+	ListApps(tenantEnvID, appName string, page, pageSize int) ([]*model.Application, int64, error)
 	GetAppByID(appID string) (*model.Application, error)
 	DeleteApp(appID string) error
 	GetByServiceID(sid string) (*model.Application, error)
 	ListByAppIDs(appIDs []string) ([]*model.Application, error)
-	IsK8sAppDuplicate(tenantID, AppID, k8sApp string) bool
+	IsK8sAppDuplicate(tenantEnvID, AppID, k8sApp string) bool
 }
 
-//AppConfigGroupDao Application config group Dao
+// AppConfigGroupDao Application config group Dao
 type AppConfigGroupDao interface {
 	Dao
 	GetConfigGroupByID(appID, configGroupName string) (*model.ApplicationConfigGroup, error)
@@ -90,7 +85,7 @@ type AppConfigGroupDao interface {
 	CreateOrUpdateConfigGroupsInBatch(cgroups []*model.ApplicationConfigGroup) error
 }
 
-//AppConfigGroupServiceDao service config group Dao
+// AppConfigGroupServiceDao service config group Dao
 type AppConfigGroupServiceDao interface {
 	Dao
 	GetConfigGroupServicesByID(appID, configGroupName string) ([]*model.ConfigGroupService, error)
@@ -101,7 +96,7 @@ type AppConfigGroupServiceDao interface {
 	DeleteByAppID(appID string) error
 }
 
-//AppConfigGroupItemDao Application config item group Dao
+// AppConfigGroupItemDao Application config item group Dao
 type AppConfigGroupItemDao interface {
 	Dao
 	GetConfigGroupItemsByID(appID, configGroupName string) ([]*model.ConfigGroupItem, error)
@@ -115,176 +110,176 @@ type AppConfigGroupItemDao interface {
 type VolumeTypeDao interface {
 	Dao
 	DeleteModelByVolumeTypes(volumeType string) error
-	GetAllVolumeTypes() ([]*model.TenantServiceVolumeType, error)
-	GetAllVolumeTypesByPage(page int, pageSize int) ([]*model.TenantServiceVolumeType, error)
-	GetVolumeTypeByType(vt string) (*model.TenantServiceVolumeType, error)
-	CreateOrUpdateVolumeType(vt *model.TenantServiceVolumeType) (*model.TenantServiceVolumeType, error)
+	GetAllVolumeTypes() ([]*model.TenantEnvServiceVolumeType, error)
+	GetAllVolumeTypesByPage(page int, pageSize int) ([]*model.TenantEnvServiceVolumeType, error)
+	GetVolumeTypeByType(vt string) (*model.TenantEnvServiceVolumeType, error)
+	CreateOrUpdateVolumeType(vt *model.TenantEnvServiceVolumeType) (*model.TenantEnvServiceVolumeType, error)
 }
 
-//LicenseDao LicenseDao
+// LicenseDao LicenseDao
 type LicenseDao interface {
 	Dao
 	//DeleteLicense(token string) error
 	ListLicenses() ([]*model.LicenseInfo, error)
 }
 
-//TenantServiceDao TenantServiceDao
-type TenantServiceDao interface {
+// TenantEnvServiceDao TenantEnvServiceDao
+type TenantEnvServiceDao interface {
 	Dao
-	GetServiceByID(serviceID string) (*model.TenantServices, error)
-	GetServiceByServiceAlias(serviceAlias string) (*model.TenantServices, error)
-	GetServiceByIDs(serviceIDs []string) ([]*model.TenantServices, error)
-	GetServiceAliasByIDs(uids []string) ([]*model.TenantServices, error)
-	GetServiceByTenantIDAndServiceAlias(tenantID, serviceName string) (*model.TenantServices, error)
-	SetTenantServiceStatus(serviceID, status string) error
-	GetServicesByTenantID(tenantID string) ([]*model.TenantServices, error)
-	GetServicesByTenantIDs(tenantIDs []string) ([]*model.TenantServices, error)
-	GetServicesAllInfoByTenantID(tenantID string) ([]*model.TenantServices, error)
-	GetServicesInfoByAppID(appID string, page, pageSize int) ([]*model.TenantServices, int64, error)
+	GetServiceByID(serviceID string) (*model.TenantEnvServices, error)
+	GetServiceByServiceAlias(serviceAlias string) (*model.TenantEnvServices, error)
+	GetServiceByIDs(serviceIDs []string) ([]*model.TenantEnvServices, error)
+	GetServiceAliasByIDs(uids []string) ([]*model.TenantEnvServices, error)
+	GetServiceByTenantEnvIDAndServiceAlias(tenantEnvID, serviceName string) (*model.TenantEnvServices, error)
+	SetTenantEnvServiceStatus(serviceID, status string) error
+	GetServicesByTenantEnvID(tenantEnvID string) ([]*model.TenantEnvServices, error)
+	GetServicesByTenantEnvIDs(tenantEnvIDs []string) ([]*model.TenantEnvServices, error)
+	GetServicesAllInfoByTenantEnvID(tenantEnvID string) ([]*model.TenantEnvServices, error)
+	GetServicesInfoByAppID(appID string, page, pageSize int) ([]*model.TenantEnvServices, int64, error)
 	CountServiceByAppID(appID string) (int64, error)
 	GetServiceIDsByAppID(appID string) (re []model.ServiceID)
-	GetServicesByServiceIDs(serviceIDs []string) ([]*model.TenantServices, error)
+	GetServicesByServiceIDs(serviceIDs []string) ([]*model.TenantEnvServices, error)
 	DeleteServiceByServiceID(serviceID string) error
-	GetServiceMemoryByTenantIDs(tenantIDs, serviceIDs []string) (map[string]map[string]interface{}, error)
+	GetServiceMemoryByTenantEnvIDs(tenantEnvIDs, serviceIDs []string) (map[string]map[string]interface{}, error)
 	GetServiceMemoryByServiceIDs(serviceIDs []string) (map[string]map[string]interface{}, error)
-	GetPagedTenantService(offset, len int, serviceIDs []string) ([]map[string]interface{}, int, error)
-	GetAllServicesID() ([]*model.TenantServices, error)
+	GetPagedTenantEnvService(offset, len int, serviceIDs []string) ([]map[string]interface{}, int, error)
+	GetAllServicesID() ([]*model.TenantEnvServices, error)
 	UpdateDeployVersion(serviceID, deployversion string) error
-	ListThirdPartyServices() ([]*model.TenantServices, error)
-	ListServicesByTenantID(tenantID string) ([]*model.TenantServices, error)
-	GetServiceTypeByID(serviceID string) (*model.TenantServices, error)
-	ListByAppID(appID string) ([]*model.TenantServices, error)
+	ListThirdPartyServices() ([]*model.TenantEnvServices, error)
+	ListServicesByTenantEnvID(tenantEnvID string) ([]*model.TenantEnvServices, error)
+	GetServiceTypeByID(serviceID string) (*model.TenantEnvServices, error)
+	ListByAppID(appID string) ([]*model.TenantEnvServices, error)
 	BindAppByServiceIDs(appID string, serviceIDs []string) error
-	CreateOrUpdateComponentsInBatch(components []*model.TenantServices) error
-	DeleteByComponentIDs(tenantID, appID string, componentIDs []string) error
+	CreateOrUpdateComponentsInBatch(components []*model.TenantEnvServices) error
+	DeleteByComponentIDs(tenantEnvID, appID string, componentIDs []string) error
 	IsK8sComponentNameDuplicate(appID, serviceID, k8sComponentName string) bool
 }
 
-//TenantServiceDeleteDao TenantServiceDeleteDao
-type TenantServiceDeleteDao interface {
+// TenantEnvServiceDeleteDao TenantEnvServiceDeleteDao
+type TenantEnvServiceDeleteDao interface {
 	Dao
-	GetTenantServicesDeleteByCreateTime(createTime time.Time) ([]*model.TenantServicesDelete, error)
-	DeleteTenantServicesDelete(record *model.TenantServicesDelete) error
-	List() ([]*model.TenantServicesDelete, error)
+	GetTenantEnvServicesDeleteByCreateTime(createTime time.Time) ([]*model.TenantEnvServicesDelete, error)
+	DeleteTenantEnvServicesDelete(record *model.TenantEnvServicesDelete) error
+	List() ([]*model.TenantEnvServicesDelete, error)
 }
 
-//TenantServicesPortDao TenantServicesPortDao
-type TenantServicesPortDao interface {
+// TenantEnvServicesPortDao TenantEnvServicesPortDao
+type TenantEnvServicesPortDao interface {
 	Dao
 	DelDao
-	GetByTenantAndName(tenantID, name string) (*model.TenantServicesPort, error)
-	GetPortsByServiceID(serviceID string) ([]*model.TenantServicesPort, error)
-	GetOuterPorts(serviceID string) ([]*model.TenantServicesPort, error)
-	GetInnerPorts(serviceID string) ([]*model.TenantServicesPort, error)
-	GetPort(serviceID string, port int) (*model.TenantServicesPort, error)
-	GetOpenedPorts(serviceID string) ([]*model.TenantServicesPort, error)
+	GetByTenantEnvAndName(tenantEnvID, name string) (*model.TenantEnvServicesPort, error)
+	GetPortsByServiceID(serviceID string) ([]*model.TenantEnvServicesPort, error)
+	GetOuterPorts(serviceID string) ([]*model.TenantEnvServicesPort, error)
+	GetInnerPorts(serviceID string) ([]*model.TenantEnvServicesPort, error)
+	GetPort(serviceID string, port int) (*model.TenantEnvServicesPort, error)
+	GetOpenedPorts(serviceID string) ([]*model.TenantEnvServicesPort, error)
 	//GetDepUDPPort get all depend service udp port info
-	GetDepUDPPort(serviceID string) ([]*model.TenantServicesPort, error)
+	GetDepUDPPort(serviceID string) ([]*model.TenantEnvServicesPort, error)
 	DELPortsByServiceID(serviceID string) error
 	HasOpenPort(sid string) bool
 	DelByServiceID(sid string) error
-	ListInnerPortsByServiceIDs(serviceIDs []string) ([]*model.TenantServicesPort, error)
-	ListByK8sServiceNames(serviceIDs []string) ([]*model.TenantServicesPort, error)
-	CreateOrUpdatePortsInBatch(ports []*model.TenantServicesPort) error
+	ListInnerPortsByServiceIDs(serviceIDs []string) ([]*model.TenantEnvServicesPort, error)
+	ListByK8sServiceNames(serviceIDs []string) ([]*model.TenantEnvServicesPort, error)
+	CreateOrUpdatePortsInBatch(ports []*model.TenantEnvServicesPort) error
 	DeleteByComponentIDs(componentIDs []string) error
 }
 
-//TenantPluginDao TenantPluginDao
-type TenantPluginDao interface {
+// TenantEnvPluginDao TenantEnvPluginDao
+type TenantEnvPluginDao interface {
 	Dao
-	GetPluginByID(pluginID, tenantID string) (*model.TenantPlugin, error)
-	DeletePluginByID(pluginID, tenantID string) error
-	GetPluginsByTenantID(tenantID string) ([]*model.TenantPlugin, error)
-	ListByIDs(ids []string) ([]*model.TenantPlugin, error)
-	ListByTenantID(tenantID string) ([]*model.TenantPlugin, error)
-	CreateOrUpdatePluginsInBatch(plugins []*model.TenantPlugin) error
+	GetPluginByID(pluginID, tenantEnvID string) (*model.TenantEnvPlugin, error)
+	DeletePluginByID(pluginID, tenantEnvID string) error
+	GetPluginsByTenantEnvID(tenantEnvID string) ([]*model.TenantEnvPlugin, error)
+	ListByIDs(ids []string) ([]*model.TenantEnvPlugin, error)
+	ListByTenantEnvID(tenantEnvID string) ([]*model.TenantEnvPlugin, error)
+	CreateOrUpdatePluginsInBatch(plugins []*model.TenantEnvPlugin) error
 }
 
-//TenantPluginDefaultENVDao TenantPluginDefaultENVDao
-type TenantPluginDefaultENVDao interface {
+// TenantEnvPluginDefaultENVDao TenantEnvPluginDefaultENVDao
+type TenantEnvPluginDefaultENVDao interface {
 	Dao
-	GetDefaultENVByName(pluginID, name, versionID string) (*model.TenantPluginDefaultENV, error)
-	GetDefaultENVSByPluginID(pluginID, versionID string) ([]*model.TenantPluginDefaultENV, error)
-	//GetDefaultENVSByPluginIDCantBeSet(pluginID string) ([]*model.TenantPluginDefaultENV, error)
+	GetDefaultENVByName(pluginID, name, versionID string) (*model.TenantEnvPluginDefaultENV, error)
+	GetDefaultENVSByPluginID(pluginID, versionID string) ([]*model.TenantEnvPluginDefaultENV, error)
+	//GetDefaultENVSByPluginIDCantBeSet(pluginID string) ([]*model.TenantEnvPluginDefaultENV, error)
 	DeleteDefaultENVByName(pluginID, name, versionID string) error
 	DeleteAllDefaultENVByPluginID(PluginID string) error
 	DeleteDefaultENVByPluginIDAndVersionID(pluginID, versionID string) error
-	GetALLMasterDefultENVs(pluginID string) ([]*model.TenantPluginDefaultENV, error)
-	GetDefaultEnvWhichCanBeSetByPluginID(pluginID, versionID string) ([]*model.TenantPluginDefaultENV, error)
+	GetALLMasterDefultENVs(pluginID string) ([]*model.TenantEnvPluginDefaultENV, error)
+	GetDefaultEnvWhichCanBeSetByPluginID(pluginID, versionID string) ([]*model.TenantEnvPluginDefaultENV, error)
 }
 
-//TenantPluginBuildVersionDao TenantPluginBuildVersionDao
-type TenantPluginBuildVersionDao interface {
+// TenantEnvPluginBuildVersionDao TenantEnvPluginBuildVersionDao
+type TenantEnvPluginBuildVersionDao interface {
 	Dao
 	DeleteBuildVersionByVersionID(versionID string) error
 	DeleteBuildVersionByPluginID(pluginID string) error
-	GetBuildVersionByPluginID(pluginID string) ([]*model.TenantPluginBuildVersion, error)
-	GetBuildVersionByVersionID(pluginID, versionID string) (*model.TenantPluginBuildVersion, error)
-	GetLastBuildVersionByVersionID(pluginID, versionID string) (*model.TenantPluginBuildVersion, error)
-	GetBuildVersionByDeployVersion(pluginID, versionID, deployVersion string) (*model.TenantPluginBuildVersion, error)
-	ListSuccessfulOnesByPluginIDs(pluginIDs []string) ([]*model.TenantPluginBuildVersion, error)
-	CreateOrUpdatePluginBuildVersionsInBatch(buildVersions []*model.TenantPluginBuildVersion) error
+	GetBuildVersionByPluginID(pluginID string) ([]*model.TenantEnvPluginBuildVersion, error)
+	GetBuildVersionByVersionID(pluginID, versionID string) (*model.TenantEnvPluginBuildVersion, error)
+	GetLastBuildVersionByVersionID(pluginID, versionID string) (*model.TenantEnvPluginBuildVersion, error)
+	GetBuildVersionByDeployVersion(pluginID, versionID, deployVersion string) (*model.TenantEnvPluginBuildVersion, error)
+	ListSuccessfulOnesByPluginIDs(pluginIDs []string) ([]*model.TenantEnvPluginBuildVersion, error)
+	CreateOrUpdatePluginBuildVersionsInBatch(buildVersions []*model.TenantEnvPluginBuildVersion) error
 }
 
-//TenantPluginVersionEnvDao TenantPluginVersionEnvDao
-type TenantPluginVersionEnvDao interface {
+// TenantEnvPluginVersionEnvDao TenantEnvPluginVersionEnvDao
+type TenantEnvPluginVersionEnvDao interface {
 	Dao
 	DeleteEnvByEnvName(envName, pluginID, serviceID string) error
 	DeleteEnvByPluginID(serviceID, pluginID string) error
 	DeleteEnvByServiceID(serviceID string) error
-	GetVersionEnvByServiceID(serviceID string, pluginID string) ([]*model.TenantPluginVersionEnv, error)
-	ListByServiceID(serviceID string) ([]*model.TenantPluginVersionEnv, error)
-	GetVersionEnvByEnvName(serviceID, pluginID, envName string) (*model.TenantPluginVersionEnv, error)
+	GetVersionEnvByServiceID(serviceID string, pluginID string) ([]*model.TenantEnvPluginVersionEnv, error)
+	ListByServiceID(serviceID string) ([]*model.TenantEnvPluginVersionEnv, error)
+	GetVersionEnvByEnvName(serviceID, pluginID, envName string) (*model.TenantEnvPluginVersionEnv, error)
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdatePluginVersionEnvsInBatch(versionEnvs []*model.TenantPluginVersionEnv) error
+	CreateOrUpdatePluginVersionEnvsInBatch(versionEnvs []*model.TenantEnvPluginVersionEnv) error
 }
 
-//TenantPluginVersionConfigDao service plugin config that can be dynamic discovery dao interface
-type TenantPluginVersionConfigDao interface {
+// TenantEnvPluginVersionConfigDao service plugin config that can be dynamic discovery dao interface
+type TenantEnvPluginVersionConfigDao interface {
 	Dao
-	GetPluginConfig(serviceID, pluginID string) (*model.TenantPluginVersionDiscoverConfig, error)
-	GetPluginConfigs(serviceID string) ([]*model.TenantPluginVersionDiscoverConfig, error)
+	GetPluginConfig(serviceID, pluginID string) (*model.TenantEnvPluginVersionDiscoverConfig, error)
+	GetPluginConfigs(serviceID string) ([]*model.TenantEnvPluginVersionDiscoverConfig, error)
 	DeletePluginConfig(serviceID, pluginID string) error
 	DeletePluginConfigByServiceID(serviceID string) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdatePluginVersionConfigsInBatch(versionConfigs []*model.TenantPluginVersionDiscoverConfig) error
+	CreateOrUpdatePluginVersionConfigsInBatch(versionConfigs []*model.TenantEnvPluginVersionDiscoverConfig) error
 }
 
-//TenantServicePluginRelationDao TenantServicePluginRelationDao
-type TenantServicePluginRelationDao interface {
+// TenantEnvServicePluginRelationDao TenantEnvServicePluginRelationDao
+type TenantEnvServicePluginRelationDao interface {
 	Dao
 	DeleteRelationByServiceIDAndPluginID(serviceID, pluginID string) error
 	DeleteALLRelationByServiceID(serviceID string) error
 	DeleteALLRelationByPluginID(pluginID string) error
-	GetALLRelationByServiceID(serviceID string) ([]*model.TenantServicePluginRelation, error)
-	GetRelateionByServiceIDAndPluginID(serviceID, pluginID string) (*model.TenantServicePluginRelation, error)
+	GetALLRelationByServiceID(serviceID string) ([]*model.TenantEnvServicePluginRelation, error)
+	GetRelateionByServiceIDAndPluginID(serviceID, pluginID string) (*model.TenantEnvServicePluginRelation, error)
 	CheckSomeModelPluginByServiceID(serviceID, pluginModel string) (bool, error)
 	// CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error)
 	CheckPluginBeforeInstall(serviceID, pluginModel string) (bool, error)
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdatePluginRelsInBatch(relations []*model.TenantServicePluginRelation) error
+	CreateOrUpdatePluginRelsInBatch(relations []*model.TenantEnvServicePluginRelation) error
 }
 
-//TenantServiceRelationDao TenantServiceRelationDao
-type TenantServiceRelationDao interface {
+// TenantEnvServiceRelationDao TenantEnvServiceRelationDao
+type TenantEnvServiceRelationDao interface {
 	Dao
 	DelDao
-	GetTenantServiceRelations(serviceID string) ([]*model.TenantServiceRelation, error)
-	ListByServiceIDs(serviceIDs []string) ([]*model.TenantServiceRelation, error)
-	GetTenantServiceRelationsByDependServiceID(dependServiceID string) ([]*model.TenantServiceRelation, error)
+	GetTenantEnvServiceRelations(serviceID string) ([]*model.TenantEnvServiceRelation, error)
+	ListByServiceIDs(serviceIDs []string) ([]*model.TenantEnvServiceRelation, error)
+	GetTenantEnvServiceRelationsByDependServiceID(dependServiceID string) ([]*model.TenantEnvServiceRelation, error)
 	HaveRelations(serviceID string) bool
 	DELRelationsByServiceID(serviceID string) error
 	DeleteRelationByDepID(serviceID, depID string) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateRelationsInBatch(relations []*model.TenantServiceRelation) error
+	CreateOrUpdateRelationsInBatch(relations []*model.TenantEnvServiceRelation) error
 }
 
-//TenantServicesStreamPluginPortDao TenantServicesStreamPluginPortDao
-type TenantServicesStreamPluginPortDao interface {
+// TenantEnvServicesStreamPluginPortDao TenantEnvServicesStreamPluginPortDao
+type TenantEnvServicesStreamPluginPortDao interface {
 	Dao
-	GetPluginMappingPorts(serviceID string) ([]*model.TenantServicesStreamPluginPort, error)
+	GetPluginMappingPorts(serviceID string) ([]*model.TenantEnvServicesStreamPluginPort, error)
 	SetPluginMappingPort(
-		tenantID string,
+		tenantEnvID string,
 		serviceID string,
 		pluginModel string,
 		containerPort int,
@@ -299,124 +294,124 @@ type TenantServicesStreamPluginPortDao interface {
 		serviceID string,
 		pluginModel string,
 		containerPort int,
-	) (*model.TenantServicesStreamPluginPort, error)
-	ListByServiceID(sid string) ([]*model.TenantServicesStreamPluginPort, error)
+	) (*model.TenantEnvServicesStreamPluginPort, error)
+	ListByServiceID(sid string) ([]*model.TenantEnvServicesStreamPluginPort, error)
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateStreamPluginPortsInBatch(spPorts []*model.TenantServicesStreamPluginPort) error
+	CreateOrUpdateStreamPluginPortsInBatch(spPorts []*model.TenantEnvServicesStreamPluginPort) error
 }
 
-//TenantServiceEnvVarDao TenantServiceEnvVarDao
-type TenantServiceEnvVarDao interface {
+// TenantEnvServiceEnvVarDao TenantEnvServiceEnvVarDao
+type TenantEnvServiceEnvVarDao interface {
 	Dao
 	DelDao
 	//service_id__in=sids, scope__in=("outer", "both")
-	GetDependServiceEnvs(serviceIDs []string, scopes []string) ([]*model.TenantServiceEnvVar, error)
-	GetServiceEnvs(serviceID string, scopes []string) ([]*model.TenantServiceEnvVar, error)
-	GetEnv(serviceID, envName string) (*model.TenantServiceEnvVar, error)
+	GetDependServiceEnvs(serviceIDs []string, scopes []string) ([]*model.TenantEnvServiceEnvVar, error)
+	GetServiceEnvs(serviceID string, scopes []string) ([]*model.TenantEnvServiceEnvVar, error)
+	GetEnv(serviceID, envName string) (*model.TenantEnvServiceEnvVar, error)
 	DELServiceEnvsByServiceID(serviceID string) error
 	DelByServiceIDAndScope(sid, scope string) error
-	CreateOrUpdateEnvsInBatch(envs []*model.TenantServiceEnvVar) error
+	CreateOrUpdateEnvsInBatch(envs []*model.TenantEnvServiceEnvVar) error
 	DeleteByComponentIDs(componentIDs []string) error
 }
 
-//TenantServiceMountRelationDao TenantServiceMountRelationDao
-type TenantServiceMountRelationDao interface {
+// TenantEnvServiceMountRelationDao TenantEnvServiceMountRelationDao
+type TenantEnvServiceMountRelationDao interface {
 	Dao
-	GetTenantServiceMountRelationsByService(serviceID string) ([]*model.TenantServiceMountRelation, error)
-	DElTenantServiceMountRelationByServiceAndName(serviceID, mntDir string) error
-	DELTenantServiceMountRelationByServiceID(serviceID string) error
-	DElTenantServiceMountRelationByDepService(serviceID, depServiceID string) error
+	GetTenantEnvServiceMountRelationsByService(serviceID string) ([]*model.TenantEnvServiceMountRelation, error)
+	DElTenantEnvServiceMountRelationByServiceAndName(serviceID, mntDir string) error
+	DELTenantEnvServiceMountRelationByServiceID(serviceID string) error
+	DElTenantEnvServiceMountRelationByDepService(serviceID, depServiceID string) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateVolumeRelsInBatch(volRels []*model.TenantServiceMountRelation) error
+	CreateOrUpdateVolumeRelsInBatch(volRels []*model.TenantEnvServiceMountRelation) error
 }
 
-//TenantServiceVolumeDao TenantServiceVolumeDao
-type TenantServiceVolumeDao interface {
+// TenantEnvServiceVolumeDao TenantEnvServiceVolumeDao
+type TenantEnvServiceVolumeDao interface {
 	Dao
 	DelDao
-	GetTenantServiceVolumesByServiceID(serviceID string) ([]*model.TenantServiceVolume, error)
-	DeleteTenantServiceVolumesByServiceID(serviceID string) error
+	GetTenantEnvServiceVolumesByServiceID(serviceID string) ([]*model.TenantEnvServiceVolume, error)
+	DeleteTenantEnvServiceVolumesByServiceID(serviceID string) error
 	DeleteByServiceIDAndVolumePath(serviceID string, volumePath string) error
-	GetVolumeByServiceIDAndName(serviceID, name string) (*model.TenantServiceVolume, error)
-	GetAllVolumes() ([]*model.TenantServiceVolume, error)
-	GetVolumeByID(id int) (*model.TenantServiceVolume, error)
+	GetVolumeByServiceIDAndName(serviceID, name string) (*model.TenantEnvServiceVolume, error)
+	GetAllVolumes() ([]*model.TenantEnvServiceVolume, error)
+	GetVolumeByID(id int) (*model.TenantEnvServiceVolume, error)
 	DelShareableBySID(sid string) error
-	ListVolumesByComponentIDs(componentIDs []string) ([]*model.TenantServiceVolume, error)
+	ListVolumesByComponentIDs(componentIDs []string) ([]*model.TenantEnvServiceVolume, error)
 	DeleteByVolumeIDs(volumeIDs []uint) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateVolumesInBatch(volumes []*model.TenantServiceVolume) error
+	CreateOrUpdateVolumesInBatch(volumes []*model.TenantEnvServiceVolume) error
 }
 
-//TenantServiceConfigFileDao tenant service config file dao interface
-type TenantServiceConfigFileDao interface {
+// TenantEnvServiceConfigFileDao tenant env service config file dao interface
+type TenantEnvServiceConfigFileDao interface {
 	Dao
-	GetConfigFileByServiceID(serviceID string) ([]*model.TenantServiceConfigFile, error)
-	GetByVolumeName(sid, volumeName string) (*model.TenantServiceConfigFile, error)
+	GetConfigFileByServiceID(serviceID string) ([]*model.TenantEnvServiceConfigFile, error)
+	GetByVolumeName(sid, volumeName string) (*model.TenantEnvServiceConfigFile, error)
 	DelByVolumeID(sid string, volumeName string) error
 	DelByServiceID(sid string) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateConfigFilesInBatch(configFiles []*model.TenantServiceConfigFile) error
+	CreateOrUpdateConfigFilesInBatch(configFiles []*model.TenantEnvServiceConfigFile) error
 }
 
-//TenantServiceLBMappingPortDao vs lb mapping port dao
-type TenantServiceLBMappingPortDao interface {
+// TenantEnvServiceLBMappingPortDao vs lb mapping port dao
+type TenantEnvServiceLBMappingPortDao interface {
 	Dao
-	GetTenantServiceLBMappingPort(serviceID string, containerPort int) (*model.TenantServiceLBMappingPort, error)
-	GetLBMappingPortByServiceIDAndPort(serviceID string, port int) (*model.TenantServiceLBMappingPort, error)
-	GetTenantServiceLBMappingPortByService(serviceID string) ([]*model.TenantServiceLBMappingPort, error)
-	GetLBPortsASC() ([]*model.TenantServiceLBMappingPort, error)
-	CreateTenantServiceLBMappingPort(serviceID string, containerPort int) (*model.TenantServiceLBMappingPort, error)
+	GetTenantEnvServiceLBMappingPort(serviceID string, containerPort int) (*model.TenantEnvServiceLBMappingPort, error)
+	GetLBMappingPortByServiceIDAndPort(serviceID string, port int) (*model.TenantEnvServiceLBMappingPort, error)
+	GetTenantEnvServiceLBMappingPortByService(serviceID string) ([]*model.TenantEnvServiceLBMappingPort, error)
+	GetLBPortsASC() ([]*model.TenantEnvServiceLBMappingPort, error)
+	CreateTenantEnvServiceLBMappingPort(serviceID string, containerPort int) (*model.TenantEnvServiceLBMappingPort, error)
 	DELServiceLBMappingPortByServiceID(serviceID string) error
 	DELServiceLBMappingPortByServiceIDAndPort(serviceID string, lbPort int) error
-	GetLBPortByTenantAndPort(tenantID string, lbport int) (*model.TenantServiceLBMappingPort, error)
+	GetLBPortByTenantEnvAndPort(tenantEnvID string, lbport int) (*model.TenantEnvServiceLBMappingPort, error)
 	PortExists(port int) bool
 }
 
-//TenantServiceLabelDao TenantServiceLabelDao
-type TenantServiceLabelDao interface {
+// TenantEnvServiceLabelDao TenantEnvServiceLabelDao
+type TenantEnvServiceLabelDao interface {
 	Dao
 	DelDao
-	GetTenantServiceLabel(serviceID string) ([]*model.TenantServiceLable, error)
+	GetTenantEnvServiceLabel(serviceID string) ([]*model.TenantEnvServiceLable, error)
 	DeleteLabelByServiceID(serviceID string) error
-	GetTenantServiceNodeSelectorLabel(serviceID string) ([]*model.TenantServiceLable, error)
-	GetTenantNodeAffinityLabel(serviceID string) (*model.TenantServiceLable, error)
-	GetTenantServiceAffinityLabel(serviceID string) ([]*model.TenantServiceLable, error)
-	GetTenantServiceTypeLabel(serviceID string) (*model.TenantServiceLable, error)
-	DelTenantServiceLabelsByLabelValuesAndServiceID(serviceID string) error
-	DelTenantServiceLabelsByServiceIDKey(serviceID string, labelKey string) error
-	DelTenantServiceLabelsByServiceIDKeyValue(serviceID string, labelKey string, labelValue string) error
-	GetLabelByNodeSelectorKey(serviceID string, labelValue string) (*model.TenantServiceLable, error)
-	GetPrivilegedLabel(serviceID string) (*model.TenantServiceLable, error)
+	GetTenantEnvServiceNodeSelectorLabel(serviceID string) ([]*model.TenantEnvServiceLable, error)
+	GetTenantEnvNodeAffinityLabel(serviceID string) (*model.TenantEnvServiceLable, error)
+	GetTenantEnvServiceAffinityLabel(serviceID string) ([]*model.TenantEnvServiceLable, error)
+	GetTenantEnvServiceTypeLabel(serviceID string) (*model.TenantEnvServiceLable, error)
+	DelTenantEnvServiceLabelsByLabelValuesAndServiceID(serviceID string) error
+	DelTenantEnvServiceLabelsByServiceIDKey(serviceID string, labelKey string) error
+	DelTenantEnvServiceLabelsByServiceIDKeyValue(serviceID string, labelKey string, labelValue string) error
+	GetLabelByNodeSelectorKey(serviceID string, labelValue string) (*model.TenantEnvServiceLable, error)
+	GetPrivilegedLabel(serviceID string) (*model.TenantEnvServiceLable, error)
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateLabelsInBatch(labels []*model.TenantServiceLable) error
+	CreateOrUpdateLabelsInBatch(labels []*model.TenantEnvServiceLable) error
 }
 
-//LocalSchedulerDao 本地调度信息
+// LocalSchedulerDao 本地调度信息
 type LocalSchedulerDao interface {
 	Dao
 	GetLocalScheduler(serviceID string) ([]*model.LocalScheduler, error)
 }
 
-//ServiceProbeDao ServiceProbeDao
+// ServiceProbeDao ServiceProbeDao
 type ServiceProbeDao interface {
 	Dao
 	DelDao
-	GetServiceProbes(serviceID string) ([]*model.TenantServiceProbe, error)
-	GetServiceUsedProbe(serviceID, mode string) (*model.TenantServiceProbe, error)
+	GetServiceProbes(serviceID string) ([]*model.TenantEnvServiceProbe, error)
+	GetServiceUsedProbe(serviceID, mode string) (*model.TenantEnvServiceProbe, error)
 	DELServiceProbesByServiceID(serviceID string) error
 	DelByServiceID(sid string) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateProbesInBatch(probes []*model.TenantServiceProbe) error
+	CreateOrUpdateProbesInBatch(probes []*model.TenantEnvServiceProbe) error
 }
 
-//CodeCheckResultDao CodeCheckResultDao
+// CodeCheckResultDao CodeCheckResultDao
 type CodeCheckResultDao interface {
 	Dao
 	GetCodeCheckResult(serviceID string) (*model.CodeCheckResult, error)
 	DeleteByServiceID(serviceID string) error
 }
 
-//EventDao EventDao
+// EventDao EventDao
 type EventDao interface {
 	Dao
 	CreateEventsInBatch(events []*model.ServiceEvent) error
@@ -426,16 +421,17 @@ type EventDao interface {
 	DelEventByServiceID(serviceID string) error
 	ListByTargetID(targetID string) ([]*model.ServiceEvent, error)
 	GetEventsByTarget(target, targetID string, offset, liimt int) ([]*model.ServiceEvent, int, error)
-	GetEventsByTenantID(tenantID string, offset, limit int) ([]*model.ServiceEvent, int, error)
+	GetEventsByTenantEnvID(tenantEnvID string, offset, limit int) ([]*model.ServiceEvent, int, error)
 	GetLastASyncEvent(target, targetID string) (*model.ServiceEvent, error)
 	UnfinishedEvents(target, targetID string, optTypes ...string) ([]*model.ServiceEvent, error)
 	LatestFailurePodEvent(podName string) (*model.ServiceEvent, error)
 	UpdateReason(eventID string, reason string) error
 	SetEventStatus(ctx context.Context, status model.EventStatus) error
+	DeleteEvents(eventIDs []string) error
 	UpdateInBatch(events []*model.ServiceEvent) error
 }
 
-//VersionInfoDao VersionInfoDao
+// VersionInfoDao VersionInfoDao
 type VersionInfoDao interface {
 	Dao
 	ListSuccessfulOnes() ([]*model.VersionInfo, error)
@@ -454,22 +450,14 @@ type VersionInfoDao interface {
 	ListVersionsByComponentIDs(componentIDs []string) ([]*model.VersionInfo, error)
 }
 
-//RegionUserInfoDao UserRegionInfoDao
-type RegionUserInfoDao interface {
-	Dao
-	GetALLTokenInValidityPeriod() ([]*model.RegionUserInfo, error)
-	GetTokenByEid(eid string) (*model.RegionUserInfo, error)
-	GetTokenByTokenID(token string) (*model.RegionUserInfo, error)
-}
-
-//RegionAPIClassDao RegionAPIClassDao
+// RegionAPIClassDao RegionAPIClassDao
 type RegionAPIClassDao interface {
 	Dao
 	GetPrefixesByClass(apiClass string) ([]*model.RegionAPIClass, error)
 	DeletePrefixInClass(apiClass, prefix string) error
 }
 
-//NotificationEventDao NotificationEventDao
+// NotificationEventDao NotificationEventDao
 type NotificationEventDao interface {
 	Dao
 	GetNotificationEventByHash(hash string) (*model.NotificationEvent, error)
@@ -478,7 +466,7 @@ type NotificationEventDao interface {
 	GetNotificationEventNotHandle() ([]*model.NotificationEvent, error)
 }
 
-//AppBackupDao group app backup history
+// AppBackupDao group app backup history
 type AppBackupDao interface {
 	Dao
 	CheckHistory(groupID, version string) bool
@@ -489,7 +477,7 @@ type AppBackupDao interface {
 	GetDeleteAppBackups() ([]*model.AppBackup, error)
 }
 
-//ServiceSourceDao service source dao
+// ServiceSourceDao service source dao
 type ServiceSourceDao interface {
 	Dao
 	GetServiceSource(serviceID string) ([]*model.ServiceSourceConfig, error)
@@ -582,42 +570,42 @@ type GwRuleConfigDao interface {
 	CreateOrUpdateGwRuleConfigsInBatch(ruleConfigs []*model.GwRuleConfig) error
 }
 
-// TenantServceAutoscalerRulesDao -
-type TenantServceAutoscalerRulesDao interface {
+// TenantEnvServceAutoscalerRulesDao -
+type TenantEnvServceAutoscalerRulesDao interface {
 	Dao
-	GetByRuleID(ruleID string) (*model.TenantServiceAutoscalerRules, error)
-	ListByServiceID(serviceID string) ([]*model.TenantServiceAutoscalerRules, error)
-	ListEnableOnesByServiceID(serviceID string) ([]*model.TenantServiceAutoscalerRules, error)
-	ListByComponentIDs(componentIDs []string) ([]*model.TenantServiceAutoscalerRules, error)
+	GetByRuleID(ruleID string) (*model.TenantEnvServiceAutoscalerRules, error)
+	ListByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error)
+	ListEnableOnesByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error)
+	ListByComponentIDs(componentIDs []string) ([]*model.TenantEnvServiceAutoscalerRules, error)
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateScaleRulesInBatch(rules []*model.TenantServiceAutoscalerRules) error
+	CreateOrUpdateScaleRulesInBatch(rules []*model.TenantEnvServiceAutoscalerRules) error
 }
 
-// TenantServceAutoscalerRuleMetricsDao -
-type TenantServceAutoscalerRuleMetricsDao interface {
+// TenantEnvServceAutoscalerRuleMetricsDao -
+type TenantEnvServceAutoscalerRuleMetricsDao interface {
 	Dao
-	UpdateOrCreate(metric *model.TenantServiceAutoscalerRuleMetrics) error
-	ListByRuleID(ruleID string) ([]*model.TenantServiceAutoscalerRuleMetrics, error)
+	UpdateOrCreate(metric *model.TenantEnvServiceAutoscalerRuleMetrics) error
+	ListByRuleID(ruleID string) ([]*model.TenantEnvServiceAutoscalerRuleMetrics, error)
 	DeleteByRuleID(ruldID string) error
 	DeleteByRuleIDs(ruleIDs []string) error
-	CreateOrUpdateScaleRuleMetricsInBatch(metrics []*model.TenantServiceAutoscalerRuleMetrics) error
+	CreateOrUpdateScaleRuleMetricsInBatch(metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) error
 }
 
-// TenantServiceScalingRecordsDao -
-type TenantServiceScalingRecordsDao interface {
+// TenantEnvServiceScalingRecordsDao -
+type TenantEnvServiceScalingRecordsDao interface {
 	Dao
-	UpdateOrCreate(new *model.TenantServiceScalingRecords) error
-	ListByServiceID(serviceID string, offset, limit int) ([]*model.TenantServiceScalingRecords, error)
+	UpdateOrCreate(new *model.TenantEnvServiceScalingRecords) error
+	ListByServiceID(serviceID string, offset, limit int) ([]*model.TenantEnvServiceScalingRecords, error)
 	CountByServiceID(serviceID string) (int, error)
 }
 
-// TenantServiceMonitorDao -
-type TenantServiceMonitorDao interface {
+// TenantEnvServiceMonitorDao -
+type TenantEnvServiceMonitorDao interface {
 	Dao
-	GetByName(serviceID, name string) (*model.TenantServiceMonitor, error)
-	GetByServiceID(serviceID string) ([]*model.TenantServiceMonitor, error)
-	DeleteServiceMonitor(mo *model.TenantServiceMonitor) error
+	GetByName(serviceID, name string) (*model.TenantEnvServiceMonitor, error)
+	GetByServiceID(serviceID string) ([]*model.TenantEnvServiceMonitor, error)
+	DeleteServiceMonitor(mo *model.TenantEnvServiceMonitor) error
 	DeleteServiceMonitorByServiceID(serviceID string) error
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateMonitorInBatch(monitors []*model.TenantServiceMonitor) error
+	CreateOrUpdateMonitorInBatch(monitors []*model.TenantEnvServiceMonitor) error
 }

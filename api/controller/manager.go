@@ -30,14 +30,14 @@ import (
 	"github.com/wutong-paas/wutong/worker/client"
 )
 
-//V2Manager v2 manager
+// V2Manager v2 manager
 type V2Manager interface {
 	Show(w http.ResponseWriter, r *http.Request)
 	Health(w http.ResponseWriter, r *http.Request)
 	AlertManagerWebHook(w http.ResponseWriter, r *http.Request)
 	Version(w http.ResponseWriter, r *http.Request)
 	api.ClusterInterface
-	api.TenantInterface
+	api.TenantEnvInterface
 	api.ServiceInterface
 	api.LogInterface
 	api.PluginInterface
@@ -55,18 +55,18 @@ type V2Manager interface {
 
 var defaultV2Manager V2Manager
 
-//CreateV2RouterManager 创建manager
+// CreateV2RouterManager 创建manager
 func CreateV2RouterManager(conf option.Config, statusCli *client.AppRuntimeSyncClient) (err error) {
 	defaultV2Manager, err = NewManager(conf, statusCli)
 	return err
 }
 
-//GetManager 获取管理器
+// GetManager 获取管理器
 func GetManager() V2Manager {
 	return defaultV2Manager
 }
 
-//NewManager new manager
+// NewManager new manager
 func NewManager(conf option.Config, statusCli *client.AppRuntimeSyncClient) (*V2Routes, error) {
 	etcdClientArgs := &etcdutil.ClientArgs{
 		Endpoints: conf.EtcdEndpoint,
@@ -79,8 +79,8 @@ func NewManager(conf option.Config, statusCli *client.AppRuntimeSyncClient) (*V2
 		return nil, err
 	}
 	var v2r V2Routes
-	v2r.TenantStruct.StatusCli = statusCli
-	v2r.TenantStruct.MQClient = mqClient
+	v2r.TenantEnvStruct.StatusCli = statusCli
+	v2r.TenantEnvStruct.MQClient = mqClient
 	v2r.GatewayStruct.MQClient = mqClient
 	v2r.GatewayStruct.cfg = &conf
 	v2r.LabelController.optconfig = &conf

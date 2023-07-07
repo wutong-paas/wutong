@@ -18,8 +18,8 @@
 
 package model
 
-// TenantServiceVolumeType tenant service volume type
-type TenantServiceVolumeType struct {
+// TenantEnvServiceVolumeType tenant env service volume type
+type TenantEnvServiceVolumeType struct {
 	Model
 	VolumeType         string `gorm:"column:volume_type; size:64" json:"volume_type"`
 	NameShow           string `gorm:"column:name_show; size:64" json:"name_show"`
@@ -36,6 +36,6 @@ type TenantServiceVolumeType struct {
 }
 
 // TableName 表名
-func (t *TenantServiceVolumeType) TableName() string {
-	return "tenant_services_volume_type"
+func (t *TenantEnvServiceVolumeType) TableName() string {
+	return "tenant_env_services_volume_type"
 }

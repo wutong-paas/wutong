@@ -134,7 +134,7 @@ func qMsg(others []string) string {
 // CheckLabel check label
 func CheckLabel(serviceID string) bool {
 	//true for v2, false for v1
-	serviceLabel, err := db.GetManager().TenantServiceLabelDao().GetTenantServiceLabel(serviceID)
+	serviceLabel, err := db.GetManager().TenantEnvServiceLabelDao().GetTenantEnvServiceLabel(serviceID)
 	if err != nil {
 		return false
 	}
@@ -182,7 +182,7 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	fs := http.StripPrefix(path, http.FileServer(root))
 
 	if path != "/" && path[len(path)-1] != '/' {
-		r.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		r.Get(path, http.RedirectHandler(path+"/", http.StatusMovedPermanently).ServeHTTP)
 		path += "/"
 	}
 	path += "*"

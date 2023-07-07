@@ -47,15 +47,16 @@ import (
 type Backup struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
-	Body       struct {
-		EventID    string   `json:"event_id" validate:"event_id|required"`
-		GroupID    string   `json:"group_id" validate:"group_name|required"`
-		Metadata   string   `json:"metadata,omitempty" validate:"metadata|required"`
-		ServiceIDs []string `json:"service_ids" validate:"service_ids|required"`
-		Version    string   `json:"version" validate:"version|required"`
-		SourceDir  string   `json:"source_dir"`
-		BackupID   string   `json:"backup_id,omitempty"`
+	TenantEnvName string `json:"tenant_env_name"`
+	Body          struct {
+		EventID       string   `json:"event_id" validate:"event_id|required"`
+		GroupID       string   `json:"group_id" validate:"group_name|required"`
+		Metadata      string   `json:"metadata,omitempty" validate:"metadata|required"`
+		ServiceIDs    []string `json:"service_ids" validate:"service_ids|required"`
+		Version       string   `json:"version" validate:"version|required"`
+		SourceDir     string   `json:"source_dir"`
+		BackupID      string   `json:"backup_id,omitempty"`
+		WithImageData bool     `json:"with_image_data"`
 
 		Mode     string `json:"mode" validate:"mode|required|in:full-online,full-offline"`
 		Force    bool   `json:"force"`
@@ -85,19 +86,20 @@ func CreateBackupHandle(MQClient mqclient.MQClient, statusCli *client.AppRuntime
 func (h *BackupHandle) NewBackup(b Backup) (*dbmodel.AppBackup, *util.APIHandleError) {
 	logger := event.GetManager().GetLogger(b.Body.EventID)
 	var appBackup = dbmodel.AppBackup{
-		EventID:    b.Body.EventID,
-		BackupID:   core_util.NewUUID(),
-		GroupID:    b.Body.GroupID,
-		Status:     "starting",
-		Version:    b.Body.Version,
-		BackupMode: b.Body.Mode,
+		EventID:       b.Body.EventID,
+		BackupID:      core_util.NewUUID(),
+		GroupID:       b.Body.GroupID,
+		Status:        "starting",
+		Version:       b.Body.Version,
+		BackupMode:    b.Body.Mode,
+		WithImageData: b.Body.WithImageData,
 	}
 	//check last backup task whether complete or version whether exist
 	if db.GetManager().AppBackupDao().CheckHistory(b.Body.GroupID, b.Body.Version) {
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("last backup task do not complete or have restore backup or version is exist"))
 	}
 	//check all service exist
-	if alias, err := db.GetManager().TenantServiceDao().GetServiceAliasByIDs(b.Body.ServiceIDs); len(alias) != len(b.Body.ServiceIDs) || err != nil {
+	if alias, err := db.GetManager().TenantEnvServiceDao().GetServiceAliasByIDs(b.Body.ServiceIDs); len(alias) != len(b.Body.ServiceIDs) || err != nil {
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("some services do not exist in need backup services"))
 	}
 	//make source dir
@@ -194,30 +196,30 @@ func (h *BackupHandle) GetBackupByGroupID(groupID string) ([]*dbmodel.AppBackup,
 // AppSnapshot holds a snapshot of your app
 type AppSnapshot struct {
 	Services            []*RegionServiceSnapshot
-	Plugins             []*dbmodel.TenantPlugin
-	PluginBuildVersions []*dbmodel.TenantPluginBuildVersion
+	Plugins             []*dbmodel.TenantEnvPlugin
+	PluginBuildVersions []*dbmodel.TenantEnvPluginBuildVersion
 }
 
 // RegionServiceSnapshot RegionServiceSnapshot
 type RegionServiceSnapshot struct {
 	ServiceID          string
-	Service            *dbmodel.TenantServices
-	ServiceProbe       []*dbmodel.TenantServiceProbe
-	LBMappingPort      []*dbmodel.TenantServiceLBMappingPort
-	ServiceEnv         []*dbmodel.TenantServiceEnvVar
-	ServiceLabel       []*dbmodel.TenantServiceLable
-	ServiceMntRelation []*dbmodel.TenantServiceMountRelation
-	ServiceRelation    []*dbmodel.TenantServiceRelation
+	Service            *dbmodel.TenantEnvServices
+	ServiceProbe       []*dbmodel.TenantEnvServiceProbe
+	LBMappingPort      []*dbmodel.TenantEnvServiceLBMappingPort
+	ServiceEnv         []*dbmodel.TenantEnvServiceEnvVar
+	ServiceLabel       []*dbmodel.TenantEnvServiceLable
+	ServiceMntRelation []*dbmodel.TenantEnvServiceMountRelation
+	ServiceRelation    []*dbmodel.TenantEnvServiceRelation
 	ServiceStatus      string
-	ServiceVolume      []*dbmodel.TenantServiceVolume
-	ServiceConfigFile  []*dbmodel.TenantServiceConfigFile
-	ServicePort        []*dbmodel.TenantServicesPort
+	ServiceVolume      []*dbmodel.TenantEnvServiceVolume
+	ServiceConfigFile  []*dbmodel.TenantEnvServiceConfigFile
+	ServicePort        []*dbmodel.TenantEnvServicesPort
 	Versions           []*dbmodel.VersionInfo
 
-	PluginRelation    []*dbmodel.TenantServicePluginRelation
-	PluginConfigs     []*dbmodel.TenantPluginVersionDiscoverConfig
-	PluginEnvs        []*dbmodel.TenantPluginVersionEnv
-	PluginStreamPorts []*dbmodel.TenantServicesStreamPluginPort
+	PluginRelation    []*dbmodel.TenantEnvServicePluginRelation
+	PluginConfigs     []*dbmodel.TenantEnvPluginVersionDiscoverConfig
+	PluginEnvs        []*dbmodel.TenantEnvPluginVersionEnv
+	PluginStreamPorts []*dbmodel.TenantEnvServicesStreamPluginPort
 }
 
 // snapshot
@@ -225,7 +227,7 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 	var pluginIDs []string
 	var services []*RegionServiceSnapshot
 	for _, id := range ids {
-		service, err := db.GetManager().TenantServiceDao().GetServiceByID(id)
+		service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(id)
 		if err != nil {
 			return fmt.Errorf("Get service(%s) error %s", id, err.Error())
 		}
@@ -248,42 +250,42 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 			return fmt.Errorf("Get service(%s) probe error %s", id, err)
 		}
 		data.ServiceProbe = serviceProbes
-		lbmappingPorts, err := db.GetManager().TenantServiceLBMappingPortDao().GetTenantServiceLBMappingPortByService(id)
+		lbmappingPorts, err := db.GetManager().TenantEnvServiceLBMappingPortDao().GetTenantEnvServiceLBMappingPortByService(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) lb mapping port error %s", id, err)
 		}
 		data.LBMappingPort = lbmappingPorts
-		serviceEnv, err := db.GetManager().TenantServiceEnvVarDao().GetServiceEnvs(id, nil)
+		serviceEnv, err := db.GetManager().TenantEnvServiceEnvVarDao().GetServiceEnvs(id, nil)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) envs error %s", id, err)
 		}
 		data.ServiceEnv = serviceEnv
-		serviceLabels, err := db.GetManager().TenantServiceLabelDao().GetTenantServiceLabel(id)
+		serviceLabels, err := db.GetManager().TenantEnvServiceLabelDao().GetTenantEnvServiceLabel(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) labels error %s", id, err)
 		}
 		data.ServiceLabel = serviceLabels
-		serviceMntRelations, err := db.GetManager().TenantServiceMountRelationDao().GetTenantServiceMountRelationsByService(id)
+		serviceMntRelations, err := db.GetManager().TenantEnvServiceMountRelationDao().GetTenantEnvServiceMountRelationsByService(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) mnt relations error %s", id, err)
 		}
 		data.ServiceMntRelation = serviceMntRelations
-		serviceRelations, err := db.GetManager().TenantServiceRelationDao().GetTenantServiceRelations(id)
+		serviceRelations, err := db.GetManager().TenantEnvServiceRelationDao().GetTenantEnvServiceRelations(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) relations error %s", id, err)
 		}
 		data.ServiceRelation = serviceRelations
-		serviceVolume, err := db.GetManager().TenantServiceVolumeDao().GetTenantServiceVolumesByServiceID(id)
+		serviceVolume, err := db.GetManager().TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) volume error %s", id, err)
 		}
 		data.ServiceVolume = serviceVolume
-		serviceConfigFile, err := db.GetManager().TenantServiceConfigFileDao().GetConfigFileByServiceID(id)
+		serviceConfigFile, err := db.GetManager().TenantEnvServiceConfigFileDao().GetConfigFileByServiceID(id)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return fmt.Errorf("get service(%s) config file error: %s", id, err.Error())
 		}
 		data.ServiceConfigFile = serviceConfigFile
-		servicePorts, err := db.GetManager().TenantServicesPortDao().GetPortsByServiceID(id)
+		servicePorts, err := db.GetManager().TenantEnvServicesPortDao().GetPortsByServiceID(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) ports error %s", id, err)
 		}
@@ -297,7 +299,7 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 			data.Versions = []*dbmodel.VersionInfo{version}
 		}
 
-		pluginReations, err := db.GetManager().TenantServicePluginRelationDao().GetALLRelationByServiceID(id)
+		pluginReations, err := db.GetManager().TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) plugins error %s", id, err)
 		}
@@ -305,17 +307,17 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 		for _, pr := range pluginReations {
 			pluginIDs = append(pluginIDs, pr.PluginID)
 		}
-		pluginConfigs, err := db.GetManager().TenantPluginVersionConfigDao().GetPluginConfigs(id)
+		pluginConfigs, err := db.GetManager().TenantEnvPluginVersionConfigDao().GetPluginConfigs(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 			return fmt.Errorf("Get service(%s) plugin configs error %s", id, err)
 		}
 		data.PluginConfigs = pluginConfigs
-		pluginEnvs, err := db.GetManager().TenantPluginVersionENVDao().ListByServiceID(id)
+		pluginEnvs, err := db.GetManager().TenantEnvPluginVersionENVDao().ListByServiceID(id)
 		if err != nil {
 			return fmt.Errorf("service id: %s; failed to list plugin envs: %v", id, err)
 		}
 		data.PluginEnvs = pluginEnvs
-		pluginStreamPorts, err := db.GetManager().TenantServicesStreamPluginPortDao().ListByServiceID(id)
+		pluginStreamPorts, err := db.GetManager().TenantEnvServicesStreamPluginPortDao().ListByServiceID(id)
 		if err != nil {
 			return fmt.Errorf("service id: %s; failed to list stream plugin ports: %v", id, err)
 		}
@@ -329,13 +331,13 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 		Services: services,
 	}
 	// plugin
-	plugins, err := db.GetManager().TenantPluginDao().ListByIDs(pluginIDs)
+	plugins, err := db.GetManager().TenantEnvPluginDao().ListByIDs(pluginIDs)
 	if err != nil {
 		return fmt.Errorf("failed to list plugins: %v", err)
 	}
 	appSnapshot.Plugins = plugins
 	logrus.Debug("plugins ok.")
-	pluginVersions, err := db.GetManager().TenantPluginBuildVersionDao().ListSuccessfulOnesByPluginIDs(pluginIDs)
+	pluginVersions, err := db.GetManager().TenantEnvPluginBuildVersionDao().ListSuccessfulOnesByPluginIDs(pluginIDs)
 	if err != nil {
 		return fmt.Errorf("failed to list successful plugin build versions: %v", err)
 	}
@@ -358,10 +360,10 @@ type BackupRestore struct {
 	BackupID string `json:"backup_id"`
 	Body     struct {
 		EventID string `json:"event_id"`
-		//need restore target tenant id
-		TenantID string `json:"tenant_id"`
-		//RestoreMode(cdct) current datacenter and current tenant
-		//RestoreMode(cdot) current datacenter and other tenant
+		//need restore target tenant env id
+		TenantEnvID string `json:"tenant_env_id"`
+		//RestoreMode(cdct) current datacenter and current tenantEnv
+		//RestoreMode(cdot) current datacenter and other tenantEnv
 		//RestoreMode(od)     other datacenter
 		RestoreMode string `json:"restore_mode"`
 
@@ -410,11 +412,11 @@ func (h *BackupHandle) RestoreBackup(br BackupRestore) (*RestoreResult, *util.AP
 	}
 	restoreID := core_util.NewUUID()
 	var dataMap = map[string]interface{}{
-		"backup_id":    backup.BackupID,
-		"tenant_id":    br.Body.TenantID,
-		"restore_id":   restoreID,
-		"restore_mode": br.Body.RestoreMode,
-		"s3_config":    br.Body.S3Config,
+		"backup_id":     backup.BackupID,
+		"tenant_env_id": br.Body.TenantEnvID,
+		"restore_id":    restoreID,
+		"restore_mode":  br.Body.RestoreMode,
+		"s3_config":     br.Body.S3Config,
 	}
 	err := h.mqcli.SendBuilderTopic(mqclient.TaskStruct{
 		TaskBody: dataMap,

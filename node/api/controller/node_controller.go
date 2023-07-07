@@ -458,7 +458,7 @@ func Instances(w http.ResponseWriter, r *http.Request) {
 
 		pod.MemoryRequests = strconv.Itoa(int(memR))
 		pod.MemoryRequestsR = strconv.FormatFloat(float64(memR*100)/float64(capMEM), 'f', 1, 64)
-		pod.TenantName = v.Labels["tenant_name"]
+		pod.TenantEnvName = v.Labels["tenant_env_name"]
 		pod.MemoryLimits = strconv.Itoa(int(memL))
 		pod.MemoryLimitsR = strconv.FormatFloat(float64(memL*100)/float64(capMEM), 'f', 1, 64)
 

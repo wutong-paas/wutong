@@ -55,16 +55,17 @@ var maxBackupVersionSize = 3
 
 // BackupAPPNew backup group app new version
 type BackupAPPNew struct {
-	GroupID     string   `json:"group_id" `
-	ServiceIDs  []string `json:"service_ids" `
-	Version     string   `json:"version"`
-	EventID     string
-	SourceDir   string `json:"source_dir"`
-	SourceType  string `json:"source_type"`
-	BackupID    string `json:"backup_id"`
-	BackupSize  int64
-	Logger      event.Logger
-	ImageClient sources.ImageClient
+	WithImageData bool     `json:"with_image_data"`
+	GroupID       string   `json:"group_id" `
+	ServiceIDs    []string `json:"service_ids" `
+	Version       string   `json:"version"`
+	EventID       string
+	SourceDir     string `json:"source_dir"`
+	SourceType    string `json:"source_type"`
+	BackupID      string `json:"backup_id"`
+	BackupSize    int64
+	Logger        event.Logger
+	ImageClient   sources.ImageClient
 
 	//full-online,full-offline
 	Mode     string `json:"mode"`
@@ -99,30 +100,30 @@ func BackupAPPNewCreater(in []byte, m *exectorManager) (TaskWorker, error) {
 // AppSnapshot holds a snapshot of your app
 type AppSnapshot struct {
 	Services            []*RegionServiceSnapshot
-	Plugins             []*dbmodel.TenantPlugin
-	PluginBuildVersions []*dbmodel.TenantPluginBuildVersion
+	Plugins             []*dbmodel.TenantEnvPlugin
+	PluginBuildVersions []*dbmodel.TenantEnvPluginBuildVersion
 }
 
 // RegionServiceSnapshot RegionServiceSnapshot
 type RegionServiceSnapshot struct {
 	ServiceID          string
-	Service            *dbmodel.TenantServices
-	ServiceProbe       []*dbmodel.TenantServiceProbe
-	LBMappingPort      []*dbmodel.TenantServiceLBMappingPort
-	ServiceEnv         []*dbmodel.TenantServiceEnvVar
-	ServiceLabel       []*dbmodel.TenantServiceLable
-	ServiceMntRelation []*dbmodel.TenantServiceMountRelation
-	ServiceRelation    []*dbmodel.TenantServiceRelation
+	Service            *dbmodel.TenantEnvServices
+	ServiceProbe       []*dbmodel.TenantEnvServiceProbe
+	LBMappingPort      []*dbmodel.TenantEnvServiceLBMappingPort
+	ServiceEnv         []*dbmodel.TenantEnvServiceEnvVar
+	ServiceLabel       []*dbmodel.TenantEnvServiceLable
+	ServiceMntRelation []*dbmodel.TenantEnvServiceMountRelation
+	ServiceRelation    []*dbmodel.TenantEnvServiceRelation
 	ServiceStatus      string
-	ServiceVolume      []*dbmodel.TenantServiceVolume
-	ServiceConfigFile  []*dbmodel.TenantServiceConfigFile
-	ServicePort        []*dbmodel.TenantServicesPort
+	ServiceVolume      []*dbmodel.TenantEnvServiceVolume
+	ServiceConfigFile  []*dbmodel.TenantEnvServiceConfigFile
+	ServicePort        []*dbmodel.TenantEnvServicesPort
 	Versions           []*dbmodel.VersionInfo
 
-	PluginRelation    []*dbmodel.TenantServicePluginRelation
-	PluginConfigs     []*dbmodel.TenantPluginVersionDiscoverConfig
-	PluginEnvs        []*dbmodel.TenantPluginVersionEnv
-	PluginStreamPorts []*dbmodel.TenantServicesStreamPluginPort
+	PluginRelation    []*dbmodel.TenantEnvServicePluginRelation
+	PluginConfigs     []*dbmodel.TenantEnvPluginVersionDiscoverConfig
+	PluginEnvs        []*dbmodel.TenantEnvPluginVersionEnv
+	PluginStreamPorts []*dbmodel.TenantEnvServicesStreamPluginPort
 }
 
 // Run Run
@@ -256,22 +257,28 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 						backupVersionSize++
 					}
 				}
-				if version.DeliveredType == "image" && version.FinalStatus == "success" {
-					if ok, _ := b.checkVersionExist(version); !ok {
-						version.FinalStatus = "lost"
-						continue
-					}
-					if err := b.saveImagePkg(app, version); err != nil {
-						logrus.Errorf("upload app %s version %s image error.%s", app.Service.ServiceName, version.BuildVersion, err.Error())
-					} else {
-						backupVersionSize++
+				if b.WithImageData {
+					if version.DeliveredType == "image" && version.FinalStatus == "success" {
+						if ok, _ := b.checkVersionExist(version); !ok {
+							version.FinalStatus = "lost"
+							continue
+						}
+						if err := b.saveImagePkg(app, version); err != nil {
+							logrus.Errorf("upload app %s version %s image error.%s", app.Service.ServiceName, version.BuildVersion, err.Error())
+						} else {
+							backupVersionSize++
+						}
 					}
 				}
+
 			}
-			if backupVersionSize == 0 {
-				b.Logger.Error(fmt.Sprintf("Application(%s) Backup build version failure.", app.Service.ServiceAlias), map[string]string{"step": "backup_builder", "status": "success"})
-				return fmt.Errorf("Application(%s) Backup build version failure", app.Service.ServiceAlias)
+			if b.WithImageData {
+				if backupVersionSize == 0 {
+					b.Logger.Error(fmt.Sprintf("Application(%s) Backup build version failure.", app.Service.ServiceAlias), map[string]string{"step": "backup_builder", "status": "success"})
+					return fmt.Errorf("Application(%s) Backup build version failure", app.Service.ServiceAlias)
+				}
 			}
+
 			logrus.Infof("backup app %s %d version", app.Service.ServiceName, backupVersionSize)
 			b.Logger.Info(fmt.Sprintf("Complete backup application (%s) runtime %d version", app.Service.ServiceAlias, backupVersionSize), map[string]string{"step": "backup_builder", "status": "success"})
 		}
@@ -281,7 +288,7 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 		if len(app.ServiceVolume) > 0 {
 			dstDir := fmt.Sprintf("%s/data_%s/%s.zip", b.SourceDir, app.Service.ServiceID, "__all_data")
 			_, sharepath := GetVolumeDir()
-			serviceVolumeData := path.Join(sharepath, "tenant", app.Service.TenantID, "service", app.Service.ServiceID)
+			serviceVolumeData := path.Join(sharepath, "tenant_env", app.Service.TenantEnvID, "service", app.Service.ServiceID)
 			if !util.DirIsEmpty(serviceVolumeData) {
 				if err := util.Zip(serviceVolumeData, dstDir); err != nil {
 					logrus.Errorf("backup service(%s) volume data error.%s", app.ServiceID, err.Error())
@@ -305,19 +312,21 @@ func (b *BackupAPPNew) backupServiceInfo(serviceInfos []*RegionServiceSnapshot) 
 }
 
 func (b *BackupAPPNew) backupPluginInfo(appSnapshot *AppSnapshot) error {
-	b.Logger.Info("Start backup plugin", map[string]string{"step": "backup_builder", "status": "starting"})
-	for _, pv := range appSnapshot.PluginBuildVersions {
-		dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.SourceDir, pv.PluginID, pv.DeployVersion)
-		util.CheckAndCreateDir(filepath.Dir(dstDir))
-		if _, err := b.ImageClient.ImagePull(pv.BuildLocalImage, builder.REGISTRYUSER, builder.REGISTRYPASS, b.Logger, 20); err != nil {
-			b.Logger.Error(fmt.Sprintf("plugin image: %s; failed to pull image", pv.BuildLocalImage), map[string]string{"step": "backup_builder", "status": "failure"})
-			logrus.Errorf("plugin image: %s; failed to pull image: %v", pv.BuildLocalImage, err)
-			return err
-		}
-		if err := b.ImageClient.ImageSave(pv.BuildLocalImage, dstDir); err != nil {
-			b.Logger.Error(util.Translation("save image to local dir error"), map[string]string{"step": "backup_builder", "status": "failure"})
-			logrus.Errorf("plugin image: %s; failed to save image: %v", pv.BuildLocalImage, err)
-			return err
+	if b.WithImageData {
+		b.Logger.Info("Start backup plugin", map[string]string{"step": "backup_builder", "status": "starting"})
+		for _, pv := range appSnapshot.PluginBuildVersions {
+			dstDir := fmt.Sprintf("%s/plugin_%s/image_%s.tar", b.SourceDir, pv.PluginID, pv.DeployVersion)
+			util.CheckAndCreateDir(filepath.Dir(dstDir))
+			if _, err := b.ImageClient.ImagePull(pv.BuildLocalImage, builder.REGISTRYUSER, builder.REGISTRYPASS, b.Logger, 20); err != nil {
+				b.Logger.Error(fmt.Sprintf("plugin image: %s; failed to pull image", pv.BuildLocalImage), map[string]string{"step": "backup_builder", "status": "failure"})
+				logrus.Errorf("plugin image: %s; failed to pull image: %v", pv.BuildLocalImage, err)
+				return err
+			}
+			if err := b.ImageClient.ImageSave(pv.BuildLocalImage, dstDir); err != nil {
+				b.Logger.Error(util.Translation("save image to local dir error"), map[string]string{"step": "backup_builder", "status": "failure"})
+				logrus.Errorf("plugin image: %s; failed to save image: %v", pv.BuildLocalImage, err)
+				return err
+			}
 		}
 	}
 	return nil

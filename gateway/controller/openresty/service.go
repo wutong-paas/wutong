@@ -55,7 +55,7 @@ type OrService struct {
 	configManage  *template.NginxConfigFileTemplete
 }
 
-//CreateOpenrestyService create openresty service
+// CreateOpenrestyService create openresty service
 func CreateOpenrestyService(config *option.Config, isShuttingDown *bool) *OrService {
 	gws := &OrService{
 		IsShuttingDown: isShuttingDown,
@@ -208,8 +208,8 @@ func (o *OrService) getNgxServer(conf *v1.Config) (l7srv []*model.Server, l4srv 
 			ServerName: strings.Replace(vs.ServerName, "tls", "", 1),
 			// ForceSSLRedirect: vs.ForceSSLRedirect,
 			OptionValue: map[string]string{
-				"tenant_id":  vs.Namespace,
-				"service_id": vs.ServiceID,
+				"tenant_env_id": vs.Namespace,
+				"service_id":    vs.ServiceID,
 			},
 			ProxyStreamNextUpstream:        true,
 			ProxyStreamNextUpstreamTimeout: "600s",
@@ -243,17 +243,18 @@ func (o *OrService) getNgxServer(conf *v1.Config) (l7srv []*model.Server, l4srv 
 		server := &model.Server{
 			Protocol: string(vs.Protocol),
 			OptionValue: map[string]string{
-				"tenant_id":  vs.Namespace,
-				"service_id": vs.ServiceID,
+				"tenant_env_id": vs.Namespace,
+				"service_id":    vs.ServiceID,
 			},
 			UpstreamName:                   vs.PoolName,
 			ProxyStreamNextUpstream:        true,
-			ProxyStreamNextUpstreamTimeout: "600s",
 			ProxyStreamNextUpstreamTries:   3,
 			TCPKeepaliveEnabled:            vs.TCPKeepaliveEnabled,
 			TCPKeepaliveIdle:               vs.TCPKeepaliveIdle,
 			TCPKeepaliveIntvl:              vs.TCPKeepaliveIntvl,
 			TCPKeepaliveCnt:                vs.TCPKeepaliveCnt,
+			ProxyStreamTimeout:             vs.ProxyStreamTimeout,
+			ProxyStreamNextUpstreamTimeout: vs.ProxyStreamNextUpstreamTimeout,
 		}
 		server.Listen = strings.Join(vs.Listening, " ")
 		for _, loc := range vs.Locations {

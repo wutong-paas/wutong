@@ -23,39 +23,39 @@ import (
 	"testing"
 )
 
-func TestTenantList(t *testing.T) {
-	var tenants TenantList
-	t1 := &TenantAndResource{
+func TestTenantEnvList(t *testing.T) {
+	var tenantEnvs TenantEnvList
+	t1 := &TenantEnvAndResource{
 		MemoryRequest: 100,
 	}
 	t1.LimitMemory = 30
-	tenants.Add(t1)
+	tenantEnvs.Add(t1)
 
-	t2 := &TenantAndResource{
+	t2 := &TenantEnvAndResource{
 		MemoryRequest: 80,
 	}
 	t2.LimitMemory = 40
-	tenants.Add(t2)
+	tenantEnvs.Add(t2)
 
-	t3 := &TenantAndResource{
+	t3 := &TenantEnvAndResource{
 		MemoryRequest: 0,
 	}
 	t3.LimitMemory = 60
-	t4 := &TenantAndResource{
+	t4 := &TenantEnvAndResource{
 		MemoryRequest: 0,
 	}
 	t4.LimitMemory = 70
 
-	t5 := &TenantAndResource{
+	t5 := &TenantEnvAndResource{
 		RunningAppNum: 10,
 	}
 	t5.LimitMemory = 0
 
-	tenants.Add(t3)
-	tenants.Add(t4)
-	tenants.Add(t5)
-	sort.Sort(tenants)
-	for _, ten := range tenants {
+	tenantEnvs.Add(t3)
+	tenantEnvs.Add(t4)
+	tenantEnvs.Add(t5)
+	sort.Sort(tenantEnvs)
+	for _, ten := range tenantEnvs {
 		t.Logf("%+v", ten)
 	}
 }

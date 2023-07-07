@@ -36,15 +36,15 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//MarketSlugItem MarketSlugItem
+// MarketSlugItem MarketSlugItem
 type MarketSlugItem struct {
-	TenantName    string       `json:"tenant_name"`
+	TenantEnvName string       `json:"tenant_env_name"`
 	ServiceAlias  string       `json:"service_alias"`
 	Logger        event.Logger `json:"logger"`
 	EventID       string       `json:"event_id"`
 	Operator      string       `json:"operator"`
 	DeployVersion string       `json:"deploy_version"`
-	TenantID      string       `json:"tenant_id"`
+	TenantEnvID   string       `json:"tenant_env_id"`
 	ServiceID     string       `json:"service_id"`
 	Action        string       `json:"action"`
 	TGZPath       string
@@ -58,18 +58,18 @@ type MarketSlugItem struct {
 	} `json:"slug_info"`
 }
 
-//NewMarketSlugItem 创建实体
+// NewMarketSlugItem 创建实体
 func NewMarketSlugItem(in []byte) (*MarketSlugItem, error) {
 	var msi MarketSlugItem
 	if err := ffjson.Unmarshal(in, &msi); err != nil {
 		return nil, err
 	}
 	msi.Logger = event.GetManager().GetLogger(msi.EventID)
-	msi.TGZPath = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s/%s.tgz", msi.TenantID, msi.ServiceID, msi.DeployVersion)
+	msi.TGZPath = fmt.Sprintf("/wtdata/build/tenantEnv/%s/slug/%s/%s.tgz", msi.TenantEnvID, msi.ServiceID, msi.DeployVersion)
 	return &msi, nil
 }
 
-//Run Run
+// Run Run
 func (i *MarketSlugItem) Run() error {
 	if i.SlugInfo.FTPHost != "" && i.SlugInfo.FTPPort != "" {
 		sFTPClient, err := sources.NewSFTPClient(i.SlugInfo.FTPUser, i.SlugInfo.FTPPassword, i.SlugInfo.FTPHost, i.SlugInfo.FTPPort)
@@ -111,7 +111,7 @@ func (i *MarketSlugItem) Run() error {
 	return nil
 }
 
-//UpdateVersionInfo 更新任务执行结果
+// UpdateVersionInfo 更新任务执行结果
 func (i *MarketSlugItem) UpdateVersionInfo(vi *dbmodel.VersionInfo) error {
 	version, err := db.GetManager().VersionInfoDao().GetVersionByDeployVersion(i.DeployVersion, i.ServiceID)
 	if err != nil {

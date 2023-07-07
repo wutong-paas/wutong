@@ -37,13 +37,13 @@ type Plugin struct {
 	GitURL      string `json:"git_url" validate:"git_url"`
 	BuildModel  string `json:"build_model" validate:"build_model"`
 	PluginModel string `json:"plugin_model" validate:"plugin_model"`
-	TenantID    string `json:"tenant_id" validate:"tenant_id"`
+	TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
 	PluginType  string `json:"origin" validate:"origin"`
 }
 
 // DbModel return database model
-func (p *Plugin) DbModel(tenantID string) *dbmodel.TenantPlugin {
-	tp := &dbmodel.TenantPlugin{
+func (p *Plugin) DbModel(tenantEnvID string) *dbmodel.TenantEnvPlugin {
+	tp := &dbmodel.TenantEnvPlugin{
 		PluginID:    p.PluginID,
 		PluginName:  p.PluginName,
 		PluginInfo:  p.PluginInfo,
@@ -51,11 +51,11 @@ func (p *Plugin) DbModel(tenantID string) *dbmodel.TenantPlugin {
 		GitURL:      p.GitURL,
 		BuildModel:  p.BuildModel,
 		PluginModel: p.PluginModel,
-		TenantID:    tenantID,
+		TenantEnvID: tenantEnvID,
 		PluginType:  p.PluginType,
 	}
 	if p.PluginType == PluginTypeSys {
-		tp.TenantID = ""
+		tp.TenantEnvID = ""
 		tp.Domain = ""
 	}
 	return tp
@@ -66,12 +66,13 @@ type BatchCreatePlugins struct {
 	Plugins []*Plugin `json:"plugins"`
 }
 
-//CreatePluginStruct CreatePluginStruct
+// CreatePluginStruct CreatePluginStruct
+//
 //swagger:parameters createPlugin
 type CreatePluginStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: body
 	Body struct {
 		//插件id
@@ -104,24 +105,25 @@ type CreatePluginStruct struct {
 		//租户id
 		//in: body
 		//required: false
-		TenantID string `json:"tenant_id" validate:"tenant_id"`
+		TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
 
 		//插件类型
 		PluginType string `json:"origin" validate:"origin"`
 	}
 }
 
-//UpdatePluginStruct UpdatePluginStruct
+// UpdatePluginStruct UpdatePluginStruct
+//
 //swagger:parameters updatePlugin
 type UpdatePluginStruct struct {
 	// 租户名称
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name|required"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name|required"`
 	// 插件id
 	// in: path
 	// required: true
-	PluginID string `json:"plugin_id" validate:"tenant_name|required"`
+	PluginID string `json:"plugin_id" validate:"tenant_env_name|required"`
 	// in: body
 	Body struct {
 		//插件名称
@@ -151,24 +153,26 @@ type UpdatePluginStruct struct {
 	}
 }
 
-//DeletePluginStruct deletePluginStruct
+// DeletePluginStruct deletePluginStruct
+//
 //swagger:parameters deletePlugin
 type DeletePluginStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name|required"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name|required"`
 	// in: path
 	// required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id|required"`
 }
 
-//ENVStruct ENVStruct
+// ENVStruct ENVStruct
+//
 //swagger:parameters adddefaultenv updatedefaultenv
 type ENVStruct struct {
 	// 租户名称
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// 插件id
 	// in: path
 	// required: true
@@ -185,13 +189,14 @@ type ENVStruct struct {
 	}
 }
 
-//DeleteENVstruct DeleteENVstruct
+// DeleteENVstruct DeleteENVstruct
+//
 //swagger:parameters deletedefaultenv
 type DeleteENVstruct struct {
 	// 租户名称
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name|required"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name|required"`
 	// 插件id
 	// in: path
 	// required: true
@@ -206,7 +211,7 @@ type DeleteENVstruct struct {
 	ENVName string `json:"env_name" validate:"env_name|required"`
 }
 
-//PluginDefaultENV 插件默认环境变量
+// PluginDefaultENV 插件默认环境变量
 type PluginDefaultENV struct {
 	//对应插件id
 	//in: body
@@ -230,12 +235,13 @@ type PluginDefaultENV struct {
 	IsChange bool `json:"is_change" validate:"is_change|bool"`
 }
 
-//BuildPluginStruct BuildPluginStruct
+// BuildPluginStruct BuildPluginStruct
+//
 //swagger:parameters buildPlugin
 type BuildPluginStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id"`
@@ -288,7 +294,7 @@ type BuildPluginStruct struct {
 		//租户id
 		// in: body
 		// required: true
-		TenantID string `json:"tenant_id" validate:"tenant_id"`
+		TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
 		// 镜像地址
 		// in: body
 		// required: false
@@ -318,7 +324,7 @@ type BuildPluginReq struct {
 	Password      string `json:"password"`
 	Info          string `json:"info" validate:"info"`
 	Operator      string `json:"operator" validate:"operator"`
-	TenantID      string `json:"tenant_id" validate:"tenant_id"`
+	TenantEnvID   string `json:"tenant_env_id" validate:"tenant_env_id"`
 	BuildImage    string `json:"build_image" validate:"build_image"`
 	ImageInfo     struct {
 		HubURL      string `json:"hub_url"`
@@ -330,8 +336,8 @@ type BuildPluginReq struct {
 }
 
 // DbModel return database model
-func (b BuildPluginReq) DbModel(plugin *dbmodel.TenantPlugin) *dbmodel.TenantPluginBuildVersion {
-	buildVersion := &dbmodel.TenantPluginBuildVersion{
+func (b BuildPluginReq) DbModel(plugin *dbmodel.TenantEnvPlugin) *dbmodel.TenantEnvPluginBuildVersion {
+	buildVersion := &dbmodel.TenantEnvPluginBuildVersion{
 		VersionID:       b.BuildVersion,
 		DeployVersion:   b.DeployVersion,
 		PluginID:        b.PluginID,
@@ -364,12 +370,13 @@ type BatchBuildPlugins struct {
 	Plugins []*BuildPluginReq `json:"plugins"`
 }
 
-//PluginBuildVersionStruct PluginBuildVersionStruct
+// PluginBuildVersionStruct PluginBuildVersionStruct
+//
 //swagger:parameters deletePluginVersion pluginVersion
 type PluginBuildVersionStruct struct {
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	//in: path
 	//required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id"`
@@ -378,23 +385,25 @@ type PluginBuildVersionStruct struct {
 	VersionID string `json:"version_id" validate:"version_id"`
 }
 
-//AllPluginBuildVersionStruct AllPluginBuildVersionStruct
+// AllPluginBuildVersionStruct AllPluginBuildVersionStruct
+//
 //swagger:parameters allPluginVersions
 type AllPluginBuildVersionStruct struct {
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	//in: path
 	//required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id"`
 }
 
-//PluginSetStruct PluginSetStruct
+// PluginSetStruct PluginSetStruct
+//
 //swagger:parameters updatePluginSet addPluginSet
 type PluginSetStruct struct {
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	//in: path
 	//required: true
 	ServiceAlias string `json:"service_alias"`
@@ -427,31 +436,34 @@ type PluginSetStruct struct {
 	}
 }
 
-//GetPluginsStruct GetPluginsStruct
+// GetPluginsStruct GetPluginsStruct
+//
 //swagger:parameters getPlugins
 type GetPluginsStruct struct {
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 }
 
-//GetPluginSetStruct GetPluginSetStruct
+// GetPluginSetStruct GetPluginSetStruct
+//
 //swagger:parameters getPluginSet
 type GetPluginSetStruct struct {
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	//in: path
 	//required: true
 	ServiceAlias string `json:"service_alias"`
 }
 
-//DeletePluginSetStruct DeletePluginSetStruct
+// DeletePluginSetStruct DeletePluginSetStruct
+//
 //swagger:parameters deletePluginRelation
 type DeletePluginSetStruct struct {
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	//in: path
 	//required: true
 	ServiceAlias string `json:"service_alias"`
@@ -461,13 +473,14 @@ type DeletePluginSetStruct struct {
 	PluginID string `json:"plugin_id"`
 }
 
-//GetPluginEnvStruct GetPluginEnvStruct
+// GetPluginEnvStruct GetPluginEnvStruct
+//
 //swagger:parameters getPluginEnv getPluginDefaultEnv
 type GetPluginEnvStruct struct {
 	//租户名称
 	//in: path
 	//required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// 插件id
 	// in: path
 	// required: true
@@ -478,12 +491,13 @@ type GetPluginEnvStruct struct {
 	VersionID string `json:"version_id"`
 }
 
-//GetVersionEnvStruct GetVersionEnvStruct
+// GetVersionEnvStruct GetVersionEnvStruct
+//
 //swagger:parameters getVersionEnvs
 type GetVersionEnvStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -493,12 +507,13 @@ type GetVersionEnvStruct struct {
 	PluginID string `json:"plugin_id"`
 }
 
-//SetVersionEnv SetVersionEnv
+// SetVersionEnv SetVersionEnv
+//
 //swagger:parameters setVersionEnv updateVersionEnv
 type SetVersionEnv struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -508,8 +523,8 @@ type SetVersionEnv struct {
 	PluginID string `json:"plugin_id"`
 	//in: body
 	Body struct {
-		TenantID  string `json:"tenant_id"`
-		ServiceID string `json:"service_id"`
+		TenantEnvID string `json:"tenant_env_id"`
+		ServiceID   string `json:"service_id"`
 		// 环境变量
 		// in: body
 		// required: true
@@ -517,13 +532,13 @@ type SetVersionEnv struct {
 	}
 }
 
-//ConfigEnvs Config
+// ConfigEnvs Config
 type ConfigEnvs struct {
 	NormalEnvs  []*VersionEnv `json:"normal_envs" validate:"normal_envs"`
 	ComplexEnvs *ResourceSpec `json:"complex_envs" validate:"complex_envs"`
 }
 
-//VersionEnv VersionEnv
+// VersionEnv VersionEnv
 type VersionEnv struct {
 	//变量名
 	//in:body
@@ -536,8 +551,8 @@ type VersionEnv struct {
 }
 
 // DbModel return database model
-func (v *VersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantPluginVersionEnv {
-	return &dbmodel.TenantPluginVersionEnv{
+func (v *VersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantEnvPluginVersionEnv {
+	return &dbmodel.TenantEnvPluginVersionEnv{
 		ServiceID: componentID,
 		PluginID:  pluginID,
 		EnvName:   v.EnvName,
@@ -545,17 +560,17 @@ func (v *VersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantPlugin
 	}
 }
 
-//TransPlugins TransPlugins
+// TransPlugins TransPlugins
 type TransPlugins struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	//in: body
 	Body struct {
 		// 从该租户安装
 		// in: body
 		// required: true
-		FromTenantName string `json:"from_tenant_name" validate:"from_tenant_name"`
+		FromTenantEnvName string `json:"from_tenant_env_name" validate:"from_tenant_env_name"`
 		// 插件id
 		// in: body
 		// required: true
@@ -570,8 +585,8 @@ type PluginVersionEnv struct {
 }
 
 // DbModel return database model
-func (p *PluginVersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantPluginVersionEnv {
-	return &dbmodel.TenantPluginVersionEnv{
+func (p *PluginVersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantEnvPluginVersionEnv {
+	return &dbmodel.TenantEnvPluginVersionEnv{
 		ServiceID: componentID,
 		PluginID:  pluginID,
 		EnvName:   p.EnvName,
@@ -579,14 +594,14 @@ func (p *PluginVersionEnv) DbModel(componentID, pluginID string) *dbmodel.Tenant
 	}
 }
 
-// TenantPluginVersionConfig -
-type TenantPluginVersionConfig struct {
+// TenantEnvPluginVersionConfig -
+type TenantEnvPluginVersionConfig struct {
 	ConfigStr string `json:"config_str" validate:"config_str"`
 }
 
 // DbModel return database model
-func (p *TenantPluginVersionConfig) DbModel(componentID, pluginID string) *dbmodel.TenantPluginVersionDiscoverConfig {
-	return &dbmodel.TenantPluginVersionDiscoverConfig{
+func (p *TenantEnvPluginVersionConfig) DbModel(componentID, pluginID string) *dbmodel.TenantEnvPluginVersionDiscoverConfig {
+	return &dbmodel.TenantEnvPluginVersionDiscoverConfig{
 		ServiceID: componentID,
 		PluginID:  pluginID,
 		ConfigStr: p.ConfigStr,
@@ -605,8 +620,8 @@ type ComponentPlugin struct {
 }
 
 // DbModel return database model
-func (p *ComponentPlugin) DbModel(componentID string) *dbmodel.TenantServicePluginRelation {
-	return &dbmodel.TenantServicePluginRelation{
+func (p *ComponentPlugin) DbModel(componentID string) *dbmodel.TenantEnvServicePluginRelation {
+	return &dbmodel.TenantEnvServicePluginRelation{
 		VersionID:       p.VersionID,
 		ServiceID:       componentID,
 		PluginID:        p.PluginID,

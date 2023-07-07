@@ -26,7 +26,7 @@ import (
 
 	"github.com/wutong-paas/wutong/builder/exector"
 
-	"github.com/twinj/uuid"
+	"github.com/google/uuid"
 
 	"github.com/pquerna/ffjson/ffjson"
 
@@ -38,13 +38,13 @@ import (
 	"github.com/wutong-paas/wutong/api/util"
 )
 
-//ServiceShareHandle service share
+// ServiceShareHandle service share
 type ServiceShareHandle struct {
 	MQClient client.MQClient
 	EtcdCli  *clientv3.Client
 }
 
-//APIResult 分享接口返回
+// APIResult 分享接口返回
 type APIResult struct {
 	EventID   string `json:"event_id"`
 	ShareID   string `json:"share_id"`
@@ -52,9 +52,9 @@ type APIResult struct {
 	SlugPath  string `json:"slug_path,omitempty"`
 }
 
-//Share 分享应用
+// Share 分享应用
 func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) (*APIResult, *util.APIHandleError) {
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError("查询应用出错", err)
 	}
@@ -63,43 +63,44 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 	if err != nil {
 		logrus.Error("query service deploy version error", err.Error())
 	}
-	shareID := uuid.NewV4().String()
+	shareID := uuid.New().String()
 	var slugPath, shareImageName string
 	var task client.TaskStruct
 	if version.DeliveredType == "slug" {
 		shareSlugInfo := ss.Body.SlugInfo
 		slugPath = service.CreateShareSlug(ss.Body.ServiceKey, shareSlugInfo.Namespace, ss.Body.AppVersion)
 		if ss.Body.SlugInfo.FTPHost == "" {
-			slugPath = fmt.Sprintf("/wtdata/build/tenant/%s", slugPath)
+			slugPath = fmt.Sprintf("/wtdata/build/tenantEnv/%s", slugPath)
 		}
 		info := map[string]interface{}{
-			"service_alias": ss.ServiceAlias,
-			"service_id":    serviceID,
-			"tenant_name":   ss.TenantName,
-			"share_info":    ss.Body,
-			"slug_path":     slugPath,
-			"share_id":      shareID,
+			"service_alias":   ss.ServiceAlias,
+			"service_id":      serviceID,
+			"tenant_env_name": ss.TenantEnvName,
+			"share_info":      ss.Body,
+			"slug_path":       slugPath,
+			"share_id":        shareID,
 		}
 		if version != nil && version.DeliveredPath != "" {
 			info["local_slug_path"] = version.DeliveredPath
 		} else {
-			info["local_slug_path"] = fmt.Sprintf("/wtdata/build/tenant/%s/slug/%s/%s.tgz", service.TenantID, service.ServiceID, service.DeployVersion)
+			info["local_slug_path"] = fmt.Sprintf("/wtdata/build/tenantEnv/%s/slug/%s/%s.tgz", service.TenantEnvID, service.ServiceID, service.DeployVersion)
 		}
 		task.TaskType = "share-slug"
 		task.TaskBody = info
 	} else {
-		shareImageInfo := ss.Body.ImageInfo
-		shareImageName, err = version.CreateShareImage(shareImageInfo.HubURL, shareImageInfo.Namespace, ss.Body.AppVersion)
+		// shareImageInfo := ss.Body.ImageInfo
+		// shareImageName, err = version.CreateShareImage(shareImageInfo.HubURL, shareImageInfo.Namespace, ss.Body.AppVersion)
+		shareImageName = version.ImageName
 		if err != nil {
 			return nil, util.CreateAPIHandleError(500, err)
 		}
 		info := map[string]interface{}{
-			"share_info":    ss.Body,
-			"service_alias": ss.ServiceAlias,
-			"service_id":    serviceID,
-			"tenant_name":   ss.TenantName,
-			"image_name":    shareImageName,
-			"share_id":      shareID,
+			"share_info":      ss.Body,
+			"service_alias":   ss.ServiceAlias,
+			"service_id":      serviceID,
+			"tenant_env_name": ss.TenantEnvName,
+			"image_name":      shareImageName,
+			"share_id":        shareID,
 		}
 		if version != nil && version.DeliveredPath != "" {
 			info["local_image_name"] = version.DeliveredPath
@@ -107,7 +108,7 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 		task.TaskType = "share-image"
 		task.TaskBody = info
 	}
-	label, err := db.GetManager().TenantServiceLabelDao().GetLabelByNodeSelectorKey(serviceID, "windows")
+	label, err := db.GetManager().TenantEnvServiceLabelDao().GetLabelByNodeSelectorKey(serviceID, "windows")
 	if label == nil || err != nil {
 		task.Topic = client.BuilderTopic
 	} else {
@@ -121,7 +122,7 @@ func (s *ServiceShareHandle) Share(serviceID string, ss api_model.ServiceShare) 
 	return &APIResult{EventID: ss.Body.EventID, ShareID: shareID, ImageName: shareImageName, SlugPath: slugPath}, nil
 }
 
-//ShareResult 分享应用结果查询
+// ShareResult 分享应用结果查询
 func (s *ServiceShareHandle) ShareResult(shareID string) (i exector.ShareStatus, e *util.APIHandleError) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

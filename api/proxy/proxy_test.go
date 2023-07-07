@@ -31,7 +31,7 @@ import (
 func TestHttpProxy(t *testing.T) {
 	proxy := CreateProxy("prometheus", "http", []string{"http://106.14.145.76:9999"})
 
-	query := fmt.Sprintf(`sum(app_resource_appfs{tenant_id=~"%s"}) by(tenant_id)`, strings.Join([]string{"824b2e9dcc4d461a852ddea20369d377"}, "|"))
+	query := fmt.Sprintf(`sum(app_resource_appfs{tenant_env_id=~"%s"}) by(tenant_env_id)`, strings.Join([]string{"824b2e9dcc4d461a852ddea20369d377"}, "|"))
 	query = strings.Replace(query, " ", "%20", -1)
 	fmt.Printf("http://127.0.0.1:9999/api/v1/query?query=%s", query)
 	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:9999/api/v1/query?query=%s", query), nil)

@@ -40,7 +40,7 @@ const (
 type ServiceGetCommon struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -73,13 +73,13 @@ type ComposerStruct struct {
 type CreateServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `gorm:"column:tenant_name;size:32" json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `gorm:"column:tenant_env_name;size:32" json:"tenant_env_name" validate:"tenant_env_name"`
 	// in:body
 	Body struct {
 		// 租户id
 		// in: body
 		// required: false
-		TenantID string `gorm:"column:tenant_id;size:32" json:"tenant_id" validate:"tenant_id"`
+		TenantEnvID string `gorm:"column:tenant_env_id;size:32" json:"tenant_env_id" validate:"tenant_env_id"`
 		// 应用id
 		// in: body
 		// required: false
@@ -96,22 +96,22 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		NodeLabel string `json:"node_label" validate:"node_label"`
-		// 依赖id, 格式: []struct TenantServiceRelation
+		// 依赖id, 格式: []struct TenantEnvServiceRelation
 		// in: body
 		// required: false
-		DependIDs []dbmodel.TenantServiceRelation `json:"depend_ids" validate:"depend_ids"`
-		// 持久化目录信息, 格式: []struct TenantServiceVolume
+		DependIDs []dbmodel.TenantEnvServiceRelation `json:"depend_ids" validate:"depend_ids"`
+		// 持久化目录信息, 格式: []struct TenantEnvServiceVolume
 		// in: body
 		// required: false
-		VolumesInfo []dbmodel.TenantServiceVolume `json:"volumes_info" validate:"volumes_info"`
-		// 环境变量信息, 格式: []struct TenantServiceEnvVar
+		VolumesInfo []dbmodel.TenantEnvServiceVolume `json:"volumes_info" validate:"volumes_info"`
+		// 环境变量信息, 格式: []struct TenantEnvServiceEnvVar
 		// in: body
 		// required: false
-		EnvsInfo []dbmodel.TenantServiceEnvVar `json:"envs_info" validate:"envs_info"`
-		// 端口信息, 格式: []struct TenantServicesPort
+		EnvsInfo []dbmodel.TenantEnvServiceEnvVar `json:"envs_info" validate:"envs_info"`
+		// 端口信息, 格式: []struct TenantEnvServicesPort
 		// in: body
 		// required: false
-		PortsInfo []dbmodel.TenantServicesPort `json:"ports_info" validate:"ports_info"`
+		PortsInfo []dbmodel.TenantEnvServicesPort `json:"ports_info" validate:"ports_info"`
 		// 服务key
 		// in: body
 		// required: false
@@ -163,7 +163,7 @@ type CreateServiceStruct struct {
 		// 扩容方式；0:无状态；1:有状态；2:分区
 		// in: body
 		// required: false
-		ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method" validate:"extend_method"`
+		ExtendMethod string `gorm:"column:extend_method;default:stateless;" json:"extend_method" validate:"extend_method"`
 		// 节点数
 		// in: body
 		// required: false
@@ -191,11 +191,11 @@ type CreateServiceStruct struct {
 		// 共享类型shared、exclusive
 		// in: body
 		// required: false
-		VolumeType string `gorm:"column:volume_type;default:'shared'" json:"volume_type" validate:"volume_type"`
+		VolumeType string `gorm:"column:volume_type;default:shared" json:"volume_type" validate:"volume_type"`
 		// 端口类型，one_outer;dif_protocol;multi_outer
 		// in: body
 		// required: false
-		PortType string `gorm:"column:port_type;default:'multi_outer'" json:"port_type" validate:"port_type"`
+		PortType string `gorm:"column:port_type;default:multi_outer" json:"port_type" validate:"port_type"`
 		// 更新时间
 		// in: body
 		// required: false
@@ -203,7 +203,7 @@ type CreateServiceStruct struct {
 		// 服务创建类型cloud云市服务,assistant云帮服务
 		// in: body
 		// required: false
-		ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin" validate:"service_origin"`
+		ServiceOrigin string `gorm:"column:service_origin;default:assistant" json:"service_origin" validate:"service_origin"`
 		// 代码来源:gitlab,github
 		// in: body
 		// required: false
@@ -216,7 +216,7 @@ type CreateServiceStruct struct {
 type UpdateServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -240,7 +240,7 @@ type UpdateServiceStruct struct {
 // StartStopStruct start struct
 type StartStopStruct struct {
 	ServiceID     string
-	TenantID      string
+	TenantEnvID   string
 	DeployVersion string
 	EventID       string
 	TaskType      string
@@ -254,7 +254,7 @@ type LanguageSet struct {
 
 // ServiceStruct service struct
 type ServiceStruct struct {
-	TenantID string `json:"tenant_id" validate:"tenant_id"`
+	TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
 	// in: path
 	// required: true
 	ServiceID string `json:"service_id" validate:"service_id"`
@@ -347,23 +347,23 @@ type ServiceStruct struct {
 	//OSType runtime os type
 	// in: body
 	// required: false
-	OSType            string                               `json:"os_type" validate:"os_type|in:windows,linux"`
-	ServiceLabel      string                               `json:"service_label"  validate:"service_label|in:StatelessServiceType,StatefulServiceType"`
-	NodeLabel         string                               `json:"node_label"  validate:"node_label"`
-	Operator          string                               `json:"operator"  validate:"operator"`
-	RepoURL           string                               `json:"repo_url" validate:"repo_url"`
-	DependIDs         []dbmodel.TenantServiceRelation      `json:"depend_ids" validate:"depend_ids"`
-	VolumesInfo       []TenantServiceVolumeStruct          `json:"volumes_info" validate:"volumes_info"`
-	DepVolumesInfo    []dbmodel.TenantServiceMountRelation `json:"dep_volumes_info" validate:"dep_volumes_info"`
-	EnvsInfo          []dbmodel.TenantServiceEnvVar        `json:"envs_info" validate:"envs_info"`
-	PortsInfo         []dbmodel.TenantServicesPort         `json:"ports_info" validate:"ports_info"`
-	Endpoints         *Endpoints                           `json:"endpoints" validate:"endpoints"`
-	AppID             string                               `json:"app_id" validate:"required"`
-	ComponentProbes   []ServiceProbe                       `json:"component_probes" validate:"component_probes"`
-	ComponentMonitors []AddServiceMonitorRequestStruct     `json:"component_monitors" validate:"component_monitors"`
-	HTTPRules         []AddHTTPRuleStruct                  `json:"http_rules" validate:"http_rules"`
-	TCPRules          []AddTCPRuleStruct                   `json:"tcp_rules" validate:"tcp_rules"`
-	K8sComponentName  string                               `json:"k8s_component_name" validate:"k8s_component_name"`
+	OSType            string                                  `json:"os_type" validate:"os_type|in:windows,linux"`
+	ServiceLabel      string                                  `json:"service_label"  validate:"service_label|in:StatelessServiceType,StatefulServiceType"`
+	NodeLabel         string                                  `json:"node_label"  validate:"node_label"`
+	Operator          string                                  `json:"operator"  validate:"operator"`
+	RepoURL           string                                  `json:"repo_url" validate:"repo_url"`
+	DependIDs         []dbmodel.TenantEnvServiceRelation      `json:"depend_ids" validate:"depend_ids"`
+	VolumesInfo       []TenantEnvServiceVolumeStruct          `json:"volumes_info" validate:"volumes_info"`
+	DepVolumesInfo    []dbmodel.TenantEnvServiceMountRelation `json:"dep_volumes_info" validate:"dep_volumes_info"`
+	EnvsInfo          []dbmodel.TenantEnvServiceEnvVar        `json:"envs_info" validate:"envs_info"`
+	PortsInfo         []dbmodel.TenantEnvServicesPort         `json:"ports_info" validate:"ports_info"`
+	Endpoints         *Endpoints                              `json:"endpoints" validate:"endpoints"`
+	AppID             string                                  `json:"app_id" validate:"required"`
+	ComponentProbes   []ServiceProbe                          `json:"component_probes" validate:"component_probes"`
+	ComponentMonitors []AddServiceMonitorRequestStruct        `json:"component_monitors" validate:"component_monitors"`
+	HTTPRules         []AddHTTPRuleStruct                     `json:"http_rules" validate:"http_rules"`
+	TCPRules          []AddTCPRuleStruct                      `json:"tcp_rules" validate:"tcp_rules"`
+	K8sComponentName  string                                  `json:"k8s_component_name" validate:"k8s_component_name"`
 }
 
 // Endpoints holds third-party service endpoints or configuraion to get endpoints.
@@ -388,8 +388,8 @@ type EndpointKubernetes struct {
 	ServiceName string `json:"serviceName"`
 }
 
-// TenantServiceVolumeStruct -
-type TenantServiceVolumeStruct struct {
+// TenantEnvServiceVolumeStruct -
+type TenantEnvServiceVolumeStruct struct {
 	ServiceID string ` json:"service_id"`
 	//服务类型
 	Category string `json:"category"`
@@ -423,7 +423,7 @@ type TenantServiceVolumeStruct struct {
 
 // DependService struct for depend service
 type DependService struct {
-	TenantID       string `json:"tenant_id"`
+	TenantEnvID    string `json:"tenant_env_id"`
 	ServiceID      string `json:"service_id"`
 	DepServiceID   string `json:"dep_service_id"`
 	DepServiceType string `json:"dep_service_type"`
@@ -432,11 +432,11 @@ type DependService struct {
 
 // Attr attr
 type Attr struct {
-	Action    string `json:"action"`
-	TenantID  string `json:"tenant_id"`
-	ServiceID string `json:"service_id"`
-	AttrName  string `json:"env_name"`
-	AttrValue string `json:"env_value"`
+	Action      string `json:"action"`
+	TenantEnvID string `json:"tenant_env_id"`
+	ServiceID   string `json:"service_id"`
+	AttrName    string `json:"env_name"`
+	AttrValue   string `json:"env_value"`
 }
 
 // DeleteServicePort service port
@@ -444,7 +444,7 @@ type Attr struct {
 type DeleteServicePort struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -454,14 +454,17 @@ type DeleteServicePort struct {
 	Port int `json:"port"`
 }
 
-// TenantResources TenantResources
-// swagger:parameters tenantResources
-type TenantResources struct {
+// TenantEnvResources TenantEnvResources
+// swagger:parameters tenantEnvResources
+type TenantEnvResources struct {
 	// in: body
 	Body struct {
 		// in: body
 		// required: true
-		TenantNames []string `json:"tenant_name" validate:"tenant_name"`
+		TenantName string `json:"tenant_name" validate:"tenant_name"`
+		// in: body
+		// required: true
+		TenantEnvNames []string `json:"tenant_env_names" validate:"tenant_env_names"`
 	}
 }
 
@@ -501,7 +504,7 @@ type CommandResponse struct {
 type ServicePortInnerOrOuter struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -523,7 +526,7 @@ type ServicePortInnerOrOuter struct {
 type ServiceLBPortChange struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -540,7 +543,7 @@ type ServiceLBPortChange struct {
 
 // RollbackStruct struct
 type RollbackStruct struct {
-	TenantID      string `json:"tenant_id"`
+	TenantEnvID   string `json:"tenant_env_id"`
 	ServiceID     string `json:"service_id"`
 	EventID       string `json:"event_id;default:system"`
 	Operator      string `json:"operator"`
@@ -549,7 +552,7 @@ type RollbackStruct struct {
 
 // StatusList status list
 type StatusList struct {
-	TenantID      string     `json:"tenant_id"`
+	TenantEnvID   string     `json:"tenant_env_id"`
 	ServiceID     string     `json:"service_id"`
 	ServiceAlias  string     `json:"service_alias"`
 	DeployVersion string     `json:"deploy_version"`
@@ -589,18 +592,26 @@ type LicenseInfo struct {
 	Node       int      `json:"node"`
 	CPU        int      `json:"cpu"`
 	MEM        int      `json:"memory"`
-	Tenant     int      `json:"tenant"`
+	TenantEnv  int      `json:"tenant_env"`
 	EndTime    string   `json:"end_time"`
 	StartTime  string   `json:"start_time"`
 	DataCenter int      `json:"data_center"`
 	ModuleList []string `json:"module_list"`
 }
 
-// AddTenantStruct AddTenantStruct
-// swagger:parameters addTenant
-type AddTenantStruct struct {
+// AddTenantEnvStruct AddTenantEnvStruct
+// swagger:parameters addTenantEnv
+type AddTenantEnvStruct struct {
 	//in: body
 	Body struct {
+		// the tenant env id
+		// in: body
+		// required: false
+		TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
+		// the tenant env name
+		// in: body
+		// required: false
+		TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 		// the tenant id
 		// in: body
 		// required: false
@@ -608,23 +619,19 @@ type AddTenantStruct struct {
 		// the tenant name
 		// in: body
 		// required: false
-		TenantName string `json:"tenant_name" validate:"tenant_name"`
-		// the eid
-		// in : body
-		// required: false
-		Eid         string `json:"eid" validata:"eid"`
+		TenantName  string `json:"tenant_name" validate:"tenant_name"`
 		Token       string `json:"token" validate:"token"`
 		LimitMemory int    `json:"limit_memory" validate:"limit_memory"`
 		Namespace   string `json:"namespace" validate:"namespace"`
 	}
 }
 
-// UpdateTenantStruct UpdateTenantStruct
-// swagger:parameters updateTenant
-type UpdateTenantStruct struct {
+// UpdateTenantEnvStruct UpdateTenantEnvStruct
+// swagger:parameters updateTenantEnv
+type UpdateTenantEnvStruct struct {
 	//in: body
 	Body struct {
-		// the eid
+		// the limit memory
 		// in : body
 		// required: false
 		LimitMemory int `json:"limit_memory" validate:"limit_memory"`
@@ -636,7 +643,7 @@ type UpdateTenantStruct struct {
 type ServicesInfoStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 }
 
 // SetLanguageStruct SetLanguageStruct
@@ -644,13 +651,13 @@ type ServicesInfoStruct struct {
 type SetLanguageStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
 	//in: body
 	Body struct {
-		// the tenant id
+		// the tenant env id
 		// in: body
 		// required: true
 		EventID string `json:"event_id"`
@@ -667,13 +674,13 @@ type SetLanguageStruct struct {
 type StartServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
 	//in: body
 	Body struct {
-		// the tenant id
+		// the tenant env id
 		// in: body
 		// required: false
 		EventID string `json:"event_id"`
@@ -686,7 +693,7 @@ type StartServiceStruct struct {
 type VerticalServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -713,7 +720,7 @@ type VerticalServiceStruct struct {
 type HorizontalServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -736,7 +743,7 @@ type HorizontalServiceStruct struct {
 type BuildServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name" validate:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`
@@ -781,15 +788,15 @@ type BuildServiceStruct struct {
 		// 代码服务器类型
 		// in: body
 		// required: false
-		ServerType   string `json:"server_type" validate:"server_type"`
-		Runtime      string `json:"runtime" validate:"runtime"`
-		ServiceType  string `json:"service_type" validate:"service_type"`
-		User         string `json:"user" validate:"user"`
-		Password     string `json:"password" validate:"password"`
-		Operator     string `json:"operator" validate:"operator"`
-		TenantName   string `json:"tenant_name"`
-		ServiceAlias string `json:"service_alias"`
-		Cmd          string `json:"cmd"`
+		ServerType    string `json:"server_type" validate:"server_type"`
+		Runtime       string `json:"runtime" validate:"runtime"`
+		ServiceType   string `json:"service_type" validate:"service_type"`
+		User          string `json:"user" validate:"user"`
+		Password      string `json:"password" validate:"password"`
+		Operator      string `json:"operator" validate:"operator"`
+		TenantEnvName string `json:"tenant_env_name"`
+		ServiceAlias  string `json:"service_alias"`
+		Cmd           string `json:"cmd"`
 		//用于云市代码包创建
 		SlugInfo struct {
 			SlugPath    string `json:"slug_path"`
@@ -826,7 +833,7 @@ type V1BuildServiceStruct struct {
 type UpgradeServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -853,7 +860,7 @@ type UpgradeServiceStruct struct {
 type StatusServiceStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -865,7 +872,7 @@ type StatusServiceStruct struct {
 type StatusServiceListStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: body
 	// required: true
 	Body struct {
@@ -882,7 +889,7 @@ type StatusServiceListStruct struct {
 type AddServiceLabelStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -901,7 +908,7 @@ type AddServiceLabelStruct struct {
 type AddNodeLabelStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -931,7 +938,7 @@ type LabelStruct struct {
 type GetSingleServiceInfoStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -943,7 +950,7 @@ type GetSingleServiceInfoStruct struct {
 type CheckCodeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: body
 	Body struct {
 		// git分支详情
@@ -973,8 +980,8 @@ type CheckCodeStruct struct {
 		// 租户id
 		// in: body
 		// required: false
-		TenantID string `json:"tenant_id" validate:"tenant_id"`
-		Action   string `json:"action"`
+		TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
+		Action      string `json:"action"`
 		// 应用id
 		// in: body
 		// required: true
@@ -988,7 +995,7 @@ type CheckCodeStruct struct {
 type ServiceCheckStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: body
 	Body struct {
 		//uuid
@@ -1006,11 +1013,11 @@ type ServiceCheckStruct struct {
 		// docker-compose: compose全文
 		// in: body
 		// required: true
-		SourceBody string `json:"source_body"`
-		TenantID   string
-		Username   string `json:"username"`
-		Password   string `json:"password"`
-		EventID    string `json:"event_id"`
+		SourceBody  string `json:"source_body"`
+		TenantEnvID string
+		Username    string `json:"username"`
+		Password    string `json:"password"`
+		EventID     string `json:"event_id"`
 	}
 }
 
@@ -1020,7 +1027,7 @@ type ServiceCheckStruct struct {
 type GetServiceCheckInfoStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	UUID string `json:"uuid"`
@@ -1045,7 +1052,7 @@ type SlugShare struct {
 	ServiceKey    string `json:"service_key" validate:"service_key"`
 	APPVersion    string `json:"app_version" validate:"app_version"`
 	DeployVersion string `json:"deploy_version" validate:"deploy_version"`
-	TenantID      string `json:"tenant_id" validate:"tenant_id"`
+	TenantEnvID   string `json:"tenant_env_id" validate:"tenant_env_id"`
 	Dest          string `json:"dest" validate:"dest|in:yb,ys"`
 }
 
@@ -1071,7 +1078,7 @@ type ShareConfItems struct {
 type AddDependencyStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1098,7 +1105,7 @@ type AddDependencyStruct struct {
 type AddEnvStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1137,7 +1144,7 @@ type AddEnvStruct struct {
 type RollBackStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1164,7 +1171,7 @@ type RollBackStruct struct {
 type AddProbeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1231,7 +1238,7 @@ type AddProbeStruct struct {
 type DeleteProbeStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1250,7 +1257,7 @@ type DeleteProbeStruct struct {
 type PodsStructStruct struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1303,10 +1310,10 @@ type Model struct {
 	//CreatedAt time.Time
 }
 
-// AddTenantServiceEnvVar  应用环境变量
-type AddTenantServiceEnvVar struct {
+// AddTenantEnvServiceEnvVar  应用环境变量
+type AddTenantEnvServiceEnvVar struct {
 	Model
-	TenantID      string `validate:"tenant_id|between:30,33" json:"tenant_id"`
+	TenantEnvID   string `validate:"tenant_env_id|between:30,33" json:"tenant_env_id"`
 	ServiceID     string `validate:"service_id|between:30,33" json:"service_id"`
 	ContainerPort int    `validate:"container_port|numeric_between:1,65535" json:"container_port"`
 	Name          string `validate:"name" json:"name"`
@@ -1317,9 +1324,9 @@ type AddTenantServiceEnvVar struct {
 }
 
 // DbModel return database model
-func (a *AddTenantServiceEnvVar) DbModel(tenantID, componentID string) *dbmodel.TenantServiceEnvVar {
-	return &dbmodel.TenantServiceEnvVar{
-		TenantID:      tenantID,
+func (a *AddTenantEnvServiceEnvVar) DbModel(tenantEnvID, componentID string) *dbmodel.TenantEnvServiceEnvVar {
+	return &dbmodel.TenantEnvServiceEnvVar{
+		TenantEnvID:   tenantEnvID,
 		ServiceID:     componentID,
 		Name:          a.Name,
 		AttrName:      a.AttrName,
@@ -1330,10 +1337,10 @@ func (a *AddTenantServiceEnvVar) DbModel(tenantID, componentID string) *dbmodel.
 	}
 }
 
-// DelTenantServiceEnvVar  应用环境变量
-type DelTenantServiceEnvVar struct {
+// DelTenantEnvServiceEnvVar  应用环境变量
+type DelTenantEnvServiceEnvVar struct {
 	Model
-	TenantID      string `validate:"tenant_id|between:30,33" json:"tenant_id"`
+	TenantEnvID   string `validate:"tenant_env_id|between:30,33" json:"tenant_env_id"`
 	ServiceID     string `validate:"service_id|between:30,33" json:"service_id"`
 	ContainerPort int    `validate:"container_port|numeric_between:1,65535" json:"container_port"`
 	Name          string `validate:"name" json:"name"`
@@ -1345,13 +1352,13 @@ type DelTenantServiceEnvVar struct {
 
 // ServicePorts service ports
 type ServicePorts struct {
-	Port []*TenantServicesPort
+	Port []*TenantEnvServicesPort
 }
 
-// TenantServicesPort 应用端口信息
-type TenantServicesPort struct {
+// TenantEnvServicesPort 应用端口信息
+type TenantEnvServicesPort struct {
 	Model
-	TenantID       string `gorm:"column:tenant_id;size:32" validate:"tenant_id|between:30,33" json:"tenant_id"`
+	TenantEnvID    string `gorm:"column:tenant_env_id;size:32" validate:"tenant_env_id|between:30,33" json:"tenant_env_id"`
 	ServiceID      string `gorm:"column:service_id;size:32" validate:"service_id|between:30,33" json:"service_id"`
 	ContainerPort  int    `gorm:"column:container_port" validate:"container_port|required|numeric_between:1,65535" json:"container_port"`
 	MappingPort    int    `gorm:"column:mapping_port" validate:"mapping_port|required|numeric_between:1,65535" json:"mapping_port"`
@@ -1363,11 +1370,11 @@ type TenantServicesPort struct {
 }
 
 // DbModel return database model
-func (p *TenantServicesPort) DbModel(tenantID, componentID string) *dbmodel.TenantServicesPort {
+func (p *TenantEnvServicesPort) DbModel(tenantEnvID, componentID string) *dbmodel.TenantEnvServicesPort {
 	isInnerService := p.IsInnerService
 	isOuterService := p.IsOuterService
-	return &dbmodel.TenantServicesPort{
-		TenantID:       tenantID,
+	return &dbmodel.TenantEnvServicesPort{
+		TenantEnvID:    tenantEnvID,
 		ServiceID:      componentID,
 		ContainerPort:  p.ContainerPort,
 		MappingPort:    p.MappingPort,
@@ -1384,7 +1391,7 @@ func (p *TenantServicesPort) DbModel(tenantID, componentID string) *dbmodel.Tena
 type AddServicePort struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1425,8 +1432,8 @@ type ServiceProbe struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
 	ProbeID   string `gorm:"column:probe_id;size:32" json:"probe_id" validate:"probe_id|required|between:30,33"`
-	Mode      string `gorm:"column:mode;default:'liveness'" json:"mode" validate:"mode"`
-	Scheme    string `gorm:"column:scheme;default:'scheme'" json:"scheme" validate:"scheme"`
+	Mode      string `gorm:"column:mode;default:liveness" json:"mode" validate:"mode"`
+	Scheme    string `gorm:"column:scheme;default:scheme" json:"scheme" validate:"scheme"`
 	Path      string `gorm:"column:path" json:"path" validate:"path"`
 	Port      int    `gorm:"column:port;size:5;default:80" json:"port" validate:"port|numeric_between:1,65535"`
 	Cmd       string `gorm:"column:cmd;size:150" json:"cmd" validate:"cmd"`
@@ -1448,8 +1455,8 @@ type ServiceProbe struct {
 }
 
 // DbModel return database model
-func (p *ServiceProbe) DbModel(componentID string) *dbmodel.TenantServiceProbe {
-	return &dbmodel.TenantServiceProbe{
+func (p *ServiceProbe) DbModel(componentID string) *dbmodel.TenantEnvServiceProbe {
+	return &dbmodel.TenantEnvServiceProbe{
 		ServiceID:          componentID,
 		Cmd:                p.Cmd,
 		FailureThreshold:   p.FailureThreshold,
@@ -1468,8 +1475,8 @@ func (p *ServiceProbe) DbModel(componentID string) *dbmodel.TenantServiceProbe {
 	}
 }
 
-// TenantServiceVolume 应用持久化记录
-type TenantServiceVolume struct {
+// TenantEnvServiceVolume 应用持久化记录
+type TenantEnvServiceVolume struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id"`
 	//服务类型
@@ -1484,7 +1491,7 @@ type TenantServiceVolume struct {
 type GetSupportProtocols struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 }
 
 // ServiceShare service share
@@ -1492,7 +1499,7 @@ type GetSupportProtocols struct {
 type ServiceShare struct {
 	// in: path
 	// required: true
-	TenantName string `json:"tenant_name"`
+	TenantEnvName string `json:"tenant_env_name"`
 	// in: path
 	// required: true
 	ServiceAlias string `json:"service_alias"`
@@ -1522,6 +1529,18 @@ type ServiceShare struct {
 	}
 }
 
+// ExportHelmChart -
+var ExportHelmChart = "export_helm_chart"
+
+// ExportK8sYaml -
+var ExportK8sYaml = "export_k8s_yaml"
+
+// ExportAppInfo -
+type ExportAppInfo struct {
+	AppName    string `json:"app_name"`
+	AppVersion string `json:"app_version"`
+}
+
 // ExportAppStruct -
 type ExportAppStruct struct {
 	SourceDir string `json:"source_dir"`
@@ -1529,7 +1548,7 @@ type ExportAppStruct struct {
 		EventID       string `json:"event_id"`
 		GroupKey      string `json:"group_key"` // TODO 考虑去掉
 		Version       string `json:"version"`   // TODO 考虑去掉
-		Format        string `json:"format"`    // only wutong-app/docker-compose
+		Format        string `json:"format"`    // only wutong-app/docker-compose/slug/helm_chart/yaml
 		GroupMetadata string `json:"group_metadata"`
 		WithImageData bool   `json:"with_image_data"`
 	}
@@ -1537,9 +1556,9 @@ type ExportAppStruct struct {
 
 // BatchOperationReq beatch operation request body
 type BatchOperationReq struct {
-	Operator   string `json:"operator"`
-	TenantName string `json:"tenant_name"`
-	Body       struct {
+	Operator      string `json:"operator"`
+	TenantEnvName string `json:"tenant_env_name"`
+	Body          struct {
 		Operation string                 `json:"operation" validate:"operation|required|in:start,stop,build,upgrade"`
 		Builds    []*ComponentBuildReq   `json:"build_infos,omitempty"`
 		Starts    []*ComponentStartReq   `json:"start_infos,omitempty"`
@@ -1634,8 +1653,8 @@ type ComponentBuildReq struct {
 	CodeInfo BuildCodeInfo `json:"code_info,omitempty"`
 	//用于云市代码包创建
 	SlugInfo BuildSlugInfo `json:"slug_info,omitempty"`
-	//tenantName
-	TenantName string `json:"-"`
+	//tenantEnvName
+	TenantEnvName string `json:"-"`
 }
 
 // GetEventID -
@@ -1677,7 +1696,7 @@ func (b *ComponentBuildReq) GetComponentID() string {
 }
 
 // TaskBody returns a task body.
-func (b *ComponentBuildReq) TaskBody(cpt *dbmodel.TenantServices) interface{} {
+func (b *ComponentBuildReq) TaskBody(cpt *dbmodel.TenantEnvServices) interface{} {
 	return nil
 }
 
@@ -1730,9 +1749,9 @@ func (u *ComponentUpgradeReq) GetComponentID() string {
 }
 
 // TaskBody returns the task body.
-func (u *ComponentUpgradeReq) TaskBody(cpt *dbmodel.TenantServices) interface{} {
+func (u *ComponentUpgradeReq) TaskBody(cpt *dbmodel.TenantEnvServices) interface{} {
 	return &dmodel.RollingUpgradeTaskBody{
-		TenantID:         cpt.TenantID,
+		TenantEnvID:      cpt.TenantEnvID,
 		ServiceID:        cpt.ServiceID,
 		NewDeployVersion: u.UpgradeVersion,
 		EventID:          u.GetEventID(),
@@ -1837,12 +1856,11 @@ func NewAppStatusFromImport(app *ImportAppStruct) *dbmodel.AppStatus {
 
 // Application -
 type Application struct {
-	EID             string   `json:"eid" validate:"required"`
 	AppName         string   `json:"app_name" validate:"required"`
 	AppType         string   `json:"app_type" validate:"required,oneof=wutong helm"`
 	ConsoleAppID    int64    `json:"console_app_id"`
 	AppID           string   `json:"app_id"`
-	TenantID        string   `json:"tenant_id"`
+	TenantEnvID     string   `json:"tenant_env_id"`
 	ServiceIDs      []string `json:"service_ids"`
 	AppStoreName    string   `json:"app_store_name"`
 	AppStoreURL     string   `json:"app_store_url"`
@@ -1872,10 +1890,10 @@ type ListAppResponse struct {
 
 // ListServiceResponse -
 type ListServiceResponse struct {
-	Page     int                       `json:"page"`
-	PageSize int                       `json:"pageSize"`
-	Total    int64                     `json:"total"`
-	Services []*dbmodel.TenantServices `json:"services"`
+	Page     int                          `json:"page"`
+	PageSize int                          `json:"pageSize"`
+	Total    int64                        `json:"total"`
+	Services []*dbmodel.TenantEnvServices `json:"services"`
 }
 
 // UpdateAppRequest -

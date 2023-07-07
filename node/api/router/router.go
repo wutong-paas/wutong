@@ -30,8 +30,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
-//Routers 路由
-func Routers(mode string) *chi.Mux {
+// Routers 路由
+func Routers(mode string, enableDebugPprof bool) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID) //每个请求的上下文中注册一个id
 	//Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP
@@ -44,6 +44,10 @@ func Routers(mode string) *chi.Mux {
 	r.Use(middleware.Recoverer)
 	//request time out
 	r.Use(middleware.Timeout(time.Second * 5))
+	if enableDebugPprof {
+		// 使用 pprof 分析工具
+		r.Mount("/debug", middleware.Profiler())
+	}
 	r.Mount("/v1", DisconverRoutes())
 	r.Route("/v2", func(r chi.Router) {
 		r.Get("/ping", controller.Ping)

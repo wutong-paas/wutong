@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"github.com/barnettZQG/gotty/server"
@@ -68,10 +69,13 @@ func (e *execContext) Run() error {
 	if err != nil {
 		return fmt.Errorf("create executor failure %s", err.Error())
 	}
+
+	errCh := make(chan error)
+
 	go func() {
 		out := CreateOut(e.tty)
 		t := out.SetTTY()
-		t.Safe(func() error {
+		errCh <- t.Safe(func() error {
 			defer e.Close()
 			if err := exec.Stream(remotecommand.StreamOptions{
 				Stdin:             out.Stdin,
@@ -85,9 +89,17 @@ func (e *execContext) Run() error {
 			}
 			return nil
 		})
-
 	}()
-	return nil
+
+	// 如果在 200 毫秒内 errCh 有返回，则说明出错了，返回错误
+	// 否则认为是正常的，返回 nil
+	timeout := time.After(200 * time.Millisecond)
+	select {
+	case err := <-errCh:
+		return err
+	case <-timeout:
+		return nil
+	}
 }
 
 func (e *execContext) Read(p []byte) (n int, err error) {
@@ -99,7 +111,14 @@ func (e *execContext) Write(p []byte) (n int, err error) {
 }
 
 func (e *execContext) Close() error {
-	return e.tty.Close()
+	e1 := e.pty.Close()
+	e2 := e.tty.Close()
+
+	if e1 != nil {
+		return e1
+	}
+
+	return e2
 }
 
 func (e *execContext) WindowTitleVariables() map[string]interface{} {

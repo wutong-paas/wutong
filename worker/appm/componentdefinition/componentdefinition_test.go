@@ -26,7 +26,7 @@ import (
 )
 
 func TestTemplateContext(t *testing.T) {
-	ctx := NewTemplateContext(&v1.AppService{AppServiceBase: v1.AppServiceBase{ServiceID: "1234567890", ServiceAlias: "niasdjaj", TenantID: "098765432345678"}}, cueTemplate, map[string]interface{}{
+	ctx := NewTemplateContext(&v1.AppService{AppServiceBase: v1.AppServiceBase{ServiceID: "1234567890", ServiceAlias: "niasdjaj", TenantEnvID: "098765432345678"}}, cueTemplate, map[string]interface{}{
 		"kubernetes": map[string]interface{}{
 			"name":      "service-name",
 			"namespace": "t-namesapce",

@@ -29,8 +29,8 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//Check service check
-// swagger:operation POST /v2/tenants/{tenant_name}/servicecheck v2 serviceCheck
+// Check service check
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/servicecheck v2 serviceCheck
 //
 // 应用构建源检测，支持docker run ,docker compose, source code
 //
@@ -46,17 +46,18 @@ import (
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
 func Check(w http.ResponseWriter, r *http.Request) {
 	var gt api_model.ServiceCheckStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &gt.Body, nil); !ok {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	gt.Body.TenantID = tenantID
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	gt.Body.TenantEnvID = tenantEnvID
 	result, eventID, err := handler.GetServiceManager().ServiceCheck(&gt)
 	if err != nil {
 		err.Handle(r, w)
@@ -72,8 +73,8 @@ func Check(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, re)
 }
 
-//GetServiceCheckInfo get service check info
-// swagger:operation GET /v2/tenants/{tenant_name}/servicecheck/{uuid} v2 getServiceCheckInfo
+// GetServiceCheckInfo get service check info
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/servicecheck/{uuid} v2 getServiceCheckInfo
 //
 //	获取构建检测信息
 //
@@ -89,10 +90,11 @@ func Check(w http.ResponseWriter, r *http.Request) {
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
 func GetServiceCheckInfo(w http.ResponseWriter, r *http.Request) {
 	uuid := strings.TrimSpace(chi.URLParam(r, "uuid"))
 	si, err := handler.GetServiceManager().GetServiceCheckInfo(uuid)

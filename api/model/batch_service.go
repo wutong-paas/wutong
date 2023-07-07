@@ -45,7 +45,7 @@ func (b BatchOpRequesters) ComponentIDs() []string {
 type ComponentOpReq interface {
 	GetComponentID() string
 	GetEventID() string
-	TaskBody(component *dbmodel.TenantServices) interface{}
+	TaskBody(component *dbmodel.TenantEnvServices) interface{}
 	BatchOpFailureItem() *ComponentOpResult
 	UpdateConfig(key, value string)
 	OpType() string
@@ -126,9 +126,9 @@ func (s *ComponentStartReq) GetComponentID() string {
 }
 
 // TaskBody -
-func (s *ComponentStartReq) TaskBody(cpt *dbmodel.TenantServices) interface{} {
+func (s *ComponentStartReq) TaskBody(cpt *dbmodel.TenantEnvServices) interface{} {
 	return &wmodel.StartTaskBody{
-		TenantID:              cpt.TenantID,
+		TenantEnvID:           cpt.TenantEnvID,
 		ServiceID:             cpt.ServiceID,
 		DeployVersion:         cpt.DeployVersion,
 		EventID:               s.GetEventID(),

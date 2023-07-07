@@ -64,6 +64,12 @@ var TypeApplyConfigController TypeController = "apply_config"
 // TypeControllerRefreshHPA -
 var TypeControllerRefreshHPA TypeController = "refreshhpa"
 
+// TypeControllerExportHelmChart -
+var TypeControllerExportHelmChart TypeController = "export_helm_chart"
+
+// TypeControllerExportK8sYaml -
+var TypeControllerExportK8sYaml TypeController = "export_k8s_yaml"
+
 // Manager controller manager
 type Manager struct {
 	ctx           context.Context
@@ -178,6 +184,40 @@ func (m *Manager) StartController(controllerType TypeController, apps ...v1.AppS
 	defer m.lock.Unlock()
 	m.controllers[controllerID] = controller
 	go controller.Begin()
+	return nil
+}
+
+func (m *Manager) StartExportHelmChartController(appName, appVersion string, end bool, apps ...v1.AppService) error {
+	controllerID := util.NewUUID()
+	controller := &exportHelmChartController{
+		controllerID: controllerID,
+		appService:   apps,
+		manager:      m,
+		stopChan:     make(chan struct{}),
+		ctx:          context.Background(),
+		AppName:      appName,
+		AppVersion:   appVersion,
+		End:          end,
+	}
+	m.controllers[controllerID] = controller
+	controller.Begin()
+	return nil
+}
+
+func (m *Manager) StartExportK8sYamlController(appName, appVersion string, end bool, apps ...v1.AppService) error {
+	controllerID := util.NewUUID()
+	controller := &exportK8sYamlController{
+		controllerID: controllerID,
+		appService:   apps,
+		manager:      m,
+		stopChan:     make(chan struct{}),
+		ctx:          context.Background(),
+		AppName:      appName,
+		AppVersion:   appVersion,
+		End:          end,
+	}
+	m.controllers[controllerID] = controller
+	controller.Begin()
 	return nil
 }
 

@@ -42,10 +42,10 @@ func TestGetSuitableInstance(t *testing.T) {
 		log:          logrus.WithField("Module", "Test"),
 	}
 	d.monitorDatas = map[string]*db.MonitorData{
-		"a": &db.MonitorData{
+		"a": {
 			InstanceID: "a", LogSizePeerM: 200,
 		},
-		"b": &db.MonitorData{
+		"b": {
 			InstanceID: "b", LogSizePeerM: 150,
 		},
 	}

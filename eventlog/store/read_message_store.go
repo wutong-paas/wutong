@@ -85,12 +85,12 @@ func (h *readMessageStore) Run() {
 }
 func (h *readMessageStore) Gc() {
 	tiker := time.NewTicker(time.Second * 30)
+	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
 		case <-h.ctx.Done():
 			h.log.Debug("read message store gc stop.")
-			tiker.Stop()
 			return
 		}
 		if len(h.barrels) == 0 {

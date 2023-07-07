@@ -35,7 +35,7 @@ const (
 	exporter = "exporter"
 )
 
-//NewExporter new exporter
+// NewExporter new exporter
 func NewExporter() *Exporter {
 	return &Exporter{
 		apiRequest: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -44,12 +44,12 @@ func NewExporter() *Exporter {
 			Name:      "api_request",
 			Help:      "wutong cluster api request metric",
 		}, []string{"code", "path"}),
-		tenantLimit: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		tenantEnvLimit: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: exporter,
-			Name:      "tenant_memory_limit",
-			Help:      "wutong tenant memory limit",
-		}, []string{"tenant_id", "namespace"}),
+			Name:      "tenant_env_memory_limit",
+			Help:      "wutong tenant env memory limit",
+		}, []string{"tenant_env_id", "namespace"}),
 		clusterMemoryTotal: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: namespace,
 			Subsystem: exporter,
@@ -65,20 +65,20 @@ func NewExporter() *Exporter {
 	}
 }
 
-//Exporter exporter
+// Exporter exporter
 type Exporter struct {
 	apiRequest         *prometheus.CounterVec
-	tenantLimit        *prometheus.GaugeVec
+	tenantEnvLimit     *prometheus.GaugeVec
 	clusterCPUTotal    prometheus.Gauge
 	clusterMemoryTotal prometheus.Gauge
 }
 
-//RequestInc request inc
+// RequestInc request inc
 func (e *Exporter) RequestInc(code int, path string) {
 	e.apiRequest.WithLabelValues(fmt.Sprintf("%d", code), path).Inc()
 }
 
-//Describe implements prometheus.Collector.
+// Describe implements prometheus.Collector.
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	metricCh := make(chan prometheus.Metric)
 	doneCh := make(chan struct{})
@@ -98,20 +98,20 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements prometheus.Collector.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.apiRequest.Collect(ch)
-	// tenant limit value
-	tenants, _ := handler.GetTenantManager().GetTenants("")
-	for _, t := range tenants {
-		e.tenantLimit.WithLabelValues(t.UUID, t.UUID).Set(float64(t.LimitMemory))
+	// tenant env limit value
+	tenantEnvs, _ := handler.GetTenantEnvManager().GetAllTenantEnvs("")
+	for _, t := range tenantEnvs {
+		e.tenantEnvLimit.WithLabelValues(t.UUID, t.UUID).Set(float64(t.LimitMemory))
 	}
 	// cluster memory
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	resource := handler.GetTenantManager().GetClusterResource(ctx)
+	resource := handler.GetTenantEnvManager().GetClusterResource(ctx)
 	if resource != nil {
 		e.clusterMemoryTotal.Set(float64(resource.AllMemory))
 		e.clusterCPUTotal.Set(float64(resource.AllCPU))
 	}
-	e.tenantLimit.Collect(ch)
+	e.tenantEnvLimit.Collect(ch)
 	e.clusterMemoryTotal.Collect(ch)
 	e.clusterCPUTotal.Collect(ch)
 }

@@ -44,7 +44,7 @@ import (
 	_ "net/http/pprof"
 )
 
-//Manager api manager
+// Manager api manager
 type Manager struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
@@ -58,9 +58,9 @@ type Manager struct {
 	etcdClientArgs *etcdutil.ClientArgs
 }
 
-//NewManager api manager
+// NewManager api manager
 func NewManager(c option.Conf, node *nodeclient.HostNode, ms *masterserver.MasterServer, kubecli kubecache.KubeClient) *Manager {
-	r := router.Routers(c.RunMode)
+	r := router.Routers(c.RunMode, c.EnableDebugPprof)
 	ctx, cancel := context.WithCancel(context.Background())
 	controller.Init(&c, ms, kubecli)
 	etcdClientArgs := &etcdutil.ClientArgs{
@@ -84,7 +84,7 @@ func NewManager(c option.Conf, node *nodeclient.HostNode, ms *masterserver.Maste
 	return m
 }
 
-//Start 启动
+// Start 启动
 func (m *Manager) Start(errChan chan error) error {
 	logrus.Infof("api server start listening on %s", m.conf.APIAddr)
 	go func() {
@@ -122,7 +122,7 @@ func (m *Manager) Start(errChan chan error) error {
 	return nil
 }
 
-//Stop 停止
+// Stop 停止
 func (m *Manager) Stop() error {
 	logrus.Info("api server is stoping.")
 	m.cancel()
@@ -132,12 +132,12 @@ func (m *Manager) Stop() error {
 	return nil
 }
 
-//GetRouter GetRouter
+// GetRouter GetRouter
 func (m *Manager) GetRouter() *chi.Mux {
 	return m.router
 }
 
-//HandleClusterScrape prometheus handle
+// HandleClusterScrape prometheus handle
 func (m *Manager) HandleClusterScrape(w http.ResponseWriter, r *http.Request) {
 	gatherers := prometheus.Gatherers{
 		prometheus.DefaultGatherer,

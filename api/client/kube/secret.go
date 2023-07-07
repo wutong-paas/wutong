@@ -28,10 +28,12 @@ func (s *Secrets) Migrate(namespace string, seletcor labels.Selector) {
 func (s *Secrets) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for i := 0; i < len(s.Secrets); i++ {
 		labels := map[string]string{
-			"app":         s.Secrets[i].Labels["app"],
-			"app_id":      s.Secrets[i].Labels["app_id"],
-			"tenant_id":   s.Secrets[i].Labels["tenant_id"],
-			"tenant_name": s.Secrets[i].Labels["tenant_name"],
+			"app":             s.Secrets[i].Labels["app"],
+			"app_id":          s.Secrets[i].Labels["app_id"],
+			"tenant_id":       s.Secrets[i].Labels["tenant_id"],
+			"tenant_name":     s.Secrets[i].Labels["tenant_name"],
+			"tenant_env_id":   s.Secrets[i].Labels["tenant_env_id"],
+			"tenant_env_name": s.Secrets[i].Labels["tenant_env_name"],
 		}
 		if s.Secrets[i] != nil {
 			s.Secrets[i].APIVersion = "v1"

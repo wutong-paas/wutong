@@ -119,8 +119,6 @@ type HelmAppSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	EID string `json:"eid"`
-
 	// The prerequisite status.
 	// +kubebuilder:validation:Enum=NotConfigured;Configured
 	PreStatus HelmAppPreStatus `json:"preStatus,omitempty"`
@@ -146,7 +144,7 @@ func (in *HelmAppSpec) FullName() string {
 	if in.AppStore == nil {
 		return ""
 	}
-	return in.EID + "-" + in.AppStore.Name
+	return in.AppStore.Name
 }
 
 // HelmAppStore represents a helm repo.

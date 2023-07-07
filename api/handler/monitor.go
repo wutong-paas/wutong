@@ -20,14 +20,14 @@ package handler
 
 import "github.com/wutong-paas/wutong/api/client/prometheus"
 
-//MonitorHandler monitor api handler
+// MonitorHandler monitor api handler
 type MonitorHandler interface {
-	GetTenantMonitorMetrics(tenantID string) []prometheus.Metadata
-	GetAppMonitorMetrics(tenantID, appID string) []prometheus.Metadata
-	GetComponentMonitorMetrics(tenantID, componentID string) []prometheus.Metadata
+	GetTenantEnvMonitorMetrics(tenantEnvID string) []prometheus.Metadata
+	GetAppMonitorMetrics(tenantEnvID, appID string) []prometheus.Metadata
+	GetComponentMonitorMetrics(tenantEnvID, componentID string) []prometheus.Metadata
 }
 
-//NewMonitorHandler new monitor handler
+// NewMonitorHandler new monitor handler
 func NewMonitorHandler(cli prometheus.Interface) MonitorHandler {
 	return &monitorHandler{cli: cli}
 }
@@ -36,14 +36,14 @@ type monitorHandler struct {
 	cli prometheus.Interface
 }
 
-func (m *monitorHandler) GetTenantMonitorMetrics(tenantID string) []prometheus.Metadata {
-	return m.cli.GetMetadata(tenantID)
+func (m *monitorHandler) GetTenantEnvMonitorMetrics(tenantEnvID string) []prometheus.Metadata {
+	return m.cli.GetMetadata(tenantEnvID)
 }
 
-func (m *monitorHandler) GetAppMonitorMetrics(tenantID, appID string) []prometheus.Metadata {
-	return m.cli.GetAppMetadata(tenantID, appID)
+func (m *monitorHandler) GetAppMonitorMetrics(tenantEnvID, appID string) []prometheus.Metadata {
+	return m.cli.GetAppMetadata(tenantEnvID, appID)
 }
 
-func (m *monitorHandler) GetComponentMonitorMetrics(tenantID, componentID string) []prometheus.Metadata {
-	return m.cli.GetComponentMetadata(tenantID, componentID)
+func (m *monitorHandler) GetComponentMonitorMetrics(tenantEnvID, componentID string) []prometheus.Metadata {
+	return m.cli.GetComponentMetadata(tenantEnvID, componentID)
 }

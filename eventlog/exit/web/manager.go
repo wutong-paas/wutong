@@ -37,16 +37,16 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"github.com/sirupsen/logrus"
-	"github.com/twinj/uuid"
 	"golang.org/x/net/context"
 )
 
-//SocketServer socket 服务
+// SocketServer socket 服务
 type SocketServer struct {
 	conf                 conf.WebSocketConf
 	discoverConf         conf.DiscoverConf
@@ -63,7 +63,7 @@ type SocketServer struct {
 	pubsubCtx            map[string]*PubContext
 }
 
-//NewSocket 创建zmq sub客户端
+// NewSocket 创建zmq sub客户端
 func NewSocket(conf conf.WebSocketConf, discoverConf conf.DiscoverConf, etcdClient *clientv3.Client, log *logrus.Entry, storeManager store.Manager, c cluster.Cluster, healthInfo map[string]string) *SocketServer {
 	ctx, cancel := context.WithCancel(context.Background())
 	d, err := time.ParseDuration(conf.TimeOut)
@@ -123,7 +123,7 @@ func (s *SocketServer) pushEventMessage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	s.log.Infof("Begin push event message of event (%s)", EventID)
-	SubID := uuid.NewV4().String()
+	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("event", EventID, SubID)
 	if ch == nil {
 		// w.Write([]byte("Real-time message does not exist."))
@@ -206,7 +206,7 @@ func (s *SocketServer) pushDockerLog(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.log.Infof("Begin push docker message of service (%s)", ServiceID)
-	SubID := uuid.NewV4().String()
+	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("docker", ServiceID, SubID)
 	if ch == nil {
 		// w.Write([]byte("Real-time message does not exist."))
@@ -292,7 +292,7 @@ func (s *SocketServer) pushMonitorMessage(w http.ResponseWriter, r *http.Request
 		return
 	}
 	s.log.Infof("Begin push monitor message of service (%s)", ServiceID)
-	SubID := uuid.NewV4().String()
+	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("monitor", ServiceID, SubID)
 	if ch == nil {
 		// w.Write([]byte("Real-time message does not exist."))
@@ -375,7 +375,7 @@ func (s *SocketServer) pushNewMonitorMessage(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	s.log.Infof("Begin push monitor message of service (%s)", ServiceID)
-	SubID := uuid.NewV4().String()
+	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("newmonitor", ServiceID, SubID)
 	if ch == nil {
 		// w.Write([]byte("Real-time message does not exist."))
@@ -435,7 +435,7 @@ func (s *SocketServer) reader(ws *websocket.Conn, ch chan struct{}) {
 	close(ch)
 }
 
-//Run 执行
+// Run 执行
 func (s *SocketServer) Run() error {
 	s.log.Info("WebSocker Server start")
 	go s.listen()
@@ -465,7 +465,6 @@ func (s *SocketServer) listen() {
 			w.Write([]byte(`{"message":"service id can not be empty.","status":"failure"}`))
 			return
 		}
-		s.log.Info("ServiceID:" + ServiceID)
 		instance := s.cluster.GetSuitableInstance(ServiceID)
 		err := discover.SaveDockerLogInInstance(s.etcdClient, s.discoverConf, ServiceID, instance.HostID)
 		if err != nil {
@@ -487,7 +486,7 @@ func (s *SocketServer) listen() {
 	})
 	// new websocket pubsub
 	r.Get("/services/{serviceID}/pubsub", s.pubsub)
-	r.Get("/tenants/{tenantName}/services/{serviceID}/logs", s.getDockerLogs)
+	r.Get("/tenants/{tenant_name}/envs/{tenantEnvName}/services/{serviceID}/logs", s.getDockerLogs)
 	//monitor setting
 	s.prometheus(r)
 	//pprof debug
@@ -532,18 +531,18 @@ func (s *SocketServer) checkHealth() {
 	}
 }
 
-//ListenError 返回错误通道
+// ListenError 返回错误通道
 func (s *SocketServer) ListenError() chan error {
 	return s.errorStop
 }
 
-//Stop 停止
+// Stop 停止
 func (s *SocketServer) Stop() {
 	s.log.Info("WebSocker Server stop")
 	s.cancel()
 }
 
-//receiveEventMessage 接收操作日志API
+// receiveEventMessage 接收操作日志API
 func (s *SocketServer) receiveEventMessage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -578,7 +577,7 @@ func (s *SocketServer) prometheus(r *chi.Mux) {
 	r.Handle(s.conf.PrometheusMetricPath, promhttp.Handler())
 }
 
-//ResponseType 返回内容
+// ResponseType 返回内容
 type ResponseType struct {
 	Code      int          `json:"code"`
 	Message   string       `json:"msg"`
@@ -586,7 +585,7 @@ type ResponseType struct {
 	Body      ResponseBody `json:"body,omitempty"`
 }
 
-//ResponseBody 返回主体
+// ResponseBody 返回主体
 type ResponseBody struct {
 	Bean     interface{}   `json:"bean,omitempty"`
 	List     []interface{} `json:"list,omitempty"`
@@ -595,7 +594,7 @@ type ResponseBody struct {
 	Total    int           `json:"total,omitempty"`
 }
 
-//NewResponseType 构建返回结构
+// NewResponseType 构建返回结构
 func NewResponseType(code int, message string, messageCN string, bean interface{}, list []interface{}) ResponseType {
 	return ResponseType{
 		Code:      code,
@@ -608,7 +607,7 @@ func NewResponseType(code int, message string, messageCN string, bean interface{
 	}
 }
 
-//NewSuccessResponse 创建成功返回结构
+// NewSuccessResponse 创建成功返回结构
 func NewSuccessResponse(bean interface{}, list []interface{}) ResponseType {
 	return NewResponseType(200, "", "", bean, list)
 }

@@ -27,10 +27,10 @@ import (
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 )
 
-//TaskType 任务类型
+// TaskType 任务类型
 type TaskType string
 
-//Task 任务
+// Task 任务
 type Task struct {
 	Type       TaskType  `json:"type"`
 	Body       TaskBody  `json:"body"`
@@ -38,7 +38,7 @@ type Task struct {
 	User       string    `json:"user"`
 }
 
-//NewTask 从json bytes data create task
+// NewTask 从json bytes data create task
 func NewTask(data []byte) (*Task, error) {
 	taskType := gjson.GetBytes(data, "type").String()
 	body := CreateTaskBody(taskType)
@@ -52,7 +52,7 @@ func NewTask(data []byte) (*Task, error) {
 	return &task, err
 }
 
-//TransTask transtask
+// TransTask transtask
 func TransTask(task *pb.TaskMessage) (*Task, error) {
 	timeT, _ := time.Parse(time.RFC3339, task.CreateTime)
 	return &Task{
@@ -63,7 +63,7 @@ func TransTask(task *pb.TaskMessage) (*Task, error) {
 	}, nil
 }
 
-//NewTaskBody new task body
+// NewTaskBody new task body
 func NewTaskBody(taskType string, body []byte) TaskBody {
 	switch taskType {
 	case "start":
@@ -151,8 +151,8 @@ func NewTaskBody(taskType string, body []byte) TaskBody {
 			return nil
 		}
 		return b
-	case "delete_tenant":
-		b := &DeleteTenantTaskBody{}
+	case "delete_tenant_env":
+		b := &DeleteTenantEnvTaskBody{}
 		err := ffjson.Unmarshal(body, &b)
 		if err != nil {
 			return nil
@@ -169,7 +169,13 @@ func NewTaskBody(taskType string, body []byte) TaskBody {
 		b := ApplyRegistryAuthSecretTaskBody{}
 		err := ffjson.Unmarshal(body, &b)
 		if err != nil {
-			logrus.Debugf("error unmarshal data: %v", err)
+			return nil
+		}
+		return &b
+	case "export_helm_chart", "export_k8s_yaml":
+		b := ExportHelmChartOrK8sYamlTaskBody{}
+		err := ffjson.Unmarshal(body, &b)
+		if err != nil {
 			return nil
 		}
 		return &b
@@ -178,7 +184,7 @@ func NewTaskBody(taskType string, body []byte) TaskBody {
 	}
 }
 
-//CreateTaskBody 通过类型串创建实体
+// CreateTaskBody 通过类型串创建实体
 func CreateTaskBody(taskType string) TaskBody {
 	switch taskType {
 	case "start":
@@ -201,8 +207,8 @@ func CreateTaskBody(taskType string) TaskBody {
 		return VerticalScalingTaskBody{}
 	case "apply_plugin_config":
 		return ApplyPluginConfigTaskBody{}
-	case "delete_tenant":
-		return DeleteTenantTaskBody{}
+	case "delete_tenant_env":
+		return DeleteTenantEnvTaskBody{}
 	case "refreshhpa":
 		return RefreshHPATaskBody{}
 	default:
@@ -210,12 +216,12 @@ func CreateTaskBody(taskType string) TaskBody {
 	}
 }
 
-//TaskBody task body
+// TaskBody task body
 type TaskBody interface{}
 
-//StartTaskBody 启动操作任务主体
+// StartTaskBody 启动操作任务主体
 type StartTaskBody struct {
-	TenantID      string            `json:"tenant_id"`
+	TenantEnvID   string            `json:"tenant_env_id"`
 	ServiceID     string            `json:"service_id"`
 	DeployVersion string            `json:"deploy_version"`
 	EventID       string            `json:"event_id"`
@@ -224,27 +230,27 @@ type StartTaskBody struct {
 	DepServiceIDInBootSeq []string `json:"dep_service_ids_in_boot_seq"`
 }
 
-//StopTaskBody 停止操作任务主体
+// StopTaskBody 停止操作任务主体
 type StopTaskBody struct {
-	TenantID      string            `json:"tenant_id"`
+	TenantEnvID   string            `json:"tenant_env_id"`
 	ServiceID     string            `json:"service_id"`
 	DeployVersion string            `json:"deploy_version"`
 	EventID       string            `json:"event_id"`
 	Configs       map[string]string `json:"configs"`
 }
 
-//HorizontalScalingTaskBody 水平伸缩操作任务主体
+// HorizontalScalingTaskBody 水平伸缩操作任务主体
 type HorizontalScalingTaskBody struct {
-	TenantID  string `json:"tenant_id"`
-	ServiceID string `json:"service_id"`
-	Replicas  int32  `json:"replicas"`
-	EventID   string `json:"event_id"`
-	Username  string `json:"username"`
+	TenantEnvID string `json:"tenant_env_id"`
+	ServiceID   string `json:"service_id"`
+	Replicas    int32  `json:"replicas"`
+	EventID     string `json:"event_id"`
+	Username    string `json:"username"`
 }
 
-//VerticalScalingTaskBody 垂直伸缩操作任务主体
+// VerticalScalingTaskBody 垂直伸缩操作任务主体
 type VerticalScalingTaskBody struct {
-	TenantID         string  `json:"tenant_id"`
+	TenantEnvID      string  `json:"tenant_env_id"`
 	ServiceID        string  `json:"service_id"`
 	ContainerCPU     *int    `json:"container_cpu"`
 	ContainerMemory  *int    `json:"container_memory"`
@@ -253,9 +259,9 @@ type VerticalScalingTaskBody struct {
 	EventID          string  `json:"event_id"`
 }
 
-//RestartTaskBody 重启操作任务主体
+// RestartTaskBody 重启操作任务主体
 type RestartTaskBody struct {
-	TenantID      string `json:"tenant_id"`
+	TenantEnvID   string `json:"tenant_env_id"`
 	ServiceID     string `json:"service_id"`
 	DeployVersion string `json:"deploy_version"`
 	EventID       string `json:"event_id"`
@@ -266,32 +272,36 @@ type RestartTaskBody struct {
 	Configs  map[string]string `json:"configs"`
 }
 
-//StrategyIsValid 验证策略是否有效
-//策略包括以下值：
+// StrategyIsValid 验证策略是否有效
+// 策略包括以下值：
 // prestart 先启动后关闭
 // prestop 先关闭后启动
 // rollingupdate 滚动形式
 // grayupdate 灰度形式
 // bluegreenupdate 蓝绿形式
-//
 func StrategyIsValid(strategy []string, serviceDeployType string) bool {
 	return false
 }
 
-//RollingUpgradeTaskBody 升级操作任务主体
+// RollingUpgradeTaskBody 升级操作任务主体
 type RollingUpgradeTaskBody struct {
-	TenantID         string            `json:"tenant_id"`
+	TenantEnvID      string            `json:"tenant_env_id"`
 	ServiceID        string            `json:"service_id"`
 	NewDeployVersion string            `json:"deploy_version"`
 	EventID          string            `json:"event_id"`
 	Strategy         []string          `json:"strategy"`
 	Configs          map[string]string `json:"configs"`
+	DryRun           bool              `json:"dry_run"`
+	AppName          string            `json:"app_name"`
+	AppVersion       string            `json:"app_version"`
+	EventIDs         []string          `json:"event_ids"`
+	End              bool              `json:"end"`
 }
 
-//RollBackTaskBody 回滚操作任务主体
+// RollBackTaskBody 回滚操作任务主体
 type RollBackTaskBody struct {
-	TenantID  string `json:"tenant_id"`
-	ServiceID string `json:"service_id"`
+	TenantEnvID string `json:"tenant_env_id"`
+	ServiceID   string `json:"service_id"`
 	//当前版本
 	CurrentDeployVersion string `json:"current_deploy_version"`
 	//回滚目标版本
@@ -304,7 +314,7 @@ type RollBackTaskBody struct {
 	Strategy []string `json:"strategy"`
 }
 
-//GroupStartTaskBody 组应用启动操作任务主体
+// GroupStartTaskBody 组应用启动操作任务主体
 type GroupStartTaskBody struct {
 	Services    []StartTaskBody `json:"services"`
 	Dependences []Dependence    `json:"dependences"`
@@ -333,13 +343,13 @@ type ApplyPluginConfigTaskBody struct {
 	Action string `json:"action"`
 }
 
-//Dependence 依赖关系
+// Dependence 依赖关系
 type Dependence struct {
 	CurrentServiceID string `json:"current_service_id"`
 	DependServiceID  string `json:"depend_service_id"`
 }
 
-//GroupStopTaskBody 组应用停止操作任务主体
+// GroupStopTaskBody 组应用停止操作任务主体
 type GroupStopTaskBody struct {
 	Services    []StartTaskBody `json:"services"`
 	Dependences []Dependence    `json:"dependences"`
@@ -350,14 +360,14 @@ type GroupStopTaskBody struct {
 
 // ServiceGCTaskBody holds the request body to execute service gc task.
 type ServiceGCTaskBody struct {
-	TenantID  string   `json:"tenant_id"`
-	ServiceID string   `json:"service_id"`
-	EventIDs  []string `json:"event_ids"`
+	TenantEnvID string   `json:"tenant_env_id"`
+	ServiceID   string   `json:"service_id"`
+	EventIDs    []string `json:"event_ids"`
 }
 
-// DeleteTenantTaskBody -
-type DeleteTenantTaskBody struct {
-	TenantID string `json:"tenant_id"`
+// DeleteTenantEnvTaskBody -
+type DeleteTenantEnvTaskBody struct {
+	TenantEnvID string `json:"tenant_env_id"`
 }
 
 // RefreshHPATaskBody -
@@ -369,13 +379,23 @@ type RefreshHPATaskBody struct {
 
 // ApplyRegistryAuthSecretTaskBody contains information for ApplyRegistryAuthSecretTask
 type ApplyRegistryAuthSecretTaskBody struct {
-	Action   string `json:"action"`
-	TenantID string `json:"tenant_id"`
-	SecretID string `json:"secret_id"`
-	Domain   string `json:"domain"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Action      string `json:"action"`
+	TenantEnvID string `json:"tenant_env_id"`
+	SecretID    string `json:"secret_id"`
+	Domain      string `json:"domain"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
 }
 
-//DefaultTaskBody 默认操作任务主体
+type ExportHelmChartOrK8sYamlTaskBody struct {
+	TenantEnvID string `json:"tenant_env_id"`
+	ServiceID   string `json:"service_id"`
+	// EventID     string `json:"event_id"`
+	// Configs     map[string]string `json:"configs"`
+	AppName    string `json:"app_name"`
+	AppVersion string `json:"app_version"`
+	End        bool   `json:"end"`
+}
+
+// DefaultTaskBody 默认操作任务主体
 type DefaultTaskBody map[string]interface{}

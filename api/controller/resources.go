@@ -51,7 +51,7 @@ import (
 // V2Routes v2Routes
 type V2Routes struct {
 	ClusterController
-	TenantStruct
+	TenantEnvStruct
 	EventLogStruct
 	AppStruct
 	GatewayStruct
@@ -109,44 +109,44 @@ func (v2 *V2Routes) Version(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, map[string]string{"version": os.Getenv("RELEASE_DESC")})
 }
 
-// TenantStruct tenant struct
-type TenantStruct struct {
+// TenantEnvStruct tenant env struct
+type TenantEnvStruct struct {
 	StatusCli *client.AppRuntimeSyncClient
 	MQClient  mqclient.MQClient
 }
 
-// AllTenantResources GetResources
-func (t *TenantStruct) AllTenantResources(w http.ResponseWriter, r *http.Request) {
-	tenants, err := handler.GetTenantManager().GetTenants("")
+// AllTenantEnvResources GetResources
+func (t *TenantEnvStruct) AllTenantEnvResources(w http.ResponseWriter, r *http.Request) {
+	tenantEnvs, err := handler.GetTenantEnvManager().GetAllTenantEnvs("")
 	if err != nil {
 		msg := httputil.ResponseBody{
-			Msg: fmt.Sprintf("get tenant error, %v", err),
+			Msg: fmt.Sprintf("get tenant env error, %v", err),
 		}
 		httputil.Return(r, w, 500, msg)
 	}
 	ts := &api_model.TotalStatsInfo{}
-	for _, tenant := range tenants {
-		services, err := handler.GetServiceManager().GetService(tenant.UUID)
+	for _, tenantEnv := range tenantEnvs {
+		services, err := handler.GetServiceManager().GetService(tenantEnv.UUID)
 		if err != nil {
 			msg := httputil.ResponseBody{
 				Msg: fmt.Sprintf("get service error, %v", err),
 			}
 			httputil.Return(r, w, 500, msg)
 		}
-		statsInfo, _ := handler.GetTenantManager().StatsMemCPU(services)
-		statsInfo.UUID = tenant.UUID
+		statsInfo, _ := handler.GetTenantEnvManager().StatsMemCPU(services)
+		statsInfo.UUID = tenantEnv.UUID
 		ts.Data = append(ts.Data, statsInfo)
 	}
 	httputil.ReturnSuccess(r, w, ts.Data)
 }
 
-// TenantResources TenantResources
-func (t *TenantStruct) TenantResources(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/resources/tenants v2 tenantResources
+// TenantEnvResources TenantEnvResources
+func (t *TenantEnvStruct) TenantEnvResources(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/resources/tenants/{tenant_name}/envs v2 tenantEnvResources
 	//
 	// 租户资源使用情况
 	//
-	// get tenant resources
+	// get tenant env resources
 	//
 	// ---
 	// produces:
@@ -158,13 +158,13 @@ func (t *TenantStruct) TenantResources(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	var tr api_model.TenantResources
+	var tr api_model.TenantEnvResources
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tr.Body, nil)
 	if !ok {
 		return
 	}
 
-	rep, err := handler.GetTenantManager().GetTenantsResources(r.Context(), &tr)
+	rep, err := handler.GetTenantEnvManager().GetTenantEnvsResources(r.Context(), &tr)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get resources error, %v", err))
 		return
@@ -179,7 +179,7 @@ func (t *TenantStruct) TenantResources(w http.ResponseWriter, r *http.Request) {
 }
 
 // ServiceResources ServiceResources
-func (t *TenantStruct) ServiceResources(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) ServiceResources(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/resources/services v2 serviceResources
 	//
 	// 应用资源使用情况
@@ -201,7 +201,7 @@ func (t *TenantStruct) ServiceResources(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	rep, err := handler.GetTenantManager().GetServicesResources(&tr)
+	rep, err := handler.GetTenantEnvManager().GetServicesResources(&tr)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get resources error, %v", err))
 		return
@@ -209,13 +209,13 @@ func (t *TenantStruct) ServiceResources(w http.ResponseWriter, r *http.Request) 
 	httputil.ReturnSuccess(r, w, rep)
 }
 
-// TenantsQuery TenantsQuery
-func (t *TenantStruct) TenantsQuery(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/query/{tenant_name} v2 tenants
+// TenantEnvsQuery TenantEnvsQuery
+func (t *TenantEnvStruct) TenantEnvsQuery(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/query/{tenant_env_name} v2 tenantEnvs
 	//
 	// 租户带资源列表
 	//
-	// get tenant resources
+	// get tenant env resources
 	//
 	// ---
 	// produces:
@@ -223,7 +223,7 @@ func (t *TenantStruct) TenantsQuery(w http.ResponseWriter, r *http.Request) {
 	// - application/xml
 	//
 	// parameters:
-	// - name: tenant_name
+	// - name: tenant_env_name
 	//   in: path
 	//   description: '123'
 	//   required: true
@@ -237,24 +237,25 @@ func (t *TenantStruct) TenantsQuery(w http.ResponseWriter, r *http.Request) {
 	//     description: 统一返回格式
 
 	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
+	tenantEnvName := strings.TrimSpace(chi.URLParam(r, "tenant_env_name"))
 
-	rep, err := handler.GetTenantManager().GetTenantsName()
+	rep, err := handler.GetTenantEnvManager().GetTenantEnvsName(tenantName)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenants names error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenant envs names error, %v", err))
 		return
 	}
 
-	result := fuzzy.Find(tenantName, rep) // [cartwheel wheel]
+	result := fuzzy.Find(tenantEnvName, rep) // [cartwheel wheel]
 	httputil.ReturnSuccess(r, w, result)
 }
 
-// TenantsGetByName TenantsGetByName
-func (t *TenantStruct) TenantsGetByName(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/res v2 tenants
+// TenantEnvsGetByName TenantEnvsGetByName
+func (t *TenantEnvStruct) TenantEnvsGetByName(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/res v2 tenantEnvs
 	//
 	// 租户带资源单个
 	//
-	// get tenant resources
+	// get tenant env resources
 	//
 	// ---
 	// produces:
@@ -262,7 +263,7 @@ func (t *TenantStruct) TenantsGetByName(w http.ResponseWriter, r *http.Request) 
 	// - application/xml
 	//
 	// parameters:
-	// - name: tenant_name
+	// - name: tenant_env_name
 	//   in: path
 	//   description: '123'
 	//   required: true
@@ -276,33 +277,33 @@ func (t *TenantStruct) TenantsGetByName(w http.ResponseWriter, r *http.Request) 
 	//     description: 统一返回格式
 
 	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
+	tenantEnvName := strings.TrimSpace(chi.URLParam(r, "tenant_env_name"))
 
-	v, err := handler.GetTenantManager().GetTenantsByName(tenantName)
+	v, err := handler.GetTenantEnvManager().GetTenantEnvsByName(tenantName, tenantEnvName)
 	if err != nil {
-		httputil.ReturnError(r, w, 404, fmt.Sprintf("get tenants names error, %v", err))
+		httputil.ReturnError(r, w, 404, fmt.Sprintf("get tenant envs names error, %v", err))
 		return
 	}
-	logrus.Infof("query tenant from db by name %s ,got %v", tenantName, v)
+	logrus.Infof("query tenant env from db by name %s ,got %v", tenantEnvName, v)
 
-	tenantServiceRes, err := handler.GetServiceManager().GetTenantRes(v.UUID)
+	tenantEnvServiceRes, err := handler.GetServiceManager().GetTenantEnvRes(v.UUID)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenants service total resources  error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenant envs service total resources  error, %v", err))
 		return
 	}
-	tenantServiceRes.UUID = v.UUID
-	tenantServiceRes.Name = v.Name
-	tenantServiceRes.EID = v.EID
+	tenantEnvServiceRes.UUID = v.UUID
+	tenantEnvServiceRes.Name = v.Name
 
-	httputil.ReturnSuccess(r, w, tenantServiceRes)
+	httputil.ReturnSuccess(r, w, tenantEnvServiceRes)
 }
 
-// TenantsWithResource TenantsWithResource
-func (t *TenantStruct) TenantsWithResource(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/resources/tenants/res/page/{curPage}/size/{pageLen} v2 PagedTenantResList
+// TenantEnvsWithResource TenantEnvsWithResource
+func (t *TenantEnvStruct) TenantEnvsWithResource(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/resources/tenants/{tenant_name}/envs/res/page/{curPage}/size/{pageLen} v2 PagedTenantEnvResList
 	//
 	// 租户带资源列表
 	//
-	// get paged tenant resources
+	// get paged tenant env resources
 	//
 	// ---
 	// produces:
@@ -342,24 +343,24 @@ func (t *TenantStruct) TenantsWithResource(w http.ResponseWriter, r *http.Reques
 		httputil.ReturnError(r, w, 400, fmt.Sprintf("bad request, %v", err))
 		return
 	}
-	resource, count, err := handler.GetServiceManager().GetPagedTenantRes((curPage-1)*pageLen, pageLen)
+	resource, count, err := handler.GetServiceManager().GetPagedTenantEnvRes((curPage-1)*pageLen, pageLen)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenants  error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenant envs  error, %v", err))
 		return
 	}
-	var ret api_model.PagedTenantResList
+	var ret api_model.PagedTenantEnvResList
 	ret.List = resource
 	ret.Length = count
 	httputil.ReturnSuccess(r, w, ret)
 }
 
-// SumTenants 统计租户数量
-func (t *TenantStruct) SumTenants(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/resources/tenants/sum v2 sumTenants
+// SumTenantEnvs 统计租户数量
+func (t *TenantEnvStruct) SumTenantEnvs(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/resources/tenants/{tenant_name}/envs/sum v2 sumTenantEnvs
 	//
 	// 获取租户数量
 	//
-	// get tenant resources
+	// get tenant env resources
 	//
 	// ---
 	// produces:
@@ -372,9 +373,10 @@ func (t *TenantStruct) SumTenants(w http.ResponseWriter, r *http.Request) {
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
 
-	s, err := handler.GetTenantManager().TenantsSum()
+	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
+	s, err := handler.GetTenantEnvManager().TenantEnvsSum(tenantName)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("sum tenants error, %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("sum tenant envs error, %v", err))
 		return
 	}
 	rc := make(map[string]int)
@@ -382,35 +384,35 @@ func (t *TenantStruct) SumTenants(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, rc)
 }
 
-// Tenant one tenant controller
-func (t *TenantStruct) Tenant(w http.ResponseWriter, r *http.Request) {
+// TenantEnv one tenant env controller
+func (t *TenantEnvStruct) TenantEnv(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		t.GetTenant(w, r)
+		t.GetTenantEnv(w, r)
 	case "DELETE":
-		t.DeleteTenant(w, r)
+		t.DeleteTenantEnv(w, r)
 	case "PUT":
-		t.UpdateTenant(w, r)
+		t.UpdateTenantEnv(w, r)
 	}
 }
 
-// Tenants Tenant
-func (t *TenantStruct) Tenants(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case "POST":
-		t.AddTenant(w, r)
-	case "GET":
-		t.GetTenants(w, r)
-	}
-}
+// TenantEnvs TenantEnv
+// func (t *TenantEnvStruct) TenantEnvs(w http.ResponseWriter, r *http.Request) {
+// 	switch r.Method {
+// 	case "POST":
+// 		t.AddTenantEnv(w, r)
+// 	case "GET":
+// 		t.GetTenantEnvs(w, r)
+// 	}
+// }
 
-// AddTenant AddTenant
-func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants v2 addTenant
+// AddTenantEnv AddTenantEnv
+func (t *TenantEnvStruct) AddTenantEnv(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs v2 addTenantEnv
 	//
-	// 添加租户信息
+	// 添加租户环境信息
 	//
-	// add tenant
+	// add tenant env
 	//
 	// ---
 	// consumes:
@@ -426,87 +428,62 @@ func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	var ts api_model.AddTenantStruct
+	var ts api_model.AddTenantEnvStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ts.Body, nil)
 	if !ok {
+		httputil.ReturnError(r, w, 400, "bad request")
 		return
 	}
-	var dbts dbmodel.Tenants
-	if ts.Body.Eid != "" {
-		//新接口
-		//TODO:生成tenant_id and tenant_name
-		id, name, errN := handler.GetServiceManager().CreateTenandIDAndName(ts.Body.Eid)
-		if errN != nil {
-			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant error, %v", errN))
+	var dbts dbmodel.TenantEnvs
+	//新接口
+	//TODO:生成tenant_env_id and tenant_env_name
+	id, name, errN := handler.GetServiceManager().CreateTenantEnvIDAndName()
+	if errN != nil {
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", errN))
+		return
+	}
+	if ts.Body.TenantEnvName == "" {
+		dbts.Name = name
+	} else {
+		dbts.Name = ts.Body.TenantEnvName
+		name = ts.Body.TenantEnvName
+	}
+	if ts.Body.TenantEnvID == "" {
+		dbts.UUID = id
+	} else {
+		dbts.UUID = ts.Body.TenantEnvID
+		id = ts.Body.TenantEnvID
+	}
+	dbts.LimitMemory = ts.Body.LimitMemory
+	dbts.Namespace = dbts.UUID
+	if ts.Body.Namespace != "" {
+		dbts.Namespace = ts.Body.Namespace
+	}
+	dbts.TenantID = ts.Body.TenantID
+	dbts.TenantName = ts.Body.TenantName
+	if err := handler.GetServiceManager().CreateTenantEnv(&dbts); err != nil {
+		if strings.HasSuffix(err.Error(), "is exist") {
+			httputil.ReturnError(r, w, 400, err.Error())
 			return
 		}
-		dbts.EID = ts.Body.Eid
-		if ts.Body.TenantName == "" {
-			dbts.Name = name
-		} else {
-			dbts.Name = ts.Body.TenantName
-			name = ts.Body.TenantName
-		}
-		if ts.Body.TenantID == "" {
-			dbts.UUID = id
-		} else {
-			dbts.UUID = ts.Body.TenantID
-			id = ts.Body.TenantID
-		}
-		dbts.LimitMemory = ts.Body.LimitMemory
-		dbts.Namespace = dbts.UUID
-		if ts.Body.Namespace != "" {
-			dbts.Namespace = ts.Body.Namespace
-		}
-		if err := handler.GetServiceManager().CreateTenant(&dbts); err != nil {
-			if strings.HasSuffix(err.Error(), "is exist") {
-				httputil.ReturnError(r, w, 400, err.Error())
-				return
-			}
-			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant error, %v", err))
-			return
-		}
-		rc := make(map[string]string)
-		rc["tenant_id"] = id
-		rc["tenang_name"] = name
-		rc["eid"] = ts.Body.Eid
-		rc["namespace"] = dbts.Namespace
-		httputil.ReturnSuccess(r, w, rc)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant env error, %v", err))
 		return
 	}
-	if ts.Body.TenantID != "" && ts.Body.TenantName != "" {
-		//兼容旧接口
-		dbts.Name = ts.Body.TenantName
-		dbts.UUID = ts.Body.TenantID
-		dbts.Namespace = ts.Body.TenantID
-		if ts.Body.Namespace != "" {
-			dbts.Namespace = ts.Body.Namespace
-		}
-		if err := handler.GetServiceManager().CreateTenant(&dbts); err != nil {
-			if strings.HasSuffix(err.Error(), "is exist") {
-				httputil.ReturnError(r, w, 400, err.Error())
-				return
-			}
-			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant error, %v", err))
-			return
-		}
-		httputil.ReturnSuccess(r, w, nil)
-		return
-	}
-	if ts.Body.Eid == "" && (ts.Body.TenantID == "" || ts.Body.TenantName == "") {
-		httputil.ReturnError(r, w, 400, "args error")
-		return
-	}
-	httputil.ReturnError(r, w, 400, "args error, need eid or tenatn_id / tenant_name")
+	rc := make(map[string]string)
+	rc["tenant_env_id"] = id
+	rc["tenant_env_name"] = name
+	rc["namespace"] = dbts.Namespace
+	httputil.ReturnSuccess(r, w, rc)
+	return
 }
 
-// GetTenants GetTenants
-func (t *TenantStruct) GetTenants(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants v2 getTenants
+// GetAllTenantEnvs GetAllTenantEnvs
+func (t *TenantEnvStruct) GetAllTenantEnvs(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs v2 getTenantEnvs
 	//
-	// 获取所有租户信息
+	// 获取所有租户环境信息
 	//
-	// get tenant
+	// get tenant env
 	//
 	// ---
 	// consumes:
@@ -522,7 +499,6 @@ func (t *TenantStruct) GetTenants(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	value := r.FormValue("eid")
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	if page == 0 {
 		page = 1
@@ -532,32 +508,68 @@ func (t *TenantStruct) GetTenants(w http.ResponseWriter, r *http.Request) {
 		pageSize = 10
 	}
 	queryName := r.FormValue("query")
-	var tenants []*dbmodel.Tenants
+	var tenantEnvs []*dbmodel.TenantEnvs
 	var err error
-	if len(value) == 0 {
-		tenants, err = handler.GetTenantManager().GetTenants(queryName)
-		if err != nil {
-			httputil.ReturnError(r, w, 500, "get tenant error")
-			return
-		}
-	} else {
-		tenants, err = handler.GetTenantManager().GetTenantsByEid(value, queryName)
-		if err != nil {
-			httputil.ReturnError(r, w, 500, "get tenant error")
-			return
-		}
+	tenantEnvs, err = handler.GetTenantEnvManager().GetAllTenantEnvs(queryName)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, "get tenant env error")
+		return
 	}
-	list := handler.GetTenantManager().BindTenantsResource(tenants)
+	list := handler.GetTenantEnvManager().BindTenantEnvsResource(tenantEnvs)
 	re := list.Paging(page, pageSize)
 	httputil.ReturnSuccess(r, w, re)
 }
 
-// DeleteTenant DeleteTenant
-func (t *TenantStruct) DeleteTenant(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+// GetTenantEnvs GetTenantEnvs
+func (t *TenantEnvStruct) GetTenantEnvs(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs v2 getTenantEnvs
+	//
+	// 获取所有租户环境信息
+	//
+	// get tenant env
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// - application/x-protobuf
+	//
+	// produces:
+	// - application/json
+	// - application/xml
+	//
+	// responses:
+	//   default:
+	//     schema:
+	//       "$ref": "#/responses/commandResponse"
+	//     description: 统一返回格式
+	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	if page == 0 {
+		page = 1
+	}
+	pageSize, _ := strconv.Atoi(r.FormValue("pageSize"))
+	if pageSize == 0 {
+		pageSize = 10
+	}
+	queryName := r.FormValue("query")
+	var tenantEnvs []*dbmodel.TenantEnvs
 
-	if err := handler.GetTenantManager().DeleteTenant(r.Context(), tenantID); err != nil {
-		if err == handler.ErrTenantStillHasServices || err == handler.ErrTenantStillHasPlugins {
+	tenantEnvs, err := handler.GetTenantEnvManager().GetTenantEnvs(tenantName, queryName)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, "get tenant env error")
+		return
+	}
+	list := handler.GetTenantEnvManager().BindTenantEnvsResource(tenantEnvs)
+	re := list.Paging(page, pageSize)
+	httputil.ReturnSuccess(r, w, re)
+}
+
+// DeleteTenantEnv DeleteTenantEnv
+func (t *TenantEnvStruct) DeleteTenantEnv(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+
+	if err := handler.GetTenantEnvManager().DeleteTenantEnv(r.Context(), tenantEnvID); err != nil {
+		if err == handler.ErrTenantEnvStillHasServices || err == handler.ErrTenantEnvStillHasPlugins {
 			httputil.ReturnError(r, w, 400, err.Error())
 			return
 		}
@@ -566,39 +578,39 @@ func (t *TenantStruct) DeleteTenant(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete tenant: %v", err))
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete tenant env: %v", err))
 		return
 	}
 
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-// UpdateTenant UpdateTenant
-// support update tenant limit memory
-func (t *TenantStruct) UpdateTenant(w http.ResponseWriter, r *http.Request) {
-	var ts api_model.UpdateTenantStruct
+// UpdateTenantEnv UpdateTenantEnv
+// support update tenant env limit memory
+func (t *TenantEnvStruct) UpdateTenantEnv(w http.ResponseWriter, r *http.Request) {
+	var ts api_model.UpdateTenantEnvStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ts.Body, nil)
 	if !ok {
 		return
 	}
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	tenant.LimitMemory = ts.Body.LimitMemory
-	if err := handler.GetTenantManager().UpdateTenant(tenant); err != nil {
-		httputil.ReturnError(r, w, 500, "update tenant error")
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	tenantEnv.LimitMemory = ts.Body.LimitMemory
+	if err := handler.GetTenantEnvManager().UpdateTenantEnv(tenantEnv); err != nil {
+		httputil.ReturnError(r, w, 500, "update tenant env error")
 		return
 	}
-	httputil.ReturnSuccess(r, w, tenant)
+	httputil.ReturnSuccess(r, w, tenantEnv)
 }
 
-// GetTenant get one tenant
-func (t *TenantStruct) GetTenant(w http.ResponseWriter, r *http.Request) {
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
-	list := handler.GetTenantManager().BindTenantsResource([]*dbmodel.Tenants{tenant})
+// GetTenantEnv get one tenant env
+func (t *TenantEnvStruct) GetTenantEnv(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	list := handler.GetTenantEnvManager().BindTenantEnvsResource([]*dbmodel.TenantEnvs{tenantEnv})
 	httputil.ReturnSuccess(r, w, list[0])
 }
 
 // ServicesCount Get all apps and status
-func (t *TenantStruct) ServicesCount(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) ServicesCount(w http.ResponseWriter, r *http.Request) {
 	allStatus := t.StatusCli.GetAllStatus()
 	var closed int
 	var running int
@@ -618,12 +630,12 @@ func (t *TenantStruct) ServicesCount(w http.ResponseWriter, r *http.Request) {
 }
 
 // ServicesInfo GetServiceInfo
-func (t *TenantStruct) ServicesInfo(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services v2 getServiceInfo
+func (t *TenantEnvStruct) ServicesInfo(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services v2 getServiceInfo
 	//
 	// 获取租户所有应用信息
 	//
-	// get services info in tenant
+	// get services info in tenantEnv
 	//
 	// ---
 	// consumes:
@@ -639,17 +651,17 @@ func (t *TenantStruct) ServicesInfo(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	services, err := handler.GetServiceManager().GetService(tenantID)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	services, err := handler.GetServiceManager().GetService(tenantEnvID)
 	if err != nil {
-		httputil.ReturnError(r, w, 500, "get tenant services error")
+		httputil.ReturnError(r, w, 500, "get tenant env services error")
 		return
 	}
 	httputil.ReturnSuccess(r, w, services)
 }
 
 // CreateService create Service
-func (t *TenantStruct) CreateService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) CreateService(w http.ResponseWriter, r *http.Request) {
 	var ss api_model.ServiceStruct
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &ss, nil) {
 		return
@@ -682,10 +694,10 @@ func (t *TenantStruct) CreateService(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	ss.TenantID = tenantID
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	ss.TenantEnvID = tenantEnvID
 	if err := handler.GetServiceManager().ServiceCreate(&ss); err != nil {
-		if strings.Contains(err.Error(), "is exist in tenant") {
+		if strings.Contains(err.Error(), "is exist in tenantEnv") {
 			httputil.ReturnError(r, w, 400, fmt.Sprintf("create service error, %v", err))
 			return
 		}
@@ -697,8 +709,8 @@ func (t *TenantStruct) CreateService(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateService create Service
-func (t *TenantStruct) UpdateService(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias} v2 updateService
+func (t *TenantEnvStruct) UpdateService(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias} v2 updateService
 	//
 	// 应用更新
 	//
@@ -754,8 +766,8 @@ func (t *TenantStruct) UpdateService(w http.ResponseWriter, r *http.Request) {
 }
 
 // SetLanguage SetLanguage
-func (t *TenantStruct) SetLanguage(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST  /v2/tenants/{tenant_name}/services/{service_alias}/language v2 setLanguage
+func (t *TenantEnvStruct) SetLanguage(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/language v2 setLanguage
 	//
 	// 设置应用语言
 	//
@@ -793,8 +805,8 @@ func (t *TenantStruct) SetLanguage(w http.ResponseWriter, r *http.Request) {
 }
 
 // StatusService StatusService
-func (t *TenantStruct) StatusService(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/status v2 serviceStatus
+func (t *TenantEnvStruct) StatusService(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/status v2 serviceStatus
 	//
 	// 获取应用状态
 	//
@@ -824,13 +836,13 @@ func (t *TenantStruct) StatusService(w http.ResponseWriter, r *http.Request) {
 }
 
 // PostStatusService PostStatusService
-func (t *TenantStruct) PostStatusService(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) PostStatusService(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("in status service serviceID")
 }
 
 // StatusServiceList service list status
-func (t *TenantStruct) StatusServiceList(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation POST /v2/tenants/{tenant_name}/services_status v2 serviceStatuslist
+func (t *TenantEnvStruct) StatusServiceList(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services_status v2 serviceStatuslist
 	//
 	// 获取应用状态
 	//
@@ -857,14 +869,14 @@ func (t *TenantStruct) StatusServiceList(w http.ResponseWriter, r *http.Request)
 	}
 	//logrus.Info(services.Body.ServiceIDs)
 	serviceList := services.Body.ServiceIDs
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	info := handler.GetServiceManager().GetServicesStatus(tenantID, serviceList)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	info := handler.GetServiceManager().GetServicesStatus(tenantEnvID, serviceList)
 
 	httputil.ReturnSuccess(r, w, info)
 }
 
 // Label -
-func (t *TenantStruct) Label(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Label(w http.ResponseWriter, r *http.Request) {
 	var req api_model.LabelsStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
 	if !ok {
@@ -902,7 +914,7 @@ func (t *TenantStruct) Label(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddLabel adds label
-func (t *TenantStruct) AddLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
+func (t *TenantEnvStruct) AddLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
 	logrus.Debugf("add label")
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().AddLabel(labels, serviceID); err != nil {
@@ -913,7 +925,7 @@ func (t *TenantStruct) AddLabel(w http.ResponseWriter, r *http.Request, labels *
 }
 
 // DeleteLabel deletes labels
-func (t *TenantStruct) DeleteLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
+func (t *TenantEnvStruct) DeleteLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().DeleteLabel(labels, serviceID); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete node label failure, %v", err))
@@ -923,7 +935,7 @@ func (t *TenantStruct) DeleteLabel(w http.ResponseWriter, r *http.Request, label
 }
 
 // UpdateLabel Update updates labels
-func (t *TenantStruct) UpdateLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
+func (t *TenantEnvStruct) UpdateLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().UpdateLabel(labels, serviceID); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("error updating label: %v", err))
@@ -933,12 +945,12 @@ func (t *TenantStruct) UpdateLabel(w http.ResponseWriter, r *http.Request, label
 }
 
 // StatusContainerID StatusContainerID
-func (t *TenantStruct) StatusContainerID(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) StatusContainerID(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("status container IDs list"))
 }
 
 // SingleServiceInfo SingleServiceInfo
-func (t *TenantStruct) SingleServiceInfo(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) SingleServiceInfo(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
 		t.DeleteSingleServiceInfo(w, r)
@@ -948,8 +960,8 @@ func (t *TenantStruct) SingleServiceInfo(w http.ResponseWriter, r *http.Request)
 }
 
 // GetSingleServiceInfo GetSingleServiceInfo
-func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Request) {
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias} v2 getService
+func (t *TenantEnvStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias} v2 getService
 	//
 	// 获取应用信息
 	//
@@ -970,20 +982,20 @@ func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Reque
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
 
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	serviceName := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
 	result := make(map[string]string)
-	result["tenantName"] = tenantName
+	result["tenantEnvName"] = tenantEnvName
 	result["serviceAlias"] = serviceName
-	result["tenantId"] = tenantID
+	result["tenantEnvId"] = tenantEnvID
 	result["serviceId"] = serviceID
 	httputil.ReturnSuccess(r, w, result)
 }
 
 // DeleteSingleServiceInfo DeleteService
-// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias} v2 deleteService
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias} v2 deleteService
 //
 // 删除应用
 //
@@ -1004,16 +1016,16 @@ func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Reque
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) DeleteSingleServiceInfo(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) DeleteSingleServiceInfo(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	var req api_model.EtcdCleanReq
 	if httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil) {
 		logrus.Debugf("delete service etcd keys : %+v", req.Keys)
 		handler.GetEtcdHandler().CleanAllServiceData(req.Keys)
 	}
 
-	if err := handler.GetServiceManager().TransServieToDelete(r.Context(), tenantID, serviceID); err != nil {
+	if err := handler.GetServiceManager().TransServieToDelete(r.Context(), tenantEnvID, serviceID); err != nil {
 		if err == handler.ErrServiceNotClosed {
 			httputil.ReturnError(r, w, 400, "Service must be closed")
 			return
@@ -1025,7 +1037,7 @@ func (t *TenantStruct) DeleteSingleServiceInfo(w http.ResponseWriter, r *http.Re
 }
 
 // Dependency Dependency
-func (t *TenantStruct) Dependency(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Dependency(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
 		t.DeleteDependency(w, r)
@@ -1035,7 +1047,7 @@ func (t *TenantStruct) Dependency(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddDependency AddDependency
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/dependency v2 addDependency
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/dependency v2 addDependency
 //
 // 增加应用依赖关系
 //
@@ -1056,7 +1068,7 @@ func (t *TenantStruct) Dependency(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 	rules := validator.MapData{
 		"dep_service_id":   []string{"required"},
 		"dep_service_type": []string{"required"},
@@ -1067,7 +1079,7 @@ func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ds := &api_model.DependService{
-		TenantID:       r.Context().Value(ctxutil.ContextKey("tenant_id")).(string),
+		TenantEnvID:    r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string),
 		ServiceID:      r.Context().Value(ctxutil.ContextKey("service_id")).(string),
 		DepServiceID:   data["dep_service_id"].(string),
 		DepServiceType: data["dep_service_type"].(string),
@@ -1080,7 +1092,7 @@ func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteDependency DeleteDependency
-// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/dependency v2 deleteDependency
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/dependency v2 deleteDependency
 //
 // 删除应用依赖关系
 //
@@ -1101,7 +1113,7 @@ func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) DeleteDependency(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) DeleteDependency(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("trans delete depend service ")
 	rules := validator.MapData{
 		"dep_service_id":   []string{"required"},
@@ -1113,7 +1125,7 @@ func (t *TenantStruct) DeleteDependency(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	ds := &api_model.DependService{
-		TenantID:     r.Context().Value(ctxutil.ContextKey("tenant_id")).(string),
+		TenantEnvID:  r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string),
 		ServiceID:    r.Context().Value(ctxutil.ContextKey("service_id")).(string),
 		DepServiceID: data["dep_service_id"].(string),
 	}
@@ -1125,7 +1137,7 @@ func (t *TenantStruct) DeleteDependency(w http.ResponseWriter, r *http.Request) 
 }
 
 // Env Env
-func (t *TenantStruct) Env(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Env(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
 		t.DeleteEnv(w, r)
@@ -1137,7 +1149,7 @@ func (t *TenantStruct) Env(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddEnv AddEnv
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/env v2 addEnv
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/env v2 addEnv
 //
 // 增加环境变量
 //
@@ -1158,17 +1170,17 @@ func (t *TenantStruct) Env(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) AddEnv(w http.ResponseWriter, r *http.Request) {
-	var envM api_model.AddTenantServiceEnvVar
+func (t *TenantEnvStruct) AddEnv(w http.ResponseWriter, r *http.Request) {
+	var envM api_model.AddTenantEnvServiceEnvVar
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &envM, nil) {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	var envD dbmodel.TenantServiceEnvVar
+	var envD dbmodel.TenantEnvServiceEnvVar
 	envD.AttrName = envM.AttrName
 	envD.AttrValue = envM.AttrValue
-	envD.TenantID = tenantID
+	envD.TenantEnvID = tenantEnvID
 	envD.ServiceID = serviceID
 	envD.ContainerPort = envM.ContainerPort
 	envD.IsChange = envM.IsChange
@@ -1187,7 +1199,7 @@ func (t *TenantStruct) AddEnv(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateEnv UpdateEnv
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/env v2 update Env
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/env v2 update Env
 //
 // 修改环境变量
 //
@@ -1208,17 +1220,17 @@ func (t *TenantStruct) AddEnv(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) UpdateEnv(w http.ResponseWriter, r *http.Request) {
-	var envM api_model.AddTenantServiceEnvVar
+func (t *TenantEnvStruct) UpdateEnv(w http.ResponseWriter, r *http.Request) {
+	var envM api_model.AddTenantEnvServiceEnvVar
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &envM, nil) {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	var envD dbmodel.TenantServiceEnvVar
+	var envD dbmodel.TenantEnvServiceEnvVar
 	envD.AttrName = envM.AttrName
 	envD.AttrValue = envM.AttrValue
-	envD.TenantID = tenantID
+	envD.TenantEnvID = tenantEnvID
 	envD.ServiceID = serviceID
 	envD.ContainerPort = envM.ContainerPort
 	envD.IsChange = envM.IsChange
@@ -1233,7 +1245,7 @@ func (t *TenantStruct) UpdateEnv(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteEnv DeleteEnv
-// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/env v2 deleteEnv
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/env v2 deleteEnv
 //
 // 删除环境变量
 //
@@ -1254,19 +1266,19 @@ func (t *TenantStruct) UpdateEnv(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) DeleteEnv(w http.ResponseWriter, r *http.Request) {
-	var envM api_model.DelTenantServiceEnvVar
+func (t *TenantEnvStruct) DeleteEnv(w http.ResponseWriter, r *http.Request) {
+	var envM api_model.DelTenantEnvServiceEnvVar
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &envM, nil) {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	envM.TenantID = tenantID
+	envM.TenantEnvID = tenantEnvID
 	envM.ServiceID = serviceID
-	var envD dbmodel.TenantServiceEnvVar
+	var envD dbmodel.TenantEnvServiceEnvVar
 	envD.AttrName = envM.AttrName
 	envD.AttrValue = envM.AttrValue
-	envD.TenantID = tenantID
+	envD.TenantEnvID = tenantEnvID
 	envD.ServiceID = serviceID
 	envD.ContainerPort = envM.ContainerPort
 	envD.IsChange = envM.IsChange
@@ -1285,7 +1297,7 @@ func (t *TenantStruct) DeleteEnv(w http.ResponseWriter, r *http.Request) {
 }
 
 // Ports 应用端口控制器
-func (t *TenantStruct) Ports(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Ports(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
 		t.deletePortController(w, r)
@@ -1297,7 +1309,7 @@ func (t *TenantStruct) Ports(w http.ResponseWriter, r *http.Request) {
 }
 
 // PutPorts PortVar
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports v2 updatePort
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports v2 updatePort
 //
 // 更新应用端口信息(旧)
 //
@@ -1318,14 +1330,14 @@ func (t *TenantStruct) Ports(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var ports api_model.ServicePorts
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ports, nil); !ok {
 		return
 	}
-	if err := handler.GetServiceManager().PortVar("update", tenantID, serviceID, &ports, 0); err != nil {
+	if err := handler.GetServiceManager().PortVar("update", tenantEnvID, serviceID, &ports, 0); err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
 	}
@@ -1333,7 +1345,7 @@ func (t *TenantStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddPortVar PortVar
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/ports v2 addPort
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports v2 addPort
 //
 // 增加应用端口,默认关闭对内和对外选项，需要开启使用相应接口
 //
@@ -1354,14 +1366,14 @@ func (t *TenantStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) addPortController(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) addPortController(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var ports api_model.ServicePorts
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ports, nil); !ok {
 		return
 	}
-	if err := handler.GetServiceManager().CreatePorts(tenantID, serviceID, &ports); err != nil {
+	if err := handler.GetServiceManager().CreatePorts(tenantEnvID, serviceID, &ports); err != nil {
 		logrus.Errorf("add port error. %v", err)
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -1370,7 +1382,7 @@ func (t *TenantStruct) addPortController(w http.ResponseWriter, r *http.Request)
 }
 
 // UpdatePortVar PortVar
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port} v2 updatePort
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port} v2 updatePort
 //
 // 更新应用端口信息
 //
@@ -1391,8 +1403,8 @@ func (t *TenantStruct) addPortController(w http.ResponseWriter, r *http.Request)
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) updatePortController(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	portStr := chi.URLParam(r, "port")
 	oldPort, err := strconv.Atoi(portStr)
@@ -1404,7 +1416,7 @@ func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Reque
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ports, nil); !ok {
 		return
 	}
-	if err := handler.GetServiceManager().PortVar("update", tenantID, serviceID, &ports, oldPort); err != nil {
+	if err := handler.GetServiceManager().PortVar("update", tenantEnvID, serviceID, &ports, oldPort); err != nil {
 		logrus.Errorf("update port error. %v", err)
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -1413,7 +1425,7 @@ func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Reque
 }
 
 // DeletePortVar PortVar
-// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port} v2 deletePort
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port} v2 deletePort
 //
 // 删除端口变量
 //
@@ -1434,8 +1446,8 @@ func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Reque
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) deletePortController(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	portStr := chi.URLParam(r, "port")
 	oldPort, err := strconv.Atoi(portStr)
@@ -1443,14 +1455,14 @@ func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Reque
 		httputil.ReturnError(r, w, 400, "port must be a number")
 		return
 	}
-	var port = &api_model.TenantServicesPort{
-		TenantID:      tenantID,
+	var port = &api_model.TenantEnvServicesPort{
+		TenantEnvID:   tenantEnvID,
 		ServiceID:     serviceID,
 		ContainerPort: oldPort,
 	}
 	var ports api_model.ServicePorts
 	ports.Port = append(ports.Port, port)
-	if err := handler.GetServiceManager().PortVar("delete", tenantID, serviceID, &ports, oldPort); err != nil {
+	if err := handler.GetServiceManager().PortVar("delete", tenantEnvID, serviceID, &ports, oldPort); err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			httputil.ReturnError(r, w, 404, "port can not found")
 			return
@@ -1462,7 +1474,7 @@ func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Reque
 }
 
 // PortOuterController 开关端口对外服务
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/outer v2 PortOuterController
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port}/outer v2 PortOuterController
 //
 // 开关端口对外服务，应用无需重启自动生效
 //
@@ -1483,14 +1495,14 @@ func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Reque
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) PortOuterController(w http.ResponseWriter, r *http.Request) {
 	var data api_model.ServicePortInnerOrOuter
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &(data.Body), nil) {
 		return
 	}
 
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
 	if dbmodel.ServiceKind(service.Kind) == dbmodel.ServiceKindThirdParty {
 		endpoints, err := db.GetManager().EndpointsDao().List(serviceID)
 		if err != nil {
@@ -1507,14 +1519,14 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	portStr := chi.URLParam(r, "port")
 	containerPort, err := strconv.Atoi(portStr)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, "port must be a number")
 		return
 	}
-	vsPort, protocol, errV := handler.GetServiceManager().PortOuter(tenantName, serviceID, containerPort, &data)
+	vsPort, protocol, errV := handler.GetServiceManager().PortOuter(tenantEnvName, serviceID, containerPort, &data)
 	if errV != nil {
 		if strings.HasSuffix(errV.Error(), gorm.ErrRecordNotFound.Error()) {
 			httputil.ReturnError(r, w, 404, errV.Error())
@@ -1555,7 +1567,7 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 }
 
 // PortInnerController 开关端口对内服务
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/inner v2 PortInnerController
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/ports/{port}/inner v2 PortInnerController
 //
 // 开关对内服务，应用无需重启，自动生效
 //
@@ -1576,20 +1588,20 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) PortInnerController(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) PortInnerController(w http.ResponseWriter, r *http.Request) {
 	var data api_model.ServicePortInnerOrOuter
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &(data.Body), nil) {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	portStr := chi.URLParam(r, "port")
 	containerPort, err := strconv.Atoi(portStr)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, "port must be a number")
 		return
 	}
-	if err := handler.GetServiceManager().PortInner(tenantName, serviceID, data.Body.Operation, containerPort); err != nil {
+	if err := handler.GetServiceManager().PortInner(tenantEnvName, serviceID, data.Body.Operation, containerPort); err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			httputil.ReturnError(r, w, 404, "service port "+err.Error())
 			return
@@ -1615,7 +1627,7 @@ func (t *TenantStruct) PortInnerController(w http.ResponseWriter, r *http.Reques
 }
 
 // Pods pods
-// swagger:operation GET  /v2/tenants/{tenant_name}/services/{service_alias}/pods v2 getPodsInfo
+// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/pods v2 getPodsInfo
 //
 // 获取pods信息
 //
@@ -1636,7 +1648,7 @@ func (t *TenantStruct) PortInnerController(w http.ResponseWriter, r *http.Reques
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) Pods(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Pods(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	pods, err := handler.GetServiceManager().GetPods(serviceID)
 	if err != nil {
@@ -1653,7 +1665,7 @@ func (t *TenantStruct) Pods(w http.ResponseWriter, r *http.Request) {
 }
 
 // Probe probe
-func (t *TenantStruct) Probe(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Probe(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
 		t.UpdateProbe(w, r)
@@ -1665,7 +1677,7 @@ func (t *TenantStruct) Probe(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddProbe add probe
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/probe v2 addProbe
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/probe v2 addProbe
 //
 // 增加应用探针
 //
@@ -1686,13 +1698,13 @@ func (t *TenantStruct) Probe(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var tsp api_model.ServiceProbe
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsp, nil); !ok {
 		return
 	}
-	var tspD dbmodel.TenantServiceProbe
+	var tspD dbmodel.TenantEnvServiceProbe
 	tspD.ServiceID = serviceID
 	tspD.Cmd = tsp.Cmd
 	tspD.FailureThreshold = tsp.FailureThreshold
@@ -1717,7 +1729,7 @@ func (t *TenantStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateProbe update probe
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/probe v2 updateProbe
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/probe v2 updateProbe
 //
 // 更新应用探针信息, *注意此处为全量更新
 //
@@ -1738,13 +1750,13 @@ func (t *TenantStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) UpdateProbe(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) UpdateProbe(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var tsp api_model.ServiceProbe
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsp, nil); !ok {
 		return
 	}
-	var tspD dbmodel.TenantServiceProbe
+	var tspD dbmodel.TenantEnvServiceProbe
 	tspD.ServiceID = serviceID
 	tspD.Cmd = tsp.Cmd
 	tspD.FailureThreshold = tsp.FailureThreshold
@@ -1772,7 +1784,7 @@ func (t *TenantStruct) UpdateProbe(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteProbe delete probe
-// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/probe v2 deleteProbe
+// swagger:operation DELETE /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/probe v2 deleteProbe
 //
 // 删除应用探针
 //
@@ -1793,13 +1805,13 @@ func (t *TenantStruct) UpdateProbe(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) DeleteProbe(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) DeleteProbe(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var tsp api_model.ServiceProbe
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsp, nil); !ok {
 		return
 	}
-	var tspD dbmodel.TenantServiceProbe
+	var tspD dbmodel.TenantEnvServiceProbe
 	tspD.ServiceID = serviceID
 	tspD.ProbeID = tsp.ProbeID
 	//注意端口问题
@@ -1815,7 +1827,7 @@ func (t *TenantStruct) DeleteProbe(w http.ResponseWriter, r *http.Request) {
 }
 
 // Port Port
-func (t *TenantStruct) Port(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) Port(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
 		t.UpdatePort(w, r)
@@ -1827,32 +1839,32 @@ func (t *TenantStruct) Port(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddPort add port
-func (t *TenantStruct) AddPort(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) AddPort(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeletePort delete port
-func (t *TenantStruct) DeletePort(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) DeletePort(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdatePort Update port
-func (t *TenantStruct) UpdatePort(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) UpdatePort(w http.ResponseWriter, r *http.Request) {
 }
 
-// SingleTenantResources SingleTenantResources
-// swagger:operation GET /v2/tenants/{tenant_name}/resources v2 singletenantResources
+// SingleTenantEnvResources SingleTenantEnvResources
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/resources v2 singletenantEnvResources
 //
 // 指定租户资源使用情况
 //
-// get tenant resources
+// get tenant env resources
 //
 // ---
 // produces:
 // - application/json
 // - application/xml
 // parameters:
-//   - name: tenant_name
+//   - name: tenant_env_name
 //     in: path
-//     description: tenant name
+//     description: tenant env name
 //     required: true
 //     type: string
 //
@@ -1862,10 +1874,10 @@ func (t *TenantStruct) UpdatePort(w http.ResponseWriter, r *http.Request) {
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+func (t *TenantEnvStruct) SingleTenantEnvResources(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	//11ms
-	services, err := handler.GetServiceManager().GetService(tenantID)
+	services, err := handler.GetServiceManager().GetService(tenantEnvID)
 	if err != nil {
 		msg := httputil.ResponseBody{
 			Msg: fmt.Sprintf("get service error, %v", err),
@@ -1873,14 +1885,14 @@ func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Requ
 		httputil.Return(r, w, 500, msg)
 	}
 	//19ms
-	statsInfo, _ := handler.GetTenantManager().StatsMemCPU(services)
+	statsInfo, _ := handler.GetTenantEnvManager().StatsMemCPU(services)
 	//900ms
-	statsInfo.UUID = tenantID
+	statsInfo.UUID = tenantEnvID
 	httputil.ReturnSuccess(r, w, statsInfo)
 }
 
 // GetSupportProtocols GetSupportProtocols
-// swagger:operation GET /v2/tenants/{tenant_name}/protocols v2 getSupportProtocols
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/protocols v2 getSupportProtocols
 //
 // 获取当前数据中心支持的protocols
 //
@@ -1891,9 +1903,9 @@ func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Requ
 // - application/json
 // - application/xml
 // parameters:
-//   - name: tenant_name
+//   - name: tenant_env_name
 //     in: path
-//     description: tenant name
+//     description: tenant env name
 //     required: true
 //     type: string
 //
@@ -1903,8 +1915,8 @@ func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Requ
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Request) {
-	rps, err := handler.GetTenantManager().GetProtocols()
+func (t *TenantEnvStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Request) {
+	rps, err := handler.GetTenantEnvManager().GetProtocols()
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -1913,7 +1925,7 @@ func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Reques
 }
 
 // TransPlugins transPlugins
-// swagger:operation POST /v2/tenants/{tenant_name}/transplugins v2 transPlugins
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/transplugins v2 transPlugins
 //
 // 安装云帮默认plugins
 //
@@ -1924,9 +1936,9 @@ func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Reques
 // - application/json
 // - application/xml
 // parameters:
-//   - name: tenant_name
+//   - name: tenant_env_name
 //     in: path
-//     description: tenant name
+//     description: tenant env name
 //     required: true
 //     type: string
 //
@@ -1936,16 +1948,16 @@ func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Reques
 //	  schema:
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
-func (t *TenantStruct) TransPlugins(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) TransPlugins(w http.ResponseWriter, r *http.Request) {
 	var tps api_model.TransPlugins
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tps.Body, nil)
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	rc := make(map[string]string)
-	err := handler.GetTenantManager().TransPlugins(tenantID, tenantName, tps.Body.FromTenantName, tps.Body.PluginsID)
+	err := handler.GetTenantEnvManager().TransPlugins(tenantEnvID, tenantEnvName, tps.Body.FromTenantEnvName, tps.Body.PluginsID)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -1955,15 +1967,15 @@ func (t *TenantStruct) TransPlugins(w http.ResponseWriter, r *http.Request) {
 }
 
 // CheckResourceName checks the resource name.
-func (t *TenantStruct) CheckResourceName(w http.ResponseWriter, r *http.Request) {
+func (t *TenantEnvStruct) CheckResourceName(w http.ResponseWriter, r *http.Request) {
 	var req model.CheckResourceNameReq
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil) {
 		return
 	}
 
-	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 
-	res, err := handler.GetTenantManager().CheckResourceName(r.Context(), tenant.UUID, &req)
+	res, err := handler.GetTenantEnvManager().CheckResourceName(r.Context(), tenantEnv.UUID, &req)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return

@@ -23,7 +23,7 @@ import (
 	"github.com/wutong-paas/wutong/node/api/controller"
 )
 
-//DisconverRoutes envoy discover api
+// DisconverRoutes envoy discover api
 // v1 api will abandoned in 5.2
 func DisconverRoutes() chi.Router {
 	r := chi.NewRouter()
@@ -36,26 +36,26 @@ func DisconverRoutes() chi.Router {
 	return r
 }
 
-//ListenersRoutes listeners routes lds
-//GET /v1/listeners/(string: service_cluster)/(string: service_node)
+// ListenersRoutes listeners routes lds
+// GET /v1/listeners/(string: service_cluster)/(string: service_node)
 func ListenersRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/ping", controller.Ping)
-	r.Get("/{tenant_service}/{service_nodes}", controller.ListenerDiscover)
+	r.Get("/{tenant_env_service}/{service_nodes}", controller.ListenerDiscover)
 	return r
 }
 
-//ClustersRoutes cds
-//GET /v1/clusters/(string: service_cluster)/(string: service_node)
+// ClustersRoutes cds
+// GET /v1/clusters/(string: service_cluster)/(string: service_node)
 func ClustersRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/ping", controller.Ping)
-	r.Get("/{tenant_service}/{service_nodes}", controller.ClusterDiscover)
+	r.Get("/{tenant_env_service}/{service_nodes}", controller.ClusterDiscover)
 	return r
 }
 
-//RegistrationRoutes sds
-//GET /v1/registration/(string: service_name)
+// RegistrationRoutes sds
+// GET /v1/registration/(string: service_name)
 func RegistrationRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/ping", controller.Ping)
@@ -63,19 +63,19 @@ func RegistrationRoutes() chi.Router {
 	return r
 }
 
-//RoutesRouters rds
-//GET /v1/routes/(string: route_config_name)/(string: service_cluster)/(string: service_node)
+// RoutesRouters rds
+// GET /v1/routes/(string: route_config_name)/(string: service_cluster)/(string: service_node)
 func RoutesRouters() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/ping", controller.Ping)
-	r.Get("/{route_config}/{tenant_service}/{service_nodes}", controller.RoutesDiscover)
+	r.Get("/{route_config}/{tenant_env_service}/{service_nodes}", controller.RoutesDiscover)
 	return r
 }
 
-//SourcesRoutes SourcesRoutes
-//GET /v1/resources/(string: tenant_id)/(string: service_alias)/(string: plugin_id)
+// SourcesRoutes SourcesRoutes
+// GET /v1/resources/(string: tenant_env_id)/(string: service_alias)/(string: plugin_id)
 func SourcesRoutes() chi.Router {
 	r := chi.NewRouter()
-	r.Get("/{tenant_id}/{service_alias}/{plugin_id}", controller.PluginResourcesConfig)
+	r.Get("/{tenant_env_id}/{service_alias}/{plugin_id}", controller.PluginResourcesConfig)
 	return r
 }

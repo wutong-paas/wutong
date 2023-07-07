@@ -7,13 +7,13 @@ import (
 // AppRestoreHandler defines handler methods to restore app.
 // app means market service.
 type AppRestoreHandler interface {
-	RestoreEnvs(tenantID, serviceID string, req *apimodel.RestoreEnvsReq) error
-	RestorePorts(tenantID, serviceID string, req *apimodel.RestorePortsReq) error
-	RestoreVolumes(tenantID, serviceID string, req *apimodel.RestoreVolumesReq) error
+	RestoreEnvs(tenantEnvID, serviceID string, req *apimodel.RestoreEnvsReq) error
+	RestorePorts(tenantEnvID, serviceID string, req *apimodel.RestorePortsReq) error
+	RestoreVolumes(tenantEnvID, serviceID string, req *apimodel.RestoreVolumesReq) error
 	RestoreProbe(serviceID string, req *apimodel.ServiceProbe) error
-	RestoreDeps(tenantID, serviceID string, req *apimodel.RestoreDepsReq) error
-	RestoreDepVols(tenantID, serviceID string, req *apimodel.RestoreDepVolsReq) error
-	RestorePlugins(tenantID, serviceID string, req *apimodel.RestorePluginsReq) error
+	RestoreDeps(tenantEnvID, serviceID string, req *apimodel.RestoreDepsReq) error
+	RestoreDepVols(tenantEnvID, serviceID string, req *apimodel.RestoreDepVolsReq) error
+	RestorePlugins(tenantEnvID, serviceID string, req *apimodel.RestorePluginsReq) error
 }
 
 // NewAppRestoreHandler creates a new AppRestoreHandler.

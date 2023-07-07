@@ -130,7 +130,7 @@ func ImagePull(client *containerd.Client, ref string, username, password string,
 		return nil, err
 	}
 	<-progress
-	printLog(logger, "info", fmt.Sprintf("Success Pull Image：%s", image), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("Success Pull Image: %s", image), map[string]string{"step": "pullimage"})
 	return &img, nil
 }
 
@@ -147,8 +147,8 @@ func ImageTag(containerdClient *containerd.Client, source, target string, logger
 		return err
 	}
 	targetImage := targetNamed.String()
-	logrus.Infof(fmt.Sprintf("change image tag：%s -> %s", srcImage, targetImage))
-	printLog(logger, "info", fmt.Sprintf("change image tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
+	logrus.Infof(fmt.Sprintf("change image tag: %s -> %s", srcImage, targetImage))
+	printLog(logger, "info", fmt.Sprintf("change image tag: %s -> %s", source, target), map[string]string{"step": "changetag"})
 	ctx := namespaces.WithNamespace(context.Background(), Namespace)
 	imageService := containerdClient.ImageService()
 	image, err := imageService.Get(ctx, srcImage)
@@ -241,7 +241,7 @@ func ImageNameWithNamespaceHandle(imageName string) *model.ImageName {
 // timeout minutes of the unit
 // Deprecated: use sources.ImageClient.ImagePush instead
 func ImagePush(client *containerd.Client, rawRef, user, pass string, logger event.Logger, timeout int) error {
-	printLog(logger, "info", fmt.Sprintf("start push image：%s", rawRef), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("start push image: %s", rawRef), map[string]string{"step": "pushimage"})
 	named, err := refdocker.ParseDockerRef(rawRef)
 	if err != nil {
 		return err
@@ -326,8 +326,13 @@ func ImagePush(client *containerd.Client, rawRef, user, pass string, logger even
 			}
 		}
 	})
+	waitErr := eg.Wait()
+	if waitErr != nil {
+		printLog(logger, "error", fmt.Sprintf("push image: %s failure", image), map[string]string{"step": "pushimage", "status": "failure"})
+		return waitErr
+	}
 	// create a container
-	printLog(logger, "info", fmt.Sprintf("success push image：%s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("success push image: %s", image), map[string]string{"step": "pushimage"})
 	return nil
 }
 
@@ -713,7 +718,7 @@ func printLog(logger event.Logger, level, msg string, info map[string]string) {
 func CreateImageName(ServiceID, DeployVersion string) string {
 	imageName := strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, ServiceID, DeployVersion))
 	logrus.Info("imageName:", imageName)
-	component, err := db.GetManager().TenantServiceDao().GetServiceByID(ServiceID)
+	component, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(ServiceID)
 	if err != nil {
 		logrus.Errorf("image build get service by id error: %v", err)
 		return imageName
@@ -723,12 +728,12 @@ func CreateImageName(ServiceID, DeployVersion string) string {
 		logrus.Errorf("image build get app by serviceid error: %v", err)
 		return imageName
 	}
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(component.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(component.TenantEnvID)
 	if err != nil {
-		logrus.Errorf("image build get tenant by uuid error: %v", err)
+		logrus.Errorf("image build get tenant env by uuid error: %v", err)
 		return imageName
 	}
-	workloadName := fmt.Sprintf("%s-%s-%s", tenant.Namespace, app.K8sApp, component.K8sComponentName)
+	workloadName := fmt.Sprintf("%s-%s-%s", tenantEnv.Namespace, app.K8sApp, component.K8sComponentName)
 	return strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, workloadName, DeployVersion))
 }
 
@@ -797,7 +802,7 @@ func CreateVolumesAndMounts(contextDir, buildType string) (volumes []corev1.Volu
 			Name: "run-build",
 			VolumeSource: corev1.VolumeSource{
 				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: "wt-cpt-grdata",
+					ClaimName: "wt-cpt-wtdata",
 				},
 			},
 		}
@@ -816,6 +821,7 @@ func WaitingComplete(reChan *channels.RingChannel) (err error) {
 	var logComplete = false
 	var jobComplete = false
 	timeOut := time.NewTimer(time.Minute * 60)
+	defer timeOut.Stop()
 	for {
 		select {
 		case <-timeOut.C:

@@ -27,12 +27,14 @@ func (h *HorizontalPodAutoscalers) Migrate(namespace string, seletcor labels.Sel
 func (h *HorizontalPodAutoscalers) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for i := 0; i < len(h.HorizontalPodAutoscalers); i++ {
 		labels := map[string]string{
-			"app":           h.HorizontalPodAutoscalers[i].Labels["app"],
-			"app_id":        h.HorizontalPodAutoscalers[i].Labels["app_id"],
-			"service_alias": h.HorizontalPodAutoscalers[i].Labels["service_alias"],
-			"service_id":    h.HorizontalPodAutoscalers[i].Labels["service_id"],
-			"tenant_id":     h.HorizontalPodAutoscalers[i].Labels["tenant_id"],
-			"tenant_name":   h.HorizontalPodAutoscalers[i].Labels["tenant_name"],
+			"app":             h.HorizontalPodAutoscalers[i].Labels["app"],
+			"app_id":          h.HorizontalPodAutoscalers[i].Labels["app_id"],
+			"service_alias":   h.HorizontalPodAutoscalers[i].Labels["service_alias"],
+			"service_id":      h.HorizontalPodAutoscalers[i].Labels["service_id"],
+			"tenant_id":       h.HorizontalPodAutoscalers[i].Labels["tenant_id"],
+			"tenant_name":     h.HorizontalPodAutoscalers[i].Labels["tenant_name"],
+			"tenant_env_id":   h.HorizontalPodAutoscalers[i].Labels["tenant_env_id"],
+			"tenant_env_name": h.HorizontalPodAutoscalers[i].Labels["tenant_env_name"],
 		}
 		if h.HorizontalPodAutoscalers[i] != nil {
 			h.HorizontalPodAutoscalers[i].APIVersion = "autoscaling/v1"

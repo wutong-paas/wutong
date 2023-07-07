@@ -20,16 +20,12 @@ package option
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"path"
 	"time"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/namespaces"
 	client "github.com/coreos/etcd/clientv3"
-	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/wutong-paas/wutong/builder/sources"
@@ -42,14 +38,13 @@ import (
 )
 
 var (
-	confFile = flag.String("conf",
-		"conf/files/base.json", "config file path")
+	// confFile = flag.String("conf", "conf/files/base.json", "config file path")
 	//Config config
 	Config      = new(Conf)
 	initialized bool
 
-	watcher  *fsnotify.Watcher
-	exitChan = make(chan struct{})
+	// watcher  *fsnotify.Watcher
+	// exitChan = make(chan struct{})
 )
 
 // Init  init config
@@ -136,6 +131,7 @@ type Conf struct {
 	ImageRepositoryHost string
 	GatewayVIP          string
 	HostsFile           string
+	EnableDebugPprof    bool
 }
 
 // StatsdConfig StatsdConfig
@@ -189,8 +185,6 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&a.AutoScheduler, "auto-scheduler", true, "Whether auto set node unscheduler where current node is unhealth")
 	fs.BoolVar(&a.EnableCollectLog, "enabel-collect-log", true, "Whether to collect container logs")
 	fs.DurationVar(&a.AutoUnschedulerUnHealthDuration, "autounscheduler-unhealthy-dura", 5*time.Minute, "Node unhealthy duration, after the automatic offline,if set 0,disable auto handle unscheduler.default is 5 Minute")
-	fs.StringVar(&a.LicPath, "lic-path", "/opt/wutong/etc/license/license.yb", "the license path of the enterprise version.")
-	fs.StringVar(&a.LicSoPath, "lic-so-path", "/opt/wutong/etc/license/license.so", "Dynamic library file path for parsing the license.")
 	fs.BoolVar(&a.EnableImageGC, "enable-image-gc", true, "The trigger of image garbage collection.")
 	fs.DurationVar(&a.ImageMinimumGCAge, "minimum-image-ttl-duration", 2*time.Hour, "Minimum age for an unused image before it is garbage collected.  Examples: '300ms', '10s' or '2h45m'.")
 	fs.DurationVar(&a.ImageGCPeriod, "image-gc-period", 5*time.Minute, "ImageGCPeriod is the period for performing image garbage collection.  Examples: '10s', '5m' or '2h45m'.")
@@ -202,6 +196,7 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.HostsFile, "hostsfile", "/newetc/hosts", "/etc/hosts mapped path in the container. eg. /etc/hosts:/tmp/hosts. Do not set hostsfile to /etc/hosts")
 	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
 	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.RuntimeEndpointDocker, "container runtime endpoint")
+	fs.BoolVar(&a.EnableDebugPprof, "enable-debug-pprof", false, "enable debug pprof")
 }
 
 // SetLog 设置log
@@ -226,20 +221,20 @@ func (a *Conf) SetLog() {
 	}
 }
 
-func newClient(namespace, address string, opts ...containerd.ClientOpt) (*containerd.Client, context.Context, context.CancelFunc, error) {
-	ctx := namespaces.WithNamespace(context.Background(), namespace)
-	client, err := containerd.New(address, opts...)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithCancel(ctx)
-	return client, ctx, cancel, nil
-}
+// func newClient(namespace, address string, opts ...containerd.ClientOpt) (*containerd.Client, context.Context, context.CancelFunc, error) {
+// 	ctx := namespaces.WithNamespace(context.Background(), namespace)
+// 	client, err := containerd.New(address, opts...)
+// 	if err != nil {
+// 		return nil, nil, nil, err
+// 	}
+// 	var cancel context.CancelFunc
+// 	ctx, cancel = context.WithCancel(ctx)
+// 	return client, ctx, cancel, nil
+// }
 
 // ParseClient handle config and create some api
 func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientArgs) (err error) {
-	logrus.Infof("begin create container image client, runtime [%s] runtime endpoint [%s]", a.ContainerRuntime, a.RuntimeEndpoint, a.EtcdEndpoints)
+	logrus.Infof("begin create container image client, runtime [%s] runtime endpoint [%s]", a.ContainerRuntime, a.RuntimeEndpoint)
 	containerImageCli, err := sources.NewContainerImageClient(a.ContainerRuntime, a.RuntimeEndpoint, time.Second*3)
 	if err != nil {
 		logrus.Errorf("new client failed %v", err)
@@ -258,6 +253,12 @@ func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientA
 		time.Sleep(time.Second * 3)
 	}
 	logrus.Infof("create etcd client success")
+
+	// set defult container runtime
+	if a.ContainerRuntime == "" {
+		a.ContainerRuntime = sources.ContainerRuntimeDocker
+		a.RuntimeEndpoint = sources.RuntimeEndpointDocker
+	}
 	return nil
 }
 

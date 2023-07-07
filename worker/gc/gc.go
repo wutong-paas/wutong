@@ -70,7 +70,7 @@ func (g *GarbageCollector) DelLogFile(serviceGCReq model.ServiceGCTaskBody) {
 // DelVolumeData -
 func (g *GarbageCollector) DelVolumeData(serviceGCReq model.ServiceGCTaskBody) {
 	f := func(prefix string) {
-		dir := path.Join(prefix, fmt.Sprintf("tenant/%s/service/%s", serviceGCReq.TenantID, serviceGCReq.ServiceID))
+		dir := path.Join(prefix, fmt.Sprintf("tenantEnv/%s/service/%s", serviceGCReq.TenantEnvID, serviceGCReq.ServiceID))
 		logrus.Infof("volume data. delete %s", dir)
 		if err := os.RemoveAll(dir); err != nil {
 			logrus.Warningf("dir: %s; remove volume data: %v", dir, err)
@@ -84,13 +84,13 @@ func (g *GarbageCollector) DelPvPvcByServiceID(serviceGCReq model.ServiceGCTaskB
 	logrus.Infof("service_id: %s", serviceGCReq.ServiceID)
 	deleteOpts := metav1.DeleteOptions{}
 	listOpts := g.listOptionsServiceID(serviceGCReq.ServiceID)
-	namespace := serviceGCReq.TenantID
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(serviceGCReq.TenantID)
+	namespace := serviceGCReq.TenantEnvID
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(serviceGCReq.TenantEnvID)
 	if err != nil {
-		logrus.Warningf("tenant id: %s; get tenant before delete a collection for PV: %v", serviceGCReq.TenantID, err)
+		logrus.Warningf("tenant env id: %s; get tenant env before delete a collection for PV: %v", serviceGCReq.TenantEnvID, err)
 	}
-	if tenant != nil {
-		namespace = tenant.Namespace
+	if tenantEnv != nil {
+		namespace = tenantEnv.Namespace
 	}
 	if err := g.clientset.CoreV1().PersistentVolumes().DeleteCollection(context.Background(), deleteOpts, listOpts); err != nil {
 		logrus.Warningf("service id: %s; delete a collection for PV: %v", serviceGCReq.ServiceID, err)
@@ -105,13 +105,13 @@ func (g *GarbageCollector) DelPvPvcByServiceID(serviceGCReq model.ServiceGCTaskB
 func (g *GarbageCollector) DelKubernetesObjects(serviceGCReq model.ServiceGCTaskBody) {
 	deleteOpts := metav1.DeleteOptions{}
 	listOpts := g.listOptionsServiceID(serviceGCReq.ServiceID)
-	namespace := serviceGCReq.TenantID
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(serviceGCReq.TenantID)
+	namespace := serviceGCReq.TenantEnvID
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(serviceGCReq.TenantEnvID)
 	if err != nil {
-		logrus.Warningf("[DelKubernetesObjects] get tenant(%s): %v", serviceGCReq.TenantID, err)
+		logrus.Warningf("[DelKubernetesObjects] get tenantEnv(%s): %v", serviceGCReq.TenantEnvID, err)
 	}
-	if tenant != nil {
-		namespace = tenant.Namespace
+	if tenantEnv != nil {
+		namespace = tenantEnv.Namespace
 	}
 	if err := g.clientset.AppsV1().Deployments(namespace).DeleteCollection(context.Background(), deleteOpts, listOpts); err != nil {
 		logrus.Warningf("[DelKubernetesObjects] delete deployments(%s): %v", serviceGCReq.ServiceID, err)

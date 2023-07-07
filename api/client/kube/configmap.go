@@ -2,6 +2,7 @@ package kube
 
 import (
 	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/util/constants"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,12 +29,14 @@ func (c *ConfigMaps) Migrate(namespace string, seletcor labels.Selector) {
 func (c *ConfigMaps) Decorate(setting *api_model.KubeResourceCustomSetting) {
 	for i := 0; i < len(c.ConfigMaps); i++ {
 		labels := map[string]string{
-			"app":           c.ConfigMaps[i].Labels["app"],
-			"app_id":        c.ConfigMaps[i].Labels["app_id"],
-			"service_alias": c.ConfigMaps[i].Labels["service_alias"],
-			"service_id":    c.ConfigMaps[i].Labels["service_id"],
-			"tenant_id":     c.ConfigMaps[i].Labels["tenant_id"],
-			"tenant_name":   c.ConfigMaps[i].Labels["tenant_name"],
+			constants.ResourceAppNameLabel:       c.ConfigMaps[i].Labels[constants.ResourceAppNameLabel],
+			constants.ResourceAppIDLabel:         c.ConfigMaps[i].Labels[constants.ResourceAppIDLabel],
+			constants.ResourceServiceAliasLabel:  c.ConfigMaps[i].Labels[constants.ResourceServiceAliasLabel],
+			constants.ResourceServiceIDLabel:     c.ConfigMaps[i].Labels[constants.ResourceServiceIDLabel],
+			constants.ResourceTenantEnvIDLabel:   c.ConfigMaps[i].Labels[constants.ResourceTenantEnvIDLabel],
+			constants.ResourceTenantEnvNameLabel: c.ConfigMaps[i].Labels[constants.ResourceTenantEnvNameLabel],
+			constants.ResourceTenantIDLabel:      c.ConfigMaps[i].Labels[constants.ResourceTenantIDLabel],
+			constants.ResourceTenantNameLabel:    c.ConfigMaps[i].Labels[constants.ResourceTenantNameLabel],
 		}
 		if c.ConfigMaps[i] != nil {
 			c.ConfigMaps[i].APIVersion = "v1"

@@ -25,7 +25,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,14 +32,13 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/wutong-paas/wutong-oam/pkg/export"
 	"github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
-	ramv1alpha1 "github.com/wutong-paas/wutong-oam/pkg/ram/v1alpha1"
 	"github.com/wutong-paas/wutong/builder"
 	"github.com/wutong-paas/wutong/builder/sources"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/event"
 )
 
-var re = regexp.MustCompile(`\s`)
+// var re = regexp.MustCompile(`\s`)
 
 // ExportApp Export app to specified format(wutong-app or dockercompose)
 type ExportApp struct {
@@ -61,25 +59,24 @@ func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
 	logger := event.GetManager().GetLogger(eventID)
 	return &ExportApp{
-		Format:      gjson.GetBytes(in, "format").String(),
-		SourceDir:   gjson.GetBytes(in, "source_dir").String(),
-		Logger:      logger,
-		EventID:     eventID,
-		ImageClient: m.imageClient,
+		Format:        gjson.GetBytes(in, "format").String(),
+		SourceDir:     gjson.GetBytes(in, "source_dir").String(),
+		Logger:        logger,
+		EventID:       eventID,
+		ImageClient:   m.imageClient,
+		WithImageData: gjson.GetBytes(in, "with_image_data").Bool(),
 	}, nil
 }
 
 // Run Run
 func (i *ExportApp) Run(timeout time.Duration) error {
 	defer os.RemoveAll(i.SourceDir)
-	// disable Md5 checksum
-	// if ok := i.isLatest(); ok {
-	// 	i.updateStatus("success")
-	// 	return nil
-	// }
+
 	// Delete the old application group directory and then regenerate the application package
-	if err := i.CleanSourceDir(); err != nil {
-		return err
+	if i.Format != "helm_chart" && i.Format != "yaml" {
+		if err := i.CleanSourceDir(); err != nil {
+			return err
+		}
 	}
 
 	ram, err := i.parseRAM()
@@ -99,6 +96,27 @@ func (i *ExportApp) Run(timeout time.Duration) error {
 		re, err = i.exportDockerCompose(*ram)
 		if err != nil {
 			logrus.Errorf("export docker compose app package failure %s", err.Error())
+			i.updateStatus("failed", "")
+			return err
+		}
+	} else if i.Format == "slug" {
+		re, err = i.exportSlug(*ram)
+		if err != nil {
+			logrus.Errorf("export slug app package failure %s", err.Error())
+			i.updateStatus("failed", "")
+			return err
+		}
+	} else if i.Format == "helm_chart" {
+		re, err = i.exportHelmChart(*ram)
+		if err != nil {
+			logrus.Errorf("export helm chart package failure %s", err.Error())
+			i.updateStatus("failed", "")
+			return err
+		}
+	} else if i.Format == "yaml" {
+		re, err = i.exportK8sYaml(*ram)
+		if err != nil {
+			logrus.Errorf("export k8s yaml package failure %s", err.Error())
 			i.updateStatus("failed", "")
 			return err
 		}
@@ -171,6 +189,22 @@ func (i *ExportApp) exportSlug(ram v1alpha1.WutongApplicationConfig) (*export.Re
 	return slugExporter.Export()
 }
 
+func (i *ExportApp) exportHelmChart(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
+	helmChartExporter, err := export.New(export.HELM, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
+	return helmChartExporter.Export()
+}
+
+func (i *ExportApp) exportK8sYaml(ram v1alpha1.WutongApplicationConfig) (*export.Result, error) {
+	k8sYamlExporter, err := export.New(export.YAML, i.SourceDir, ram, i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), logrus.StandardLogger())
+	if err != nil {
+		return nil, err
+	}
+	return k8sYamlExporter.Export()
+}
+
 // Stop stop
 func (i *ExportApp) Stop() error {
 	return nil
@@ -184,27 +218,6 @@ func (i *ExportApp) Name() string {
 // GetLogger GetLogger
 func (i *ExportApp) GetLogger() event.Logger {
 	return i.Logger
-}
-
-// isLatest Returns true if the application is packaged and up to date
-func (i *ExportApp) isLatest() bool {
-	md5File := fmt.Sprintf("%s/metadata.json.md5", i.SourceDir)
-	if _, err := os.Stat(md5File); os.IsNotExist(err) {
-		logrus.Debug("The export app md5 file is not found: ", md5File)
-		return false
-	}
-	err := exec.Command("md5sum", "-c", md5File).Run()
-	if err != nil {
-		tarFile := i.SourceDir + ".tar"
-		if _, err := os.Stat(tarFile); os.IsNotExist(err) {
-			logrus.Debug("The export app tar file is not found. ")
-			return false
-		}
-		logrus.Info("The export app tar file is not latest.")
-		return false
-	}
-	logrus.Info("The export app tar file is latest.")
-	return true
 }
 
 // CleanSourceDir clean export dir
@@ -228,33 +241,20 @@ func (i *ExportApp) CleanSourceDir() error {
 
 	return nil
 }
-func (i *ExportApp) parseRAM() (*ramv1alpha1.WutongApplicationConfig, error) {
+func (i *ExportApp) parseRAM() (*v1alpha1.WutongApplicationConfig, error) {
 	data, err := ioutil.ReadFile(fmt.Sprintf("%s/metadata.json", i.SourceDir))
 	if err != nil {
 		i.Logger.Error("导出应用失败，没有找到应用信息", map[string]string{"step": "read-metadata", "status": "failure"})
 		logrus.Error("Failed to read metadata file: ", err)
 		return nil, err
 	}
-	var ram ramv1alpha1.WutongApplicationConfig
+	var ram v1alpha1.WutongApplicationConfig
 	if err := json.Unmarshal(data, &ram); err != nil {
 		return nil, err
 	}
 
-	// If WithImageData is false, then remove the value of ShareImage from components and plugins
-	if !i.WithImageData {
-		for i := range ram.Components {
-			if ram.Components[i].Image == "" {
-				ram.Components[i].Image = ram.Components[i].ShareImage
-			}
-			ram.Components[i].ShareImage = ""
-		}
-		for i := range ram.Plugins {
-			if ram.Plugins[i].Image == "" {
-				ram.Plugins[i].Image = ram.Plugins[i].ShareImage
-			}
-			ram.Plugins[i].ShareImage = ""
-		}
-	}
+	ram.WithImageData = i.WithImageData
+
 	return &ram, nil
 }
 

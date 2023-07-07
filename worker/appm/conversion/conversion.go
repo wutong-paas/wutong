@@ -33,36 +33,36 @@ import (
 func init() {
 	// core component conversion
 	// convert config group to env secrets
-	RegistConversion("TenantServiceConfigGroup", TenantServiceConfigGroup)
+	RegistConversion("TenantEnvServiceConfigGroup", TenantEnvServiceConfigGroup)
 	//step1 conv service pod base info
-	RegistConversion("TenantServiceVersion", TenantServiceVersion)
+	RegistConversion("TenantEnvServiceVersion", TenantEnvServiceVersion)
 	//step2 conv service plugin
-	RegistConversion("TenantServicePlugin", TenantServicePlugin)
+	RegistConversion("TenantEnvServicePlugin", TenantEnvServicePlugin)
 	//step3 -
-	RegistConversion("TenantServiceAutoscaler", TenantServiceAutoscaler)
+	RegistConversion("TenantEnvServiceAutoscaler", TenantEnvServiceAutoscaler)
 	//step4 conv service monitor
-	RegistConversion("TenantServiceMonitor", TenantServiceMonitor)
+	RegistConversion("TenantEnvServiceMonitor", TenantEnvServiceMonitor)
 }
 
-//Conversion conversion function
-//Any application attribute implementation is similarly injected
+// Conversion conversion function
+// Any application attribute implementation is similarly injected
 type Conversion func(*v1.AppService, db.Manager) error
 
-//CacheConversion conversion cache struct
+// CacheConversion conversion cache struct
 type CacheConversion struct {
 	Name       string
 	Conversion Conversion
 }
 
-//conversionList conversion function list
+// conversionList conversion function list
 var conversionList []CacheConversion
 
-//RegistConversion regist conversion function list
+// RegistConversion regist conversion function list
 func RegistConversion(name string, fun Conversion) {
 	conversionList = append(conversionList, CacheConversion{Name: name, Conversion: fun})
 }
 
-//InitAppService init a app service
+// InitAppService init a app service
 func InitAppService(dbmanager db.Manager, serviceID string, configs map[string]string, enableConversionList ...string) (*v1.AppService, error) {
 	if configs == nil {
 		configs = make(map[string]string)
@@ -86,12 +86,12 @@ func InitAppService(dbmanager db.Manager, serviceID string, configs map[string]s
 		appService.AppServiceBase.GovernanceMode = app.GovernanceMode
 		appService.AppServiceBase.K8sApp = app.K8sApp
 	}
-	if err := TenantServiceBase(appService, dbmanager); err != nil {
+	if err := TenantEnvServiceBase(appService, dbmanager); err != nil {
 		logrus.Errorf("init component base config failure %s", err.Error())
 		return nil, err
 	}
 	// all component can regist server.
-	if err := TenantServiceRegist(appService, dbmanager); err != nil {
+	if err := TenantEnvServiceRegist(appService, dbmanager); err != nil {
 		logrus.Errorf("init component server regist config failure %s", err.Error())
 		return nil, err
 	}
@@ -112,8 +112,8 @@ func InitAppService(dbmanager db.Manager, serviceID string, configs map[string]s
 	return appService, nil
 }
 
-//InitCacheAppService init cache app service.
-//if store manager receive a kube model belong with service and not find in store,will create
+// InitCacheAppService init cache app service.
+// if store manager receive a kube model belong with service and not find in store,will create
 func InitCacheAppService(dbm db.Manager, serviceID, creatorID string) (*v1.AppService, error) {
 	appService := &v1.AppService{
 		AppServiceBase: v1.AppServiceBase{
@@ -135,15 +135,15 @@ func InitCacheAppService(dbm db.Manager, serviceID, creatorID string) (*v1.AppSe
 		appService.AppServiceBase.K8sApp = app.K8sApp
 	}
 
-	if err := TenantServiceBase(appService, dbm); err != nil {
+	if err := TenantEnvServiceBase(appService, dbm); err != nil {
 		return nil, err
 	}
-	svc, err := dbm.TenantServiceDao().GetServiceByID(serviceID)
+	svc, err := dbm.TenantEnvServiceDao().GetServiceByID(serviceID)
 	if err != nil {
 		return nil, err
 	}
 	if svc.Kind == model.ServiceKindThirdParty.String() {
-		if err := TenantServiceRegist(appService, dbm); err != nil {
+		if err := TenantEnvServiceRegist(appService, dbm); err != nil {
 			return nil, err
 		}
 	}

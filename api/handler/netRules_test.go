@@ -48,8 +48,8 @@ func TestStoreETCD(t *testing.T) {
 	}
 
 	srs := &api_model.SetNetDownStreamRuleStruct{
-		TenantName:   "123",
-		ServiceAlias: "wttest12",
+		TenantEnvName: "123",
+		ServiceAlias:  "wttest12",
 	}
 	srs.Body.DestService = "redis"
 	srs.Body.DestServiceAlias = "wttest34"
@@ -57,14 +57,14 @@ func TestStoreETCD(t *testing.T) {
 	srs.Body.Protocol = "tcp"
 	srs.Body.Rules = rules
 
-	tenantID := "tenantid1b50sfadfadfafadfadfadf"
+	tenantEnvID := "tenantEnvid1b50sfadfadfafadfadfadf"
 
-	if err := nra.CreateDownStreamNetRules(tenantID, srs); err != nil {
+	if err := nra.CreateDownStreamNetRules(tenantEnvID, srs); err != nil {
 		t.Error(err)
 	}
 
 	k := fmt.Sprintf("/netRules/%s/%s/downstream/%s/%v",
-		tenantID, srs.ServiceAlias, srs.Body.DestServiceAlias, srs.Body.Port)
+		tenantEnvID, srs.ServiceAlias, srs.Body.DestServiceAlias, srs.Body.Port)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	v, err := cli.Get(ctx, k)
 	cancel()

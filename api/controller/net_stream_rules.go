@@ -27,8 +27,8 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//SetDownStreamRule 设置下游规则
-// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/net-rule/downstream v2 setNetDownStreamRuleStruct
+// SetDownStreamRule 设置下游规则
+// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/net-rule/downstream v2 setNetDownStreamRuleStruct
 //
 // 设置下游网络规则
 //
@@ -44,32 +44,33 @@ import (
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) SetDownStreamRule(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) SetDownStreamRule(w http.ResponseWriter, r *http.Request) {
 	var rs api_model.SetNetDownStreamRuleStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &rs.Body, nil)
 	if !ok {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
-	rs.TenantName = tenantName
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	rs.TenantEnvName = tenantEnvName
 	rs.ServiceAlias = serviceAlias
 	rs.Body.Rules.ServiceID = serviceID
-	if err := handler.GetRulesManager().CreateDownStreamNetRules(tenantID, &rs); err != nil {
+	if err := handler.GetRulesManager().CreateDownStreamNetRules(tenantEnvID, &rs); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GetDownStreamRule 获取下游规则
-// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/net-rule/downstream/{dest_service_alias}/{port} v2 getNetDownStreamRuleStruct
+// GetDownStreamRule 获取下游规则
+// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/net-rule/downstream/{dest_service_alias}/{port} v2 getNetDownStreamRuleStruct
 //
 // 获取下游网络规则
 //
@@ -85,18 +86,19 @@ func (t *TenantStruct) SetDownStreamRule(w http.ResponseWriter, r *http.Request)
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) GetDownStreamRule(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) GetDownStreamRule(w http.ResponseWriter, r *http.Request) {
 	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
 	destServiceAlias := r.Context().Value(ctxutil.ContextKey("dest_service_alias")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	port := r.Context().Value(ctxutil.ContextKey("port")).(string)
 
 	nrs, err := handler.GetRulesManager().GetDownStreamNetRule(
-		tenantID,
+		tenantEnvID,
 		serviceAlias,
 		destServiceAlias,
 		port)
@@ -107,11 +109,11 @@ func (t *TenantStruct) GetDownStreamRule(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, nrs)
 }
 
-//DeleteDownStreamRule 删除下游规则
-func (t *TenantStruct) DeleteDownStreamRule(w http.ResponseWriter, r *http.Request) {}
+// DeleteDownStreamRule 删除下游规则
+func (t *TenantEnvStruct) DeleteDownStreamRule(w http.ResponseWriter, r *http.Request) {}
 
-//UpdateDownStreamRule 更新下游规则
-// swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/net-rule/downstream/{dest_service_alias}/{port} v2 updateNetDownStreamRuleStruct
+// UpdateDownStreamRule 更新下游规则
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/net-rule/downstream/{dest_service_alias}/{port} v2 updateNetDownStreamRuleStruct
 //
 // 更新下游网络规则
 //
@@ -127,30 +129,31 @@ func (t *TenantStruct) DeleteDownStreamRule(w http.ResponseWriter, r *http.Reque
 // - application/xml
 //
 // responses:
-//   default:
-//     schema:
-//       "$ref": "#/responses/commandResponse"
-//     description: 统一返回格式
-func (t *TenantStruct) UpdateDownStreamRule(w http.ResponseWriter, r *http.Request) {
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) UpdateDownStreamRule(w http.ResponseWriter, r *http.Request) {
 	var urs api_model.UpdateNetDownStreamRuleStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &urs.Body, nil)
 	if !ok {
 		return
 	}
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantEnvName := r.Context().Value(ctxutil.ContextKey("tenant_env_name")).(string)
 	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
-	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	destServiceAlias := r.Context().Value(ctxutil.ContextKey("dest_service_alias")).(string)
-	port := r.Context().Value(ctxutil.ContextKey("tenant_id")).(int)
+	port := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(int)
 
 	urs.DestServiceAlias = destServiceAlias
 	urs.Port = port
 	urs.ServiceAlias = serviceAlias
-	urs.TenantName = tenantName
+	urs.TenantEnvName = tenantEnvName
 	urs.Body.Rules.ServiceID = serviceID
 
-	if err := handler.GetRulesManager().UpdateDownStreamNetRule(tenantID, &urs); err != nil {
+	if err := handler.GetRulesManager().UpdateDownStreamNetRule(tenantEnvID, &urs); err != nil {
 		err.Handle(r, w)
 		return
 	}

@@ -419,7 +419,7 @@ func (s *k8sStore) ListPool() ([]*v1.Pool, []*v1.Pool) {
 						Nodes: []*v1.Node{},
 					}
 					pool.Name = backend.name
-					// TODO: The tenant isolation
+					// TODO: The tenant env isolation
 					pool.Namespace = "default"
 					pool.UpstreamHashBy = backend.hashBy
 					pool.LoadBalancingType = v1.GetLoadBalancingType(backend.loadBalancingType)
@@ -447,7 +447,7 @@ func (s *k8sStore) ListPool() ([]*v1.Pool, []*v1.Pool) {
 					pool = &v1.Pool{
 						Nodes: []*v1.Node{},
 					}
-					// TODO: The tenant isolation
+					// TODO: The tenant env isolation
 					pool.Namespace = "default"
 					pool.Name = backend.name
 					l4Pools[backend.name] = pool
@@ -587,6 +587,8 @@ func (s *k8sStore) ListVirtualService() (l7vs []*v1.VirtualService, l4vs []*v1.V
 			vs.TCPKeepaliveIdle = anns.L4.KeepaliveIdle
 			vs.TCPKeepaliveIntvl = anns.L4.KeepaliveIntvl
 			vs.TCPKeepaliveCnt = anns.L4.KeepaliveCnt
+			vs.ProxyStreamTimeout = anns.L4.ProxyStreamTimeout
+			vs.ProxyStreamNextUpstreamTimeout = anns.L4.ProxyStreamNextUpstreamTimeout
 			l4PoolMap[ingServiceName] = struct{}{}
 			l4vsMap[listening] = vs
 			l4vs = append(l4vs, vs)

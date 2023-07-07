@@ -42,7 +42,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//Manager manager
+// Manager manager
 type Manager struct {
 	ctx               context.Context
 	cfg               option.Config
@@ -52,7 +52,7 @@ type Manager struct {
 	garbageCollector  *gc.GarbageCollector
 }
 
-//NewManager now handle
+// NewManager now handle
 func NewManager(ctx context.Context,
 	config option.Config,
 	store store.Storer,
@@ -69,14 +69,14 @@ func NewManager(ctx context.Context,
 	}
 }
 
-//ErrCallback do not handle this task
+// ErrCallback do not handle this task
 var ErrCallback = fmt.Errorf("callback task to mq")
 
 func (m *Manager) checkCount() bool {
 	return m.controllerManager.GetControllerSize() > m.cfg.MaxTasks
 }
 
-//AnalystToExec analyst exec
+// AnalystToExec analyst exec
 func (m *Manager) AnalystToExec(task *model.Task) error {
 	if task == nil {
 		return nil
@@ -116,22 +116,28 @@ func (m *Manager) AnalystToExec(task *model.Task) error {
 	case "service_gc":
 		logrus.Info("start the 'service_gc' task")
 		return m.ExecServiceGCTask(task)
-	case "delete_tenant":
-		logrus.Info("start a 'delete_tenant' task worker")
-		return m.deleteTenant(task)
+	case "delete_tenant_env":
+		logrus.Info("start a 'delete_tenant_env' task worker")
+		return m.deleteTenantEnv(task)
 	case "refreshhpa":
 		logrus.Info("start a 'refreshhpa' task worker")
 		return m.ExecRefreshHPATask(task)
 	case "apply_registry_auth_secret":
 		logrus.Info("start a 'apply_registry_auth_secret' task worker")
 		return m.ExecApplyRegistryAuthSecretTask(task)
+	case "export_helm_chart":
+		logrus.Info("start a 'export_helm_chart' task worker")
+		return m.ExecExportHelmChartTask(task)
+	case "export_k8s_yaml":
+		logrus.Info("start a 'export_k8s_yaml' task worker")
+		return m.ExecExportK8sYamlTask(task)
 	default:
 		logrus.Warning("task can not execute because no type is identified")
 		return nil
 	}
 }
 
-//startExec exec start service task
+// startExec exec start service task
 func (m *Manager) startExec(task *model.Task) error {
 	body, ok := task.Body.(model.StartTaskBody)
 	if !ok {
@@ -232,7 +238,7 @@ func (m *Manager) horizontalScalingExec(task *model.Task) (err error) {
 	}
 
 	logger := event.GetManager().GetLogger(body.EventID)
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(body.ServiceID)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(body.ServiceID)
 	if err != nil {
 		logger.Error("Get app base info failure", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
@@ -256,7 +262,7 @@ func (m *Manager) horizontalScalingExec(task *model.Task) (err error) {
 			desc = fmt.Sprintf(desc, oldReplicas, newReplicas, err)
 			reason = "FailedRescale"
 		}
-		scalingRecord := &dbmodel.TenantServiceScalingRecords{
+		scalingRecord := &dbmodel.TenantEnvServiceScalingRecords{
 			ServiceID:   body.ServiceID,
 			EventName:   util.NewUUID(),
 			RecordType:  "manual",
@@ -266,7 +272,7 @@ func (m *Manager) horizontalScalingExec(task *model.Task) (err error) {
 			Operator:    body.Username,
 			LastTime:    time.Now(),
 		}
-		if err := db.GetManager().TenantServiceScalingRecordsDao().AddModel(scalingRecord); err != nil {
+		if err := db.GetManager().TenantEnvServiceScalingRecordsDao().AddModel(scalingRecord); err != nil {
 			logrus.Warningf("save scaling record: %v", err)
 		}
 	}()
@@ -291,7 +297,7 @@ func (m *Manager) verticalScalingExec(task *model.Task) error {
 		return fmt.Errorf("vertical_scaling body convert to taskbody error")
 	}
 	logger := event.GetManager().GetLogger(body.EventID)
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(body.ServiceID)
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(body.ServiceID)
 	if err != nil {
 		logrus.Errorf("vertical_scaling get rc error. %v", err)
 		logger.Error("Get app base info failure", event.GetCallbackLoggerOption())
@@ -386,10 +392,10 @@ func (m *Manager) applyRuleExec(task *model.Task) error {
 		logrus.Errorf("Can't convert %s to *model.ApplyRuleTaskBody", reflect.TypeOf(task.Body))
 		return fmt.Errorf("can't convert %s to *model.ApplyRuleTaskBody", reflect.TypeOf(task.Body))
 	}
-	svc, err := db.GetManager().TenantServiceDao().GetServiceByID(body.ServiceID)
+	svc, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(body.ServiceID)
 	if err != nil {
-		logrus.Errorf("error get TenantServices: %v", err)
-		return fmt.Errorf("error get TenantServices: %v", err)
+		logrus.Errorf("error get TenantEnvServices: %v", err)
+		return fmt.Errorf("error get TenantEnvServices: %v", err)
 	}
 	logger := event.GetManager().GetLogger(body.EventID)
 	oldAppService := m.store.GetAppService(body.ServiceID)
@@ -405,7 +411,7 @@ func (m *Manager) applyRuleExec(task *model.Task) error {
 	var newAppService *v1.AppService
 	if svc.Kind == dbmodel.ServiceKindThirdParty.String() {
 		newAppService, err = conversion.InitAppService(m.dbmanager, body.ServiceID, nil,
-			"ServiceSource", "TenantServiceBase", "TenantServiceRegist")
+			"ServiceSource", "TenantEnvServiceBase", "TenantEnvServiceRegist")
 	} else {
 		newAppService, err = conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
 	}
@@ -428,7 +434,7 @@ func (m *Manager) applyRuleExec(task *model.Task) error {
 	return nil
 }
 
-//applyPluginConfig apply service plugin config
+// applyPluginConfig apply service plugin config
 func (m *Manager) applyPluginConfig(task *model.Task) error {
 	body, ok := task.Body.(*model.ApplyPluginConfigTaskBody)
 	if !ok {
@@ -440,7 +446,7 @@ func (m *Manager) applyPluginConfig(task *model.Task) error {
 		logrus.Debugf("service is closed,no need handle")
 		return nil
 	}
-	newApp, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil, "ServiceSource", "TenantServiceBase", "TenantServicePlugin")
+	newApp, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil, "ServiceSource", "TenantEnvServiceBase", "TenantEnvServicePlugin")
 	if err != nil {
 		logrus.Errorf("component apply plugin config controller failure:%s", err.Error())
 		return err
@@ -467,11 +473,11 @@ func (m *Manager) ExecServiceGCTask(task *model.Task) error {
 	return nil
 }
 
-func (m *Manager) deleteTenant(task *model.Task) (err error) {
-	body, ok := task.Body.(*model.DeleteTenantTaskBody)
+func (m *Manager) deleteTenantEnv(task *model.Task) (err error) {
+	body, ok := task.Body.(*model.DeleteTenantEnvTaskBody)
 	if !ok {
-		logrus.Errorf("can't convert %s to *model.DeleteTenantTaskBody", reflect.TypeOf(task.Body))
-		err = fmt.Errorf("can't convert %s to *model.DeleteTenantTaskBody", reflect.TypeOf(task.Body))
+		logrus.Errorf("can't convert %s to *model.DeleteTenantEnvTaskBody", reflect.TypeOf(task.Body))
+		err = fmt.Errorf("can't convert %s to *model.DeleteTenantEnvTaskBody", reflect.TypeOf(task.Body))
 		return
 	}
 
@@ -479,35 +485,35 @@ func (m *Manager) deleteTenant(task *model.Task) (err error) {
 		if err == nil {
 			return
 		}
-		logrus.Errorf("failed to delete tenant: %v", err)
-		var tenant *dbmodel.Tenants
-		tenant, err = db.GetManager().TenantDao().GetTenantByUUID(body.TenantID)
+		logrus.Errorf("failed to delete tenantEnv: %v", err)
+		var tenantEnv *dbmodel.TenantEnvs
+		tenantEnv, err = db.GetManager().TenantEnvDao().GetTenantEnvByUUID(body.TenantEnvID)
 		if err != nil {
-			err = fmt.Errorf("tenant id: %s; find tenant: %v", body.TenantID, err)
+			err = fmt.Errorf("tenant env id: %s; find tenantEnv: %v", body.TenantEnvID, err)
 			return
 		}
-		tenant.Status = dbmodel.TenantStatusDeleteFailed.String()
-		err := db.GetManager().TenantDao().UpdateModel(tenant)
+		tenantEnv.Status = dbmodel.TenantEnvStatusDeleteFailed.String()
+		err := db.GetManager().TenantEnvDao().UpdateModel(tenantEnv)
 		if err != nil {
-			logrus.Errorf("update tenant_status to '%s': %v", tenant.Status, err)
+			logrus.Errorf("update tenant_env_status to '%s': %v", tenantEnv.Status, err)
 			return
 		}
 	}()
-	tenant, err := db.GetManager().TenantDao().GetTenantByUUID(body.TenantID)
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(body.TenantEnvID)
 	if err != nil {
-		err = fmt.Errorf("tenant id: %s; find tenant: %v", body.TenantID, err)
+		err = fmt.Errorf("tenant env id: %s; find tenantEnv: %v", body.TenantEnvID, err)
 		return
 	}
-	if err = m.cfg.KubeClient.CoreV1().Namespaces().Delete(context.Background(), tenant.Namespace, metav1.DeleteOptions{
+	if err = m.cfg.KubeClient.CoreV1().Namespaces().Delete(context.Background(), tenantEnv.Namespace, metav1.DeleteOptions{
 		GracePeriodSeconds: util.Int64(0),
 	}); err != nil && !k8sErrors.IsNotFound(err) {
 		err = fmt.Errorf("delete namespace: %v", err)
 		return
 	}
 
-	err = db.GetManager().TenantDao().DelByTenantID(body.TenantID)
+	err = db.GetManager().TenantEnvDao().DelByTenantEnvID(body.TenantEnvID)
 	if err != nil {
-		err = fmt.Errorf("delete tenant: %v", err)
+		err = fmt.Errorf("delete tenantEnv: %v", err)
 		return
 	}
 
@@ -558,9 +564,9 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 	if !ok {
 		return fmt.Errorf("can't convert %s to *model.ApplyRegistryAuthSecretTaskBody", reflect.TypeOf(task.Body))
 	}
-	tenant, err := m.dbmanager.TenantDao().GetTenantByUUID(body.TenantID)
+	tenantEnv, err := m.dbmanager.TenantEnvDao().GetTenantEnvByUUID(body.TenantEnvID)
 	if err != nil {
-		logrus.Debugf("cant get tenant by uuid: %s", body.TenantID)
+		logrus.Debugf("cant get tenant env by uuid: %s", body.TenantEnvID)
 		return err
 	}
 
@@ -568,7 +574,7 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 		return fmt.Sprintf("wt-registry-auth-%s", secretID)
 	}
 
-	secret, err := m.cfg.KubeClient.CoreV1().Secrets(tenant.Namespace).Get(m.ctx, secretNameFrom(body.SecretID), metav1.GetOptions{})
+	secret, err := m.cfg.KubeClient.CoreV1().Secrets(tenantEnv.Namespace).Get(m.ctx, secretNameFrom(body.SecretID), metav1.GetOptions{})
 	switch body.Action {
 	case "apply":
 		if err != nil {
@@ -576,10 +582,12 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 				secret = &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      secretNameFrom(body.SecretID),
-						Namespace: tenant.Namespace,
+						Namespace: tenantEnv.Namespace,
 						Labels: map[string]string{
-							"tenant_id":                      tenant.UUID,
-							"tenant_name":                    tenant.Name,
+							"tenant_id":                      tenantEnv.TenantID,
+							"tenant_name":                    tenantEnv.TenantName,
+							"tenant_env_id":                  tenantEnv.UUID,
+							"tenant_env_name":                tenantEnv.Name,
 							"creator":                        "Wutong",
 							"wutong.io/registry-auth-secret": "true",
 						},
@@ -591,7 +599,7 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 					},
 					Type: corev1.SecretTypeOpaque,
 				}
-				_, err = m.cfg.KubeClient.CoreV1().Secrets(tenant.Namespace).Create(m.ctx, secret, metav1.CreateOptions{})
+				_, err = m.cfg.KubeClient.CoreV1().Secrets(tenantEnv.Namespace).Create(m.ctx, secret, metav1.CreateOptions{})
 			} else {
 				logrus.Errorf("get secret failure: %s", err.Error())
 				return err
@@ -600,18 +608,85 @@ func (m *Manager) ExecApplyRegistryAuthSecretTask(task *model.Task) error {
 			secret.Data["Domain"] = []byte(body.Domain)
 			secret.Data["Username"] = []byte(body.Username)
 			secret.Data["Password"] = []byte(body.Password)
-			_, err = m.cfg.KubeClient.CoreV1().Secrets(tenant.Namespace).Update(m.ctx, secret, metav1.UpdateOptions{})
+			_, err = m.cfg.KubeClient.CoreV1().Secrets(tenantEnv.Namespace).Update(m.ctx, secret, metav1.UpdateOptions{})
 		}
 		if err != nil {
 			logrus.Errorf("apply secret failure: %s", err.Error())
 			return err
 		}
 	case "delete":
-		err := m.cfg.KubeClient.CoreV1().Secrets(tenant.Namespace).Delete(m.ctx, secretNameFrom(body.SecretID), metav1.DeleteOptions{})
+		err := m.cfg.KubeClient.CoreV1().Secrets(tenantEnv.Namespace).Delete(m.ctx, secretNameFrom(body.SecretID), metav1.DeleteOptions{})
 		if err != nil {
 			logrus.Debugf("delete secret: %s", err.Error())
 		}
 		return err
 	}
+	return nil
+}
+
+func (m *Manager) ExecExportHelmChartTask(task *model.Task) error {
+	body, ok := task.Body.(*model.ExportHelmChartOrK8sYamlTaskBody)
+	if !ok {
+		logrus.Error("export_helm_chart body convert to taskbody error", task.Body)
+		return fmt.Errorf("export_helm_chart body convert to taskbody error")
+	}
+	logger := event.GetManager().GetLogger(util.NewUUID())
+	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
+	if err != nil {
+		logrus.Errorf("component init create failure:%s", err.Error())
+		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component init create failure")
+	}
+	newAppService.Logger = logger
+	oldAppService := m.store.GetAppService(body.ServiceID)
+	// if service not deploy,start it
+	if oldAppService == nil || oldAppService.IsClosed() {
+		//regist new app service
+		m.store.RegistAppService(newAppService)
+
+	}
+	err = m.controllerManager.StartExportHelmChartController(body.AppName, body.AppVersion, body.End, *newAppService)
+	if err != nil {
+		logrus.Errorf("component run export_helm_chart controller failure:%s", err.Error())
+		logger.Info("component run export_helm_chart controller failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component export_helm_chart failure")
+	}
+	logrus.Infof("service(%s) %s working is running.", body.ServiceID, "export_helm_chart")
+	return nil
+
+}
+
+func (m *Manager) ExecExportK8sYamlTask(task *model.Task) error {
+	body, ok := task.Body.(*model.ExportHelmChartOrK8sYamlTaskBody)
+	if !ok {
+		logrus.Error("export_k8s_yaml body convert to taskbody error", task.Body)
+		return fmt.Errorf("export_k8s_yaml body convert to taskbody error")
+	}
+	logger := event.GetManager().GetLogger(util.NewUUID())
+	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
+	if err != nil {
+		logrus.Errorf("component init create failure:%s", err.Error())
+		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component init create failure")
+	}
+	newAppService.AppServiceBase.GovernanceMode = dbmodel.GovernanceModeKubernetesNativeService
+	newAppService.Logger = logger
+	oldAppService := m.store.GetAppService(body.ServiceID)
+	// if service not deploy,start it
+	if oldAppService == nil || oldAppService.IsClosed() {
+		//regist new app service
+		m.store.RegistAppService(newAppService)
+	}
+	err = m.controllerManager.StartExportK8sYamlController(body.AppName, body.AppVersion, body.End, *newAppService)
+	if err != nil {
+		logrus.Errorf("component run export_k8s_yaml controller failure:%s", err.Error())
+		logger.Info("component run export_k8s_yaml controller failure", event.GetCallbackLoggerOption())
+		event.GetManager().ReleaseLogger(logger)
+		return fmt.Errorf("component start failure")
+	}
+	logrus.Infof("service(%s) %s working is running.", body.ServiceID, "export_k8s_yaml")
 	return nil
 }

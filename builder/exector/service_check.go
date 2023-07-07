@@ -42,11 +42,11 @@ type ServiceCheckInput struct {
 	// 代码： https://github.com/shurcooL/githubql.git master
 	// docker-run: docker run --name xxx nginx:latest nginx
 	// docker-compose: compose全文
-	SourceBody string `json:"source_body"`
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	TenantID   string
-	EventID    string `json:"event_id"`
+	SourceBody  string `json:"source_body"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	TenantEnvID string
+	EventID     string `json:"event_id"`
 }
 
 // ServiceCheckResult 应用检测结果

@@ -33,8 +33,6 @@ import (
 
 	"fmt"
 
-	"encoding/json"
-
 	"bytes"
 
 	"context"
@@ -321,9 +319,9 @@ func (s *storeManager) deleteFile(filename string) error {
 	return nil
 }
 
-func (s *storeManager) checkHealth() {
+// func (s *storeManager) checkHealth() {
 
-}
+// }
 
 func (s *storeManager) parsingMessage(msg []byte, messageType string) (*db.EventLogMessage, error) {
 	if msg == nil {
@@ -441,12 +439,12 @@ func (s *storeManager) handleSubMessage() {
 	}
 }
 
-type containerLog struct {
-	ContainerID string          `json:"container_id"`
-	ServiceID   string          `json:"service_id"`
-	Msg         string          `json:"msg"`
-	Time        json.RawMessage `json:"time"`
-}
+// type containerLog struct {
+// 	ContainerID string          `json:"container_id"`
+// 	ServiceID   string          `json:"service_id"`
+// 	Msg         string          `json:"msg"`
+// 	Time        json.RawMessage `json:"time"`
+// }
 
 func (s *storeManager) handleDockerLog() {
 	s.log.Debug("event message store manager start handle docker container log message")

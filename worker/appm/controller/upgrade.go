@@ -151,7 +151,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 	_, err := s.manager.client.CoreV1().Namespaces().Get(s.ctx, app.GetNamespace(), metav1.GetOptions{})
 	if err != nil {
 		if errors.IsNotFound(err) {
-			_, err = s.manager.client.CoreV1().Namespaces().Create(s.ctx, app.GetTenant(), metav1.CreateOptions{})
+			_, err = s.manager.client.CoreV1().Namespaces().Create(s.ctx, app.GetTenantEnv(), metav1.CreateOptions{})
 		}
 		if err != nil {
 			return fmt.Errorf("create or check namespace failure %s", err.Error())
@@ -223,7 +223,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 	return s.WaitingReady(app)
 }
 
-//WaitingReady wait app start or upgrade ready
+// WaitingReady wait app start or upgrade ready
 func (s *upgradeController) WaitingReady(app v1.AppService) error {
 	storeAppService := s.manager.store.GetAppService(app.ServiceID)
 	var initTime int32

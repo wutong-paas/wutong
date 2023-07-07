@@ -140,6 +140,7 @@ func (c *Conn) AsyncWritePacket(p Packet, timeout time.Duration) (err error) {
 		}
 
 	} else {
+		timeoutC := time.After(timeout)
 		select {
 		case c.packetSendChan <- p:
 			return nil
@@ -147,7 +148,7 @@ func (c *Conn) AsyncWritePacket(p Packet, timeout time.Duration) (err error) {
 		case <-c.closeChan:
 			return ErrConnClosing
 
-		case <-time.After(timeout):
+		case <-timeoutC:
 			return ErrWriteBlocking
 		}
 	}

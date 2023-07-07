@@ -23,17 +23,17 @@ import (
 	"github.com/wutong-paas/wutong/api/util"
 )
 
-//NetRulesHandler net rules handler
+// NetRulesHandler net rules handler
 type NetRulesHandler interface {
 	CreateDownStreamNetRules(
-		tenantID string,
+		tenantEnvID string,
 		rs *api_model.SetNetDownStreamRuleStruct) *util.APIHandleError
 	GetDownStreamNetRule(
-		tenantID,
+		tenantEnvID,
 		serviceAlias,
 		destServiceAlias,
 		port string) (*api_model.NetRulesDownStreamBody, *util.APIHandleError)
 	UpdateDownStreamNetRule(
-		tenantID string,
+		tenantEnvID string,
 		urs *api_model.UpdateNetDownStreamRuleStruct) *util.APIHandleError
 }

@@ -18,7 +18,9 @@
 
 package v1
 
-//GetCommonLabels get common labels
+import "github.com/wutong-paas/wutong/db"
+
+// GetCommonLabels get common labels
 func (a *AppService) GetCommonLabels(labels ...map[string]string) map[string]string {
 	var resultLabel = make(map[string]string)
 	for _, l := range labels {
@@ -26,12 +28,21 @@ func (a *AppService) GetCommonLabels(labels ...map[string]string) map[string]str
 			resultLabel[k] = v
 		}
 	}
+	var tenantID, tenantName string
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(a.TenantEnvID)
+	if err == nil && tenantEnv != nil {
+		tenantID = tenantEnv.TenantID
+		tenantName = tenantEnv.TenantName
+	}
+
 	resultLabel["creator"] = "Wutong"
 	resultLabel["creater_id"] = a.CreaterID
 	resultLabel["service_id"] = a.ServiceID
 	resultLabel["service_alias"] = a.ServiceAlias
-	resultLabel["tenant_name"] = a.TenantName
-	resultLabel["tenant_id"] = a.TenantID
+	resultLabel["tenant_id"] = tenantID
+	resultLabel["tenant_name"] = tenantName
+	resultLabel["tenant_env_id"] = a.TenantEnvID
+	resultLabel["tenant_env_name"] = a.TenantEnvName
 	resultLabel["app_id"] = a.AppID
 	resultLabel["app"] = a.K8sApp
 	return resultLabel

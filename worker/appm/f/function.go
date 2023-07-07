@@ -50,7 +50,7 @@ func ApplyOne(ctx context.Context, apply apply.Applicator, clientset kubernetes.
 	_, err := clientset.CoreV1().Namespaces().Get(context.Background(), app.GetNamespace(), metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			_, err = clientset.CoreV1().Namespaces().Create(context.Background(), app.GetTenant(), metav1.CreateOptions{})
+			_, err = clientset.CoreV1().Namespaces().Create(context.Background(), app.GetTenantEnv(), metav1.CreateOptions{})
 			if err != nil && !k8sErrors.IsAlreadyExists(err) {
 				return fmt.Errorf("error creating namespace: %v", err)
 			}

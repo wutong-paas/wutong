@@ -438,16 +438,16 @@ func (x *ServicesRequest) GetServiceIds() string {
 	return ""
 }
 
-type TenantRequest struct {
+type TenantEnvRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	TenantEnvId string `protobuf:"bytes,1,opt,name=tenant_env_id,json=tenantEnvId,proto3" json:"tenant_env_id,omitempty"`
 }
 
-func (x *TenantRequest) Reset() {
-	*x = TenantRequest{}
+func (x *TenantEnvRequest) Reset() {
+	*x = TenantEnvRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_worker_server_pb_app_runtime_server_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -455,13 +455,13 @@ func (x *TenantRequest) Reset() {
 	}
 }
 
-func (x *TenantRequest) String() string {
+func (x *TenantEnvRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TenantRequest) ProtoMessage() {}
+func (*TenantEnvRequest) ProtoMessage() {}
 
-func (x *TenantRequest) ProtoReflect() protoreflect.Message {
+func (x *TenantEnvRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_server_pb_app_runtime_server_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -473,14 +473,14 @@ func (x *TenantRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TenantRequest.ProtoReflect.Descriptor instead.
-func (*TenantRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use TenantEnvRequest.ProtoReflect.Descriptor instead.
+func (*TenantEnvRequest) Descriptor() ([]byte, []int) {
 	return file_worker_server_pb_app_runtime_server_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *TenantRequest) GetTenantId() string {
+func (x *TenantEnvRequest) GetTenantEnvId() string {
 	if x != nil {
-		return x.TenantId
+		return x.TenantEnvId
 	}
 	return ""
 }
@@ -1029,7 +1029,7 @@ func (x *DeployInfo) GetStatus() string {
 	return ""
 }
 
-type TenantResource struct {
+type TenantEnvResource struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -1043,8 +1043,8 @@ type TenantResource struct {
 	RunningAppInternalNum int64 `protobuf:"varint,11,opt,name=running_app_internal_num,json=runningAppInternalNum,proto3" json:"running_app_internal_num,omitempty"`
 }
 
-func (x *TenantResource) Reset() {
-	*x = TenantResource{}
+func (x *TenantEnvResource) Reset() {
+	*x = TenantEnvResource{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_worker_server_pb_app_runtime_server_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1052,13 +1052,13 @@ func (x *TenantResource) Reset() {
 	}
 }
 
-func (x *TenantResource) String() string {
+func (x *TenantEnvResource) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TenantResource) ProtoMessage() {}
+func (*TenantEnvResource) ProtoMessage() {}
 
-func (x *TenantResource) ProtoReflect() protoreflect.Message {
+func (x *TenantEnvResource) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_server_pb_app_runtime_server_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1070,70 +1070,70 @@ func (x *TenantResource) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TenantResource.ProtoReflect.Descriptor instead.
-func (*TenantResource) Descriptor() ([]byte, []int) {
+// Deprecated: Use TenantEnvResource.ProtoReflect.Descriptor instead.
+func (*TenantEnvResource) Descriptor() ([]byte, []int) {
 	return file_worker_server_pb_app_runtime_server_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *TenantResource) GetCpuRequest() int64 {
+func (x *TenantEnvResource) GetCpuRequest() int64 {
 	if x != nil {
 		return x.CpuRequest
 	}
 	return 0
 }
 
-func (x *TenantResource) GetCpuLimit() int64 {
+func (x *TenantEnvResource) GetCpuLimit() int64 {
 	if x != nil {
 		return x.CpuLimit
 	}
 	return 0
 }
 
-func (x *TenantResource) GetMemoryRequest() int64 {
+func (x *TenantEnvResource) GetMemoryRequest() int64 {
 	if x != nil {
 		return x.MemoryRequest
 	}
 	return 0
 }
 
-func (x *TenantResource) GetMemoryLimit() int64 {
+func (x *TenantEnvResource) GetMemoryLimit() int64 {
 	if x != nil {
 		return x.MemoryLimit
 	}
 	return 0
 }
 
-func (x *TenantResource) GetRunningAppNum() int64 {
+func (x *TenantEnvResource) GetRunningAppNum() int64 {
 	if x != nil {
 		return x.RunningAppNum
 	}
 	return 0
 }
 
-func (x *TenantResource) GetRunningAppThirdNum() int64 {
+func (x *TenantEnvResource) GetRunningAppThirdNum() int64 {
 	if x != nil {
 		return x.RunningAppThirdNum
 	}
 	return 0
 }
 
-func (x *TenantResource) GetRunningAppInternalNum() int64 {
+func (x *TenantEnvResource) GetRunningAppInternalNum() int64 {
 	if x != nil {
 		return x.RunningAppInternalNum
 	}
 	return 0
 }
 
-type TenantResourceList struct {
+type TenantEnvResourceList struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Resources map[string]*TenantResource `protobuf:"bytes,1,rep,name=resources,proto3" json:"resources,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Resources map[string]*TenantEnvResource `protobuf:"bytes,1,rep,name=resources,proto3" json:"resources,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
-func (x *TenantResourceList) Reset() {
-	*x = TenantResourceList{}
+func (x *TenantEnvResourceList) Reset() {
+	*x = TenantEnvResourceList{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_worker_server_pb_app_runtime_server_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1141,13 +1141,13 @@ func (x *TenantResourceList) Reset() {
 	}
 }
 
-func (x *TenantResourceList) String() string {
+func (x *TenantEnvResourceList) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TenantResourceList) ProtoMessage() {}
+func (*TenantEnvResourceList) ProtoMessage() {}
 
-func (x *TenantResourceList) ProtoReflect() protoreflect.Message {
+func (x *TenantEnvResourceList) ProtoReflect() protoreflect.Message {
 	mi := &file_worker_server_pb_app_runtime_server_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1159,12 +1159,12 @@ func (x *TenantResourceList) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TenantResourceList.ProtoReflect.Descriptor instead.
-func (*TenantResourceList) Descriptor() ([]byte, []int) {
+// Deprecated: Use TenantEnvResourceList.ProtoReflect.Descriptor instead.
+func (*TenantEnvResourceList) Descriptor() ([]byte, []int) {
 	return file_worker_server_pb_app_runtime_server_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *TenantResourceList) GetResources() map[string]*TenantResource {
+func (x *TenantEnvResourceList) GetResources() map[string]*TenantEnvResource {
 	if x != nil {
 		return x.Resources
 	}
@@ -3471,7 +3471,7 @@ var file_worker_server_pb_app_runtime_server_proto_goTypes = []interface{}{
 	(*AppStatusReq)(nil),                     // 5: AppStatusReq
 	(*ServiceRequest)(nil),                   // 6: ServiceRequest
 	(*ServicesRequest)(nil),                  // 7: ServicesRequest
-	(*TenantRequest)(nil),                    // 8: TenantRequest
+	(*TenantEnvRequest)(nil),                    // 8: TenantEnvRequest
 	(*StatusMessage)(nil),                    // 9: StatusMessage
 	(*DiskMessage)(nil),                      // 10: DiskMessage
 	(*ServiceAppPodList)(nil),                // 11: ServiceAppPodList
@@ -3480,8 +3480,8 @@ var file_worker_server_pb_app_runtime_server_proto_goTypes = []interface{}{
 	(*ServiceAppPod)(nil),                    // 14: ServiceAppPod
 	(*Container)(nil),                        // 15: Container
 	(*DeployInfo)(nil),                       // 16: DeployInfo
-	(*TenantResource)(nil),                   // 17: TenantResource
-	(*TenantResourceList)(nil),               // 18: TenantResourceList
+	(*TenantEnvResource)(nil),                   // 17: TenantEnvResource
+	(*TenantEnvResourceList)(nil),               // 18: TenantEnvResourceList
 	(*AddThirdPartyEndpointsReq)(nil),        // 19: AddThirdPartyEndpointsReq
 	(*UpdThirdPartyEndpointsReq)(nil),        // 20: UpdThirdPartyEndpointsReq
 	(*DelThirdPartyEndpointsReq)(nil),        // 21: DelThirdPartyEndpointsReq
@@ -3517,7 +3517,7 @@ var file_worker_server_pb_app_runtime_server_proto_goTypes = []interface{}{
 	nil,                                      // 51: DeployInfo.SecretsEntry
 	nil,                                      // 52: DeployInfo.IngressesEntry
 	nil,                                      // 53: DeployInfo.ReplicatsetEntry
-	nil,                                      // 54: TenantResourceList.ResourcesEntry
+	nil,                                      // 54: TenantEnvResourceList.ResourcesEntry
 	nil,                                      // 55: StorageClassDetail.ParametersEntry
 	nil,                                      // 56: ServiceVolumeStatusMessage.StatusEntry
 	(*AppService_Pod)(nil),                   // 57: AppService.Pod
@@ -3537,7 +3537,7 @@ var file_worker_server_pb_app_runtime_server_proto_depIdxs = []int32{
 	51, // 10: DeployInfo.secrets:type_name -> DeployInfo.SecretsEntry
 	52, // 11: DeployInfo.ingresses:type_name -> DeployInfo.IngressesEntry
 	53, // 12: DeployInfo.replicatset:type_name -> DeployInfo.ReplicatsetEntry
-	54, // 13: TenantResourceList.resources:type_name -> TenantResourceList.ResourcesEntry
+	54, // 13: TenantEnvResourceList.resources:type_name -> TenantEnvResourceList.ResourcesEntry
 	22, // 14: ThirdPartyEndpoints.items:type_name -> ThirdPartyEndpoint
 	1,  // 15: PodStatus.type:type_name -> PodStatus.Type
 	27, // 16: PodDetail.status:type_name -> PodStatus
@@ -3558,7 +3558,7 @@ var file_worker_server_pb_app_runtime_server_proto_depIdxs = []int32{
 	35, // 31: AppStatuses.app_statuses:type_name -> AppStatus
 	11, // 32: MultiServiceAppPodList.ServicePodsEntry.value:type_name -> ServiceAppPodList
 	15, // 33: ServiceAppPod.ContainersEntry.value:type_name -> Container
-	17, // 34: TenantResourceList.ResourcesEntry.value:type_name -> TenantResource
+	17, // 34: TenantEnvResourceList.ResourcesEntry.value:type_name -> TenantEnvResource
 	0,  // 35: ServiceVolumeStatusMessage.StatusEntry.value:type_name -> ServiceVolumeStatus
 	7,  // 36: AppRuntimeSync.GetAppStatusDeprecated:input_type -> ServicesRequest
 	5,  // 37: AppRuntimeSync.GetAppStatus:input_type -> AppStatusReq
@@ -3566,8 +3566,8 @@ var file_worker_server_pb_app_runtime_server_proto_depIdxs = []int32{
 	7,  // 39: AppRuntimeSync.GetMultiAppPods:input_type -> ServicesRequest
 	7,  // 40: AppRuntimeSync.GetComponentPodNums:input_type -> ServicesRequest
 	6,  // 41: AppRuntimeSync.GetDeployInfo:input_type -> ServiceRequest
-	8,  // 42: AppRuntimeSync.GetTenantResource:input_type -> TenantRequest
-	3,  // 43: AppRuntimeSync.GetTenantResources:input_type -> Empty
+	8,  // 42: AppRuntimeSync.GetTenantEnvResource:input_type -> TenantEnvRequest
+	3,  // 43: AppRuntimeSync.GetTenantEnvResources:input_type -> Empty
 	6,  // 44: AppRuntimeSync.ListThirdPartyEndpoints:input_type -> ServiceRequest
 	19, // 45: AppRuntimeSync.AddThirdPartyEndpoint:input_type -> AddThirdPartyEndpointsReq
 	20, // 46: AppRuntimeSync.UpdThirdPartyEndpoint:input_type -> UpdThirdPartyEndpointsReq
@@ -3584,8 +3584,8 @@ var file_worker_server_pb_app_runtime_server_proto_depIdxs = []int32{
 	12, // 57: AppRuntimeSync.GetMultiAppPods:output_type -> MultiServiceAppPodList
 	13, // 58: AppRuntimeSync.GetComponentPodNums:output_type -> ComponentPodNums
 	16, // 59: AppRuntimeSync.GetDeployInfo:output_type -> DeployInfo
-	17, // 60: AppRuntimeSync.GetTenantResource:output_type -> TenantResource
-	18, // 61: AppRuntimeSync.GetTenantResources:output_type -> TenantResourceList
+	17, // 60: AppRuntimeSync.GetTenantEnvResource:output_type -> TenantEnvResource
+	18, // 61: AppRuntimeSync.GetTenantEnvResources:output_type -> TenantEnvResourceList
 	23, // 62: AppRuntimeSync.ListThirdPartyEndpoints:output_type -> ThirdPartyEndpoints
 	3,  // 63: AppRuntimeSync.AddThirdPartyEndpoint:output_type -> Empty
 	3,  // 64: AppRuntimeSync.UpdThirdPartyEndpoint:output_type -> Empty
@@ -3670,7 +3670,7 @@ func file_worker_server_pb_app_runtime_server_proto_init() {
 			}
 		}
 		file_worker_server_pb_app_runtime_server_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TenantRequest); i {
+			switch v := v.(*TenantEnvRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3778,7 +3778,7 @@ func file_worker_server_pb_app_runtime_server_proto_init() {
 			}
 		}
 		file_worker_server_pb_app_runtime_server_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TenantResource); i {
+			switch v := v.(*TenantEnvResource); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3790,7 +3790,7 @@ func file_worker_server_pb_app_runtime_server_proto_init() {
 			}
 		}
 		file_worker_server_pb_app_runtime_server_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*TenantResourceList); i {
+			switch v := v.(*TenantEnvResourceList); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -4154,8 +4154,8 @@ type AppRuntimeSyncClient interface {
 	GetMultiAppPods(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*MultiServiceAppPodList, error)
 	GetComponentPodNums(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*ComponentPodNums, error)
 	GetDeployInfo(ctx context.Context, in *ServiceRequest, opts ...grpc.CallOption) (*DeployInfo, error)
-	GetTenantResource(ctx context.Context, in *TenantRequest, opts ...grpc.CallOption) (*TenantResource, error)
-	GetTenantResources(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TenantResourceList, error)
+	GetTenantEnvResource(ctx context.Context, in *TenantEnvRequest, opts ...grpc.CallOption) (*TenantEnvResource, error)
+	GetTenantEnvResources(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TenantEnvResourceList, error)
 	ListThirdPartyEndpoints(ctx context.Context, in *ServiceRequest, opts ...grpc.CallOption) (*ThirdPartyEndpoints, error)
 	AddThirdPartyEndpoint(ctx context.Context, in *AddThirdPartyEndpointsReq, opts ...grpc.CallOption) (*Empty, error)
 	UpdThirdPartyEndpoint(ctx context.Context, in *UpdThirdPartyEndpointsReq, opts ...grpc.CallOption) (*Empty, error)
@@ -4230,18 +4230,18 @@ func (c *appRuntimeSyncClient) GetDeployInfo(ctx context.Context, in *ServiceReq
 	return out, nil
 }
 
-func (c *appRuntimeSyncClient) GetTenantResource(ctx context.Context, in *TenantRequest, opts ...grpc.CallOption) (*TenantResource, error) {
-	out := new(TenantResource)
-	err := c.cc.Invoke(ctx, "/AppRuntimeSync/GetTenantResource", in, out, opts...)
+func (c *appRuntimeSyncClient) GetTenantEnvResource(ctx context.Context, in *TenantEnvRequest, opts ...grpc.CallOption) (*TenantEnvResource, error) {
+	out := new(TenantEnvResource)
+	err := c.cc.Invoke(ctx, "/AppRuntimeSync/GetTenantEnvResource", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *appRuntimeSyncClient) GetTenantResources(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TenantResourceList, error) {
-	out := new(TenantResourceList)
-	err := c.cc.Invoke(ctx, "/AppRuntimeSync/GetTenantResources", in, out, opts...)
+func (c *appRuntimeSyncClient) GetTenantEnvResources(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*TenantEnvResourceList, error) {
+	out := new(TenantEnvResourceList)
+	err := c.cc.Invoke(ctx, "/AppRuntimeSync/GetTenantEnvResources", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -4347,8 +4347,8 @@ type AppRuntimeSyncServer interface {
 	GetMultiAppPods(context.Context, *ServicesRequest) (*MultiServiceAppPodList, error)
 	GetComponentPodNums(context.Context, *ServicesRequest) (*ComponentPodNums, error)
 	GetDeployInfo(context.Context, *ServiceRequest) (*DeployInfo, error)
-	GetTenantResource(context.Context, *TenantRequest) (*TenantResource, error)
-	GetTenantResources(context.Context, *Empty) (*TenantResourceList, error)
+	GetTenantEnvResource(context.Context, *TenantEnvRequest) (*TenantEnvResource, error)
+	GetTenantEnvResources(context.Context, *Empty) (*TenantEnvResourceList, error)
 	ListThirdPartyEndpoints(context.Context, *ServiceRequest) (*ThirdPartyEndpoints, error)
 	AddThirdPartyEndpoint(context.Context, *AddThirdPartyEndpointsReq) (*Empty, error)
 	UpdThirdPartyEndpoint(context.Context, *UpdThirdPartyEndpointsReq) (*Empty, error)
@@ -4383,11 +4383,11 @@ func (*UnimplementedAppRuntimeSyncServer) GetComponentPodNums(context.Context, *
 func (*UnimplementedAppRuntimeSyncServer) GetDeployInfo(context.Context, *ServiceRequest) (*DeployInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDeployInfo not implemented")
 }
-func (*UnimplementedAppRuntimeSyncServer) GetTenantResource(context.Context, *TenantRequest) (*TenantResource, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTenantResource not implemented")
+func (*UnimplementedAppRuntimeSyncServer) GetTenantEnvResource(context.Context, *TenantEnvRequest) (*TenantEnvResource, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTenantEnvResource not implemented")
 }
-func (*UnimplementedAppRuntimeSyncServer) GetTenantResources(context.Context, *Empty) (*TenantResourceList, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTenantResources not implemented")
+func (*UnimplementedAppRuntimeSyncServer) GetTenantEnvResources(context.Context, *Empty) (*TenantEnvResourceList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTenantEnvResources not implemented")
 }
 func (*UnimplementedAppRuntimeSyncServer) ListThirdPartyEndpoints(context.Context, *ServiceRequest) (*ThirdPartyEndpoints, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListThirdPartyEndpoints not implemented")
@@ -4532,38 +4532,38 @@ func _AppRuntimeSync_GetDeployInfo_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AppRuntimeSync_GetTenantResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TenantRequest)
+func _AppRuntimeSync_GetTenantEnvResource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TenantEnvRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AppRuntimeSyncServer).GetTenantResource(ctx, in)
+		return srv.(AppRuntimeSyncServer).GetTenantEnvResource(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/AppRuntimeSync/GetTenantResource",
+		FullMethod: "/AppRuntimeSync/GetTenantEnvResource",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppRuntimeSyncServer).GetTenantResource(ctx, req.(*TenantRequest))
+		return srv.(AppRuntimeSyncServer).GetTenantEnvResource(ctx, req.(*TenantEnvRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AppRuntimeSync_GetTenantResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AppRuntimeSync_GetTenantEnvResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AppRuntimeSyncServer).GetTenantResources(ctx, in)
+		return srv.(AppRuntimeSyncServer).GetTenantEnvResources(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/AppRuntimeSync/GetTenantResources",
+		FullMethod: "/AppRuntimeSync/GetTenantEnvResources",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppRuntimeSyncServer).GetTenantResources(ctx, req.(*Empty))
+		return srv.(AppRuntimeSyncServer).GetTenantEnvResources(ctx, req.(*Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -4777,12 +4777,12 @@ var _AppRuntimeSync_serviceDesc = grpc.ServiceDesc{
 			Handler:    _AppRuntimeSync_GetDeployInfo_Handler,
 		},
 		{
-			MethodName: "GetTenantResource",
-			Handler:    _AppRuntimeSync_GetTenantResource_Handler,
+			MethodName: "GetTenantEnvResource",
+			Handler:    _AppRuntimeSync_GetTenantEnvResource_Handler,
 		},
 		{
-			MethodName: "GetTenantResources",
-			Handler:    _AppRuntimeSync_GetTenantResources_Handler,
+			MethodName: "GetTenantEnvResources",
+			Handler:    _AppRuntimeSync_GetTenantEnvResources_Handler,
 		},
 		{
 			MethodName: "ListThirdPartyEndpoints",

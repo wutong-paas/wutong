@@ -136,11 +136,6 @@ func (s *slugBuild) buildRunnerImage(slugPackage string) (string, error) {
 	if err := s.writeRunDockerfile(cacheDir, packageName, s.re.BuildEnvs); err != nil {
 		return "", fmt.Errorf("write default runtime dockerfile error:%s", err.Error())
 	}
-	//build runtime image
-	if err := s.re.ImageClient.ImagesPullAndPush(builder.RUNNERIMAGENAME, builder.ONLINERUNNERIMAGENAME, "", "", s.re.Logger); err != nil {
-		return "", fmt.Errorf("pull image %s: %v", builder.RUNNERIMAGENAME, err)
-	}
-	logrus.Infof("pull image %s successfully.", builder.RUNNERIMAGENAME)
 	err := sources.ImageBuild(cacheDir, s.re.WtNamespace, s.re.ServiceID, s.re.DeployVersion, s.re.Logger, "run-build", "", s.re.KanikoImage)
 	if err != nil {
 		s.re.Logger.Error(fmt.Sprintf("build image %s of new version failure", imageName), map[string]string{"step": "builder-exector", "status": "failure"})
@@ -158,6 +153,9 @@ func (s *slugBuild) getSourceCodeTarFile(re *Request) (string, error) {
 	}
 	if re.ServerType == "git" {
 		cmd = append(cmd, "tar", "-cf", sourceTarFile, "./")
+	}
+	if len(cmd) == 0 {
+		return "", fmt.Errorf("server type [%s] is not supported", re.ServerType)
 	}
 	source := exec.Command(cmd[0], cmd[1:]...)
 	source.Dir = re.SourceDir
@@ -320,8 +318,8 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	}
 	envs := []corev1.EnvVar{
 		{Name: "SLUG_VERSION", Value: re.DeployVersion},
-		{Name: "SERVICE_ID", Value: re.ServiceID},
-		{Name: "TENANT_ID", Value: re.TenantID},
+		{Name: "WT_SERVICE_ID", Value: re.ServiceID},
+		{Name: "WT_TENANT_ID", Value: re.TenantEnvID},
 		{Name: "CODE_COMMIT_HASH", Value: re.Commit.Hash},
 		{Name: "CODE_COMMIT_USER", Value: re.Commit.User},
 		{Name: "CODE_COMMIT_MESSAGE", Value: re.Commit.Message},
@@ -436,12 +434,6 @@ func (s *slugBuild) runBuildJob(re *Request) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Get builder image at build time
-	if err := s.re.ImageClient.ImagesPullAndPush(builder.BUILDERIMAGENAME, builder.ONLINEBUILDERIMAGENAME, "", "", re.Logger); err != nil {
-		return err
-	}
-
-	logrus.Debugf("create job[name: %s; namespace: %s]", job.Name, job.Namespace)
 	err := jobc.GetJobController().ExecJob(ctx, &job, writer, reChan)
 	if err != nil {
 		logrus.Errorf("create new job:%s failed: %s", name, err.Error())
@@ -458,6 +450,7 @@ func (s *slugBuild) waitingComplete(re *Request, reChan *channels.RingChannel) (
 	var logComplete = false
 	var jobComplete = false
 	timeout := time.NewTimer(time.Minute * 60)
+	defer timeout.Stop()
 	for {
 		select {
 		case <-timeout.C:

@@ -99,13 +99,13 @@ func (h *handleMessageStore) RealseSubChan(eventID, subID string) {}
 func (h *handleMessageStore) Gc() {
 	h.log.Debug("Handle message store gc core start.")
 	tiker := time.NewTicker(time.Second * 30)
+	// defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
 			h.size = 0
 			h.gcRun()
 		case <-h.ctx.Done():
-			tiker.Stop()
 			h.log.Debug("Handle message store gc core stop.")
 			return
 		}
@@ -207,6 +207,7 @@ func (h *handleMessageStore) InsertGarbageMessage(message ...*db.EventLogMessage
 
 func (h *handleMessageStore) handleGarbageMessage() {
 	tick := time.NewTicker(10 * time.Second)
+	defer tick.Stop()
 	for {
 		select {
 		case <-tick.C:
@@ -251,7 +252,7 @@ func (h *handleMessageStore) persistence(eventID string) {
 				h.log.Error("persistence barrel message error.", err.Error())
 				h.InsertGarbageMessage(ba.persistenceBarrel...)
 			}
-			h.log.Debugf("persistence barrel(%s) %d message  to db.", eventID, len(ba.persistenceBarrel))
+			h.log.Debugf("handleMessageStore.persistence: persistence barrel(%s) %d message  to db.", eventID, len(ba.persistenceBarrel))
 			ba.persistenceBarrel = ba.persistenceBarrel[:0]
 			ba.needPersistence = false
 		}

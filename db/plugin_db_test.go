@@ -90,18 +90,18 @@ func TestManager_PluginBuildVersionDaoImpl_ListSuccessfulOnesByPluginIDs(t *test
 		{pluginID: "4998ca78d41f45149e71c1f03ad0aa22", status: "complete"},
 	}
 	for _, od := range oridata {
-		buildVersion := &model.TenantPluginBuildVersion{
+		buildVersion := &model.TenantEnvPluginBuildVersion{
 			PluginID:      od.pluginID,
 			Status:        od.status,
 			DeployVersion: time.Now().Format("20060102150405.000000"),
 		}
-		if err := GetManager().TenantPluginBuildVersionDao().AddModel(buildVersion); err != nil {
+		if err := GetManager().TenantEnvPluginBuildVersionDao().AddModel(buildVersion); err != nil {
 			t.Fatalf("failed to create plugin build version: %v", err)
 		}
 	}
 
 	pluginIDs := []string{"ff6aad8a70324384a7578285799e50d9", "4998ca78d41f45149e71c1f03ad0aa22"}
-	verions, err := GetManager().TenantPluginBuildVersionDao().ListSuccessfulOnesByPluginIDs(pluginIDs)
+	verions, err := GetManager().TenantEnvPluginBuildVersionDao().ListSuccessfulOnesByPluginIDs(pluginIDs)
 	if err != nil {
 		t.Errorf("received unexpected error: %v", err)
 	}

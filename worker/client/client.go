@@ -33,7 +33,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-//AppRuntimeSyncClient grpc client
+// AppRuntimeSyncClient grpc client
 type AppRuntimeSyncClient struct {
 	pb.AppRuntimeSyncClient
 	AppRuntimeSyncClientConf
@@ -41,7 +41,7 @@ type AppRuntimeSyncClient struct {
 	ctx context.Context
 }
 
-//AppRuntimeSyncClientConf client conf
+// AppRuntimeSyncClientConf client conf
 type AppRuntimeSyncClientConf struct {
 	NonBlock             bool
 	EtcdEndpoints        []string
@@ -51,8 +51,8 @@ type AppRuntimeSyncClientConf struct {
 	DefaultServerAddress []string
 }
 
-//NewClient new client
-//ctx must be cancel where client not used
+// NewClient new client
+// ctx must be cancel where client not used
 func NewClient(ctx context.Context, conf AppRuntimeSyncClientConf) (*AppRuntimeSyncClient, error) {
 	var arsc AppRuntimeSyncClient
 	arsc.AppRuntimeSyncClientConf = conf
@@ -84,12 +84,12 @@ func NewClient(ctx context.Context, conf AppRuntimeSyncClientConf) (*AppRuntimeS
 	return &arsc, nil
 }
 
-//when watch occurred error,will exec this method
+// when watch occurred error,will exec this method
 func (a *AppRuntimeSyncClient) Error(err error) {
 	logrus.Errorf("discover app runtime sync server address occurred err:%s", err.Error())
 }
 
-//GetStatus get status
+// GetStatus get status
 func (a *AppRuntimeSyncClient) GetStatus(serviceID string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -102,7 +102,7 @@ func (a *AppRuntimeSyncClient) GetStatus(serviceID string) string {
 	return status.Status[serviceID]
 }
 
-//GetStatuss get multiple app status
+// GetStatuss get multiple app status
 func (a *AppRuntimeSyncClient) GetStatuss(serviceIDs string) map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -120,7 +120,7 @@ func (a *AppRuntimeSyncClient) GetStatuss(serviceIDs string) map[string]string {
 	return status.Status
 }
 
-//GetAllStatus get all status
+// GetAllStatus get all status
 func (a *AppRuntimeSyncClient) GetAllStatus() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -133,7 +133,7 @@ func (a *AppRuntimeSyncClient) GetAllStatus() map[string]string {
 	return status.Status
 }
 
-//GetNeedBillingStatus get need billing status
+// GetNeedBillingStatus get need billing status
 func (a *AppRuntimeSyncClient) GetNeedBillingStatus() (map[string]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
@@ -150,7 +150,7 @@ func (a *AppRuntimeSyncClient) GetNeedBillingStatus() (map[string]string, error)
 	return res, nil
 }
 
-//GetServiceDeployInfo get service deploy info
+// GetServiceDeployInfo get service deploy info
 func (a *AppRuntimeSyncClient) GetServiceDeployInfo(serviceID string) (*pb.DeployInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -163,27 +163,27 @@ func (a *AppRuntimeSyncClient) GetServiceDeployInfo(serviceID string) (*pb.Deplo
 	return re, nil
 }
 
-//IsClosedStatus  check status
+// IsClosedStatus  check status
 func (a *AppRuntimeSyncClient) IsClosedStatus(curStatus string) bool {
 	return curStatus == "" || curStatus == v1.BUILDEFAILURE || curStatus == v1.CLOSED || curStatus == v1.UNDEPLOY || curStatus == v1.BUILDING || curStatus == v1.UNKNOW
 }
 
-//GetTenantResource get tenant resource
-func (a *AppRuntimeSyncClient) GetTenantResource(tenantID string) (*pb.TenantResource, error) {
+// GetTenantEnvResource get tenant env resource
+func (a *AppRuntimeSyncClient) GetTenantEnvResource(tenantEnvID string) (*pb.TenantEnvResource, error) {
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
-		defer util.Elapsed("[AppRuntimeSyncClient] get tenant resource")()
+		defer util.Elapsed("[AppRuntimeSyncClient] get tenant env resource")()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetTenantResource(ctx, &pb.TenantRequest{TenantId: tenantID})
+	return a.AppRuntimeSyncClient.GetTenantEnvResource(ctx, &pb.TenantEnvRequest{TenantEnvId: tenantEnvID})
 }
 
-//GetAllTenantResource get all tenant resource
-func (a *AppRuntimeSyncClient) GetAllTenantResource() (*pb.TenantResourceList, error) {
+// GetAllTenantEnvResource get all tenant env resource
+func (a *AppRuntimeSyncClient) GetAllTenantEnvResource() (*pb.TenantEnvResourceList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetTenantResources(ctx, &pb.Empty{})
+	return a.AppRuntimeSyncClient.GetTenantEnvResources(ctx, &pb.Empty{})
 }
 
 // ListThirdPartyEndpoints -

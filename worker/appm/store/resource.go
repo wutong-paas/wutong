@@ -25,34 +25,34 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-//ResourceCache resource cache
+// ResourceCache resource cache
 type ResourceCache struct {
 	lock      sync.Mutex
 	resources map[string]*NamespaceResource
 }
 
-//NewResourceCache new resource cache
+// NewResourceCache new resource cache
 func NewResourceCache() *ResourceCache {
 	return &ResourceCache{
 		resources: make(map[string]*NamespaceResource),
 	}
 }
 
-//NamespaceResource namespace resource
+// NamespaceResource namespace resource
 type NamespaceResource map[string]*v1.PodResource
 
-//SetPodResource set pod resource
+// SetPodResource set pod resource
 func (r *NamespaceResource) SetPodResource(podName string, pr *v1.PodResource) {
 	(*r)[podName] = pr
 }
 
-//RemovePod remove pod resource
+// RemovePod remove pod resource
 func (r *NamespaceResource) RemovePod(podName string) {
 	delete(*r, podName)
 }
 
-//TenantResource tenant resource
-type TenantResource struct {
+// TenantEnvResource tenant env resource
+type TenantEnvResource struct {
 	Namespace     string
 	MemoryRequest int64
 	MemoryLimit   int64
@@ -60,17 +60,17 @@ type TenantResource struct {
 	CPULimit      int64
 }
 
-//SetPodResource set pod resource
+// SetPodResource set pod resource
 func (r *ResourceCache) SetPodResource(pod *corev1.Pod) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	namespace := pod.Namespace
 	re := v1.CalculatePodResource(pod)
-	// Compatible with resources with tenantID as namespace
+	// Compatible with resources with tenantEnvID as namespace
 	nsKeys := []string{namespace}
 	labels := pod.Labels
-	if tenantID, ok := labels["tenant_id"]; ok && tenantID != namespace {
-		nsKeys = append(nsKeys, tenantID)
+	if tenantEnvID, ok := labels["tenant_env_id"]; ok && tenantEnvID != namespace {
+		nsKeys = append(nsKeys, tenantEnvID)
 	}
 	for _, ns := range nsKeys {
 		if nr, ok := r.resources[ns]; ok && nr != nil {
@@ -83,15 +83,15 @@ func (r *ResourceCache) SetPodResource(pod *corev1.Pod) {
 	}
 }
 
-//RemovePod remove pod resource
+// RemovePod remove pod resource
 func (r *ResourceCache) RemovePod(pod *corev1.Pod) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	namespace := pod.Namespace
 	nsKeys := []string{namespace}
 	labels := pod.Labels
-	if tenantID, ok := labels["tenant_id"]; ok && tenantID != namespace {
-		nsKeys = append(nsKeys, tenantID)
+	if tenantEnvID, ok := labels["tenant_env_id"]; ok && tenantEnvID != namespace {
+		nsKeys = append(nsKeys, tenantEnvID)
 	}
 	for _, ns := range nsKeys {
 		if nr, ok := r.resources[ns]; ok && nr != nil {
@@ -100,16 +100,16 @@ func (r *ResourceCache) RemovePod(pod *corev1.Pod) {
 	}
 }
 
-//GetTenantResource get tenant resource
-func (r *ResourceCache) GetTenantResource(namespace string) (tr TenantResource) {
+// GetTenantEnvResource get tenant env resource
+func (r *ResourceCache) GetTenantEnvResource(namespace string) (tr TenantEnvResource) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
-	tr = r.getTenantResource(r.resources[namespace])
+	tr = r.getTenantEnvResource(r.resources[namespace])
 	tr.Namespace = namespace
 	return tr
 }
 
-func (r *ResourceCache) getTenantResource(namespaceRe *NamespaceResource) (tr TenantResource) {
+func (r *ResourceCache) getTenantEnvResource(namespaceRe *NamespaceResource) (tr TenantEnvResource) {
 	if namespaceRe == nil {
 		return
 	}
@@ -122,12 +122,12 @@ func (r *ResourceCache) getTenantResource(namespaceRe *NamespaceResource) (tr Te
 	return
 }
 
-//GetAllTenantResource get all tenant resources
-func (r *ResourceCache) GetAllTenantResource() (trs []TenantResource) {
+// GetAllTenantEnvResource get all tenant env resources
+func (r *ResourceCache) GetAllTenantEnvResource() (trs []TenantEnvResource) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 	for k := range r.resources {
-		tr := r.getTenantResource(r.resources[k])
+		tr := r.getTenantEnvResource(r.resources[k])
 		tr.Namespace = k
 		trs = append(trs, tr)
 	}

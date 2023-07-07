@@ -1,17 +1,18 @@
 package controller
 
 import (
-	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"net/http"
 	"strconv"
 
+	dbmodel "github.com/wutong-paas/wutong/db/model"
+
 	"github.com/go-chi/chi"
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/handler"
 	"github.com/wutong-paas/wutong/api/model"
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	"github.com/wutong-paas/wutong/db"
 	httputil "github.com/wutong-paas/wutong/util/http"
-	"github.com/sirupsen/logrus"
 )
 
 // AddConfigGroup -
@@ -56,7 +57,7 @@ func (a *ApplicationController) UpdateConfigGroup(w http.ResponseWriter, r *http
 // checkServiceExist -
 func checkServiceExist(appID string, serviceIDs []string) {
 	// Get the application bound serviceIDs
-	availableServices := db.GetManager().TenantServiceDao().GetServiceIDsByAppID(appID)
+	availableServices := db.GetManager().TenantEnvServiceDao().GetServiceIDsByAppID(appID)
 	// Judge whether the requested service ID is correct
 	set := make(map[string]struct{})
 	for _, s := range availableServices {

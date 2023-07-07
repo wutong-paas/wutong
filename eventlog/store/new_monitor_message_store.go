@@ -123,12 +123,12 @@ func (h *newMonitorMessageStore) Run() {
 }
 func (h *newMonitorMessageStore) Gc() {
 	tiker := time.NewTicker(time.Second * 30)
+	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
 		case <-h.ctx.Done():
 			h.log.Debug("read message store gc stop.")
-			tiker.Stop()
 			return
 		}
 		h.size = 0
@@ -213,7 +213,7 @@ func (c *CacheMonitorMessageList) Insert(mms ...MonitorMessage) {
 	hostname := mms[0].HostName
 	if len(c.list) == 0 {
 		c.list = []*cacheMonitorMessage{
-			&cacheMonitorMessage{
+			{
 				updateTime: time.Now(),
 				hostName:   hostname,
 				mms:        mms,

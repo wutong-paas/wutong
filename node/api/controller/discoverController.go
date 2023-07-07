@@ -28,7 +28,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//ServiceDiscover service discover service
+// ServiceDiscover service discover service
 func ServiceDiscover(w http.ResponseWriter, r *http.Request) {
 	serviceInfo := chi.URLParam(r, "service_name")
 	sds, err := discoverService.DiscoverService(serviceInfo)
@@ -39,11 +39,11 @@ func ServiceDiscover(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnNoFomart(r, w, 200, sds)
 }
 
-//ListenerDiscover ListenerDiscover
+// ListenerDiscover ListenerDiscover
 func ListenerDiscover(w http.ResponseWriter, r *http.Request) {
-	tenantService := chi.URLParam(r, "tenant_service")
+	tenantEnvService := chi.URLParam(r, "tenant_env_service")
 	serviceNodes := chi.URLParam(r, "service_nodes")
-	lds, err := discoverService.DiscoverListeners(tenantService, serviceNodes)
+	lds, err := discoverService.DiscoverListeners(tenantEnvService, serviceNodes)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -51,11 +51,11 @@ func ListenerDiscover(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnNoFomart(r, w, 200, lds)
 }
 
-//ClusterDiscover ClusterDiscover
+// ClusterDiscover ClusterDiscover
 func ClusterDiscover(w http.ResponseWriter, r *http.Request) {
-	tenantService := chi.URLParam(r, "tenant_service")
+	tenantEnvService := chi.URLParam(r, "tenant_env_service")
 	serviceNodes := chi.URLParam(r, "service_nodes")
-	cds, err := discoverService.DiscoverClusters(tenantService, serviceNodes)
+	cds, err := discoverService.DiscoverClusters(tenantEnvService, serviceNodes)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -63,19 +63,19 @@ func ClusterDiscover(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnNoFomart(r, w, 200, cds)
 }
 
-//RoutesDiscover RoutesDiscover
-//no impl
+// RoutesDiscover RoutesDiscover
+// no impl
 func RoutesDiscover(w http.ResponseWriter, r *http.Request) {
-	namespace := chi.URLParam(r, "tenant_id")
+	namespace := chi.URLParam(r, "tenant_env_id")
 	serviceNodes := chi.URLParam(r, "service_nodes")
 	routeConfig := chi.URLParam(r, "route_config")
 	logrus.Debugf("route_config is %s, namespace %s, serviceNodes %s", routeConfig, namespace, serviceNodes)
 	w.WriteHeader(200)
 }
 
-//PluginResourcesConfig discover plugin config
+// PluginResourcesConfig discover plugin config
 func PluginResourcesConfig(w http.ResponseWriter, r *http.Request) {
-	namespace := chi.URLParam(r, "tenant_id")
+	namespace := chi.URLParam(r, "tenant_env_id")
 	serviceAlias := chi.URLParam(r, "service_alias")
 	pluginID := chi.URLParam(r, "plugin_id")
 	ss, err := discoverService.GetPluginConfigs(namespace, serviceAlias, pluginID)

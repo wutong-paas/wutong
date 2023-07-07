@@ -52,7 +52,7 @@ func (v *MemoryFSVolume) CreateVolume(define *Define) error {
 	vo.EmptyDir = &corev1.EmptyDirVolumeSource{}
 
 	// get service custom env
-	es, err := v.dbmanager.TenantServiceEnvVarDao().GetServiceEnvs(v.as.ServiceID, []string{"inner"})
+	es, err := v.dbmanager.TenantEnvServiceEnvVarDao().GetServiceEnvs(v.as.ServiceID, []string{"inner"})
 	if err != nil {
 		logrus.Errorf("get service[%s] env failed: %s", v.as.ServiceID, err.Error())
 		return err

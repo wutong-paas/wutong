@@ -42,6 +42,7 @@ func StartRegionAPI(ch chan os.Signal) {
 			logrus.Error("start region old api error.", err.Error())
 		}
 		tick := time.NewTicker(time.Second * 5)
+		defer tick.Stop()
 		select {
 		case si := <-ch:
 			cmd.Process.Signal(si)

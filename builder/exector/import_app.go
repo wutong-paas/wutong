@@ -189,7 +189,7 @@ func (i *ImportApp) updateStatusForApp(app, status string) error {
 	// 从数据库中获取该应用的状态信息
 	res, err := db.GetManager().AppDao().GetByEventId(i.EventID)
 	if err != nil {
-		err = fmt.Errorf("Failed to get app %s from db: %s", i.EventID, err.Error())
+		err = fmt.Errorf("failed to get app %s from db: %s", i.EventID, err.Error())
 		logrus.Error(err)
 		return err
 	}
@@ -200,7 +200,7 @@ func (i *ImportApp) updateStatusForApp(app, status string) error {
 	res.Apps = map2str(appsMap)
 
 	if err := db.GetManager().AppDao().UpdateModel(res); err != nil {
-		err = fmt.Errorf("Failed to update app %s: %s", i.EventID, err.Error())
+		err = fmt.Errorf("failed to update app %s: %s", i.EventID, err.Error())
 		logrus.Error(err)
 		return err
 	}
@@ -233,24 +233,4 @@ func map2str(m map[string]string) string {
 	}
 
 	return result
-}
-
-// 只保留"/"后面的部分，并去掉不合法字符，一般用于把导出的镜像文件还原为镜像名
-func buildFromLinuxFileName(fileName string) string {
-	if fileName == "" {
-		return fileName
-	}
-
-	arr := strings.Split(fileName, "/")
-
-	if str := arr[len(arr)-1]; str == "" {
-		fileName = strings.Replace(fileName, "---", "/", -1)
-	} else {
-		fileName = str
-	}
-
-	fileName = strings.Replace(fileName, "--", ":", -1)
-	fileName = strings.TrimSpace(fileName)
-
-	return fileName
 }

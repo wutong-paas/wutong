@@ -192,6 +192,7 @@ func (d *Monitor) discoverCadvisor(c *callback.Cadvisor, done <-chan struct{}) {
 
 func (d *Monitor) discoverEtcd(e *callback.Etcd, done <-chan struct{}) {
 	t := time.NewTicker(time.Minute)
+	defer t.Stop()
 	for {
 		select {
 		case <-done:

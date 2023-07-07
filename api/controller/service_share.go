@@ -28,10 +28,10 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
-//Share 应用分享
-func (t *TenantStruct) Share(w http.ResponseWriter, r *http.Request) {
+// Share 应用分享
+func (t *TenantEnvStruct) Share(w http.ResponseWriter, r *http.Request) {
 	//Share ShareService
-	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/share  v2 shareService
+	// swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/share  v2 shareService
 	//
 	// 分享应用介质
 	//
@@ -66,10 +66,10 @@ func (t *TenantStruct) Share(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, res)
 }
 
-//ShareResult 获取分享结果
-func (t *TenantStruct) ShareResult(w http.ResponseWriter, r *http.Request) {
+// ShareResult 获取分享结果
+func (t *TenantEnvStruct) ShareResult(w http.ResponseWriter, r *http.Request) {
 	//ShareResult ShareResult
-	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/share  v2 get_share_result
+	// swagger:operation GET /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/share  v2 get_share_result
 	//
 	// 获取分享应用介质结果
 	//
