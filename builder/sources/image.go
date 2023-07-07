@@ -130,7 +130,7 @@ func ImagePull(client *containerd.Client, ref string, username, password string,
 		return nil, err
 	}
 	<-progress
-	printLog(logger, "info", fmt.Sprintf("Success Pull Image：%s", image), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("Success Pull Image: %s", image), map[string]string{"step": "pullimage"})
 	return &img, nil
 }
 
@@ -147,8 +147,8 @@ func ImageTag(containerdClient *containerd.Client, source, target string, logger
 		return err
 	}
 	targetImage := targetNamed.String()
-	logrus.Infof(fmt.Sprintf("change image tag：%s -> %s", srcImage, targetImage))
-	printLog(logger, "info", fmt.Sprintf("change image tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
+	logrus.Infof(fmt.Sprintf("change image tag: %s -> %s", srcImage, targetImage))
+	printLog(logger, "info", fmt.Sprintf("change image tag: %s -> %s", source, target), map[string]string{"step": "changetag"})
 	ctx := namespaces.WithNamespace(context.Background(), Namespace)
 	imageService := containerdClient.ImageService()
 	image, err := imageService.Get(ctx, srcImage)
@@ -241,7 +241,7 @@ func ImageNameWithNamespaceHandle(imageName string) *model.ImageName {
 // timeout minutes of the unit
 // Deprecated: use sources.ImageClient.ImagePush instead
 func ImagePush(client *containerd.Client, rawRef, user, pass string, logger event.Logger, timeout int) error {
-	printLog(logger, "info", fmt.Sprintf("start push image：%s", rawRef), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("start push image: %s", rawRef), map[string]string{"step": "pushimage"})
 	named, err := refdocker.ParseDockerRef(rawRef)
 	if err != nil {
 		return err
@@ -326,8 +326,13 @@ func ImagePush(client *containerd.Client, rawRef, user, pass string, logger even
 			}
 		}
 	})
+	waitErr := eg.Wait()
+	if waitErr != nil {
+		printLog(logger, "error", fmt.Sprintf("push image: %s failure", image), map[string]string{"step": "pushimage", "status": "failure"})
+		return waitErr
+	}
 	// create a container
-	printLog(logger, "info", fmt.Sprintf("success push image：%s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("success push image: %s", image), map[string]string{"step": "pushimage"})
 	return nil
 }
 
