@@ -90,7 +90,7 @@ func (e *exectorManager) run(t *model.BuildPluginTaskBody, logger event.Logger) 
 			return err
 		}
 		logger.Info("拉取镜像完成", map[string]string{"step": "build-exector", "status": "complete"})
-		image := createPluginImageTag(t.ImageURL, t.PluginID, t.DeployVersion)
+		image = createPluginImageTag(t.ImageURL, t.PluginID, t.DeployVersion)
 		err := e.imageClient.ImageTag(t.ImageURL, image, logger, 1)
 		if err != nil {
 			logrus.Errorf("set plugin image tag error, %v", err)
