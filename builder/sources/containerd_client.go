@@ -89,6 +89,8 @@ func (c *containerdClientImpl) WatchContainers(ctx context.Context, cchan chan C
 	for {
 		var e *events.Envelope
 		select {
+		case <-ctx.Done():
+			return ctx.Err()
 		case e = <-eventsCh:
 		case err = <-errCh:
 			return err
@@ -100,13 +102,12 @@ func (c *containerdClientImpl) WatchContainers(ctx context.Context, cchan chan C
 					logrus.Warn("cannot unmarshal an event from Any")
 					continue
 				}
-				switch ev.(type) {
+				switch ev := ev.(type) {
 				case *containerdEventstypes.TaskStart:
-					evVal := ev.(*containerdEventstypes.TaskStart)
 					// PATCH: if it's start event of pause container
 					// we would skip it.
 					// QUESTION: what if someone's container ID equals the other Sandbox ID?
-					targetContainerID := evVal.ContainerID
+					targetContainerID := ev.ContainerID
 					resp, _ := c.runtimeClient.ListPodSandbox(context.Background(),
 						&runtimeapi.ListPodSandboxRequest{
 							Filter: &runtimeapi.PodSandboxFilter{
