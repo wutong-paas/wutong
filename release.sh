@@ -4,7 +4,6 @@ set -o errexit
 # define package name
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
-IMAGE_REPO=${IMAGE_REPO:-'wutongpaas'}
 GOARCH=${BUILD_ARCH:-'amd64'}
 
 GO_VERSION=1.17
@@ -110,9 +109,6 @@ build::image() {
 	if [ "$2" = "push" ]; then
 		docker tag wt-$1:${VERSION} swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 		docker push swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
-
-		# docker tag wt-$1:${VERSION} wutongpaas/wt-$1:${VERSION}
-		# docker push wutongpaas/wt-$1:${VERSION}
 	fi
 	popd
 	rm -rf "${build_image_dir}"

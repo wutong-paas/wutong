@@ -6,5 +6,4 @@ ADD wutong-api /run/wutong-api
 ADD entrypoint.sh /run/entrypoint.sh
 WORKDIR /run
 ENV RELEASE_DESC=${RELEASE_DESC}
-VOLUME [ "/etc/wutongpaas" ]
 ENTRYPOINT ["/run/entrypoint.sh"]

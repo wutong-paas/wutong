@@ -1,21 +1,21 @@
-ARG VERSION
-ARG IMAGE_REPO
-FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
-
-FROM --platform=${TARGETPLATFORM} wutongpaas/openresty:1.19.3.2-alpine
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/openresty:1.19.3.2-alpine
 ARG RELEASE_DESC
-ARG TARGETOS TARGETARCH TARGETPLATFORM
+ARG TARGETARCH
+
+WORKDIR /run
+
+COPY ${TARGETARCH}/ /run/
+COPY ingress-controller /run/ingress-controller
+COPY nginx /run/nginx
+COPY nginxtmp /run/nginxtmp
+COPY entrypoint.sh /run/entrypoint.sh
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && apk add --no-cache bash net-tools curl tzdata && \
-        cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-        echo "Asia/Shanghai" >  /etc/timezone && \
-        date && apk del --no-cache tzdata
-
-ADD . /run
-COPY --from=wt-all /output/bin/wutong-gateway /run/wutong-gateway
-
-RUN set -eux; \
-    if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    echo "Asia/Shanghai" >  /etc/timezone && \
+    date && apk del --no-cache tzdata && \
+    set -eux; \
+    if [ $(uname -m) = "aarch64" ]; then \
         wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
     fi
 

@@ -43,7 +43,6 @@ type Config struct {
 	StartArgs            []string
 	ConfigFile           string
 	AlertingRulesFile    string
-	AlertManagerURL      []string
 	LocalStoragePath     string
 	Web                  Web
 	Tsdb                 Tsdb
@@ -108,7 +107,6 @@ func NewConfig() *Config {
 		KubeConfig:           "",
 		ConfigFile:           "/etc/prometheus/prometheus.yml",
 		AlertingRulesFile:    "/etc/prometheus/rules.yml",
-		AlertManagerURL:      []string{},
 		LocalStoragePath:     "/prometheusdata",
 		WebTimeout:           "5m",
 		RemoteFlushDeadline:  "1m",
@@ -142,7 +140,6 @@ func (c *Config) AddFlag(cmd *pflag.FlagSet) {
 	cmd.StringVar(&c.EtcdKeyFile, "etcd-key", "", "etcd http tls cert key file")
 	cmd.StringVar(&c.AdvertiseAddr, "advertise-addr", c.AdvertiseAddr, "advertise address, and registry into etcd.")
 	cmd.IntVar(&c.CadvisorListenPort, "cadvisor-listen-port", c.CadvisorListenPort, "kubelet cadvisor listen port in all node")
-	cmd.StringSliceVar(&c.AlertManagerURL, "alertmanager-address", c.AlertManagerURL, "AlertManager url.")
 	cmd.StringVar(&c.MysqldExporter, "mysqld-exporter", c.MysqldExporter, "mysqld exporter address. eg: 127.0.0.1:9104")
 	cmd.StringVar(&c.KSMExporter, "kube-state-metrics", c.KSMExporter, "kube-state-metrics, current server's kube-state-metrics address")
 	cmd.StringVar(&c.KubeConfig, "kube-config", "", "kubernetes api server config file")
@@ -219,7 +216,7 @@ func (c *Config) CompleteConfig() {
 		c.Port = port
 	}
 
-	defaultOptions := "--log.level=%s --web.listen-address=%s --config.file=%s --storage.tsdb.path=%s --storage.tsdb.retention.time=%s"
+	defaultOptions := "--log.level=%s --web.listen-address=%s --config.file=%s --storage.tsdb.path=%s --storage.tsdb.retention.time=%s --storage.tsdb.retention.size=20GB"
 	defaultOptions = fmt.Sprintf(defaultOptions, c.LogLevel, c.Web.ListenAddress, c.ConfigFile, c.LocalStoragePath, c.Tsdb.Retention)
 	if c.Tsdb.NoLockfile {
 		defaultOptions += " --storage.tsdb.no-lockfile"

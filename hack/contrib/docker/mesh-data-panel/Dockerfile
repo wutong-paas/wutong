@@ -1,11 +1,12 @@
-FROM  envoyproxy/envoy:v1.13.1
+FROM envoyproxy/envoy:v1.16.5
 ARG RELEASE_DESC
 LABEL "author"="dingpeng24001"
 RUN apt-get update && apt-get install -y bash curl net-tools wget vim && \
     wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/amd/env2file -O /usr/bin/env2file    
-ADD . /root/
-RUN chmod 755 /root/start.sh && chmod 755 /usr/bin/env2file
+ADD . /run/
+
+RUN chmod 755 /run/entrypoint.sh && chmod 755 /usr/bin/env2file
 ENV ENVOY_BINARY="/usr/local/bin/envoy"
 ENV RELEASE_DESC=${RELEASE_DESC}
-WORKDIR /root
-ENTRYPOINT ["./start.sh"]
+WORKDIR /run
+ENTRYPOINT ["/run/entrypoint.sh"]

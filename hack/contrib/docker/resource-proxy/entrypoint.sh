@@ -4,5 +4,5 @@ if [ "$1" = "bash" ];then
 elif [ "${1}" = 'version' ];then
     echo "${RELEASE_DESC}"
 else
-    exec /docker-entrypoint.sh "$@"
+    exec /entrypoint.sh "$@"
 fi 

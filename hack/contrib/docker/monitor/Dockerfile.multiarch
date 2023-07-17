@@ -1,18 +1,14 @@
-ARG VERSION
-ARG IMAGE_REPO
-FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
-
-FROM --platform=${BUILDPLATFORM} prom/prometheus:v2.20.0
+FROM prom/prometheus:v2.20.0
 ARG RELEASE_DESC
-ARG TARGETOS TARGETARCH TARGETPLATFORM
+ARG TARGETARCH
+
+WORKDIR /run
+
+COPY ${TARGETARCH}/ /run/
+COPY entrypoint.sh /run/entrypoint.sh
 
 USER root
 VOLUME ["/prometheusdata"]
 
 ENV RELEASE_DESC=${RELEASE_DESC}
-
-COPY --from=wt-all /output/bin/wutong-monitor /run/wutong-monitor
-
-ADD entrypoint.sh /run/entrypoint.sh
-
 ENTRYPOINT ["/run/entrypoint.sh"]

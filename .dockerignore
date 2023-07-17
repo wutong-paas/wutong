@@ -1,0 +1,14 @@
+.git/
+.gitignore
+.github/
+_output/
+.cache/
+.docker/
+.vscode/
+.idea/
+
+config/
+docs/
+hack/
+
+*.md

@@ -1,17 +1,14 @@
-ARG BASE_IMAGE_VERSION
-ARG VERSION
-ARG IMAGE_REPO
-FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
-
-FROM --platform=${BUILDPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:${BASE_IMAGE_VERSION}
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
 ARG RELEASE_DESC
-ARG TARGETOS TARGETARCH TARGETPLATFORM
+ARG TARGETARCH
+
+WORKDIR /run
+
+COPY ${TARGETARCH}/ /run/
+COPY entrypoint.sh /run/entrypoint.sh
+RUN mkdir /root/.kube
 
 ENV PORT 7070
 
-COPY --from=wt-all /output/bin/wutong-webcli /usr/bin/wutong-webcli
-ADD entrypoint.sh /entrypoint.sh
-RUN mkdir /root/.kube
-
 ENV RELEASE_DESC=${RELEASE_DESC}
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/run/entrypoint.sh"]

@@ -2,7 +2,7 @@
 if [ "$1" = "bash" ];then
     exec /bin/bash
 elif [ "$1" = "version" ];then
-    /usr/bin/wutong-webcli version
+    /run/wutong-webcli version
 else
-    exec /usr/bin/wutong-webcli $@
+    exec /run/wutong-webcli $@
 fi

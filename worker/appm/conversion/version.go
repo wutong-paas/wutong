@@ -158,6 +158,7 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 		VolumeMounts:   dv.GetVolumeMounts(),
 		LivenessProbe:  createProbe(as, dbmanager, "liveness"),
 		ReadinessProbe: createProbe(as, dbmanager, "readiness"),
+		StartupProbe:   createProbe(as, dbmanager, "startup"),
 		Resources:      resources,
 	}
 
@@ -585,12 +586,31 @@ func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.Contai
 }
 
 func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.Probe {
-	probe, err := dbmanager.ServiceProbeDao().GetServiceUsedProbe(as.ServiceID, mode)
-	if err == nil && probe != nil {
+	var probe *dbmodel.TenantEnvServiceProbe
+	probes, err := dbmanager.ServiceProbeDao().GetServiceProbes(as.ServiceID)
+	if err != nil && len(probes) == 0 {
+		return nil
+	}
+	for _, p := range probes {
+		if *p.IsUsed < 1 {
+			continue
+		}
+		if p.Mode == mode || mode == "startup" {
+			probe = p
+			break
+		}
+	}
+
+	// probe, err := dbmanager.ServiceProbeDao().GetServiceUsedProbe(as.ServiceID, mode)
+	// if err == nil && probe != nil {
+	if probe != nil {
 		if mode == "liveness" {
 			probe.SuccessThreshold = 1
 		}
 		if mode == "readiness" && probe.FailureThreshold < 1 {
+			probe.FailureThreshold = 3
+		}
+		if mode == "startup" && probe.FailureThreshold < 1 {
 			probe.FailureThreshold = 3
 		}
 		p := &corev1.Probe{

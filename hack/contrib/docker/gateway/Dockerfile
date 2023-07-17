@@ -1,5 +1,5 @@
 ARG BASE_IMAGE_VERSION
-FROM wutongpaas/openresty:${BASE_IMAGE_VERSION}
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/openresty:${BASE_IMAGE_VERSION}
 ARG RELEASE_DESC
 ARG GOARCH
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && apk add --no-cache bash net-tools curl tzdata && \

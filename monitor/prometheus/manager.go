@@ -101,18 +101,6 @@ func NewManager(config *option.Config, a *AlertingRulesManager) *Manager {
 	}
 
 	m.LoadConfig()
-	if len(config.AlertManagerURL) > 0 {
-		al := &AlertmanagerConfig{
-			ServiceDiscoveryConfig: ServiceDiscoveryConfig{
-				StaticConfigs: []*Group{
-					{
-						Targets: config.AlertManagerURL,
-					},
-				},
-			},
-		}
-		m.Config.AlertingConfig.AlertmanagerConfigs = append(m.Config.AlertingConfig.AlertmanagerConfigs, al)
-	}
 	m.SaveConfig()
 	m.a.InitRulesConfig()
 	return m
@@ -171,7 +159,7 @@ func (p *Manager) StopDaemon() {
 	}
 }
 
-//ReloadConfig reload prometheus config
+// ReloadConfig reload prometheus config
 func (p *Manager) ReloadConfig() error {
 	if p.Status == STARTED {
 		logrus.Debug("Restart daemon for prometheus.")
@@ -183,7 +171,7 @@ func (p *Manager) ReloadConfig() error {
 	return nil
 }
 
-//LoadConfig load config
+// LoadConfig load config
 func (p *Manager) LoadConfig() error {
 	logrus.Info("Load prometheus config file.")
 	content, err := ioutil.ReadFile(p.Opt.ConfigFile)

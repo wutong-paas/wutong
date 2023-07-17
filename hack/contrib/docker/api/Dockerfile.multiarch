@@ -1,14 +1,11 @@
-ARG VERSION
-ARG IMAGE_REPO
-FROM --platform=${TARGETPLATFORM} ${IMAGE_REPO}/wt-all:${VERSION} AS wt-all
-
-FROM --platform=${TARGETPLATFORM} swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
 ARG RELEASE_DESC
-ARG TARGETOS TARGETARCH TARGETPLATFORM
+ARG TARGETARCH
 
-COPY --from=wt-all /output/bin/wutong-api /run/wutong-api
-ADD entrypoint.sh /run/entrypoint.sh
 WORKDIR /run
+
+COPY ${TARGETARCH}/ /run/
+COPY entrypoint.sh /run/entrypoint.sh
+
 ENV RELEASE_DESC=${RELEASE_DESC}
-VOLUME [ "/etc/wutongpaas" ]
 ENTRYPOINT ["/run/entrypoint.sh"]
