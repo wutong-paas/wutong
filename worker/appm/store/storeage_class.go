@@ -44,13 +44,7 @@ func (a *appRuntimeStore) initStorageclass() error {
 			if old.VolumeBindingMode == nil {
 				update = true
 			}
-			if !update && old.ReclaimPolicy == nil {
-				update = true
-			}
 			if !update && string(*old.VolumeBindingMode) != string(*storageclass.VolumeBindingMode) {
-				update = true
-			}
-			if !update && string(*old.ReclaimPolicy) != string(*storageclass.ReclaimPolicy) {
 				update = true
 			}
 			if update {

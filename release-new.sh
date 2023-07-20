@@ -32,9 +32,7 @@ buildTime=$(date +%F-%H)
 git_commit=$(git log -n 1 --pretty --format=%h)
 
 release_desc=${VERSION}-${git_commit}-${buildTime}
-# build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel wtctl node resource-proxy)
-build_items=(eventlog)
-# build_items=(api chaos)
+build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel wtctl node resource-proxy)
 
 build::binary() {
 	echo "---> build binary:$1"
@@ -113,7 +111,7 @@ build::image() {
 	# if [ "$1" = "gateway" ]; then
 	# 		BASE_IMAGE_VERSION="1.19.3.2"
 	# 	fi
-	# docker buildx create --use --name wutongbuilder || docker buildx use wutongbuilder
+	docker buildx use wutongbuilder || docker buildx create --use --name wutongbuilder
 	# docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" --build-arg -t swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 
 	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t wutongpaas/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
