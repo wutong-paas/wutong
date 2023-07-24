@@ -17,15 +17,7 @@ if [ "$DEBUG" ]; then
 fi
 BRANCH=$(git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3)
 if [ -z "$VERSION" ]; then
-	if [ -z "$TRAVIS_TAG" ]; then
-		if [ -z "$TRAVIS_BRANCH" ]; then
-			VERSION=$BRANCH-dev
-		else
-			VERSION=$TRAVIS_BRANCH-dev
-		fi
-	else
-		VERSION=$TRAVIS_TAG
-	fi
+	VERSION=$BRANCH-dev
 fi
 
 buildTime=$(date +%F-%H)
@@ -51,18 +43,11 @@ build::binary() {
 	CGO_ENABLED=0
 	if [ "$1" = "eventlog" ]; then
 		CGO_ENABLED=1
-		# if [ "$GOARCH" = "arm64" ]; then
-		# 	DOCKERFILE_BASE="Dockerfile.arm"
-		# fi
-		# docker build -t wutong.me/event-build:v1 -f "${DOCKER_PATH}/build/${DOCKERFILE_BASE}" "${DOCKER_PATH}/build/"
-		# build_image="wutong.me/event-build:v1"
 		build_image="wutongpaas/eventlog-builder:v1"
 	elif [ "$1" = "chaos" ]; then
 		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
 		build_image="golang:${GO_VERSION}-alpine"
-	elif [ "$1" = "monitor" ]; then
-		CGO_ENABLED=0
 	fi
 	if [ "$1" = "eventlog" ]; then
 		docker run --platform=linux/amd64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=amd64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${AMD64_OUTPATH}" ${build_dir}
@@ -76,7 +61,6 @@ build::binary() {
 }
 
 build::image() {
-	# local OUTPATH="./_output/binary/linux/${BASE_NAME}-$1"
 	local AMD64_OUTPATH="./_output/binary/linux/amd64/${BASE_NAME}-$1"
 	local ARM64_OUTPATH="./_output/binary/linux/arm64/${BASE_NAME}-$1"
 	local build_image_dir="./_output/image/$1/"
@@ -88,34 +72,15 @@ build::image() {
 		if [ !${CACHE} ] || [ ! -f "${AMD64_OUTPATH}" ] || [ ! -f "${ARM64_OUTPATH}" ]; then
 			build::binary "$1"
 		fi
-		# cp "${OUTPATH}" "${build_image_dir}"
 		cp "${AMD64_OUTPATH}" "${build_image_dir}/amd64/"
 		cp "${ARM64_OUTPATH}" "${build_image_dir}/arm64/"
 	fi
 	cp -r ${source_dir}/* "${build_image_dir}"
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
-	# if [ "$GOARCH" = "arm64" ]; then
-	# 	if [ "$1" = "gateway" ]; then
-	# 		BASE_IMAGE_VERSION="1.19.3.2-alpine"
-	# 	elif [ "$1" = "eventlog" ];then
-	# 		DOCKERFILE_BASE="Dockerfile.arm"
-	# 	elif [ "$1" = "mesh-data-panel" ];then
-	# 		DOCKERFILE_BASE="Dockerfile.arm"
-	# 	fi
-	# else
-	# 	if [ "$1" = "gateway" ]; then
-	# 		BASE_IMAGE_VERSION="1.19.3.2"
-	# 	fi
-	# fi
-	# if [ "$1" = "gateway" ]; then
-	# 		BASE_IMAGE_VERSION="1.19.3.2"
-	# 	fi
 	docker buildx use wutongbuilder || docker buildx create --use --name wutongbuilder
 	# docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" --build-arg -t swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
-
 	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t wutongpaas/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
-
 	# docker buildx rm wutongbuilder
 	popd
 	rm -rf "${build_image_dir}"

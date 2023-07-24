@@ -1,5 +1,8 @@
 name: build-new
 
+env:
+  VERSION: v1.4.0-beta1
+
 on:
   push:
     branches: [v1.4.0]
@@ -31,4 +34,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build
-        run: ./build.sh
+        run: ./release-new.sh all push
