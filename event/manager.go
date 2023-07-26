@@ -396,7 +396,7 @@ func (l *logger) Debug(message string, info map[string]string) {
 func (l *logger) send(message string, info map[string]string) {
 	info["event_id"] = l.event
 	info["message"] = message
-	info["time"] = time.Now().Format(time.RFC3339)
+	info["time"] = time.Now().Format(time.RFC3339Nano)
 	log, err := ffjson.Marshal(info)
 	if err == nil && l.sendChan != nil {
 		util.SendNoBlocking(log, l.sendChan)
@@ -429,6 +429,7 @@ type loggerWriter struct {
 func (l *loggerWriter) SetFormat(f map[string]interface{}) {
 	l.fmt = f
 }
+
 func (l *loggerWriter) Write(b []byte) (n int, err error) {
 	if len(b) > 0 {
 

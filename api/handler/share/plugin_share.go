@@ -29,7 +29,7 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/util"
-	"github.com/wutong-paas/wutong/builder/exector"
+	"github.com/wutong-paas/wutong/chaos/exector"
 	"github.com/wutong-paas/wutong/db"
 )
 

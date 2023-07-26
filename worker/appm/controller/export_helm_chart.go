@@ -12,7 +12,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/chaos"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	appv1 "k8s.io/api/apps/v1"
 	"k8s.io/api/autoscaling/v2beta2"
@@ -65,7 +65,7 @@ func (s *exportHelmChartController) Begin() {
 	}
 
 	if s.End {
-		err = write(path.Join(exportPath, "dependent_image.txt"), []byte(builder.PROBEMESHIMAGENAME), "\n", false)
+		err = write(path.Join(exportPath, "dependent_image.txt"), []byte(chaos.PROBEMESHIMAGENAME), "\n", false)
 		if err != nil {
 			logrus.Errorf("write dependent_image.txt failure %v", err)
 		}

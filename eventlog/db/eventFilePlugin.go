@@ -24,7 +24,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -33,12 +32,12 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-//EventFilePlugin EventFilePlugin
+// EventFilePlugin EventFilePlugin
 type EventFilePlugin struct {
 	HomePath string
 }
 
-//SaveMessage save event log to file
+// SaveMessage save event log to file
 func (m *EventFilePlugin) SaveMessage(events []*EventLogMessage) error {
 	if len(events) == 0 {
 		return nil
@@ -70,21 +69,21 @@ func (m *EventFilePlugin) SaveMessage(events []*EventLogMessage) error {
 	return nil
 }
 
-//MessageData message data 获取指定操作的操作日志
+// MessageData message data 获取指定操作的操作日志
 type MessageData struct {
 	Message  string `json:"message"`
 	Time     string `json:"time"`
 	Unixtime int64  `json:"utime"`
 }
 
-//MessageDataList MessageDataList
+// MessageDataList MessageDataList
 type MessageDataList []MessageData
 
 func (a MessageDataList) Len() int           { return len(a) }
 func (a MessageDataList) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a MessageDataList) Less(i, j int) bool { return a[i].Unixtime <= a[j].Unixtime }
 
-//GetMessages GetMessages
+// GetMessages GetMessages
 func (m *EventFilePlugin) GetMessages(eventID, level string, length int) (interface{}, error) {
 	var message MessageDataList
 	apath := path.Join(m.HomePath, "eventlog", eventID+".log")
@@ -116,13 +115,15 @@ func (m *EventFilePlugin) GetMessages(eventID, level string, length int) (interf
 			if CheckLevel(string(flag), level) {
 				info := strings.SplitN(string(line), " ", 3)
 				if len(info) == 3 {
-					timeunix := info[1]
-					unix, _ := strconv.ParseInt(timeunix, 10, 64)
-					tm := time.Unix(unix, 0)
+					timestr := info[1]
+					// timeunix := info[1]
+					// unix, _ := strconv.ParseInt(timeunix, 10, 64)
+					t, _ := time.Parse(time.RFC3339Nano, timestr)
+					// tm := time.Unix(unix, 0)
 					md := MessageData{
 						Message:  info[2],
-						Unixtime: unix,
-						Time:     tm.Format(time.RFC3339),
+						Unixtime: t.UnixNano(),
+						Time:     timestr,
 					}
 					message = append(message, md)
 					if len(message) > length && length != 0 {
@@ -135,7 +136,7 @@ func (m *EventFilePlugin) GetMessages(eventID, level string, length int) (interf
 	return message, nil
 }
 
-//CheckLevel check log level
+// CheckLevel check log level
 func CheckLevel(flag, level string) bool {
 	switch flag {
 	case "0":
@@ -152,7 +153,7 @@ func CheckLevel(flag, level string) bool {
 	return false
 }
 
-//GetTimeUnix get specified time unix
+// GetTimeUnix get specified time unix
 func GetTimeUnix(timeStr string) int64 {
 	var timeLayout string
 	if strings.Contains(timeStr, ".") {
@@ -169,7 +170,7 @@ func GetTimeUnix(timeStr string) int64 {
 	return utime.Unix()
 }
 
-//GetLevelFlag get log level flag
+// GetLevelFlag get log level flag
 func GetLevelFlag(level string) []byte {
 	switch level {
 	case "error":
@@ -183,7 +184,7 @@ func GetLevelFlag(level string) []byte {
 	}
 }
 
-//Close Close
+// Close Close
 func (m *EventFilePlugin) Close() error {
 	return nil
 }

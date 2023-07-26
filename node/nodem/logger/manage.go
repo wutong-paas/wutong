@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/docker/cli/templates"
-	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 

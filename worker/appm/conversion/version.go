@@ -28,7 +28,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
@@ -142,7 +142,7 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 	imagename := version.ImageName
 	if imagename == "" {
 		if version.DeliveredType == "slug" {
-			imagename = builder.RUNNERIMAGENAME
+			imagename = chaos.RUNNERIMAGENAME
 		} else {
 			imagename = version.DeliveredPath
 		}

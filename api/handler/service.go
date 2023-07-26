@@ -42,7 +42,7 @@ import (
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/api/util/bcode"
-	"github.com/wutong-paas/wutong/builder/parser"
+	"github.com/wutong-paas/wutong/chaos/parser"
 	"github.com/wutong-paas/wutong/cmd/api/option"
 	"github.com/wutong-paas/wutong/db"
 	dberr "github.com/wutong-paas/wutong/db/errors"

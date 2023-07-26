@@ -49,16 +49,16 @@ func (s *stopController) Begin() {
 		wait.Add(1)
 		go func(service v1.AppService) {
 			defer wait.Done()
-			service.Logger.Info("App runtime begin stop app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
+			service.Logger.Info("运行时正在准备关闭应用组件程序："+service.K8sComponentName, event.GetLoggerOption("starting"))
 			if err := s.stopOne(service); err != nil {
 				if err != ErrWaitTimeOut {
 					service.Logger.Error(util.Translation("stop service error"), event.GetCallbackLoggerOption())
-					logrus.Errorf("stop service %s failure %s", service.ServiceAlias, err.Error())
+					logrus.Errorf("stop service %s failure %s", service.K8sComponentName, err.Error())
 				} else {
 					service.Logger.Error(util.Translation("stop service timeout"), event.GetTimeoutLoggerOption())
 				}
 			} else {
-				service.Logger.Info(fmt.Sprintf("stop service %s success", service.ServiceAlias), event.GetLastLoggerOption())
+				service.Logger.Info(fmt.Sprintf("应用组件 %s 关闭成功！", service.K8sComponentName), event.GetLastLoggerOption())
 			}
 		}(service)
 	}
@@ -76,7 +76,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 					GracePeriodSeconds: &zero,
 				})
 				if err != nil && !errors.IsNotFound(err) {
-					return fmt.Errorf("delete service failure:%s", err.Error())
+					return fmt.Errorf("删除 Service 资源错误：%s", err.Error())
 				}
 			}
 		}
@@ -89,7 +89,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 					GracePeriodSeconds: &zero,
 				})
 				if err != nil && !errors.IsNotFound(err) {
-					return fmt.Errorf("delete secret failure:%s", err.Error())
+					return fmt.Errorf("删除 Secret 资源错误：%s", err.Error())
 				}
 			}
 		}
@@ -101,7 +101,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 				if ingress != nil && ingress.Name != "" {
 					err := s.deleteIngress(app.GetNamespace(), ingress.Name, zero)
 					if err != nil {
-						return err
+						return fmt.Errorf("删除 Ingress 资源错误：%s", err.Error())
 					}
 				}
 			}
@@ -110,7 +110,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 				if ingress != nil && ingress.Name != "" {
 					err := s.deleteBetaIngress(app.GetNamespace(), ingress.Name, zero)
 					if err != nil {
-						return err
+						return fmt.Errorf("删除 Ingress 资源错误：%s", err.Error())
 					}
 				}
 			}
@@ -125,7 +125,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 					GracePeriodSeconds: &zero,
 				})
 				if err != nil && !errors.IsNotFound(err) {
-					return fmt.Errorf("delete config map failure:%s", err.Error())
+					return fmt.Errorf("删除 ConfigMap 资源错误：%s", err.Error())
 				}
 			}
 		}
@@ -134,7 +134,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 	if len(app.GetManifests()) > 0 {
 		for _, manifest := range app.GetManifests() {
 			if err := s.manager.runtimeClient.Delete(s.ctx, manifest); err != nil && !errors.IsNotFound(err) {
-				logrus.Errorf("delete custom component manifest %s/%s failure %s", manifest.GetKind(), manifest.GetName(), err.Error())
+				logrus.Errorf("删除自定义组件 %s/%s 资源错误：%s", manifest.GetKind(), manifest.GetName(), err.Error())
 			}
 		}
 	}
@@ -144,21 +144,21 @@ func (s *stopController) stopOne(app v1.AppService) error {
 			ma := meta.NewAccessor()
 			name, _ := ma.Name(workload)
 			kind, _ := ma.Kind(workload)
-			logrus.Errorf("delete custom component manifest %s/%s failure %s", kind, name, err.Error())
+			logrus.Errorf("删除工作负载 %s/%s 资源错误：%s", kind, name, err.Error())
 		}
 	}
 	//step 5: delete statefulset or deployment
 	if statefulset := app.GetStatefulSet(); statefulset != nil {
 		err := s.manager.client.AppsV1().StatefulSets(app.GetNamespace()).Delete(s.ctx, statefulset.Name, metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("delete statefulset failure:%s", err.Error())
+			return fmt.Errorf("删除 StatefulSet 资源错误：%s", err.Error())
 		}
 		s.manager.store.OnDeletes(statefulset)
 	}
 	if deployment := app.GetDeployment(); deployment != nil && deployment.Name != "" {
 		err := s.manager.client.AppsV1().Deployments(app.GetNamespace()).Delete(s.ctx, deployment.Name, metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
-			return fmt.Errorf("delete deployment failure:%s", err.Error())
+			return fmt.Errorf("删除 Deployment 资源错误：%s", err.Error())
 		}
 		s.manager.store.OnDeletes(deployment)
 	}
@@ -171,7 +171,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 					GracePeriodSeconds: &gracePeriodSeconds,
 				})
 				if err != nil && !errors.IsNotFound(err) {
-					return fmt.Errorf("delete pod failure:%s", err.Error())
+					return fmt.Errorf("删除 Pod  资源错误：%s", err.Error())
 				}
 			}
 		}
@@ -181,7 +181,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 		for _, hpa := range hpas {
 			err := s.manager.client.AutoscalingV2beta2().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(s.ctx, hpa.GetName(), metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
-				return fmt.Errorf("delete hpa: %v", err)
+				return fmt.Errorf("删除 HPA 资源错误：%v", err)
 			}
 		}
 	}
@@ -205,7 +205,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 	}
 
 	//step 9: waiting endpoint ready
-	app.Logger.Info("Delete all app model success, will waiting app closed", event.GetLoggerOption("running"))
+	app.Logger.Info("组件模型相关资源清理成功，等待应用组件关闭...", event.GetLoggerOption("stopping"))
 	return s.WaitingReady(app)
 }
 func (s *stopController) Stop() error {
@@ -235,7 +235,7 @@ func (s *stopController) deleteIngress(namespace, ingressName string, zero int64
 		GracePeriodSeconds: &zero,
 	})
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("delete ingress failure:%s", err.Error())
+		return err
 	}
 	return nil
 }
@@ -245,7 +245,7 @@ func (s *stopController) deleteBetaIngress(namespace, ingressName string, zero i
 		GracePeriodSeconds: &zero,
 	})
 	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("delete ingress failure:%s", err.Error())
+		return err
 	}
 	return nil
 }

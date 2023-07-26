@@ -47,16 +47,16 @@ func (s *scalingController) Begin() {
 		wait.Add(1)
 		go func(service v1.AppService) {
 			defer wait.Done()
-			service.Logger.Info("App runtime begin horizontal scaling app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
+			service.Logger.Info("运行时正在准备水平伸缩应用组件："+service.K8sComponentName, event.GetLoggerOption("starting"))
 			if err := s.scalingOne(service); err != nil {
 				if err != ErrWaitTimeOut {
 					service.Logger.Error(util.Translation("horizontal scaling service error"), event.GetCallbackLoggerOption())
-					logrus.Errorf("horizontal scaling service %s failure %s", service.ServiceAlias, err.Error())
+					logrus.Errorf("horizontal scaling service %s failure %s", service.K8sComponentName, err.Error())
 				} else {
 					service.Logger.Error(util.Translation("horizontal scaling service timeout"), event.GetTimeoutLoggerOption())
 				}
 			} else {
-				service.Logger.Info(fmt.Sprintf("horizontal scaling service %s success", service.ServiceAlias), event.GetLastLoggerOption())
+				service.Logger.Info(fmt.Sprintf("应用组件 %s 水平伸缩成功！", service.K8sComponentName), event.GetLastLoggerOption())
 			}
 		}(service)
 	}

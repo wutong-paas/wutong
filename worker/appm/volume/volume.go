@@ -212,13 +212,17 @@ func (v *Define) SetVolume(VolumeType dbmodel.VolumeType, name, mountPath, hostP
 
 // SetVolumeCMap sets volumes and volumeMounts. The type of volumes is configMap.
 func (v *Define) SetVolumeCMap(cmap *corev1.ConfigMap, k, p string, isReadOnly bool, mode *int32) {
+	hasSubPath := true
+	if strings.HasSuffix(p, "/") {
+		hasSubPath = false
+	}
+
 	vm := corev1.VolumeMount{
 		MountPath: p,
 		Name:      cmap.Name,
 		ReadOnly:  false,
-		SubPath:   path.Base(p),
 	}
-	v.volumeMounts = append(v.volumeMounts, vm)
+
 	var defaultMode int32 = 0777
 	if mode != nil {
 		// convert int to octal
@@ -233,16 +237,23 @@ func (v *Define) SetVolumeCMap(cmap *corev1.ConfigMap, k, p string, isReadOnly b
 					Name: cmap.Name,
 				},
 				DefaultMode: &defaultMode,
-				Items: []corev1.KeyToPath{
-					{
-						Key:  k,
-						Path: path.Base(p), // subpath
-						Mode: &defaultMode,
-					},
-				},
 			},
 		},
 	}
+
+	if hasSubPath {
+		vm.SubPath = path.Base(p)
+
+		vo.VolumeSource.ConfigMap.Items = []corev1.KeyToPath{
+			{
+				Key:  k,
+				Path: path.Base(p), // subpath
+				Mode: &defaultMode,
+			},
+		}
+	}
+
+	v.volumeMounts = append(v.volumeMounts, vm)
 	v.volumes = append(v.volumes, vo)
 }
 

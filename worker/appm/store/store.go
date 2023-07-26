@@ -33,7 +33,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/util/bcode"
-	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/cmd/worker/option"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
@@ -1607,7 +1607,7 @@ func (a *appRuntimeStore) keepNodeShellPod(node string) error {
 			Containers: []corev1.Container{
 				{
 					Name:    podName,
-					Image:   builder.NODESHELLIMAGENAME,
+					Image:   chaos.NODESHELLIMAGENAME,
 					Command: []string{"nsenter", "-t", "1", "-m", "-u", "-i", "-n", "bash", "-c", "sleep infinity"},
 					SecurityContext: &corev1.SecurityContext{
 						Privileged: util.Bool(true),

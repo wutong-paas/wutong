@@ -29,6 +29,7 @@ import (
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/model"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
@@ -112,6 +113,7 @@ func (l *LogAction) GetLogInstance(serviceID string) (string, error) {
 func (l *LogAction) GetLevelLog(eventID string, level string) (*api_model.DataLog, error) {
 	re, err := l.eventdb.GetMessages(eventID, level, 0)
 	if err != nil {
+		logrus.Errorf("get event log error: %s", err.Error())
 		return nil, err
 	}
 	if re != nil {

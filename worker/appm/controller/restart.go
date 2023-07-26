@@ -46,11 +46,11 @@ func (s *restartController) Begin() {
 		wait.Add(1)
 		go func(service v1.AppService) {
 			defer wait.Done()
-			service.Logger.Info("App runtime begin restart app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
+			service.Logger.Info("运行时正在准备重启应用组件："+service.K8sComponentName, event.GetLoggerOption("starting"))
 			if err := s.restartOne(service); err != nil {
-				logrus.Errorf("restart service %s failure %s", service.ServiceAlias, err.Error())
+				logrus.Errorf("restart service %s failure %s", service.K8sComponentName, err.Error())
 			} else {
-				service.Logger.Info(fmt.Sprintf("restart service %s success", service.ServiceAlias), event.GetLastLoggerOption())
+				service.Logger.Info(fmt.Sprintf("应用组件 %s 重启成功！", service.K8sComponentName), event.GetLastLoggerOption())
 			}
 		}(service)
 	}

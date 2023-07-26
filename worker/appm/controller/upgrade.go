@@ -50,25 +50,27 @@ func (s *upgradeController) Begin() {
 		wait.Add(1)
 		go func(service v1.AppService) {
 			defer wait.Done()
-			service.Logger.Info("App runtime begin upgrade app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
+			service.Logger.Info("运行时正在准备更新应用组件："+service.K8sComponentName, event.GetLoggerOption("starting"))
 			if err := s.upgradeOne(service); err != nil {
 				if err != ErrWaitTimeOut {
 					service.Logger.Error(util.Translation("upgrade service error"), event.GetCallbackLoggerOption())
-					logrus.Errorf("upgrade service %s failure %s", service.ServiceAlias, err.Error())
+					logrus.Errorf("upgrade service %s failure %s", service.K8sComponentName, err.Error())
 				} else {
 					service.Logger.Error(util.Translation("upgrade service timeout"), event.GetTimeoutLoggerOption())
 				}
 			} else {
-				service.Logger.Info(fmt.Sprintf("upgrade service %s success", service.ServiceAlias), event.GetLastLoggerOption())
+				service.Logger.Info(fmt.Sprintf("应用组件 %s 更新成功！", service.K8sComponentName), event.GetLastLoggerOption())
 			}
 		}(service)
 	}
 	wait.Wait()
 	s.manager.callback(s.controllerID, nil)
 }
+
 func (s *upgradeController) Stop() error {
 	return nil
 }
+
 func (s *upgradeController) upgradeConfigMap(newapp v1.AppService) {
 	nowApp := s.manager.store.GetAppService(newapp.ServiceID)
 	nowConfigMaps := nowApp.GetConfigMaps()
@@ -154,6 +156,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 			_, err = s.manager.client.CoreV1().Namespaces().Create(s.ctx, app.GetTenantEnv(), metav1.CreateOptions{})
 		}
 		if err != nil {
+			app.Logger.Error(fmt.Sprintf("创建或检查命名空间 %s 资源错误：%s", app.GetTenantEnv(), err.Error()), event.GetLoggerOption("failure"))
 			return fmt.Errorf("create or check namespace failure %s", err.Error())
 		}
 	}
@@ -161,6 +164,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 	if len(app.GetManifests()) > 0 {
 		for _, manifest := range app.GetManifests() {
 			if err := s.manager.apply.Apply(s.ctx, manifest); err != nil {
+				app.Logger.Error(fmt.Sprintf("创建或更新自定义组件 %s 资源错误：%s", app.K8sComponentName, err.Error()), event.GetLoggerOption("failure"))
 				return fmt.Errorf("apply custom component manifest %s/%s failure %s", manifest.GetKind(), manifest.GetName(), err.Error())
 			}
 		}
@@ -169,7 +173,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 	if deployment := app.GetDeployment(); deployment != nil {
 		_, err = s.manager.client.AppsV1().Deployments(deployment.Namespace).Patch(s.ctx, deployment.Name, types.MergePatchType, app.UpgradePatch["deployment"], metav1.PatchOptions{})
 		if err != nil {
-			app.Logger.Error(fmt.Sprintf("upgrade deployment %s failure %s", app.ServiceAlias, err.Error()), event.GetLoggerOption("failure"))
+			app.Logger.Error(fmt.Sprintf("无状态（Deployment）应用组件 %s 升级失败：%s", app.K8sComponentName, err.Error()), event.GetLoggerOption("failure"))
 			return fmt.Errorf("upgrade deployment %s failure %s", app.ServiceAlias, err.Error())
 		}
 	}
@@ -179,6 +183,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 		logrus.Debugf("create claim: %s", claim.Name)
 		_, err := s.manager.client.CoreV1().PersistentVolumeClaims(app.GetNamespace()).Create(s.ctx, claim, metav1.CreateOptions{})
 		if err != nil && !errors.IsAlreadyExists(err) {
+			app.Logger.Error(fmt.Sprintf("创建存储卷错误：%s", err.Error()), event.GetLoggerOption("failure"))
 			return fmt.Errorf("create claims: %v", err)
 		}
 	}
@@ -187,7 +192,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 		_, err = s.manager.client.AppsV1().StatefulSets(statefulset.Namespace).Patch(s.ctx, statefulset.Name, types.MergePatchType, app.UpgradePatch["statefulset"], metav1.PatchOptions{})
 		if err != nil {
 			logrus.Errorf("patch statefulset error : %s", err.Error())
-			app.Logger.Error(fmt.Sprintf("upgrade statefulset %s failure %s", app.ServiceAlias, err.Error()), event.GetLoggerOption("failure"))
+			app.Logger.Error(fmt.Sprintf("有状态（StatefulSet）应用组件 %s 升级失败：%s", app.ServiceAlias, err.Error()), event.GetLoggerOption("failure"))
 			return fmt.Errorf("upgrade statefulset %s failure %s", app.ServiceAlias, err.Error())
 		}
 	}
@@ -206,6 +211,7 @@ func (s *upgradeController) upgradeOne(app v1.AppService) error {
 	for _, secret := range app.GetEnvVarSecrets(true) {
 		err := f.CreateOrUpdateSecret(s.manager.client, secret)
 		if err != nil {
+			app.Logger.Error(fmt.Sprintf("创建或更新 Secret 错误：%s", err.Error()), event.GetLoggerOption("failure"))
 			return fmt.Errorf("[upgradeController] [upgradeOne] create or update secrets: %v", err)
 		}
 	}

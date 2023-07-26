@@ -44,8 +44,6 @@ build::binary() {
 	if [ "$1" = "eventlog" ]; then
 		CGO_ENABLED=1
 		build_image="wutongpaas/eventlog-builder:v1"
-	elif [ "$1" = "chaos" ]; then
-		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
 		build_image="golang:${GO_VERSION}-alpine"
 	fi
@@ -61,8 +59,9 @@ build::binary() {
 }
 
 build::image() {
-	local AMD64_OUTPATH="./_output/binary/linux/amd64/${BASE_NAME}-$1"
-	local ARM64_OUTPATH="./_output/binary/linux/arm64/${BASE_NAME}-$1"
+	local build_binary_dir="./_output/binary"
+	local AMD64_OUTPATH="${build_binary_dir}/linux/amd64/${BASE_NAME}-$1"
+	local ARM64_OUTPATH="${build_binary_dir}/linux/arm64/${BASE_NAME}-$1"
 	local build_image_dir="./_output/image/$1/"
 	local source_dir="./hack/contrib/docker/$1"
 	local DOCKERFILE_BASE="Dockerfile.multiarch"
@@ -83,7 +82,7 @@ build::image() {
 	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t wutongpaas/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	# docker buildx rm gobuilder
 	popd
-	rm -rf "${build_image_dir}"
+	rm -rf "${build_image_dir}" "${build_binary_dir}"
 }
 
 build::image::all() {

@@ -28,7 +28,7 @@ import (
 	client "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	criapis "k8s.io/cri-api/pkg/apis"

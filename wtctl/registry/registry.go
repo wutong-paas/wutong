@@ -22,7 +22,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/builder/sources/registry"
+	"github.com/wutong-paas/wutong/chaos/sources/registry"
 )
 
 // Cleaner is responsible for cleaning up the free images in registry.

@@ -29,7 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
-	"github.com/wutong-paas/wutong/builder/exector"
+	"github.com/wutong-paas/wutong/chaos/exector"
 	client "github.com/wutong-paas/wutong/mq/client"
 	tutil "github.com/wutong-paas/wutong/util"
 )

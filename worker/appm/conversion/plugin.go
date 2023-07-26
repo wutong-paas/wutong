@@ -32,7 +32,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api_model "github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/builder"
+	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/util"
@@ -214,7 +214,7 @@ func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, en
 	container := v1.Container{
 		Name:      workerutil.KeepMaxLength("default-tcpmesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
-		Image:     builder.TCPMESHIMAGENAME,
+		Image:     chaos.TCPMESHIMAGENAME,
 		Resources: createTCPUDPMeshRecources(as),
 	}
 
@@ -267,7 +267,7 @@ func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias
 	return v1.Container{
 		Name:      workerutil.KeepMaxLength("probe-mesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
-		Image:     builder.PROBEMESHIMAGENAME,
+		Image:     chaos.PROBEMESHIMAGENAME,
 		Resources: createTCPUDPMeshRecources(as),
 	}
 }

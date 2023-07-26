@@ -25,7 +25,7 @@ import (
 	"github.com/jinzhu/gorm"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
-	"github.com/wutong-paas/wutong/builder/exector"
+	"github.com/wutong-paas/wutong/chaos/exector"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/worker/discover/model"
 	"github.com/wutong-paas/wutong/worker/server/pb"

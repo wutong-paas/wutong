@@ -19,7 +19,7 @@
 package registry
 
 import (
-	"github.com/wutong-paas/wutong/builder/sources/registry"
+	"github.com/wutong-paas/wutong/chaos/sources/registry"
 )
 
 // FreeImageType is the type of FreeImage

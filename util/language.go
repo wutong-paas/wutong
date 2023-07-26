@@ -32,23 +32,23 @@ var translationMetadata = map[string]string{
 	"save image to hub error":                        "保存镜像到仓库失败",
 	"Please try again or contact customer service":   "后端服务开小差，请重试或联系客服",
 	"unzip metadata file error":                      "解压数据失败",
-	"start service error":                            "启动服务失败,请检查集服务信息或查看日志",
-	"start service timeout":                          "启动服务超时,建议观察服务实例运行状态",
-	"stop service error":                             "停止服务失败,建议观察服务实例运行状态",
-	"stop service timeout":                           "停止服务超时,建议观察服务实例运行状态",
-	"(restart)stop service error":                    "停止服务失败,建议观察服务实例运行状态,待其停止后手动启动",
-	"(restart)Application model init create failure": "初始化应用元数据模型失败,请检查集群运行状态或查看日志",
-	"horizontal scaling service error":               "水平扩容失败,请检查集群运行状态或查看日志",
-	"horizontal scaling service timeout":             "水平扩容超时,建议观察服务实例运行状态",
-	"upgrade service error":                          "升级服务失败,请检查服务信息或查看日志",
-	"upgrade service timeout":                        "升级服务超时, 建议观察服务实例运行状态",
+	"start service error":                            "启动服务失败，请检查集服务信息或查看日志",
+	"start service timeout":                          "启动服务超时，建议观察服务实例运行状态",
+	"stop service error":                             "停止服务失败，建议观察服务实例运行状态",
+	"stop service timeout":                           "停止服务超时，建议观察服务实例运行状态",
+	"(restart)stop service error":                    "停止服务失败，建议观察服务实例运行状态，待其停止后手动启动",
+	"(restart)Application model init create failure": "初始化应用元数据模型失败，请检查集群运行状态或查看日志",
+	"horizontal scaling service error":               "水平伸缩失败，请检查集群运行状态或查看日志",
+	"horizontal scaling service timeout":             "水平伸缩超时，建议观察服务实例运行状态",
+	"upgrade service error":                          "升级服务失败，请检查服务信息或查看日志",
+	"upgrade service timeout":                        "升级服务超时，建议观察服务实例运行状态",
 	"Check for log location code errors":             "建议查看日志定位代码错误",
 	"Check for log location imgae source errors":     "建议查看日志定位镜像源错误",
 	"create share image task error":                  "分享任务失败，请检查服务信息或查看日志",
 	"get wt-repo ip failure":                         "获取依赖仓库IP地址失败，请检查wt-repo组件信息",
 }
 
-//Translation Translation English to Chinese
+// Translation Translation English to Chinese
 func Translation(english string) string {
 	if chinese, ok := translationMetadata[english]; ok {
 		if os.Getenv("WUTONG_LANG") == "en" {

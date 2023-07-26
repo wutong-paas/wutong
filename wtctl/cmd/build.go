@@ -29,7 +29,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/urfave/cli"
-	"github.com/wutong-paas/wutong/builder/parser/code"
+	"github.com/wutong-paas/wutong/chaos/parser/code"
 	"github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/termtables"
 	"github.com/wutong-paas/wutong/wtctl/clients"

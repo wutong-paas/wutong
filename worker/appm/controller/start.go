@@ -57,20 +57,20 @@ func (s *startController) Begin() {
 			wait.Add(1)
 			go func(service v1.AppService) {
 				defer wait.Done()
-				logrus.Debugf("App runtime begin start app service(%s)", service.ServiceAlias)
-				service.Logger.Info("App runtime begin start app service "+service.ServiceAlias, event.GetLoggerOption("starting"))
+				logrus.Debugf("App runtime begin start app service(%s)", service.K8sComponentName)
+				service.Logger.Info("运行时正在准备启动应用组件："+service.K8sComponentName, event.GetLoggerOption("starting"))
 				if err := s.startOne(service); err != nil {
 					if err != ErrWaitTimeOut {
 						service.Logger.Error(util.Translation("start service error"), event.GetCallbackLoggerOption())
-						logrus.Errorf("start service %s failure %s", service.ServiceAlias, err.Error())
+						logrus.Errorf("start service %s failure %s", service.K8sComponentName, err.Error())
 						s.errorCallback(service)
 					} else {
-						logrus.Debugf("Start service %s timeout, please wait or read service log.", service.ServiceAlias)
+						logrus.Debugf("Start service %s timeout, please wait or read service log.", service.K8sComponentName)
 						service.Logger.Error(util.Translation("start service timeout"), event.GetTimeoutLoggerOption())
 					}
 				} else {
 					logrus.Debugf("Start service %s success", service.ServiceAlias)
-					service.Logger.Info(fmt.Sprintf("Start service %s success", service.ServiceAlias), event.GetLastLoggerOption())
+					service.Logger.Info(fmt.Sprintf("启动应用组件程序 %s 成功", service.K8sComponentName), event.GetLastLoggerOption())
 				}
 			}(*service)
 		}
@@ -78,19 +78,22 @@ func (s *startController) Begin() {
 		s.manager.callback(s.controllerID, nil)
 	}
 }
+
 func (s *startController) errorCallback(app v1.AppService) error {
-	app.Logger.Info("Begin clean resources that have been created", event.GetLoggerOption("starting"))
+	app.Logger.Info("开始清理已创建的资源...", event.GetLoggerOption("starting"))
 	stopController := stopController{
 		manager: s.manager,
 		ctx:     s.ctx,
 	}
 	if err := stopController.stopOne(app); err != nil {
 		logrus.Errorf("stop app failure after start failure. %s", err.Error())
-		app.Logger.Error(fmt.Sprintf("Stop app failure %s", app.ServiceAlias), event.GetLoggerOption("failure"))
+		app.Logger.Error(fmt.Sprintf("应用组件 %s 关闭失败，错误信息：", app.K8sComponentName), event.GetLoggerOption("failure"))
+		app.Logger.Error("	--- "+err.Error(), event.GetLoggerOption("failure"))
 		return err
 	}
 	return nil
 }
+
 func (s *startController) startOne(app v1.AppService) error {
 	//first: check and create namespace
 	_, err := s.manager.client.CoreV1().Namespaces().Get(s.ctx, app.GetNamespace(), metav1.GetOptions{})
@@ -211,7 +214,7 @@ func (s *startController) startOne(app v1.AppService) error {
 	}
 
 	//step 8: waiting endpoint ready
-	app.Logger.Info("Create all app model success, will waiting app ready", event.GetLoggerOption("running"))
+	app.Logger.Info("创建应用组件模型成功，等待应用组件就绪...", event.GetLoggerOption("running"))
 	return s.WaitingReady(app)
 }
 

@@ -31,7 +31,7 @@ import (
 
 	"github.com/wutong-paas/wutong/event"
 
-	"github.com/wutong-paas/wutong/builder/parser"
+	"github.com/wutong-paas/wutong/chaos/parser"
 
 	"github.com/wutong-paas/wutong/node/nodem/service"
 

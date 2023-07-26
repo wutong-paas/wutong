@@ -27,7 +27,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
-	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/chaos/sources"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -47,13 +47,13 @@ func init() {
 	utilruntime.Must(apiextensionsv1.AddToScheme(scheme))
 }
 
-//K8SClient K8SClient
+// K8SClient K8SClient
 var K8SClient kubernetes.Interface
 
-//WutongKubeClient wutong custom resource client
+// WutongKubeClient wutong custom resource client
 var WutongKubeClient client.Client
 
-//InitClient init k8s client
+// InitClient init k8s client
 func InitClient(kubeconfig string) error {
 	if kubeconfig == "" {
 		homePath, _ := sources.Home()

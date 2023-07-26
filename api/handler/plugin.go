@@ -31,7 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/mq/client"
 	core_util "github.com/wutong-paas/wutong/util"
 
-	builder_model "github.com/wutong-paas/wutong/builder/model"
+	builder_model "github.com/wutong-paas/wutong/chaos/model"
 
 	"github.com/sirupsen/logrus"
 )

@@ -58,8 +58,6 @@ build::binary() {
 		fi
 		docker build -t wutong.me/event-build:v1 -f "${DOCKER_PATH}/build/${DOCKERFILE_BASE}" "${DOCKER_PATH}/build/"
 		build_image="wutong.me/event-build:v1"
-	elif [ "$1" = "chaos" ]; then
-		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
 		build_image="golang:${GO_VERSION}-alpine"
 	elif [ "$1" = "monitor" ]; then
@@ -72,7 +70,8 @@ build::binary() {
 }
 
 build::image() {
-	local OUTPATH="./_output/binary/$GOOS/${BASE_NAME}-$1"
+	local build_binary_dir="./_output/binary"
+	local OUTPATH="${build_binary_dir}/$GOOS/${BASE_NAME}-$1"
 	local build_image_dir="./_output/image/$1/"
 	local source_dir="./hack/contrib/docker/$1"
 	local BASE_IMAGE_VERSION="3.15"
@@ -111,7 +110,7 @@ build::image() {
 		docker push swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 	fi
 	popd
-	rm -rf "${build_image_dir}"
+	rm -rf "${build_image_dir}" "${build_binary_dir}"
 }
 
 build::image::all() {

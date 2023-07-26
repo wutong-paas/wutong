@@ -24,7 +24,7 @@ import (
 
 	"github.com/wutong-paas/wutong/mq/client"
 
-	"github.com/wutong-paas/wutong/builder/exector"
+	"github.com/wutong-paas/wutong/chaos/exector"
 
 	"github.com/google/uuid"
 

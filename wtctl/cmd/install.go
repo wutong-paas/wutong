@@ -10,7 +10,7 @@ import (
 	"github.com/urfave/cli"
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	"github.com/wutong-paas/wutong/api/region"
-	"github.com/wutong-paas/wutong/builder/sources"
+	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/wtctl/option"
 	"github.com/wutong-paas/wutong/wtctl/clients"
 	yaml "gopkg.in/yaml.v2"
@@ -32,7 +32,7 @@ func init() {
 	clientCAPemPath = path.Join(pemDirPath, "ca.pem")
 }
 
-//NewCmdInstall -
+// NewCmdInstall -
 func NewCmdInstall() cli.Command {
 	c := cli.Command{
 		Name:   "install",

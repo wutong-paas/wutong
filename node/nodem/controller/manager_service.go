@@ -28,7 +28,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/builder/parser"
+	"github.com/wutong-paas/wutong/chaos/parser"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/node/nodem/client"
