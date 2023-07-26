@@ -1,4 +1,4 @@
-name: commit-ci
+name: amd64-build
 
 on:
   push:
@@ -19,4 +19,4 @@ jobs:
           password: ${{ secrets.DOMESTIC_DOCKER_PASSWORD }}
 
       - name: Release
-        run: ./amd64-release.sh
+        run: ./amd64-build.sh

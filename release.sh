@@ -110,7 +110,11 @@ build::image() {
 		docker push swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION}
 	fi
 	popd
-	rm -rf "${build_image_dir}" "${build_binary_dir}"
+	rm -rf "${build_image_dir}"
+
+	if [ !${GITHUB_ACTIONS} ]; then
+		rm -rf "${build_binary_dir}"
+	fi
 }
 
 build::image::all() {

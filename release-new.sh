@@ -82,7 +82,11 @@ build::image() {
 	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t wutongpaas/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	# docker buildx rm gobuilder
 	popd
-	rm -rf "${build_image_dir}" "${build_binary_dir}"
+	rm -rf "${build_image_dir}"
+
+	if [ !${GITHUB_ACTIONS} ]; then
+		rm -rf "${build_binary_dir}"
+	fi
 }
 
 build::image::all() {

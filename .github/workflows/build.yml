@@ -1,4 +1,4 @@
-name: build-new
+name: build
 
 env:
   VERSION: v1.4.0-beta1
