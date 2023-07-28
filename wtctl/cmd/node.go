@@ -411,7 +411,7 @@ func NewCmdNode() cli.Command {
 				Name:  "label",
 				Usage: "handle node labels",
 				Subcommands: []cli.Command{
-					cli.Command{
+					{
 						Name:  "add",
 						Usage: "add label for the specified node",
 						Flags: []cli.Flag{
@@ -444,7 +444,7 @@ func NewCmdNode() cli.Command {
 							return nil
 						},
 					},
-					cli.Command{
+					{
 						Name:  "delete",
 						Usage: "delete the label of the specified node",
 						Flags: []cli.Flag{
@@ -467,7 +467,7 @@ func NewCmdNode() cli.Command {
 							return nil
 						},
 					},
-					cli.Command{
+					{
 						Name:   "list",
 						Usage:  "list the label of the specified node",
 						Flags:  []cli.Flag{},
@@ -479,7 +479,7 @@ func NewCmdNode() cli.Command {
 				Name:  "condition",
 				Usage: "handle node conditions, support delete and list",
 				Subcommands: []cli.Command{
-					cli.Command{
+					{
 						Name:  "delete",
 						Usage: "delete condition for the specified node",
 						Flags: []cli.Flag{
@@ -503,7 +503,7 @@ func NewCmdNode() cli.Command {
 							return nil
 						},
 					},
-					cli.Command{
+					{
 						Name:  "list",
 						Usage: "list the conditions of the specified node",
 						Action: func(c *cli.Context) error {

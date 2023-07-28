@@ -545,7 +545,7 @@ type ServiceLBPortChange struct {
 type RollbackStruct struct {
 	TenantEnvID   string `json:"tenant_env_id"`
 	ServiceID     string `json:"service_id"`
-	EventID       string `json:"event_id;default:system"`
+	EventID       string `json:"event_id" default:"system"`
 	Operator      string `json:"operator"`
 	DeployVersion string `json:"deploy_version"`
 }
@@ -1400,31 +1400,6 @@ type AddServicePort struct {
 		//in: body
 		ServicePorts
 	}
-}
-
-type plugin struct {
-	// the container port for this serviceport
-	// in: body
-	// required: true
-	ContainerPort int32 `json:"container_port"`
-	// the mapping port for this serviceport
-	// in: body
-	// required: true
-	MappingPort int32 `json:"mapping_port"`
-	// the protocol for this serviceport
-	// in: body
-	// required: true
-	Protocol string `json:"protocol"`
-	// the port alias for this serviceport
-	// in: body
-	// required: true
-	PortAlias string `json:"port_alias"`
-	// 是否开启对内服务
-	// in: body
-	Inner bool `json:"is_inner_service"`
-	// 是否开启对外服务
-	// in: body
-	Outer bool `json:"is_outer_service"`
 }
 
 // ServiceProbe 应用探针信息

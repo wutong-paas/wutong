@@ -19,18 +19,10 @@ type ClusterResource struct {
 	ComputeNode          int             `json:"compute_node"`
 	CapCPU               float32         `json:"cap_cpu"`
 	CapMem               float32         `json:"cap_mem"`
-	HealthCapCPU         float32         `json:"health_cap_cpu"`
-	HealthCapMem         float32         `json:"health_cap_mem"`
-	UnhealthCapCPU       float32         `json:"unhealth_cap_cpu"`
-	UnhealthCapMem       float32         `json:"unhealth_cap_mem"`
 	ReqCPU               float32         `json:"req_cpu"`
 	ReqMem               float32         `json:"req_mem"`
 	WutongReqMem         float32         `json:"wt_req_mem"` // Resources to embody wutong scheduling
 	WutongReqCPU         float32         `json:"wt_req_cpu"`
-	HealthReqCPU         float32         `json:"health_req_cpu"`
-	HealthReqMem         float32         `json:"health_req_mem"`
-	UnhealthReqCPU       float32         `json:"unhealth_req_cpu"`
-	UnhealthReqMem       float32         `json:"unhealth_req_mem"`
 	TotalCapacityPods    int64           `json:"total_capacity_pods"`
 	TotalUsedPods        int64           `json:"total_used_pods"`
 	TotalCapacityStorage float32         `json:"total_capacity_storage"`

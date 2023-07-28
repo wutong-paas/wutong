@@ -74,12 +74,12 @@ func (i *MarketSlugItem) Run() error {
 	if i.SlugInfo.FTPHost != "" && i.SlugInfo.FTPPort != "" {
 		sFTPClient, err := sources.NewSFTPClient(i.SlugInfo.FTPUser, i.SlugInfo.FTPPassword, i.SlugInfo.FTPHost, i.SlugInfo.FTPPort)
 		if err != nil {
-			i.Logger.Error("创建FTP客户端失败", map[string]string{"step": "slug-share", "status": "failure"})
+			i.Logger.Error("创建 FTP 客户端失败", map[string]string{"step": "slug-share", "status": "failure"})
 			return err
 		}
 		defer sFTPClient.Close()
 		if err := sFTPClient.DownloadFile(i.SlugInfo.SlugPath, i.TGZPath, i.Logger); err != nil {
-			i.Logger.Error("源码包远程FTP获取失败，安装失败", map[string]string{"step": "slug-share", "status": "failure"})
+			i.Logger.Error("源码包远程 FTP 获取失败，安装失败", map[string]string{"step": "slug-share", "status": "failure"})
 			logrus.Errorf("copy slug file error when build service, %s", err.Error())
 			return nil
 		}

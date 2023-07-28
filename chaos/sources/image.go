@@ -76,7 +76,7 @@ var Namespace = "k8s.io"
 // ImagePull pull docker image
 // Deprecated: use sources.ImageClient.ImagePull instead
 func ImagePull(client *containerd.Client, ref string, username, password string, logger event.Logger, timeout int) (*containerd.Image, error) {
-	printLog(logger, "info", fmt.Sprintf("start get image:%s", ref), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("开始拉取镜像：%s", ref), map[string]string{"step": "pullimage"})
 	srcNamed, err := refdocker.ParseDockerRef(ref)
 	if err != nil {
 		logrus.Errorf("reference image error: %s", err.Error())
@@ -124,13 +124,13 @@ func ImagePull(client *containerd.Client, ref string, username, password string,
 	if err != nil {
 		logrus.Debugf("image name: %s readcloser error: %v", image, err.Error())
 		if strings.HasSuffix(err.Error(), "does not exist or no pull access") {
-			printLog(logger, "error", fmt.Sprintf("image: %s does not exist or is not available", image), map[string]string{"step": "pullimage", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("镜像 %s 不存在或者无法拉取", image), map[string]string{"step": "pullimage", "status": "failure"})
 			return nil, fmt.Errorf("Image(%s) does not exist or no pull access", image)
 		}
 		return nil, err
 	}
 	<-progress
-	printLog(logger, "info", fmt.Sprintf("Success Pull Image: %s", image), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("成功拉取镜像：%s", image), map[string]string{"step": "pullimage"})
 	return &img, nil
 }
 
@@ -148,7 +148,7 @@ func ImageTag(containerdClient *containerd.Client, source, target string, logger
 	}
 	targetImage := targetNamed.String()
 	logrus.Infof(fmt.Sprintf("change image tag: %s -> %s", srcImage, targetImage))
-	printLog(logger, "info", fmt.Sprintf("change image tag: %s -> %s", source, target), map[string]string{"step": "changetag"})
+	printLog(logger, "info", fmt.Sprintf("修改镜像 Tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
 	ctx := namespaces.WithNamespace(context.Background(), Namespace)
 	imageService := containerdClient.ImageService()
 	image, err := imageService.Get(ctx, srcImage)
@@ -173,7 +173,7 @@ func ImageTag(containerdClient *containerd.Client, source, target string, logger
 		}
 	}
 	logrus.Info("change image tag success")
-	printLog(logger, "info", "change image tag success", map[string]string{"step": "changetag"})
+	printLog(logger, "info", "成功修改镜像 Tag", map[string]string{"step": "changetag"})
 	return nil
 }
 
@@ -241,7 +241,7 @@ func ImageNameWithNamespaceHandle(imageName string) *model.ImageName {
 // timeout minutes of the unit
 // Deprecated: use sources.ImageClient.ImagePush instead
 func ImagePush(client *containerd.Client, rawRef, user, pass string, logger event.Logger, timeout int) error {
-	printLog(logger, "info", fmt.Sprintf("start push image: %s", rawRef), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("开始推送镜像：%s", rawRef), map[string]string{"step": "pushimage"})
 	named, err := refdocker.ParseDockerRef(rawRef)
 	if err != nil {
 		return err
@@ -328,11 +328,11 @@ func ImagePush(client *containerd.Client, rawRef, user, pass string, logger even
 	})
 	waitErr := eg.Wait()
 	if waitErr != nil {
-		printLog(logger, "error", fmt.Sprintf("push image: %s failure", image), map[string]string{"step": "pushimage", "status": "failure"})
+		printLog(logger, "error", fmt.Sprintf("推动镜像 %s 失败！", image), map[string]string{"step": "pushimage", "status": "failure"})
 		return waitErr
 	}
 	// create a container
-	printLog(logger, "info", fmt.Sprintf("success push image: %s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("成功推送镜像：%s", image), map[string]string{"step": "pushimage"})
 	return nil
 }
 
@@ -676,15 +676,15 @@ func ImagesPullAndPush(sourceImage, targetImage, username, password string, logg
 	if !exists {
 		hubUser, hubPass := chaos.GetImageUserInfoV2(sourceImage, username, password)
 		if _, err := ImagePull(containerdClient, targetImage, hubUser, hubPass, logger, 15); err != nil {
-			printLog(logger, "error", fmt.Sprintf("pull image %s failed %v", targetImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("拉取镜像 %s 失败，错误信息：%v", targetImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		if err := ImageTag(containerdClient, targetImage, sourceImage, logger, 15); err != nil {
-			printLog(logger, "error", fmt.Sprintf("change image tag %s to %s failed", targetImage, sourceImage), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("修改镜像 Tag： %s -> %s 失败", targetImage, sourceImage), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		if err := ImagePush(containerdClient, sourceImage, hubUser, hubPass, logger, 15); err != nil {
-			printLog(logger, "error", fmt.Sprintf("push image %s failed %v", sourceImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("推送镜像 %s 失败，错误信息：%v", sourceImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 	}

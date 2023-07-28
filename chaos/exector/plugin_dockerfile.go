@@ -48,14 +48,14 @@ func (e *exectorManager) pluginDockerfileBuild(task *pb.TaskMessage) {
 	}
 	eventID := tb.EventID
 	logger := event.GetManager().GetLogger(eventID)
-	logger.Info("从dockerfile构建插件任务开始执行", map[string]string{"step": "builder-exector", "status": "starting"})
+	logger.Info("从 Dockerfile 构建插件任务开始执行...", map[string]string{"step": "builder-exector", "status": "starting"})
 	logrus.Info("start exec build plugin from image worker")
 	defer event.GetManager().ReleaseLogger(logger)
 	for retry := 0; retry < 2; retry++ {
 		err := e.runD(&tb, logger)
 		if err != nil {
 			logrus.Errorf("exec plugin build from dockerfile error:%s", err.Error())
-			logger.Info("dockerfile构建插件任务执行失败，开始重试", map[string]string{"step": "builder-exector", "status": "failure"})
+			logger.Info("Dockerfile 构建插件任务执行失败，开始重试...", map[string]string{"step": "builder-exector", "status": "failure"})
 		} else {
 			return
 		}
@@ -70,11 +70,11 @@ func (e *exectorManager) pluginDockerfileBuild(task *pb.TaskMessage) {
 		logrus.Errorf("update version error, %v", err)
 	}
 	MetricErrorTaskNum++
-	logger.Error("dockerfile构建插件任务执行失败", map[string]string{"step": "callback", "status": "failure"})
+	logger.Error("Dockerfile 构建插件任务执行失败", map[string]string{"step": "callback", "status": "failure"})
 }
 
 func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger) error {
-	logger.Info("开始拉取代码", map[string]string{"step": "build-exector"})
+	logger.Info("开始拉取代码...", map[string]string{"step": "build-exector"})
 	sourceDir := fmt.Sprintf(formatSourceDir, t.TenantEnvID, t.VersionID)
 	if t.Repo == "" {
 		t.Repo = "master"
@@ -86,31 +86,30 @@ func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger)
 		return err
 	}
 	if _, err := sources.GitClone(sources.CodeSourceInfo{RepositoryURL: t.GitURL, Branch: t.Repo, User: t.GitUsername, Password: t.GitPassword}, sourceDir, logger, 4); err != nil {
-		logger.Error("拉取代码失败", map[string]string{"step": "builder-exector", "status": "failure"})
+		logger.Error("拉取代码失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("[plugin]git clone code error %v", err)
 		return err
 	}
 	if !checkDockerfile(sourceDir) {
-		logger.Error("代码未检测到dockerfile，暂不支持构建，任务即将退出", map[string]string{"step": "builder-exector", "status": "failure"})
-		logrus.Error("代码未检测到dockerfile")
+		logger.Error("代码未检测到 Dockerfile，暂不支持构建，任务即将退出", map[string]string{"step": "builder-exector", "status": "failure"})
+		logrus.Error("代码未检测到 Dockerfile")
 		return fmt.Errorf("have no dockerfile")
 	}
 
-	logger.Info("代码检测为dockerfile，开始编译", map[string]string{"step": "build-exector"})
+	logger.Info("代码检测为 Dockerfile，开始构建插件镜像...", map[string]string{"step": "build-exector"})
 	mm := strings.Split(t.GitURL, "/")
 	n1 := strings.Split(mm[len(mm)-1], ".")[0]
 	buildImageName := fmt.Sprintf(chaos.REGISTRYDOMAIN+"/plugin_%s_%s:%s", n1, t.PluginID, t.DeployVersion)
 
-	logger.Info("start build image", map[string]string{"step": "builder-exector"})
 	err := sources.ImageBuild(sourceDir, "wt-system", t.PluginID, t.DeployVersion, logger, "plug-build", "", e.KanikoImage)
 	if err != nil {
-		logger.Error(fmt.Sprintf("build image %s failure,find log in wt-chaos", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+		logger.Error(fmt.Sprintf("构建插件镜像 %s 失败，可以在 wt-chaos 组件日志中查看详情", buildImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 		logrus.Errorf("[plugin]build image error: %s", err.Error())
 		return err
 	}
-	logger.Info("build image success, start to push image to local image registry", map[string]string{"step": "builder-exector"})
+	logger.Info("构建插件镜像成功，开始推送镜像到本地镜像仓库", map[string]string{"step": "builder-exector"})
 
-	logger.Info("push image success", map[string]string{"step": "build-exector"})
+	logger.Info("推送镜像成功", map[string]string{"step": "build-exector"})
 	version, err := db.GetManager().TenantEnvPluginBuildVersionDao().GetBuildVersionByDeployVersion(t.PluginID, t.VersionID, t.DeployVersion)
 	if err != nil {
 		logrus.Errorf("get version error, %v", err)
@@ -122,7 +121,7 @@ func (e *exectorManager) runD(t *model.BuildPluginTaskBody, logger event.Logger)
 		logrus.Errorf("update version error, %v", err)
 		return err
 	}
-	logger.Info("build plugin version by dockerfile success", map[string]string{"step": "last", "status": "success"})
+	logger.Info("通过 Dockerfile 构建插件镜像成功", map[string]string{"step": "last", "status": "success"})
 	return nil
 }
 

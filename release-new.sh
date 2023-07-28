@@ -68,7 +68,7 @@ build::image() {
 	mkdir -p "${build_image_dir}/amd64/" "${build_image_dir}/arm64/"
 	chmod 777 "${build_image_dir}"
 	if [ ! -f "${source_dir}/ignorebuild" ]; then
-		if [ !${CACHE} ] || [ ! -f "${AMD64_OUTPATH}" ] || [ ! -f "${ARM64_OUTPATH}" ]; then
+		if [ ! ${CACHE} ] || [ ! -f "${AMD64_OUTPATH}" ] || [ ! -f "${ARM64_OUTPATH}" ]; then
 			build::binary "$1"
 		fi
 		cp "${AMD64_OUTPATH}" "${build_image_dir}/amd64/"
@@ -84,7 +84,7 @@ build::image() {
 	popd
 	rm -rf "${build_image_dir}"
 
-	if [ !${GITHUB_ACTIONS} ]; then
+	if [ ! ${GITHUB_ACTIONS} ]; then
 		rm -rf "${build_binary_dir}"
 	fi
 }

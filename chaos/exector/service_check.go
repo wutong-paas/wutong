@@ -94,10 +94,10 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 		if r := recover(); r != nil {
 			logrus.Errorf("service check error: %v", r)
 			debug.PrintStack()
-			logger.Error("The back-end service has deserted, please try again.", map[string]string{"step": "callback", "status": "failure"})
+			logger.Error("后端服务开小差，请稍候重试", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
-	logger.Info("Start component deploy source check.", map[string]string{"step": "starting"})
+	logger.Info("开始应用组件部署源码检查...", map[string]string{"step": "starting"})
 	logrus.Infof("start check service by type: %s ", input.SourceType)
 	var pr parser.Parser
 	switch input.SourceType {
@@ -109,7 +109,7 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 			yamlbyte, err := yaml.JSONToYAML([]byte(input.SourceBody))
 			if err != nil {
 				logrus.Errorf("json bytes format is error, %s", input.SourceBody)
-				logger.Error("The dockercompose file is not in the correct format", map[string]string{"step": "callback", "status": "failure"})
+				logger.Error("检查失败：Docker Compose 文件格式错误", map[string]string{"step": "callback", "status": "failure"})
 				return
 			}
 			yamlbody = string(yamlbyte)
@@ -121,13 +121,13 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 		pr = parser.CreateThirdPartyServiceParse(input.SourceBody, logger)
 	}
 	if pr == nil {
-		logger.Error("Creating component source types is not supported", map[string]string{"step": "callback", "status": "failure"})
+		logger.Error("检查失败：应用组件构建源类型不支持", map[string]string{"step": "callback", "status": "failure"})
 		return
 	}
 	errList := pr.Parse()
 	for i, err := range errList {
 		if err.SolveAdvice == "" && input.SourceType != "sourcecode" {
-			errList[i].SolveAdvice = fmt.Sprintf("解析器认为镜像名为:%s,请确认是否正确或镜像是否存在", pr.GetImage())
+			errList[i].SolveAdvice = fmt.Sprintf("解析器认为镜像名为：%s，请确认是否正确或镜像是否存在", pr.GetImage())
 		}
 		if err.SolveAdvice == "" && input.SourceType == "sourcecode" {
 			errList[i].SolveAdvice = "源码智能解析失败"

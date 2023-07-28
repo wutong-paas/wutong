@@ -210,18 +210,10 @@ type ClusterResource struct {
 	NotReadyNode                     int           `json:"notready_node"`
 	ComputeNode                      int           `json:"compute_node"`
 	TenantEnv                        int           `json:"tenant_env"`
-	CapCPU                           int           `json:"cap_cpu"`          //可分配CPU总额
-	CapMem                           float32       `json:"cap_mem"`          //可分配Mem总额
-	HealthCapCPU                     int           `json:"health_cap_cpu"`   //健康可分配CPU
-	HealthCapMem                     float32       `json:"health_cap_mem"`   //健康可分配Mem
-	UnhealthCapCPU                   int           `json:"unhealth_cap_cpu"` //不健康可分配CPU
-	UnhealthCapMem                   float32       `json:"unhealth_cap_mem"` //不健康可分配Mem
-	ReqCPU                           float32       `json:"req_cpu"`          //已使用CPU总额
-	ReqMem                           float32       `json:"req_mem"`          //已使用Mem总额
-	HealthReqCPU                     float32       `json:"health_req_cpu"`   //健康已使用CPU
-	HealthReqMem                     float32       `json:"health_req_mem"`   //健康已使用Mem
-	UnhealthReqCPU                   float32       `json:"unhealth_req_cpu"` //不健康已使用CPU
-	UnhealthReqMem                   float32       `json:"unhealth_req_mem"` //不健康已使用Mem
+	CapCPU                           int           `json:"cap_cpu"` //可分配CPU总额
+	CapMem                           float32       `json:"cap_mem"` //可分配Mem总额
+	ReqCPU                           float32       `json:"req_cpu"` //已使用CPU总额
+	ReqMem                           float32       `json:"req_mem"` //已使用Mem总额
 	CapDisk                          uint64        `json:"cap_disk"`
 	ReqDisk                          uint64        `json:"req_disk"`
 	MaxAllocatableMemoryNodeResource *NodeResource `json:"max_allocatable_memory_node_resource"`
@@ -332,11 +324,11 @@ func CreateDefaultGlobalConfig() *GlobalConfig {
 		Value:     "calico",
 		ValueType: "string",
 		DependConfig: map[string][]ConfigUnit{
-			"calico": []ConfigUnit{ConfigUnit{Name: "ETCD_ADDRS", CNName: "ETCD地址", ValueType: "array"}},
-			"midonet": []ConfigUnit{
-				ConfigUnit{Name: "CASSANDRA_ADDRS", CNName: "CASSANDRA地址", ValueType: "array"},
-				ConfigUnit{Name: "ZOOKEEPER_ADDRS", CNName: "ZOOKEEPER地址", ValueType: "array"},
-				ConfigUnit{Name: "LB_CIDR", CNName: "负载均衡所在网段", ValueType: "string"},
+			"calico": {{Name: "ETCD_ADDRS", CNName: "ETCD地址", ValueType: "array"}},
+			"midonet": {
+				{Name: "CASSANDRA_ADDRS", CNName: "CASSANDRA地址", ValueType: "array"},
+				{Name: "ZOOKEEPER_ADDRS", CNName: "ZOOKEEPER地址", ValueType: "array"},
+				{Name: "LB_CIDR", CNName: "负载均衡所在网段", ValueType: "string"},
 			}},
 		IsConfigurable: true,
 	})
@@ -345,11 +337,11 @@ func CreateDefaultGlobalConfig() *GlobalConfig {
 		Value:  "nfs",
 		CNName: "默认共享存储模式",
 		DependConfig: map[string][]ConfigUnit{
-			"nfs": []ConfigUnit{
-				ConfigUnit{Name: "NFS_SERVERS", CNName: "NFS服务端地址列表", ValueType: "array"},
-				ConfigUnit{Name: "NFS_ENDPOINT", CNName: "NFS挂载端点", ValueType: "string"},
+			"nfs": {
+				{Name: "NFS_SERVERS", CNName: "NFS服务端地址列表", ValueType: "array"},
+				{Name: "NFS_ENDPOINT", CNName: "NFS挂载端点", ValueType: "string"},
 			},
-			"clusterfs": []ConfigUnit{},
+			"clusterfs": {},
 		},
 		IsConfigurable: true,
 	})
@@ -359,15 +351,15 @@ func CreateDefaultGlobalConfig() *GlobalConfig {
 		CNName:        "管理节点数据库类型",
 		OptionalValue: []string{"mysql", "cockroachdb"},
 		DependConfig: map[string][]ConfigUnit{
-			"mysql": []ConfigUnit{
-				ConfigUnit{Name: "MYSQL_HOST", CNName: "Mysql数据库地址", ValueType: "string", Value: "127.0.0.1"},
-				ConfigUnit{Name: "MYSQL_PASS", CNName: "Mysql数据库密码", ValueType: "string", Value: ""},
-				ConfigUnit{Name: "MYSQL_USER", CNName: "Mysql数据库用户名", ValueType: "string", Value: ""},
+			"mysql": {
+				{Name: "MYSQL_HOST", CNName: "Mysql数据库地址", ValueType: "string", Value: "127.0.0.1"},
+				{Name: "MYSQL_PASS", CNName: "Mysql数据库密码", ValueType: "string", Value: ""},
+				{Name: "MYSQL_USER", CNName: "Mysql数据库用户名", ValueType: "string", Value: ""},
 			},
-			"cockroachdb": []ConfigUnit{
-				ConfigUnit{Name: "COCKROACH_HOST", CNName: "Mysql数据库地址", ValueType: "array"},
-				ConfigUnit{Name: "COCKROACH_PASS", CNName: "Mysql数据库密码", ValueType: "string"},
-				ConfigUnit{Name: "COCKROACH_USER", CNName: "Mysql数据库用户名", ValueType: "string"},
+			"cockroachdb": {
+				{Name: "COCKROACH_HOST", CNName: "Mysql数据库地址", ValueType: "array"},
+				{Name: "COCKROACH_PASS", CNName: "Mysql数据库密码", ValueType: "string"},
+				{Name: "COCKROACH_USER", CNName: "Mysql数据库用户名", ValueType: "string"},
 			},
 		},
 		IsConfigurable: true,

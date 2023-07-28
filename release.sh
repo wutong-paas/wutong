@@ -79,7 +79,7 @@ build::image() {
 	mkdir -p "${build_image_dir}"
 	chmod 777 "${build_image_dir}"
 	if [ ! -f "${source_dir}/ignorebuild" ]; then
-		if [ !${CACHE} ] || [ ! -f "${OUTPATH}" ]; then
+		if [ ! ${CACHE} ] || [ ! -f "${OUTPATH}" ]; then
 			build::binary "$1"
 		fi
 		cp "${OUTPATH}" "${build_image_dir}"
@@ -112,7 +112,7 @@ build::image() {
 	popd
 	rm -rf "${build_image_dir}"
 
-	if [ !${GITHUB_ACTIONS} ]; then
+	if [ ! $GITHUB_ACTIONS ]; then
 		rm -rf "${build_binary_dir}"
 	fi
 }

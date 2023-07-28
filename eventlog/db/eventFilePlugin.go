@@ -24,10 +24,12 @@ import (
 	"io"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	eventutil "github.com/wutong-paas/wutong/eventlog/util"
 	"github.com/wutong-paas/wutong/util"
 )
@@ -116,14 +118,18 @@ func (m *EventFilePlugin) GetMessages(eventID, level string, length int) (interf
 				info := strings.SplitN(string(line), " ", 3)
 				if len(info) == 3 {
 					timestr := info[1]
+					unixnano := cast.ToInt64(timestr)
 					// timeunix := info[1]
 					// unix, _ := strconv.ParseInt(timeunix, 10, 64)
-					t, _ := time.Parse(time.RFC3339Nano, timestr)
+					// t, e := time.Parse(time.RFC3339Nano, timestr)
+					// if e != nil {
+					// 	t, _ = time.Parse(time.RFC3339, timestr)
+					// }
 					// tm := time.Unix(unix, 0)
 					md := MessageData{
 						Message:  info[2],
-						Unixtime: t.UnixNano(),
-						Time:     timestr,
+						Unixtime: unixnano,
+						Time:     time.Unix(0, unixnano).Format(time.RFC3339Nano),
 					}
 					message = append(message, md)
 					if len(message) > length && length != 0 {
@@ -133,6 +139,7 @@ func (m *EventFilePlugin) GetMessages(eventID, level string, length int) (interf
 			}
 		}
 	}
+	sort.Sort(message)
 	return message, nil
 }
 
@@ -155,19 +162,25 @@ func CheckLevel(flag, level string) bool {
 
 // GetTimeUnix get specified time unix
 func GetTimeUnix(timeStr string) int64 {
-	var timeLayout string
-	if strings.Contains(timeStr, ".") {
-		timeLayout = "2006-01-02T15:04:05"
-	} else {
-		timeLayout = "2006-01-02T15:04:05+08:00"
-	}
-	loc, _ := time.LoadLocation("Local")
-	utime, err := time.ParseInLocation(timeLayout, timeStr, loc)
-	if err != nil {
-		logrus.Errorf("Parse log time error %s", err.Error())
-		return 0
-	}
-	return utime.Unix()
+	// var timeLayout string
+	// if strings.Contains(timeStr, ".") {
+	// 	timeLayout = "2006-01-02T15:04:05"
+	// } else {
+	// 	timeLayout = "2006-01-02T15:04:05+08:00"
+	// }
+	// loc, _ := time.LoadLocation("Local")
+	// utime, err := time.ParseInLocation(timeLayout, timeStr, loc)
+	// if err != nil {
+	// 	logrus.Errorf("Parse log time error %s", err.Error())
+	// 	return 0
+	// }
+
+	utime, _ := time.Parse(time.RFC3339Nano, timeStr)
+	// if err != nil {
+	// 	utime, _ = time.Parse(time.RFC3339, timeStr)
+	// }
+
+	return utime.UnixNano()
 }
 
 // GetLevelFlag get log level flag

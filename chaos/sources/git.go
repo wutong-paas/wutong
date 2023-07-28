@@ -118,7 +118,7 @@ func GitClone(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout
 Loop:
 	if logger != nil {
 		//Hide possible account key information
-		logger.Info(fmt.Sprintf("Start clone source code from %s", getShowURL(csi.RepositoryURL)), map[string]string{"step": "clone_code"})
+		logger.Info(fmt.Sprintf("开始将源代码 %s 克隆至本地", getShowURL(csi.RepositoryURL)), map[string]string{"step": "clone_code"})
 	}
 	ep, err := transport.NewEndpoint(csi.RepositoryURL)
 	if err != nil {
@@ -148,7 +148,7 @@ Loop:
 		sshAuth, auerr := ssh.NewPublicKeysFromFile("git", publichFile, "")
 		if auerr != nil {
 			if logger != nil {
-				logger.Error("Create PublicKeys failure", map[string]string{"step": "clone-code", "status": "failure"})
+				logger.Error("创建 PublicKeys 失败", map[string]string{"step": "clone-code", "status": "failure"})
 			}
 			return nil, auerr
 		}
@@ -269,7 +269,7 @@ func GitPull(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout 
 	flag := true
 Loop:
 	if logger != nil {
-		logger.Info(fmt.Sprintf("Start pull source code from %s", csi.RepositoryURL), map[string]string{"step": "clone_code"})
+		logger.Info(fmt.Sprintf("开始从 %s 拉取源代码", csi.RepositoryURL), map[string]string{"step": "clone_code"})
 	}
 	if timeout < 1 {
 		timeout = 1

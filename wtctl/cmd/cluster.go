@@ -113,26 +113,23 @@ func getClusterInfo(c *cli.Context) error {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	healthCPUFree := fmt.Sprintf("%.2f", float32(clusterInfo.HealthCapCPU)-clusterInfo.HealthReqCPU)
-	unhealthCPUFree := fmt.Sprintf("%.2f", float32(clusterInfo.UnhealthCapCPU)-clusterInfo.UnhealthReqCPU)
-	healthMemFree := fmt.Sprintf("%.2f", clusterInfo.HealthCapMem-clusterInfo.HealthReqMem)
-	unhealthMemFree := fmt.Sprintf("%.2f", clusterInfo.UnhealthCapMem-clusterInfo.UnhealthReqMem)
+
 	table := uitable.New()
-	table.AddRow("", "Used/Total", "Use of", "Health free", "Unhealth free")
+	table.AddRow("", "Used/Total", "Use of")
 	table.AddRow("CPU(Core)", fmt.Sprintf("%.2f/%d", clusterInfo.ReqCPU, clusterInfo.CapCPU),
 		fmt.Sprintf("%d", func() int {
 			if clusterInfo.CapCPU == 0 {
 				return 0
 			}
 			return int(clusterInfo.ReqCPU * 100 / float32(clusterInfo.CapCPU))
-		}())+"%", "\033[0;32;32m"+healthCPUFree+"\033[0m \t\t", unhealthCPUFree)
+		}())+"%")
 	table.AddRow("Memory(Mb)", fmt.Sprintf("%.2f/%.2f", clusterInfo.ReqMem, clusterInfo.CapMem),
 		fmt.Sprintf("%d", func() int {
 			if clusterInfo.CapMem == 0 {
 				return 0
 			}
 			return int(float32(clusterInfo.ReqMem*100) / float32(clusterInfo.CapMem))
-		}())+"%", "\033[0;32;32m"+healthMemFree+" \033[0m \t\t", unhealthMemFree)
+		}())+"%")
 	table.AddRow("DistributedDisk(Gb)", fmt.Sprintf("%d/%d", clusterInfo.ReqDisk/1024/1024/1024, clusterInfo.CapDisk/1024/1024/1024),
 		fmt.Sprintf("%.2f", func() float32 {
 			if clusterInfo.CapDisk == 0 {

@@ -87,14 +87,14 @@ func (i *ImageBuildItem) Run(timeout time.Duration) error {
 		_, err := i.ImageClient.ImagePull(i.Image, user, pass, i.Logger, 30)
 		if err != nil {
 			logrus.Errorf("pull image %s error: %s", i.Image, err.Error())
-			i.Logger.Error(fmt.Sprintf("获取指定镜像：%s 失败！", i.Image), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("获取指定镜像：%s 失败，错误信息：%s", i.Image, err.Error()), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 
 		image = build.CreateImageName(i.ServiceID, i.DeployVersion)
 		if err := i.ImageClient.ImageTag(i.Image, image, i.Logger, 1); err != nil {
 			logrus.Errorf("change image tag error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("修改镜像 Tag：%s -> %s 失败！", i.Image, image), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("修改镜像 Tag：%s -> %s 失败，错误信息：%s", i.Image, image, err.Error()), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		err = i.ImageClient.ImagePush(image, chaos.REGISTRYUSER, chaos.REGISTRYPASS, i.Logger, 30)
@@ -114,7 +114,7 @@ func (i *ImageBuildItem) Run(timeout time.Duration) error {
 			}
 		}
 	} else {
-		i.Logger.Info("判定应用组件镜像源为来自内置镜像仓库或公开镜像，免构建...", nil)
+		i.Logger.Info("判定应用组件镜像源来自内置或公开镜像仓库，免构建", nil)
 	}
 
 	if err := i.StorageVersionInfo(image); err != nil {

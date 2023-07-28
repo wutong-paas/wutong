@@ -35,7 +35,7 @@ var nodeService *service.NodeService
 var discoverService *service.DiscoverAction
 var kubecli kubecache.KubeClient
 
-//Init 初始化
+// Init 初始化
 func Init(c *option.Conf, ms *masterserver.MasterServer, kube kubecache.KubeClient) {
 	if ms != nil {
 		prometheusService = service.CreatePrometheusService(c)
@@ -47,14 +47,14 @@ func Init(c *option.Conf, ms *masterserver.MasterServer, kube kubecache.KubeClie
 	kubecli = kube
 }
 
-//Exist 退出
+// Exist 退出
 func Exist(i interface{}) {
 	if datacenterConfig != nil {
 		datacenterConfig.Stop()
 	}
 }
 
-//Ping Ping
+// Ping Ping
 func Ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }

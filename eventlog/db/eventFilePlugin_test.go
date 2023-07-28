@@ -28,31 +28,31 @@ func TestEventFileSaveMessage(t *testing.T) {
 		HomePath: "./test",
 	}
 	if err := eventFilePlugin.SaveMessage([]*EventLogMessage{
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "info",
 			Message: "1ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk",
 			Time:    time.Now().Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "debug",
 			Message: "2ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk",
 			Time:    time.Now().Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "error",
 			Message: "3ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk",
 			Time:    time.Now().Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "debug",
 			Message: "4ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk",
 			Time:    time.Now().Add(time.Hour).Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "info",
 			Message: "5ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk",
@@ -62,31 +62,31 @@ func TestEventFileSaveMessage(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := eventFilePlugin.SaveMessage([]*EventLogMessage{
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "info",
 			Message: "1ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk2",
 			Time:    time.Now().Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "debug",
 			Message: "2ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk2",
 			Time:    time.Now().Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "error",
 			Message: "3ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk2",
 			Time:    time.Now().Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "debug",
 			Message: "4ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk2",
 			Time:    time.Now().Add(time.Hour).Format(time.RFC3339),
 		},
-		&EventLogMessage{
+		{
 			EventID: "eventidsadasd",
 			Level:   "info",
 			Message: "5ajdsnadskfasndjn afnasdfnln asdfjnajksndfjk2",

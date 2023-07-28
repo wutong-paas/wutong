@@ -147,14 +147,14 @@ func (m *Manager) startExec(task *model.Task) error {
 	logger := event.GetManager().GetLogger(body.EventID)
 	appService := m.store.GetAppService(body.ServiceID)
 	if appService != nil && !appService.IsClosed() {
-		logger.Info("component is not closed, can not start", event.GetLastLoggerOption())
+		logger.Info("应用组件尚未关闭，无法启动", event.GetLastLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return nil
 	}
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, body.Configs)
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("application init create failure")
 	}
@@ -164,7 +164,7 @@ func (m *Manager) startExec(task *model.Task) error {
 	err = m.controllerManager.StartController(controller.TypeStartController, *newAppService)
 	if err != nil {
 		logrus.Errorf("component run start controller failure:%s", err.Error())
-		logger.Error("component run start controller failure", event.GetCallbackLoggerOption())
+		logger.Error("运行应用组件启动控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component start failure")
 	}
@@ -181,7 +181,7 @@ func (m *Manager) stopExec(task *model.Task) error {
 	logger := event.GetManager().GetLogger(body.EventID)
 	appService := m.store.GetAppService(body.ServiceID)
 	if appService == nil {
-		logger.Info("component is closed, can not stop", event.GetLastLoggerOption())
+		logger.Info("应用组件已经关闭", event.GetLastLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return nil
 	}
@@ -192,7 +192,7 @@ func (m *Manager) stopExec(task *model.Task) error {
 	err := m.controllerManager.StartController(controller.TypeStopController, *appService)
 	if err != nil {
 		logrus.Errorf("component run  stop controller failure:%s", err.Error())
-		logger.Info("component run stop controller failure", event.GetCallbackLoggerOption())
+		logger.Info("运行应用组件关闭控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component stop failure")
 	}
@@ -209,7 +209,7 @@ func (m *Manager) restartExec(task *model.Task) error {
 	logger := event.GetManager().GetLogger(body.EventID)
 	appService := m.store.GetAppService(body.ServiceID)
 	if appService == nil {
-		logger.Info("component is closed, can not stop", event.GetLastLoggerOption())
+		logger.Info("应用组件已关闭", event.GetLastLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return nil
 	}
@@ -221,7 +221,7 @@ func (m *Manager) restartExec(task *model.Task) error {
 	err := m.controllerManager.StartController(controller.TypeRestartController, *appService)
 	if err != nil {
 		logrus.Errorf("component run restart controller failure:%s", err.Error())
-		logger.Info("component run restart controller failure", event.GetCallbackLoggerOption())
+		logger.Info("运行应用组件重启控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component restart failure")
 	}
@@ -240,7 +240,7 @@ func (m *Manager) horizontalScalingExec(task *model.Task) (err error) {
 	logger := event.GetManager().GetLogger(body.EventID)
 	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(body.ServiceID)
 	if err != nil {
-		logger.Error("Get app base info failure", event.GetCallbackLoggerOption())
+		logger.Error("获取应用组件基础信息失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		logrus.Errorf("horizontal_scaling get rc error. %v", err)
 		err = fmt.Errorf("a")
@@ -248,7 +248,7 @@ func (m *Manager) horizontalScalingExec(task *model.Task) (err error) {
 	}
 	appService := m.store.GetAppService(body.ServiceID)
 	if appService == nil || appService.IsClosed() {
-		logger.Info("service is closed, no need handle", event.GetLastLoggerOption())
+		logger.Info("应用组件已关闭", event.GetLastLoggerOption())
 		return
 	}
 	oldReplicas, newReplicas := appService.Replicas, service.Replicas
@@ -281,8 +281,8 @@ func (m *Manager) horizontalScalingExec(task *model.Task) (err error) {
 	appService.Replicas = service.Replicas
 	err = m.controllerManager.StartController(controller.TypeScalingController, *appService)
 	if err != nil {
-		logrus.Errorf("component run  scaling controller failure:%s", err.Error())
-		logger.Info("component run scaling controller failure", event.GetCallbackLoggerOption())
+		logrus.Errorf("component run scaling controller failure:%s", err.Error())
+		logger.Info("运行应用组件水平伸缩控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return
 	}
@@ -300,13 +300,13 @@ func (m *Manager) verticalScalingExec(task *model.Task) error {
 	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(body.ServiceID)
 	if err != nil {
 		logrus.Errorf("vertical_scaling get rc error. %v", err)
-		logger.Error("Get app base info failure", event.GetCallbackLoggerOption())
+		logger.Error("获取应用组件基础信息失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("vertical_scaling get rc error. %v", err)
 	}
 	appService := m.store.GetAppService(body.ServiceID)
 	if appService == nil || appService.IsClosed() {
-		logger.Info("service is closed,no need handle", event.GetLastLoggerOption())
+		logger.Info("应用组件已关闭", event.GetLastLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return nil
 	}
@@ -318,7 +318,7 @@ func (m *Manager) verticalScalingExec(task *model.Task) error {
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("application init create failure")
 	}
@@ -327,7 +327,7 @@ func (m *Manager) verticalScalingExec(task *model.Task) error {
 	err = m.controllerManager.StartController(controller.TypeUpgradeController, *newAppService)
 	if err != nil {
 		logrus.Errorf("component run  vertical scaling(upgrade) controller failure:%s", err.Error())
-		logger.Info("component run vertical scaling(upgrade) controller failure", event.GetCallbackLoggerOption())
+		logger.Info("运行应用组件资源更新控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("application vertical scaling(upgrade) failure")
 	}
@@ -345,7 +345,7 @@ func (m *Manager) rollingUpgradeExec(task *model.Task) error {
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, body.Configs)
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component init create failure")
 	}
@@ -358,7 +358,7 @@ func (m *Manager) rollingUpgradeExec(task *model.Task) error {
 		err = m.controllerManager.StartController(controller.TypeStartController, *newAppService)
 		if err != nil {
 			logrus.Errorf("component run  start controller failure:%s", err.Error())
-			logger.Info("component run start controller failure", event.GetCallbackLoggerOption())
+			logger.Info("运行应用组件启动控制器失败", event.GetCallbackLoggerOption())
 			event.GetManager().ReleaseLogger(logger)
 			return fmt.Errorf("component start failure")
 		}
@@ -367,18 +367,18 @@ func (m *Manager) rollingUpgradeExec(task *model.Task) error {
 	}
 	if err := oldAppService.SetUpgradePatch(newAppService); err != nil {
 		if err.Error() == "no upgrade" {
-			logger.Info("component no change no need upgrade.", event.GetLastLoggerOption())
+			logger.Info("应用组件无需更新", event.GetLastLoggerOption())
 			return nil
 		}
 		logrus.Errorf("component get upgrade info error:%s", err.Error())
-		logger.Error(fmt.Sprintf("component get upgrade info error:%s", err.Error()), event.GetCallbackLoggerOption())
+		logger.Error(fmt.Sprintf("获取应用组件更新信息失败，错误信息：%s", err.Error()), event.GetCallbackLoggerOption())
 		return nil
 	}
 	//if service already deploy,upgrade it:
 	err = m.controllerManager.StartController(controller.TypeUpgradeController, *newAppService)
 	if err != nil {
 		logrus.Errorf("component run  upgrade controller failure:%s", err.Error())
-		logger.Info("component run upgrade controller failure", event.GetCallbackLoggerOption())
+		logger.Info("运行应用组件更新控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component upgrade failure")
 	}
@@ -403,7 +403,7 @@ func (m *Manager) applyRuleExec(task *model.Task) error {
 	if svc.Kind != dbmodel.ServiceKindThirdParty.String() && !strings.HasPrefix(body.Action, "port") {
 		if oldAppService == nil || oldAppService.IsClosed() {
 			logrus.Debugf("service is closed, no need handle")
-			logger.Info("service is closed,no need handle", event.GetLastLoggerOption())
+			logger.Info("应用组件已关闭", event.GetLastLoggerOption())
 			event.GetManager().ReleaseLogger(logger)
 			return nil
 		}
@@ -417,7 +417,7 @@ func (m *Manager) applyRuleExec(task *model.Task) error {
 	}
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component init create failure")
 	}
@@ -532,7 +532,7 @@ func (m *Manager) ExecRefreshHPATask(task *model.Task) error {
 
 	oldAppService := m.store.GetAppService(body.ServiceID)
 	if oldAppService != nil && oldAppService.IsClosed() {
-		logger.Info("application is closed, ignore task 'refreshhpa'", event.GetLastLoggerOption())
+		logger.Info("应用组件已关闭，水平伸缩任务已忽略", event.GetLastLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return nil
 	}
@@ -540,7 +540,7 @@ func (m *Manager) ExecRefreshHPATask(task *model.Task) error {
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component init create failure")
 	}
@@ -550,7 +550,7 @@ func (m *Manager) ExecRefreshHPATask(task *model.Task) error {
 	err = m.controllerManager.StartController(controller.TypeControllerRefreshHPA, *newAppService)
 	if err != nil {
 		logrus.Errorf("component run  refreshhpa controller failure: %s", err.Error())
-		logger.Error("component run refreshhpa controller failure", event.GetCallbackLoggerOption())
+		logger.Error("运行应用组件水平伸缩控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("refresh hpa: %v", err)
 	}
@@ -634,7 +634,7 @@ func (m *Manager) ExecExportHelmChartTask(task *model.Task) error {
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component init create failure")
 	}
@@ -649,7 +649,7 @@ func (m *Manager) ExecExportHelmChartTask(task *model.Task) error {
 	err = m.controllerManager.StartExportHelmChartController(body.AppName, body.AppVersion, body.End, *newAppService)
 	if err != nil {
 		logrus.Errorf("component run export_helm_chart controller failure:%s", err.Error())
-		logger.Info("component run export_helm_chart controller failure", event.GetCallbackLoggerOption())
+		logger.Info("运行应用组件导出 Helm—Chart 控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component export_helm_chart failure")
 	}
@@ -668,7 +668,7 @@ func (m *Manager) ExecExportK8sYamlTask(task *model.Task) error {
 	newAppService, err := conversion.InitAppService(m.dbmanager, body.ServiceID, nil)
 	if err != nil {
 		logrus.Errorf("component init create failure:%s", err.Error())
-		logger.Error("component init create failure", event.GetCallbackLoggerOption())
+		logger.Error("应用组件初始创建失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component init create failure")
 	}
@@ -683,7 +683,7 @@ func (m *Manager) ExecExportK8sYamlTask(task *model.Task) error {
 	err = m.controllerManager.StartExportK8sYamlController(body.AppName, body.AppVersion, body.End, *newAppService)
 	if err != nil {
 		logrus.Errorf("component run export_k8s_yaml controller failure:%s", err.Error())
-		logger.Info("component run export_k8s_yaml controller failure", event.GetCallbackLoggerOption())
+		logger.Info("运行应用组件导出 K8s-Yaml 控制器失败", event.GetCallbackLoggerOption())
 		event.GetManager().ReleaseLogger(logger)
 		return fmt.Errorf("component start failure")
 	}

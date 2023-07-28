@@ -97,15 +97,15 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		csi.Branch = "master"
 	}
 	if csi.RepositoryURL == "" {
-		d.logger.Error("Git项目仓库地址不能为空", map[string]string{"step": "parse"})
-		d.errappend(ErrorAndSolve(FatalError, "Git项目仓库地址格式错误", SolveAdvice("modify_url", "请确认并修改仓库地址")))
+		d.logger.Error("Git 项目仓库地址不能为空", map[string]string{"step": "parse"})
+		d.errappend(ErrorAndSolve(FatalError, "Git 项目仓库地址格式错误", SolveAdvice("modify_url", "请确认并修改仓库地址")))
 		return d.errors
 	}
 	//验证仓库地址
 	buildInfo, err := sources.CreateRepostoryBuildInfo(csi.RepositoryURL, csi.ServerType, csi.Branch, csi.TenantEnvID, csi.ServiceID)
 	if err != nil {
-		d.logger.Error("Git项目仓库地址格式错误", map[string]string{"step": "parse"})
-		d.errappend(ErrorAndSolve(FatalError, "Git项目仓库地址格式错误", SolveAdvice("modify_url", "请确认并修改仓库地址")))
+		d.logger.Error("Git 项目仓库地址格式错误", map[string]string{"step": "parse"})
+		d.errappend(ErrorAndSolve(FatalError, "Git 项目仓库地址格式错误", SolveAdvice("modify_url", "请确认并修改仓库地址")))
 		return d.errors
 	}
 	// The source code is useless after the test is completed, and needs to be deleted.
@@ -129,30 +129,30 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		if err != nil {
 			if err == transport.ErrAuthenticationRequired || err == transport.ErrAuthorizationFailed {
 				if buildInfo.GetProtocol() == "ssh" {
-					d.errappend(ErrorAndSolve(FatalError, "Git项目仓库需要安全验证", SolveAdvice("get_publickey", "请获取授权Key配置到你的仓库项目中")))
+					d.errappend(ErrorAndSolve(FatalError, "Git 项目仓库需要安全验证", SolveAdvice("get_publickey", "请获取授权 Key 配置到你的仓库项目中")))
 				} else {
-					d.errappend(ErrorAndSolve(FatalError, "Git项目仓库需要安全验证", SolveAdvice("modify_userpass", "请提供正确的账号密码")))
+					d.errappend(ErrorAndSolve(FatalError, "Git 项目仓库需要安全验证", SolveAdvice("modify_userpass", "请提供正确的账号密码")))
 				}
 				return d.errors
 			}
 			if err == plumbing.ErrReferenceNotFound {
 				solve := "请到代码仓库查看正确的分支情况"
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Git项目仓库指定分支 %s 不存在", csi.Branch), solve))
+				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Git 项目仓库指定分支 %s 不存在", csi.Branch), solve))
 				return d.errors
 			}
 			if err == transport.ErrRepositoryNotFound {
 				solve := SolveAdvice("modify_repo", "请确认仓库地址是否正确")
-				d.errappend(ErrorAndSolve(FatalError, "Git项目仓库不存在", solve))
+				d.errappend(ErrorAndSolve(FatalError, "Git 项目仓库不存在", solve))
 				return d.errors
 			}
 			if err == transport.ErrEmptyRemoteRepository {
 				solve := SolveAdvice("open_repo", "请确认已提交代码")
-				d.errappend(ErrorAndSolve(FatalError, "Git项目仓库无有效文件", solve))
+				d.errappend(ErrorAndSolve(FatalError, "Git 项目仓库无有效文件", solve))
 				return d.errors
 			}
 			if strings.Contains(err.Error(), "ssh: unable to authenticate") {
-				solve := SolveAdvice("get_publickey", "请获取授权Key配置到你的仓库项目试试？")
-				d.errappend(ErrorAndSolve(FatalError, "远程仓库SSH验证错误", solve))
+				solve := SolveAdvice("get_publickey", "请获取授权 Key 配置到你的仓库项目试试？")
+				d.errappend(ErrorAndSolve(FatalError, "远程仓库 SSH 验证错误", solve))
 				return d.errors
 			}
 			if strings.Contains(err.Error(), "context deadline exceeded") {
@@ -161,7 +161,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 				return d.errors
 			}
 			logrus.Errorf("git clone error,%s", err.Error())
-			d.errappend(ErrorAndSolve(FatalError, "获取代码失败"+err.Error(), "请确认仓库能否正常访问。"))
+			d.errappend(ErrorAndSolve(FatalError, "获取代码失败，错误信息："+err.Error(), "请确认仓库能否正常访问。"))
 			return d.errors
 		}
 		//获取分支
@@ -192,7 +192,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		if err != nil {
 			if strings.Contains(err.Error(), "svn:E170000") {
 				solve := "请到代码仓库查看正确的分支情况"
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Svn项目仓库指定分支 %s 不存在", csi.Branch), solve))
+				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Svn 项目仓库指定分支 %s 不存在", csi.Branch), solve))
 				return d.errors
 			}
 			logrus.Errorf("svn checkout or update error,%s", err.Error())
@@ -229,17 +229,17 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		case ".tar":
 			if err := util.UnTar(fileName, buildInfo.GetCodeHome(), false); err != nil {
 				logrus.Errorf("untar package file failure %s", err.Error())
-				d.errappend(ErrorAndSolve(FatalError, "文件解压失败", "请确认该文件是否为tar规范文件"))
+				d.errappend(ErrorAndSolve(FatalError, "文件解压失败", "请确认该文件是否为 tar 规范文件"))
 			}
 		case ".tgz", ".tar.gz":
 			if err := util.UnTar(fileName, buildInfo.GetCodeHome(), true); err != nil {
 				logrus.Errorf("untar package file failure %s", err.Error())
-				d.errappend(ErrorAndSolve(FatalError, "文件解压失败", "请确认该文件是否为tgz规范文件"))
+				d.errappend(ErrorAndSolve(FatalError, "文件解压失败", "请确认该文件是否为 tgz 规范文件"))
 			}
 		case ".zip":
 			if err := util.Unzip(fileName, buildInfo.GetCodeHome()); err != nil {
 				logrus.Errorf("untar package file failure %s", err.Error())
-				d.errappend(ErrorAndSolve(FatalError, "文件解压失败", "请确认该文件是否为zip规范文件"))
+				d.errappend(ErrorAndSolve(FatalError, "文件解压失败", "请确认该文件是否为 zip 规范文件"))
 			}
 		}
 		logrus.Infof("unpack package file success")
@@ -322,7 +322,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 	}
 	runtimeInfo, err := code.CheckRuntime(buildPath, lang)
 	if err != nil && err == code.ErrRuntimeNotSupport {
-		d.errappend(ErrorAndSolve(FatalError, "代码选择的运行时版本不支持", "请参考文档查看平台各语言支持的Runtime版本"))
+		d.errappend(ErrorAndSolve(FatalError, "代码选择的运行时版本不支持", "请参考文档查看平台各语言支持的 Runtime 版本"))
 		return d.errors
 	}
 	for k, v := range runtimeInfo {

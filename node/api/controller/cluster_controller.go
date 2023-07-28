@@ -19,23 +19,17 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"runtime"
+	"strconv"
 	"strings"
 
-	"github.com/shirou/gopsutil/disk"
-	v1 "k8s.io/api/core/v1"
-
-	api "github.com/wutong-paas/wutong/util/http"
-
 	"github.com/go-chi/chi"
+	"github.com/shirou/gopsutil/disk"
 	"github.com/sirupsen/logrus"
-
-	"strconv"
-
 	"github.com/wutong-paas/wutong/node/api/model"
 	httputil "github.com/wutong-paas/wutong/util/http"
+	v1 "k8s.io/api/core/v1"
 )
 
 // GetNodeDetails GetNodeDetails
@@ -147,10 +141,7 @@ func GetNodeDetails(w http.ResponseWriter, r *http.Request) {
 	outRespSuccess(w, d, nil)
 
 }
-func convertByteToMB(a string) int {
-	i, _ := strconv.Atoi(a)
-	return i / 1024 / 1024
-}
+
 func convertMemoryToMBInt(mem string, pod bool) (v int) {
 	if pod {
 		if len(mem) != 1 {
@@ -284,14 +275,14 @@ func Resources(w http.ResponseWriter, r *http.Request) {
 	result.CPU = cpuR
 	result.MemR = memR
 	logrus.Infof("get cpu %v and mem %v", cpuR, memR)
-	api.ReturnSuccess(r, w, result)
+	httputil.ReturnSuccess(r, w, result)
 }
 
 // CapRes CapRes
 func CapRes(w http.ResponseWriter, r *http.Request) {
 	nodes, err := kubecli.GetNodes()
 	if err != nil {
-		api.ReturnError(r, w, 500, err.Error())
+		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}
 	var capCPU int64
@@ -305,45 +296,33 @@ func CapRes(w http.ResponseWriter, r *http.Request) {
 	result.CPU = int(capCPU)
 	result.MemR = int(capMem)
 	logrus.Infof("get cpu %v and mem %v", capCPU, capMem)
-	api.ReturnSuccess(r, w, result)
+	httputil.ReturnSuccess(r, w, result)
 }
 
 // ClusterInfo ClusterInfo
 func ClusterInfo(w http.ResponseWriter, r *http.Request) {
 	nodes, err := kubecli.GetNodes()
 	if err != nil {
-		api.ReturnError(r, w, 500, err.Error())
+		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}
-	var healthCapCPU int64
-	var healthCapMem int64
-	var unhealthCapCPU int64
-	var unhealthCapMem int64
+
+	var capCPU, capMem int64
 	usedNodeList := make([]*v1.Node, len(nodes))
 	for i, v := range nodes {
-		nodeHealth := false
 		for _, con := range v.Status.Conditions {
 			if con.Type == v1.NodeReady {
-				nodeHealth = con.Status == v1.ConditionTrue
 				break
 			}
 		}
-		if nodeHealth {
-			healthCapCPU += v.Status.Allocatable.Cpu().Value()
-			healthCapMem += v.Status.Allocatable.Memory().Value()
-		} else {
-			unhealthCapCPU += v.Status.Allocatable.Cpu().Value()
-			unhealthCapMem += v.Status.Allocatable.Memory().Value()
-		}
+		capCPU += v.Status.Allocatable.Cpu().Value()
+		capMem += v.Status.Allocatable.Memory().Value()
+
 		if !v.Spec.Unschedulable {
 			usedNodeList = append(usedNodeList, nodes[i])
 		}
 	}
-
-	var healthcpuR int64
-	var healthmemR int64
-	var unhealthCPUR int64
-	var unhealthMemR int64
+	var reqCPU, reqMem int64
 	var nodeAllocatableResourceList = make(map[string]*model.NodeResource, len(usedNodeList))
 	var maxAllocatableMemory *model.NodeResource
 	for _, node := range usedNodeList {
@@ -352,10 +331,10 @@ func ClusterInfo(w http.ResponseWriter, r *http.Request) {
 		}
 		pods, _ := kubecli.GetPodsByNodes(node.Name)
 		nodeAllocatableResource := model.NewResource(node.Status.Allocatable)
-		nodeHealth := false
+		// nodeHealth := false
 		for _, con := range node.Status.Conditions {
 			if con.Type == v1.NodeReady {
-				nodeHealth = con.Status == v1.ConditionTrue
+				// nodeHealth = con.Status == v1.ConditionTrue
 				break
 			}
 		}
@@ -365,13 +344,8 @@ func ClusterInfo(w http.ResponseWriter, r *http.Request) {
 				nodeAllocatableResource.Memory -= c.Resources.Requests.Memory().Value()
 				nodeAllocatableResource.MilliCPU -= c.Resources.Requests.Cpu().MilliValue()
 				nodeAllocatableResource.EphemeralStorage -= c.Resources.Requests.StorageEphemeral().Value()
-				if nodeHealth {
-					healthcpuR += c.Resources.Requests.Cpu().MilliValue()
-					healthmemR += c.Resources.Requests.Memory().Value()
-				} else {
-					unhealthCPUR += c.Resources.Requests.Cpu().MilliValue()
-					unhealthMemR += c.Resources.Requests.Memory().Value()
-				}
+				reqCPU += c.Resources.Requests.Cpu().MilliValue()
+				reqMem += c.Resources.Requests.Memory().Value()
 			}
 		}
 		nodeAllocatableResourceList[node.Name] = nodeAllocatableResource
@@ -397,18 +371,10 @@ func ClusterInfo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := &model.ClusterResource{
-		CapCPU:                           int(healthCapCPU + unhealthCapCPU),
-		CapMem:                           float32(healthCapMem+unhealthCapMem) / 1024 / 1024,
-		HealthCapCPU:                     int(healthCapCPU),
-		HealthCapMem:                     float32(healthCapMem) / 1024 / 1024,
-		UnhealthCapCPU:                   int(unhealthCapCPU),
-		UnhealthCapMem:                   float32(unhealthCapMem) / 1024 / 1024,
-		ReqCPU:                           float32(healthcpuR+unhealthCPUR) / 1000,
-		ReqMem:                           float32(healthmemR+unhealthMemR) / 1024 / 1024,
-		HealthReqCPU:                     float32(healthcpuR) / 1000,
-		HealthReqMem:                     float32(healthmemR) / 1024 / 1024,
-		UnhealthReqCPU:                   float32(unhealthCPUR) / 1000,
-		UnhealthReqMem:                   float32(unhealthMemR) / 1024 / 1024,
+		CapCPU:                           int(capCPU),
+		CapMem:                           float32(capMem) / 1024 / 1024,
+		ReqCPU:                           float32(reqCPU) / 1000,
+		ReqMem:                           float32(reqMem) / 1024 / 1024,
 		ComputeNode:                      len(nodes),
 		CapDisk:                          diskCap,
 		ReqDisk:                          reqDisk,
@@ -421,13 +387,7 @@ func ClusterInfo(w http.ResponseWriter, r *http.Request) {
 			result.NotReadyNode++
 		}
 	}
-	api.ReturnSuccess(r, w, result)
-}
-
-func outSuccess(w http.ResponseWriter) {
-	s := `{"ok":true}`
-	w.WriteHeader(200)
-	fmt.Fprint(w, s)
+	httputil.ReturnSuccess(r, w, result)
 }
 
 // GetServicesHealthy get service healthy
@@ -445,12 +405,12 @@ func GetNodeResource(w http.ResponseWriter, r *http.Request) {
 	nodeUID := strings.TrimSpace(chi.URLParam(r, "node_id"))
 	hostNode, apierr := nodeService.GetNode(nodeUID)
 	if apierr != nil {
-		api.ReturnError(r, w, 500, apierr.Error())
+		httputil.ReturnError(r, w, 500, apierr.Error())
 		return
 	}
 	node, err := kubecli.GetNodeByName(hostNode.ID)
 	if err != nil {
-		api.ReturnError(r, w, 500, err.Error())
+		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}
 	var capCPU int64
@@ -480,5 +440,5 @@ func GetNodeResource(w http.ResponseWriter, r *http.Request) {
 		ReqMem: int(podMemRequestMB),
 	}
 
-	api.ReturnSuccess(r, w, result)
+	httputil.ReturnSuccess(r, w, result)
 }

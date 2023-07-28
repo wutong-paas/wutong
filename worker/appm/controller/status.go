@@ -39,14 +39,18 @@ var ErrWaitCancel = errors.New("wait cancel")
 var ErrPodStatus = errors.New("pod status error")
 
 // WaitReady wait ready
-func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) error {
+func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) (err error) {
 	if timeout < 80 {
 		timeout = time.Second * 80
 	}
 	logger.Info(fmt.Sprintf("等待应用组件就绪超时时间：%ds", int(timeout.Seconds())), map[string]string{"step": "appruntime", "status": "running"})
 	ticker := time.NewTicker(5 * time.Second)
 	timer := time.NewTimer(timeout)
-	defer printUnnormalPods(a, logger)
+	defer func() {
+		if err != nil {
+			printAbnormalPods(a, logger)
+		}
+	}()
 	defer timer.Stop()
 	defer ticker.Stop()
 	var i int
@@ -54,21 +58,31 @@ func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logg
 		if i > 2 {
 			a = store.UpdateGetAppService(a.ServiceID)
 		}
-		if a.Ready() {
-			return nil
-		}
 
-		if checkPodStatusOrBreak(a, logger) {
-			return ErrPodStatus
-		}
 		select {
 		case <-cancel:
-			return ErrWaitCancel
+			err = ErrWaitCancel
+			return
 		case <-timer.C:
-			return ErrWaitTimeOut
+			err = ErrWaitTimeOut
+			return
 		case <-ticker.C:
 		}
 		i++
+
+		switch checkPodStatus(a, logger) {
+		case waiting:
+			continue
+		case running:
+			return nil
+		case abnormal:
+			err = ErrPodStatus
+			return
+		}
+
+		if a.Ready() {
+			return
+		}
 	}
 }
 
@@ -91,13 +105,20 @@ func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logge
 		if i > 2 {
 			a = store.UpdateGetAppService(a.ServiceID)
 		}
+
+		switch checkPodStatus(a, logger) {
+		case waiting:
+		case running:
+			return nil
+		case abnormal:
+			printAbnormalPods(a, logger)
+			return ErrPodStatus
+		}
+
 		if a.IsClosed() {
 			return nil
 		}
-		if checkPodStatusOrBreak(a, logger) {
-			printUnnormalPods(a, logger)
-			return ErrPodStatus
-		}
+
 		select {
 		case <-cancel:
 			return ErrWaitCancel
@@ -109,9 +130,9 @@ func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logge
 }
 
 // WaitUpgradeReady wait upgrade success
-func WaitUpgradeReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) error {
+func WaitUpgradeReady(store store.Storer, a *v1.AppService, timeout time.Duration, logger event.Logger, cancel chan struct{}) (err error) {
 	if a == nil {
-		return nil
+		return
 	}
 	if timeout < 40 {
 		timeout = time.Second * 40
@@ -119,51 +140,84 @@ func WaitUpgradeReady(store store.Storer, a *v1.AppService, timeout time.Duratio
 	logger.Info(fmt.Sprintf("等待应用组件更新完成超时时间：%ds", int(timeout.Seconds())), map[string]string{"step": "appruntime", "status": "upgrading"})
 	ticker := time.NewTicker(5 * time.Second)
 	timer := time.NewTimer(timeout)
-	defer printUnnormalPods(a, logger)
+	defer func() {
+		if err != nil {
+			printAbnormalPods(a, logger)
+		}
+	}()
 	defer timer.Stop()
 	defer ticker.Stop()
+	var i int
 	for {
-		if a.UpgradeComlete() {
-			return nil
-		}
-		if checkPodStatusOrBreak(a, logger) {
-			return ErrPodStatus
+		if i > 2 {
+			a = store.UpdateGetAppService(a.ServiceID)
 		}
 		select {
 		case <-cancel:
-			return ErrWaitCancel
+			err = ErrWaitCancel
+			return
 		case <-timer.C:
-			return ErrWaitTimeOut
+			err = ErrWaitTimeOut
+			return
 		case <-ticker.C:
+		}
+		i++
+
+		switch checkPodStatus(a, logger) {
+		case waiting:
+			continue
+		case running:
+			return
+		case abnormal:
+			err = ErrPodStatus
+			return
+		}
+
+		if a.UpgradeComlete() {
+			return
 		}
 	}
 }
 
-// checkPodStatusOrBreak 检测并打印 pod 状态，如果是确定的错误状态则返回 true
+// podCheckStatus，pod 状态检测结果，枚举值：waiting、running、abnormal
+type podCheckStatus string
+
+const (
+	// 等待中状态，如果检测到该状态，则继续检测
+	waiting podCheckStatus = "waiting"
+	// 运行中状态，如果检测到该状态，则判定任务已经完成，也可以结束等待
+	running podCheckStatus = "running"
+	// 非正常状态，如果检测到该状态，则结束任务等待，并打印错误信息
+	abnormal podCheckStatus = "abnormal" // 如果检测
+)
+
+// checkPodStatus 检测并打印 pod 状态，如果是确定的错误状态则返回 true
 // 那么等待可以直接结束
-func checkPodStatusOrBreak(a *v1.AppService, logger event.Logger) bool {
-	canBreak := false
-	var ready int32
-	if a.GetStatefulSet() != nil {
-		ready = a.GetStatefulSet().Status.ReadyReplicas
-	}
-	if a.GetDeployment() != nil {
-		ready = a.GetDeployment().Status.ReadyReplicas
-	}
-	unready := int32(len(a.GetPods(false))) - ready
-	logger.Info(fmt.Sprintf("检测应用组件运行实例 -> 当前实例总数：%d，已就绪：%d，未就绪：%d", len(a.GetPods(false)), ready, unready), map[string]string{"step": "appruntime", "status": "running"})
+func checkPodStatus(a *v1.AppService, logger event.Logger) podCheckStatus {
+	podCheckStatus := waiting
+	var newAvailableReplicas int32
 
 	pods := a.GetPods(false)
+
+	var podStatusMessage string
 	for _, pod := range pods {
+		if !isNewPod(pod, a) {
+			continue
+		}
+
+		if pod.Status.Phase == corev1.PodRunning {
+			newAvailableReplicas++
+		}
+
 		for _, con := range pod.Status.Conditions {
 			if con.Status == corev1.ConditionFalse {
 				switch con.Type {
 				case corev1.PodInitialized:
-					logger.Info(fmt.Sprintf("等待组件实例 %s 初始化容器完成...", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+					podStatusMessage = fmt.Sprintf("等待组件实例 %s 初始化容器完成...", pod.Name)
 				case corev1.PodScheduled:
-					logger.Info(fmt.Sprintf("等待组件实例 %s 调度完成...", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+					podStatusMessage = fmt.Sprintf("等待组件实例 %s 调度完成...", pod.Name)
 				case corev1.PodReady, corev1.ContainersReady:
-					logger.Info(fmt.Sprintf("等待组件实例 %s 运行就绪...", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+					podStatusMessage = fmt.Sprintf("等待组件实例 %s 运行就绪...", pod.Name)
 				}
 				break
 			}
@@ -175,56 +229,108 @@ func checkPodStatusOrBreak(a *v1.AppService, logger event.Logger) bool {
 					if cs.State.Waiting != nil {
 						switch cs.State.Waiting.Reason {
 						case "ImagePullBackOff", "ErrImagePull":
-							canBreak = true
+							podCheckStatus = abnormal
 						case "CrashLoopBackOff":
-							canBreak = true
+							podCheckStatus = abnormal
 						case "CreateContainerConfigError":
-							canBreak = true
+							podCheckStatus = abnormal
 						}
 					}
 				}
 			}
 		}
 	}
-	return canBreak
+
+	logger.Info(fmt.Sprintf("待更新应用组件运行实例：[%d/%d]", newAvailableReplicas, a.Replicas), map[string]string{"step": "appruntime", "status": "running"})
+	if podStatusMessage != "" {
+		logger.Info(podStatusMessage, map[string]string{"step": "appruntime", "status": "notready"})
+	}
+
+	if a.Replicas == int(newAvailableReplicas) && podCheckStatus != abnormal {
+		podCheckStatus = running
+	}
+	return podCheckStatus
 }
 
-func printUnnormalPods(a *v1.AppService, logger event.Logger) {
+// printAbnormalPods 打印非正常状态 Pod 信息
+func printAbnormalPods(a *v1.AppService, logger event.Logger) {
 	pods := a.GetPods(false)
 	for _, pod := range pods {
-		for _, con := range pod.Status.Conditions {
-			if con.Status == corev1.ConditionFalse {
-				switch con.Type {
-				case corev1.PodInitialized:
-					logger.Info(fmt.Sprintf("组件实例 %s 初始化容器未完成，请检查初始化插件配置是否正确。详细信息：", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
-					logger.Info("	--- "+con.Message, map[string]string{"step": "appruntime", "status": "notready"})
-				case corev1.PodScheduled:
-					logger.Info(fmt.Sprintf("组件实例 %s 未调度成功，请检查集群资源是否充足或适当向下调整组件资源配置。详细信息：", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
-					logger.Info("	--- "+con.Message, map[string]string{"step": "appruntime", "status": "notready"})
-				case corev1.PodReady, corev1.ContainersReady:
-					logger.Info(fmt.Sprintf("组件实例 %s 未完全就绪，请点击运行实例查看实例详情信息或查看组件实时日志。详细信息：", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
-					logger.Info("	--- "+con.Message, map[string]string{"step": "appruntime", "status": "notready"})
-				}
-				break
-			}
+		if !isNewPod(pod, a) {
+			continue
 		}
 
+		// 通过查看 State，知道明确的错误状态，然后打印错误信息
+		var stateFailed bool
 		for _, cs := range pod.Status.ContainerStatuses {
 			if !cs.Ready {
 				if cs.State.Waiting != nil {
+					var printDetail bool
 					switch cs.State.Waiting.Reason {
 					case "ImagePullBackOff", "ErrImagePull":
-						logger.Info(fmt.Sprintf("组件实例 %s 镜像拉取失败，请检查应用组件镜像源是否正确或镜像是否存在。错误信息：", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
-						logger.Info("	--- "+cs.State.Waiting.Message, map[string]string{"step": "appruntime", "status": "notready"})
+						logger.Info(fmt.Sprintf("组件实例 %s 镜像拉取失败，请检查应用组件镜像源是否正确或镜像是否存在。", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+						printDetail = true
+						stateFailed = true
 					case "CrashLoopBackOff":
-						logger.Info(fmt.Sprintf("组件实例 %s 容器启动失败，请点击运行实例查看实例详情信息或查看组件实时日志。错误信息：", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
-						logger.Info("	--- "+cs.State.Waiting.Message, map[string]string{"step": "appruntime", "status": "notready"})
+						logger.Info(fmt.Sprintf("组件实例 %s 容器运行失败并不断重启，请点击运行实例查看实例详情信息或查看组件实时日志。", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+						printDetail = true
+						stateFailed = true
 					case "CreateContainerConfigError":
-						logger.Info(fmt.Sprintf("组件实例 %s 容器配置错误，请检查组件容器存储是否成功挂载。错误信息：", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
-						logger.Info("	--- "+cs.State.Waiting.Message, map[string]string{"step": "appruntime", "status": "notready"})
+						logger.Info(fmt.Sprintf("组件实例 %s 容器配置错误，请检查组件容器存储是否成功挂载。", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+						printDetail = true
+						stateFailed = true
+					}
+					if printDetail && cs.State.Waiting.Message != "" {
+						logger.Info("::: 错误信息："+cs.State.Waiting.Message, map[string]string{"step": "appruntime", "status": "notready"})
 					}
 				}
 			}
 		}
+		if stateFailed {
+			continue
+		}
+
+		// 非明确的错误状态，通过查看 Conditions，打印提示信息
+		for _, con := range pod.Status.Conditions {
+			if con.Status == corev1.ConditionFalse {
+				var printDetail bool
+				switch con.Type {
+				case corev1.PodInitialized:
+					logger.Info(fmt.Sprintf("组件实例 %s 初始化容器未完成，请检查初始化插件配置是否正确。", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+					printDetail = true
+				case corev1.PodScheduled:
+					logger.Info(fmt.Sprintf("组件实例 %s 未完成调度，请检查集群资源是否充足或适当向下调整组件资源配置。", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+					printDetail = true
+				case corev1.PodReady, corev1.ContainersReady:
+					logger.Info(fmt.Sprintf("组件实例 %s 未完全就绪，请点击运行实例查看实例详情信息或查看组件实时日志。", pod.Name), map[string]string{"step": "appruntime", "status": "notready"})
+					printDetail = true
+				}
+				if printDetail && con.Reason != "" {
+					logger.Info("::: 详细信息："+con.Message, map[string]string{"step": "appruntime", "status": "notready"})
+				}
+				break
+			}
+		}
 	}
+}
+
+// isNewPod 是否是更新的一批 Pod
+func isNewPod(pod *corev1.Pod, a *v1.AppService) bool {
+	if pod.Labels["version"] != a.DeployVersion {
+		return false
+	}
+
+	if a.GetNewestReplicaSet() != nil {
+		if pod.Labels["pod-template-hash"] != a.GetNewestReplicaSet().Labels["pod-template-hash"] {
+			return false
+		}
+	}
+
+	if a.GetStatefulSet() != nil {
+		if pod.Labels["controller-revision-hash"] != a.GetStatefulSet().Status.UpdateRevision {
+			return false
+		}
+	}
+
+	return true
 }

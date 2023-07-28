@@ -24,8 +24,8 @@ import (
 
 // LogData log data
 type LogData struct {
-	num int
-	msg string
+	// num int
+	// msg string
 }
 
 // MessageData message data 获取指定操作的操作日志

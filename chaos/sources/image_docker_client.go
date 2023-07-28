@@ -78,13 +78,13 @@ func (d *dockerImageCliImpl) GetDockerClient() *dockercli.Client {
 }
 
 func (d *dockerImageCliImpl) ImagePull(image string, username, password string, logger event.Logger, timeout int) (*ocispec.ImageConfig, error) {
-	printLog(logger, "info", fmt.Sprintf("start get image:%s", image), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("开始拉取镜像：%s", image), map[string]string{"step": "pullimage"})
 	var pullipo = dtypes.ImagePullOptions{}
 	if username != "" && password != "" {
 		auth, err := EncodeAuthToBase64(dtypes.AuthConfig{Username: username, Password: password})
 		if err != nil {
 			logrus.Errorf("make auth base63 push image error: %s", err.Error())
-			printLog(logger, "error", "Failed to generate a Token to get the image", map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", "生成获取镜像的 Token 失败", map[string]string{"step": "builder-exector", "status": "failure"})
 			return nil, err
 		}
 		pullipo.RegistryAuth = auth
@@ -105,7 +105,7 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 	if err != nil {
 		logrus.Debugf("image name: %s readcloser error: %v", image, err.Error())
 		if strings.HasSuffix(err.Error(), "does not exist or no pull access") {
-			printLog(logger, "error", fmt.Sprintf("image: %s does not exist or is not available", image), map[string]string{"step": "pullimage", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("镜像 %s 不存在或者无法拉取", image), map[string]string{"step": "pullimage", "status": "failure"})
 			return nil, fmt.Errorf("Image(%s) does not exist or no pull access", image)
 		}
 		return nil, err
@@ -133,13 +133,13 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 		printLog(logger, "debug", jm.JSONString(), map[string]string{"step": "progress"})
 		logrus.Debug(jm.JSONString())
 	}
-	printLog(logger, "debug", "Get the image information and its raw representation", map[string]string{"step": "progress"})
+	printLog(logger, "debug", "获取镜像信息", map[string]string{"step": "progress"})
 	ins, _, err := d.client.ImageInspectWithRaw(ctx, image)
 	if err != nil {
-		printLog(logger, "debug", "Fail to get the image information and its raw representation", map[string]string{"step": "progress"})
+		printLog(logger, "debug", "获取图像信息失败", map[string]string{"step": "progress"})
 		return nil, err
 	}
-	printLog(logger, "info", fmt.Sprintf("Success Pull Image: %s", image), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("成功拉取镜像：%s", image), map[string]string{"step": "pullimage"})
 	exportPorts := make(map[string]struct{})
 	for port := range ins.Config.ExposedPorts {
 		exportPorts[string(port)] = struct{}{}
@@ -158,7 +158,7 @@ func (d *dockerImageCliImpl) ImagePull(image string, username, password string, 
 }
 
 func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Logger, timeout int) error {
-	printLog(logger, "info", fmt.Sprintf("start push image: %s", image), map[string]string{"step": "pushimage"})
+	printLog(logger, "info", fmt.Sprintf("开始推送镜像：%s", image), map[string]string{"step": "pushimage"})
 	if timeout < 1 {
 		timeout = 1
 	}
@@ -181,7 +181,7 @@ func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Lo
 	if err != nil {
 		logrus.Errorf("make auth base63 push image error: %s", err.Error())
 		if logger != nil {
-			logger.Error("failed to generate a token to get the image", map[string]string{"step": "builder-exector", "status": "failure"})
+			logger.Error("生成获取镜像的 Token 失败", map[string]string{"step": "builder-exector", "status": "failure"})
 		}
 		return err
 	}
@@ -191,7 +191,7 @@ func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Lo
 	readcloser, err := d.client.ImagePush(ctx, image, opts)
 	if err != nil {
 		if strings.Contains(err.Error(), "does not exist") {
-			printLog(logger, "error", fmt.Sprintf("image %s does not exist, cannot be pushed", image), map[string]string{"step": "pushimage", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("镜像 %s 不存在，无法推送", image), map[string]string{"step": "pushimage", "status": "failure"})
 			return fmt.Errorf("Image(%s) does not exist", image)
 		}
 		return err
@@ -225,7 +225,7 @@ func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Lo
 // ImageTag change docker image tag
 func (d *dockerImageCliImpl) ImageTag(source, target string, logger event.Logger, timeout int) error {
 	logrus.Debugf(fmt.Sprintf("change image tag: %s -> %s", source, target))
-	printLog(logger, "info", fmt.Sprintf("change image tag: %s -> %s", source, target), map[string]string{"step": "changetag"})
+	printLog(logger, "info", fmt.Sprintf("修改镜像 Tag：%s -> %s", source, target), map[string]string{"step": "changetag"})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*time.Duration(timeout))
 	defer cancel()
 	err := d.client.ImageTag(ctx, source, target)
@@ -234,7 +234,7 @@ func (d *dockerImageCliImpl) ImageTag(source, target string, logger event.Logger
 		return err
 	}
 	logrus.Debugf("change image tag success")
-	printLog(logger, "info", "change image tag success", map[string]string{"step": "changetag"})
+	printLog(logger, "info", "成功修改镜像 Tag", map[string]string{"step": "changetag"})
 	return nil
 }
 
@@ -249,15 +249,15 @@ func (d *dockerImageCliImpl) ImagesPullAndPush(sourceImage, targetImage, usernam
 	if !exists {
 		hubUser, hubPass := chaos.GetImageUserInfoV2(sourceImage, username, password)
 		if _, err := d.ImagePull(targetImage, hubUser, hubPass, logger, 15); err != nil {
-			printLog(logger, "error", fmt.Sprintf("pull image %s failed %v", targetImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("拉取镜像 %s 失败，错误信息： %v", targetImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		if err := d.ImageTag(targetImage, sourceImage, logger, 15); err != nil {
-			printLog(logger, "error", fmt.Sprintf("change image tag %s to %s failed", targetImage, sourceImage), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("修改镜像 Tag： %s -> %s 失败", targetImage, sourceImage), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		if err := d.ImagePush(sourceImage, hubUser, hubPass, logger, 15); err != nil {
-			printLog(logger, "error", fmt.Sprintf("push image %s failed %v", sourceImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
+			printLog(logger, "error", fmt.Sprintf("推送镜像 %s 失败，错误信息：%v", sourceImage, err), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 	}

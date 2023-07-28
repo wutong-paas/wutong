@@ -250,8 +250,5 @@ func (s *upgradeController) WaitingReady(app v1.AppService) error {
 	if storeAppService != nil && storeAppService.Replicas >= 0 {
 		timeout = timeout * time.Duration((storeAppService.Replicas)*2)
 	}
-	if err := WaitUpgradeReady(s.manager.store, storeAppService, timeout, app.Logger, s.stopChan); err != nil {
-		return err
-	}
-	return nil
+	return WaitUpgradeReady(s.manager.store, storeAppService, timeout, app.Logger, s.stopChan)
 }

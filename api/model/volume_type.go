@@ -36,8 +36,8 @@ type VolumeTypeStruct struct {
 
 // VolumeTypePageStruct volume option struct with page
 type VolumeTypePageStruct struct {
-	list     *VolumeTypeStruct
-	page     int
-	pageSize int
-	count    int
+	// list     *VolumeTypeStruct
+	// page     int
+	// pageSize int
+	// count    int
 }

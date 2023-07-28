@@ -69,28 +69,20 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	nodeCapaticyMetrics, nodeFreeStorageMetrics := c.GetNodeStorageMetrics(NodeCapacityStorageMetric), c.GetNodeStorageMetrics(NodFreeStorageMetric)
 
-	var healthCapCPU, healthCapMem, unhealthCapCPU, unhealthCapMem float32
 	usedNodeList := make([]*corev1.Node, len(nodes))
 	for i := range nodes {
 		node := nodes[i]
-		if !isNodeReady(node) {
-			logrus.Debugf("[GetClusterInfo] node(%s) not ready", node.GetName())
-			unhealthCapCPU += float32(node.Status.Allocatable.Cpu().Value())
-			unhealthCapMem += float32(node.Status.Allocatable.Memory().Value())
-			continue
-		}
-
-		healthCapCPU += float32(node.Status.Allocatable.Cpu().Value())
-		healthCapMem += float32(node.Status.Allocatable.Memory().Value())
 		if !node.Spec.Unschedulable {
 			usedNodeList[i] = node
 		}
 	}
 
-	var healthcpuR, healthmemR, unhealthCPUR, unhealthMemR, wtMemR, wtCPUR int64
+	var wtMemR, wtCPUR int64
 	var nodeResources []*model.NodeResource
 	var totalCapacityPods, totalUsedPods int64
 	var totalCapacityStorage, totalUsedStorage float32
+	var totalCapCPU, totalCapMem float32
+	var totalReqCPU, totalReqMem float32
 	tenantEnvPods := make(map[string]int)
 
 	for i := range usedNodeList {
@@ -121,13 +113,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 				for _, c := range pod.Spec.Containers {
 					nodeResource.RawUsedCPU += float32(c.Resources.Requests.Cpu().MilliValue())
 					nodeResource.RawUsedMem += float32(c.Resources.Requests.Memory().Value())
-					if isNodeReady(node) {
-						healthcpuR += c.Resources.Requests.Cpu().MilliValue()
-						healthmemR += c.Resources.Requests.Memory().Value()
-					} else {
-						unhealthCPUR += c.Resources.Requests.Cpu().MilliValue()
-						unhealthMemR += c.Resources.Requests.Memory().Value()
-					}
+
 					if pod.Labels["creator"] == "Wutong" {
 						wtMemR += c.Resources.Requests.Memory().Value()
 						wtCPUR += c.Resources.Requests.Cpu().MilliValue()
@@ -143,23 +129,19 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		nodeResource.UsedMem = util.DecimalFromFloat32(nodeResource.RawUsedMem / 1024 / 1024 / 1024)
 		nodeResources = append(nodeResources, nodeResource)
 		totalUsedPods += nodeResource.UsedPods
+		totalCapCPU += nodeResource.CapacityCPU
+		totalCapMem += nodeResource.CapacityMem
+		totalReqCPU += nodeResource.UsedCPU
+		totalReqMem += nodeResource.UsedMem
 	}
 
 	result := &model.ClusterResource{
-		CapCPU:               util.DecimalFromFloat32(healthCapCPU + unhealthCapCPU),
-		CapMem:               util.DecimalFromFloat32((healthCapMem + unhealthCapMem) / 1024 / 1024 / 1024),
-		HealthCapCPU:         util.DecimalFromFloat32(healthCapCPU),
-		HealthCapMem:         util.DecimalFromFloat32(healthCapMem / 1024 / 1024 / 1024),
-		UnhealthCapCPU:       util.DecimalFromFloat32(unhealthCapCPU),
-		UnhealthCapMem:       util.DecimalFromFloat32(unhealthCapMem / 1024 / 1024 / 1024),
-		ReqCPU:               util.DecimalFromFloat32(float32((healthcpuR + unhealthCPUR) / 1000)),
-		ReqMem:               util.DecimalFromFloat32(float32((healthmemR + unhealthMemR) / 1024 / 1024 / 1024)),
+		CapCPU:               totalCapCPU,
+		CapMem:               totalCapMem,
+		ReqCPU:               totalReqCPU,
+		ReqMem:               totalReqMem,
 		WutongReqCPU:         util.DecimalFromFloat32(float32(wtCPUR / 1000)),
 		WutongReqMem:         util.DecimalFromFloat32(float32(wtMemR / 1024 / 1024 / 1024)),
-		HealthReqCPU:         util.DecimalFromFloat32(float32(healthcpuR / 1000)),
-		HealthReqMem:         util.DecimalFromFloat32(float32(healthmemR / 1024 / 1024 / 1024)),
-		UnhealthReqCPU:       util.DecimalFromFloat32(float32(unhealthCPUR / 1000)),
-		UnhealthReqMem:       util.DecimalFromFloat32(float32(unhealthMemR / 1024 / 1024 / 1024)),
 		ComputeNode:          len(nodes),
 		TotalCapacityPods:    totalCapacityPods,
 		TotalUsedPods:        totalUsedPods,

@@ -128,10 +128,10 @@ func getKubeletMessage(v *client.HostNode) string {
 func GetRuleNodes(w http.ResponseWriter, r *http.Request) {
 	rule := chi.URLParam(r, "rule")
 	allowRule := map[string]struct{}{
-		"compute": struct{}{},
-		"manage":  struct{}{},
-		"storage": struct{}{},
-		"gateway": struct{}{},
+		"compute": {},
+		"manage":  {},
+		"storage": {},
+		"gateway": {},
 	}
 	if _, ok := allowRule[rule]; !ok {
 		httputil.ReturnError(r, w, 400, rule+" rule is not define")

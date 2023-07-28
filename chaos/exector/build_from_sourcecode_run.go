@@ -131,13 +131,13 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 	// 4.upload image /upload slug
 	rbi, err := sources.CreateRepostoryBuildInfo(i.CodeSouceInfo.RepositoryURL, i.CodeSouceInfo.ServerType, i.CodeSouceInfo.Branch, i.TenantEnvID, i.ServiceID)
 	if err != nil {
-		i.Logger.Error("Git项目仓库地址格式错误", map[string]string{"step": "parse"})
+		i.Logger.Error("Git 项目仓库地址格式错误", map[string]string{"step": "parse"})
 		return err
 	}
 	i.RepoInfo = rbi
 	if err := i.prepare(); err != nil {
 		logrus.Errorf("prepare build code error: %s", err.Error())
-		i.Logger.Error("准备源码构建失败", map[string]string{"step": "builder-exector", "status": "failure"})
+		i.Logger.Error("准备源码构建失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
 	i.CodeSouceInfo.RepositoryURL = rbi.RepostoryURL
@@ -153,7 +153,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 		}
 		if rs.Logs == nil || len(rs.Logs.CommitEntrys) < 1 {
 			logrus.Errorf("get code commit info error: %s", err.Error())
-			i.Logger.Error("读取代码版本信息失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("读取代码版本信息失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.commit = Commit{
@@ -175,7 +175,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 		commit, err := sources.GetLastCommit(rs)
 		if err != nil || commit == nil {
 			logrus.Errorf("get code commit info error: %s", err.Error())
-			i.Logger.Error("读取代码版本信息失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("读取代码版本信息失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.commit = Commit{

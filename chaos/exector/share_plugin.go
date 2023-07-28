@@ -85,18 +85,18 @@ func (i *PluginShareItem) Run(timeout time.Duration) error {
 		_, err := i.ImageClient.ImagePull(i.LocalImageName, chaos.REGISTRYUSER, chaos.REGISTRYPASS, i.Logger, 10)
 		if err != nil {
 			logrus.Errorf("pull image %s error: %s", i.LocalImageName, err.Error())
-			i.Logger.Error(fmt.Sprintf("拉取应用镜像: %s失败", i.LocalImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("拉取应用镜像: %s 失败，错误信息："+err.Error(), i.LocalImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		if err := i.ImageClient.ImageTag(i.LocalImageName, i.ImageName, i.Logger, 1); err != nil {
 			logrus.Errorf("change image tag error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败", i.LocalImageName, i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("修改镜像tag: %s -> %s 失败，错误信息："+err.Error(), i.LocalImageName, i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		n, err := reference.ParseNormalizedNamed(i.ImageName)
 		if err != nil {
 			logrus.Errorf("ParseNormalizedNamed(%s) error: %s", i.ImageName, err.Error())
-			i.Logger.Error(fmt.Sprintf("Failed to ParseNormalizedNamed(%s)", i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("解析镜像名称 %s 失败，错误信息："+err.Error(), i.ImageName), map[string]string{"step": "builder-exector", "status": "failure"})
 			return nil
 		}
 		if reference.Domain(n) == "docker.io" {
@@ -110,11 +110,11 @@ func (i *PluginShareItem) Run(timeout time.Duration) error {
 		}
 		if err != nil {
 			if err.Error() == "authentication required" {
-				i.Logger.Error("镜像仓库授权失败", map[string]string{"step": "builder-exector", "status": "failure"})
+				i.Logger.Error("镜像仓库授权失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 				return err
 			}
 			logrus.Errorf("push image into registry error: %s", err.Error())
-			i.Logger.Error("推送镜像至镜像仓库失败", map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("推送镜像至镜像仓库失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 	}
