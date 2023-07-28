@@ -3,4 +3,4 @@
 
 export BUILD_ARCH=arm64
 export VERSION=v1.4.0-arm64
-./release.sh all push
+./single-arch-build.sh all push

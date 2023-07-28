@@ -19,4 +19,4 @@ jobs:
           password: ${{ secrets.DOMESTIC_DOCKER_PASSWORD }}
 
       - name: Release
-        run: ./amd64-build.sh
+        run: ./single-arch-build.sh all push

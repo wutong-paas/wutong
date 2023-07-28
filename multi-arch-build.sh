@@ -2,6 +2,7 @@
 set -o errexit
 
 # define package name
+WUTONG_REGISTRY=${WUTONG_REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'}
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
 
@@ -78,8 +79,8 @@ build::image() {
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
 	docker buildx use gobuilder || docker buildx create --use --name gobuilder
-	# docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" --build-arg -t swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
-	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t wutongpaas/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
+	# docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" --build-arg -t ${WUTONG_REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
+	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t ${WUTONG_REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	# docker buildx rm gobuilder
 	popd
 	rm -rf "${build_image_dir}"

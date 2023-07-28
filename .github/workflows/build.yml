@@ -34,4 +34,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build
-        run: ./release-new.sh all push
+        run: ./multi-arch-build.sh all push
