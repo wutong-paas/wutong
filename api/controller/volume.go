@@ -19,6 +19,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -30,6 +31,7 @@ import (
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	httputil "github.com/wutong-paas/wutong/util/http"
+	"gopkg.in/yaml.v2"
 )
 
 // VolumeDependency VolumeDependency
@@ -365,6 +367,22 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO fanyangyang validate VolumeCapacity  AccessMode SharePolicy BackupPolicy ReclaimPolicy AllowExpansion
+
+	if !strings.HasPrefix(avs.Body.VolumePath, "/") {
+		httputil.ReturnError(r, w, 400, "volume path is invalid, must begin with /")
+		return
+	}
+
+	if strings.HasSuffix(avs.Body.VolumePath, "/") {
+		valid, content := correctConfigMapContent(avs.Body.FileContent)
+		if valid {
+			httputil.ReturnError(r, w, 400, "content is invalid for multi file volume, must be yaml format")
+			return
+		}
+		avs.Body.FileContent = content
+	}
+
 	tsv := &dbmodel.TenantEnvServiceVolume{
 		ServiceID:          serviceID,
 		VolumeName:         avs.Body.VolumeName,
@@ -382,17 +400,35 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 		Mode:               avs.Body.Mode,
 	}
 
-	// TODO fanyangyang validate VolumeCapacity  AccessMode SharePolicy BackupPolicy ReclaimPolicy AllowExpansion
-
-	if !strings.HasPrefix(avs.Body.VolumePath, "/") {
-		httputil.ReturnError(r, w, 400, "volume path is invalid,must begin with /")
-		return
-	}
 	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, avs.Body.FileContent, "add"); err != nil {
 		err.Handle(r, w)
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
+}
+
+func correctConfigMapContent(content string) (bool, string) {
+	content = trimSpaceAndNewLine(content)
+	var m map[string]interface{}
+	// ignore json
+	if strings.HasPrefix(content, "{") {
+		return false, content
+	}
+	err := yaml.UnmarshalStrict([]byte(content), &m)
+	fmt.Println("======", len(m))
+	fmt.Println(m)
+	return err == nil && len(m) > 0, content
+}
+
+func trimSpaceAndNewLine(content string) string {
+	for strings.HasPrefix(content, " ") ||
+		strings.HasPrefix(content, "\n") ||
+		strings.HasSuffix(content, " ") ||
+		strings.HasSuffix(content, "\n") {
+		content = strings.Trim(content, " ")
+		content = strings.Trim(content, "\n")
+	}
+	return content
 }
 
 // DeleteVolume DeleteVolume

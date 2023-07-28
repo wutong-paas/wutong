@@ -4,7 +4,6 @@ ARG TARGETARCH
 
 WORKDIR /run
 
-COPY ${TARGETARCH}/ /run/
 COPY entrypoint.sh /run/entrypoint.sh
 COPY resource-proxy.conf /etc/nginx/conf.d/
 
