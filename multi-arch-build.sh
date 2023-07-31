@@ -105,16 +105,16 @@ build::binary::all() {
 case $1 in
 binary)
 	if [ "$2" = "all" ]; then
-		build::binary::all "$2"
+		build::binary::all
 	else
-		build::binary "$2"
+		build::binary
 	fi
 	;;
 *)
 	if [ "$1" = "all" ]; then
-		build::image::all "$2"
+		build::image::all
 	else
-		build::image "$1" "$2"
+		build::image "$1"
 	fi
 	;;
 esac
