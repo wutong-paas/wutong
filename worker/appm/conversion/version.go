@@ -610,8 +610,11 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 		if mode == "readiness" && probe.FailureThreshold < 1 {
 			probe.FailureThreshold = 3
 		}
-		if mode == "startup" && probe.FailureThreshold < 1 {
-			probe.FailureThreshold = 3
+		if mode == "startup" {
+			probe.SuccessThreshold = 1
+			if probe.FailureThreshold < 1 {
+				probe.FailureThreshold = 3
+			}
 		}
 		p := &corev1.Probe{
 			FailureThreshold:    int32(probe.FailureThreshold),
