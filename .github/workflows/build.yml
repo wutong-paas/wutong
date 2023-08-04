@@ -1,7 +1,7 @@
 name: build
 
 env:
-  VERSION: v1.4.0-beta1
+  VERSION: v1.4.0
 
 on:
   push:
@@ -34,4 +34,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build
-        run: ./multi-arch-build.sh all push
+        run: ./multi-arch-build.sh all
