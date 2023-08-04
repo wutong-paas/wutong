@@ -115,7 +115,7 @@ func (a *AppStruct) ImportID(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		apps, err := ioutil.ReadDir(dirName)
+		apps, err := os.ReadDir(dirName)
 		if err != nil {
 			httputil.ReturnSuccess(r, w, map[string][]string{"apps": {}})
 			return
@@ -319,8 +319,10 @@ func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 		}
 		if _, err := os.Stat(res.SourceDir); err == nil {
 			if err := os.RemoveAll(res.SourceDir); err != nil {
-				httputil.ReturnError(r, w, 504, fmt.Sprintf("Deleting uploading application directory failed %s : %v", res.SourceDir, err))
-				return
+				if strings.Contains(err.Error(), "directory not empty") {
+					httputil.ReturnError(r, w, 504, fmt.Sprintf("Deleting uploading application directory failed %s : %v", res.SourceDir, err))
+					return
+				}
 			}
 		}
 		httputil.ReturnSuccess(r, w, "successfully deleted")

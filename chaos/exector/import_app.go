@@ -22,12 +22,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -116,42 +114,38 @@ func (i *ImportApp) Run(timeout time.Duration) error {
 func (i *ImportApp) importApp() error {
 	oldSourceDir := i.SourceDir
 	var datas []v1alpha1.WutongApplicationConfig
-	var wait sync.WaitGroup
 	for _, app := range i.Apps {
-		wait.Add(1)
-		go func(app string) {
-			defer wait.Done()
-			appFile := filepath.Join(oldSourceDir, app)
-			tmpDir := path.Join(oldSourceDir, app+"-cache")
-			li, err := localimport.New(logrus.StandardLogger(), i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), tmpDir)
-			if err != nil {
-				logrus.Errorf("create localimport failure %s", err.Error())
-				return
-			}
-			if err := i.updateStatusForApp(app, "importing"); err != nil {
-				logrus.Errorf("Failed to update status to importing for app %s: %v", app, err)
-			}
-			ram, err := li.Import(appFile, v1alpha1.ImageInfo{
-				HubURL:      i.ServiceImage.HubURL,
-				HubUser:     i.ServiceImage.HubUser,
-				HubPassword: i.ServiceImage.HubPassword,
-				Namespace:   i.ServiceImage.NameSpace,
-			})
-			if err != nil {
-				logrus.Errorf("Failed to load app %s: %v", appFile, err)
-				i.updateStatusForApp(app, "failed")
-				return
-			}
-			os.Rename(appFile, appFile+".success")
-			datas = append(datas, *ram)
-			logrus.Infof("Successful import app: %s", appFile)
-			os.Remove(tmpDir)
-		}(app)
+		appFile := filepath.Join(oldSourceDir, app)
+		tmpDir := path.Join(oldSourceDir, app+"-cache")
+		li, err := localimport.New(logrus.StandardLogger(), i.ImageClient.GetContainerdClient(), i.ImageClient.GetDockerClient(), tmpDir)
+		if err != nil {
+			logrus.Errorf("create localimport failure %s", err.Error())
+			i.updateStatusForApp(app, "failed")
+			continue
+		}
+		if err := i.updateStatusForApp(app, "importing"); err != nil {
+			logrus.Errorf("Failed to update status to importing for app %s: %v", app, err)
+		}
+		ram, err := li.Import(appFile, v1alpha1.ImageInfo{
+			HubURL:      i.ServiceImage.HubURL,
+			HubUser:     i.ServiceImage.HubUser,
+			HubPassword: i.ServiceImage.HubPassword,
+			Namespace:   i.ServiceImage.NameSpace,
+		})
+		if err != nil {
+			logrus.Errorf("Failed to load app %s: %v", appFile, err)
+			i.updateStatusForApp(app, "failed")
+			continue
+		}
+		i.updateStatusForApp(app, "success")
+		os.Rename(appFile, appFile+".success")
+		datas = append(datas, *ram)
+		logrus.Infof("Successful import app: %s", appFile)
+		os.Remove(tmpDir)
 	}
-	wait.Wait()
 	metadatasFile := fmt.Sprintf("%s/metadatas.json", i.SourceDir)
 	dataBytes, _ := json.Marshal(datas)
-	if err := ioutil.WriteFile(metadatasFile, []byte(dataBytes), 0644); err != nil {
+	if err := os.WriteFile(metadatasFile, []byte(dataBytes), 0644); err != nil {
 		logrus.Errorf("Failed to load apps %s: %v", i.SourceDir, err)
 		return err
 	}
