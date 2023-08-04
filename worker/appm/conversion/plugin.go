@@ -250,7 +250,7 @@ func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container,
 		con.Lifecycle = &corev1.Lifecycle{
 			PostStart: &corev1.LifecycleHandler{
 				Exec: &v1.ExecAction{
-					Command: []string{"/root/wutong-mesh-data-panel", "wait", strconv.Itoa(port)},
+					Command: []string{"/run/wutong-mesh-data-panel", "wait", strconv.Itoa(port)},
 				},
 			},
 		}
