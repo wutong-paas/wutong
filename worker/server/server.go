@@ -221,11 +221,7 @@ func (r *RuntimeServer) getHelmAppStatus(app *model.Application) (*pb.AppStatus,
 // if TenantEnvId is "" will return the sum of the all tenantEnv
 func (r *RuntimeServer) GetTenantEnvResource(ctx context.Context, re *pb.TenantEnvRequest) (*pb.TenantEnvResource, error) {
 	var tr pb.TenantEnvResource
-	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(re.TenantEnvId)
-	if err != nil {
-		return nil, err
-	}
-	res := r.store.GetTenantEnvResource(tenantEnv.Namespace)
+	res := r.store.GetTenantEnvResource(re.TenantEnvId)
 	runningApps := r.store.GetTenantEnvRunningApp(re.TenantEnvId)
 	for _, app := range runningApps {
 		if app.ServiceKind == model.ServiceKindThirdParty {
