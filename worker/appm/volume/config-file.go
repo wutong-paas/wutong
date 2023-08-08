@@ -21,9 +21,11 @@ package volume
 import (
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/util"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -65,7 +67,15 @@ func (v *ConfigFileVolume) CreateVolume(define *Define) error {
 		},
 		Data: make(map[string]string),
 	}
-	cmap.Data[path.Base(v.svm.VolumePath)] = util.ParseVariable(cf.FileContent, configs)
+	if strings.HasSuffix(v.svm.VolumePath, "/") {
+		err := yaml.Unmarshal([]byte(cf.FileContent), &cmap.Data)
+		if err != nil {
+			return fmt.Errorf("error unmarshal config file content: %v", err)
+		}
+	} else {
+		cmap.Data[path.Base(v.svm.VolumePath)] = util.ParseVariable(cf.FileContent, configs)
+	}
+
 	v.as.SetConfigMap(cmap)
 	define.SetVolumeCMap(cmap, path.Base(v.svm.VolumePath), v.svm.VolumePath, false, v.svm.Mode)
 	return nil
@@ -95,7 +105,15 @@ func (v *ConfigFileVolume) CreateDependVolume(define *Define) error {
 		},
 		Data: make(map[string]string),
 	}
-	cmap.Data[path.Base(v.smr.VolumePath)] = util.ParseVariable(cf.FileContent, configs)
+	if strings.HasSuffix(v.smr.VolumePath, "/") {
+		// multi file
+		err := yaml.Unmarshal([]byte(cf.FileContent), &cmap.Data)
+		if err != nil {
+			return fmt.Errorf("error unmarshal config file content: %v", err)
+		}
+	} else {
+		cmap.Data[path.Base(v.smr.VolumePath)] = util.ParseVariable(cf.FileContent, configs)
+	}
 	v.as.SetConfigMap(cmap)
 
 	define.SetVolumeCMap(cmap, path.Base(v.smr.VolumePath), v.smr.VolumePath, false, depVol.Mode)

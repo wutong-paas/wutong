@@ -19,7 +19,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -376,7 +375,7 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 
 	if strings.HasSuffix(avs.Body.VolumePath, "/") {
 		valid, content := correctConfigMapContent(avs.Body.FileContent)
-		if valid {
+		if !valid {
 			httputil.ReturnError(r, w, 400, "content is invalid for multi file volume, must be yaml format")
 			return
 		}
@@ -415,8 +414,6 @@ func correctConfigMapContent(content string) (bool, string) {
 		return false, content
 	}
 	err := yaml.UnmarshalStrict([]byte(content), &m)
-	fmt.Println("======", len(m))
-	fmt.Println(m)
 	return err == nil && len(m) > 0, content
 }
 

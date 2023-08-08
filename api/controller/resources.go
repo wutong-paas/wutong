@@ -91,15 +91,12 @@ func (v2 *V2Routes) Health(w http.ResponseWriter, r *http.Request) {
 
 // AlertManagerWebHook -
 func (v2 *V2Routes) AlertManagerWebHook(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("=======>webhook")
-	in, err := io.ReadAll(r.Body)
+	_, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(err)
 		httputil.ReturnError(r, w, 400, "")
 		return
 	}
-	fmt.Println("=====>body")
-	fmt.Println(string(in))
 	httputil.ReturnSuccess(r, w, "")
 
 }
