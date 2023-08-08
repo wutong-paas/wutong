@@ -20,7 +20,7 @@ package compose
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 
@@ -200,7 +200,7 @@ func getVersionFromFile(file string) (string, error) {
 	}
 	var version ComposeVersion
 
-	loadedFile, err := ioutil.ReadFile(file)
+	loadedFile, err := os.ReadFile(file)
 	if err != nil {
 		return "", err
 	}

@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -102,7 +101,7 @@ func (m *monitor) AddRule(path string) (*utilhttp.ResponseBody, *util.APIHandleE
 		}
 	}
 
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		logrus.Error("Failed to read AlertingRules config file: ", err.Error())
 		return nil, util.CreateAPIHandleError(400, err)
@@ -137,7 +136,7 @@ func (m *monitor) RegRule(ruleName string, path string) (*utilhttp.ResponseBody,
 		}
 	}
 
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		logrus.Error("Failed to read AlertingRules config file: ", err.Error())
 		return nil, util.CreateAPIHandleError(400, err)

@@ -21,7 +21,7 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -549,7 +549,7 @@ func (s *SocketServer) receiveEventMessage(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	var re ResponseType
-	message, err := ioutil.ReadAll(r.Body)
+	message, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(500)
 		re = NewResponseType(500, err.Error(), "读取event消息内容错误", nil, nil)

@@ -3,7 +3,7 @@ package controller
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -84,13 +84,13 @@ func (a *AppRestoreController) RestoreVolumes(w http.ResponseWriter, r *http.Req
 // RestoreProbe restores service probe. delete the existing probe first,
 // then create the one in the request body.
 func (a *AppRestoreController) RestoreProbe(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		format := "error reading request body: %v"
 		httputil.ReturnError(r, w, 500, fmt.Sprintf(format, err))
 	}
 	// set a new body, which will simulate the same data we read
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	var probeReq *model.ServiceProbe
 	if string(body) != "" {

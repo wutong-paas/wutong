@@ -23,7 +23,6 @@ package info
 
 import (
 	"bufio"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"runtime"
@@ -33,10 +32,10 @@ import (
 	"github.com/wutong-paas/wutong/node/nodem/client"
 )
 
-//GetSystemInfo GetSystemInfo
+// GetSystemInfo GetSystemInfo
 func GetSystemInfo() (info client.NodeSystemInfo) {
 	info.Architecture = runtime.GOARCH
-	b, _ := ioutil.ReadFile("/etc/machine-id")
+	b, _ := os.ReadFile("/etc/machine-id")
 	info.MachineID = string(b)
 	output, _ := exec.Command("uname", "-r").Output()
 	info.KernelVersion = string(output)

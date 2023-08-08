@@ -19,7 +19,7 @@
 package controller
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/bitly/go-simplejson"
@@ -30,7 +30,7 @@ import (
 )
 
 func GetEventsByIds(w http.ResponseWriter, r *http.Request) {
-	b, _ := ioutil.ReadAll(r.Body)
+	b, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	j, err := simplejson.NewJson(b)
 	if err != nil {

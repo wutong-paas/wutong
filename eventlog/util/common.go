@@ -27,8 +27,6 @@ import (
 
 	"os"
 
-	"io/ioutil"
-
 	"regexp"
 
 	"github.com/sirupsen/logrus"
@@ -47,7 +45,7 @@ func Source(l *logrus.Entry) *logrus.Entry {
 	return l.WithField("source", fmt.Sprintf("%s:%d", file, line))
 }
 
-//ExternalIP 获取本机ip
+// ExternalIP 获取本机ip
 func ExternalIP() (net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -85,13 +83,13 @@ func ExternalIP() (net.IP, error) {
 	return nil, errors.New("are you connected to the network?")
 }
 
-//GetHostID 获取机器ID
+// GetHostID 获取机器ID
 func GetHostID(nodeIDFile string) (string, error) {
 	_, err := os.Stat(nodeIDFile)
 	if err != nil {
 		return "", err
 	}
-	body, err := ioutil.ReadFile(nodeIDFile)
+	body, err := os.ReadFile(nodeIDFile)
 	if err != nil {
 		return "", err
 	}
@@ -104,7 +102,7 @@ func GetHostID(nodeIDFile string) (string, error) {
 
 var rex *regexp.Regexp
 
-//Format 格式化处理监控数据
+// Format 格式化处理监控数据
 func Format(source map[string]gjson.Result) map[string]interface{} {
 	defer func() {
 		if r := recover(); r != nil {

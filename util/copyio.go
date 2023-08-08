@@ -19,11 +19,9 @@
 package util
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"sync"
 )
 
 // StdType is the type of standard stream
@@ -47,8 +45,6 @@ const (
 
 	startingBufLen = 32*1024 + stdWriterPrefixLen + 1
 )
-
-var bufPool = &sync.Pool{New: func() interface{} { return bytes.NewBuffer(nil) }}
 
 // StdCopy is a modified version of io.Copy.
 //
@@ -104,7 +100,7 @@ func StdCopy(dstout, dsterr io.Writer, src io.Reader) (written int64, err error)
 			// to outstream if Systemerr is the stream
 			out = nil
 		default:
-			return 0, fmt.Errorf("Unrecognized input header: %d", buf[stdWriterFdIndex])
+			return 0, fmt.Errorf("unrecognized input header: %d", buf[stdWriterFdIndex])
 		}
 
 		// Retrieve the size of the frame

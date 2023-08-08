@@ -25,8 +25,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
@@ -91,7 +91,7 @@ func NewRegion(c APIConf) (Region, error) {
 		}
 		if c.Cacert != "" && c.Cert != "" && c.CertKey != "" {
 			pool := x509.NewCertPool()
-			caCrt, err := ioutil.ReadFile(c.Cacert)
+			caCrt, err := os.ReadFile(c.Cacert)
 			if err != nil {
 				logrus.Errorf("read ca file err: %s", err)
 				return nil, err
@@ -192,7 +192,7 @@ func LoadConfig(regionAPI, token string) (map[string]map[string]interface{}, err
 			return nil, err
 		}
 		defer res.Body.Close()
-		data, err := ioutil.ReadAll(res.Body)
+		data, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, err
 		}

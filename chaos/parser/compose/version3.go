@@ -20,7 +20,6 @@ package compose
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strconv"
 	"strings"
 
@@ -66,7 +65,7 @@ func parseV3(bodys [][]byte) (ComposeObject, error) {
 	var files []string
 	for i, body := range bodys {
 		filename := fmt.Sprintf("/cache/docker-compose/%s/%d-docker-compose.yml", cacheName, i)
-		if err := ioutil.WriteFile(filename, body, 0755); err != nil {
+		if err := os.WriteFile(filename, body, 0755); err != nil {
 			return ComposeObject{}, fmt.Errorf("write cache docker compose file error:%s", err.Error())
 		}
 		files = append(files, filename)

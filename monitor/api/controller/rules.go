@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	httputil "github.com/wutong-paas/wutong/util/http"
@@ -9,17 +9,17 @@ import (
 	"encoding/json"
 
 	"github.com/go-chi/chi"
-	"github.com/wutong-paas/wutong/monitor/prometheus"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/monitor/prometheus"
 )
 
-//RuleControllerManager controller manager
+// RuleControllerManager controller manager
 type RuleControllerManager struct {
 	Rules   *prometheus.AlertingRulesManager
 	Manager *prometheus.Manager
 }
 
-//NewControllerManager new controller manager
+// NewControllerManager new controller manager
 func NewControllerManager(a *prometheus.AlertingRulesManager, p *prometheus.Manager) *RuleControllerManager {
 	c := &RuleControllerManager{
 		Rules:   a,
@@ -28,9 +28,9 @@ func NewControllerManager(a *prometheus.AlertingRulesManager, p *prometheus.Mana
 	return c
 }
 
-//AddRules add rule
+// AddRules add rule
 func (c *RuleControllerManager) AddRules(w http.ResponseWriter, r *http.Request) {
-	in, err := ioutil.ReadAll(r.Body)
+	in, err := io.ReadAll(r.Body)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return
@@ -57,7 +57,7 @@ func (c *RuleControllerManager) AddRules(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, "Add rule successfully")
 }
 
-//GetRules get rules
+// GetRules get rules
 func (c *RuleControllerManager) GetRules(w http.ResponseWriter, r *http.Request) {
 	rulesName := chi.URLParam(r, "rules_name")
 	c.Rules.LoadAlertingRulesConfig()
@@ -70,7 +70,7 @@ func (c *RuleControllerManager) GetRules(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnError(r, w, 404, "Rule does not exist")
 }
 
-//DelRules del rules
+// DelRules del rules
 func (c *RuleControllerManager) DelRules(w http.ResponseWriter, r *http.Request) {
 	rulesName := chi.URLParam(r, "rules_name")
 	c.Rules.LoadAlertingRulesConfig()
@@ -88,10 +88,10 @@ func (c *RuleControllerManager) DelRules(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, "")
 }
 
-//RegRules reg rules
+// RegRules reg rules
 func (c *RuleControllerManager) RegRules(w http.ResponseWriter, r *http.Request) {
 	rulesName := chi.URLParam(r, "rules_name")
-	in, err := ioutil.ReadAll(r.Body)
+	in, err := io.ReadAll(r.Body)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return
@@ -117,7 +117,7 @@ func (c *RuleControllerManager) RegRules(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnError(r, w, 404, "The rule to be updated does not exist")
 }
 
-//GetAllRules get all rules
+// GetAllRules get all rules
 func (c *RuleControllerManager) GetAllRules(w http.ResponseWriter, r *http.Request) {
 	c.Rules.LoadAlertingRulesConfig()
 	val := c.Rules.RulesConfig

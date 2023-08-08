@@ -20,7 +20,7 @@ package exporter
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 	"sync"
@@ -44,7 +44,7 @@ type mapperConfigDefaults struct {
 	MatchType matchType `yaml:"match_type"`
 }
 
-//MetricMapper MetricMapper
+// MetricMapper MetricMapper
 type MetricMapper struct {
 	Defaults mapperConfigDefaults `yaml:"defaults"`
 	Mappings []metricMapping      `yaml:"mappings"`
@@ -62,7 +62,7 @@ type metricMapping struct {
 	HelpText  string            `yaml:"help"`
 }
 
-//InitFromYAMLString InitFromYAMLString
+// InitFromYAMLString InitFromYAMLString
 func (m *MetricMapper) InitFromYAMLString(fileContents string) error {
 	var n MetricMapper
 
@@ -134,9 +134,9 @@ func (m *MetricMapper) InitFromYAMLString(fileContents string) error {
 	return nil
 }
 
-//InitFromFile InitFromFile
+// InitFromFile InitFromFile
 func (m *MetricMapper) InitFromFile(fileName string) error {
-	mappingStr, err := ioutil.ReadFile(fileName)
+	mappingStr, err := os.ReadFile(fileName)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (m *MetricMapper) getMapping(statsdMetric string) (*metricMapping, promethe
 	return nil, nil, false
 }
 
-//InitMapping init mapping config
+// InitMapping init mapping config
 func InitMapping() (*MetricMapper, error) {
 	var n MetricMapper
 	m1 := metricMapping{

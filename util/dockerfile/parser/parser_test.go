@@ -3,7 +3,6 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -68,7 +67,7 @@ func TestTestData(t *testing.T) {
 			t.Fatalf("Error parsing %s's dockerfile: %v", dir, err)
 		}
 
-		content, err := ioutil.ReadFile(resultfile)
+		content, err := os.ReadFile(resultfile)
 		if err != nil {
 			t.Fatalf("Error reading %s's result file: %v", dir, err)
 		}

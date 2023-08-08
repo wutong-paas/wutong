@@ -2,7 +2,7 @@ package util
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/wutong-paas/wutong/worker/server/pb"
@@ -11,7 +11,7 @@ import (
 )
 
 func eventsFromJSONFile(t *testing.T, filename string) *corev1.EventList {
-	jsonfile, err := ioutil.ReadFile(filename)
+	jsonfile, err := os.ReadFile(filename)
 	if err != nil {
 		t.Fatalf("failed to read file '%s': %v", filename, err)
 	}
@@ -41,7 +41,7 @@ func TestDescribePodStatus(t *testing.T) {
 	for idx := range tests {
 		tc := tests[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			jsonfile, err := ioutil.ReadFile(tc.podfilename)
+			jsonfile, err := os.ReadFile(tc.podfilename)
 			if err != nil {
 				t.Errorf("failed to read file '%s': %v", tc.podfilename, err)
 			}

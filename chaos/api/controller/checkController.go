@@ -20,6 +20,7 @@ package controller
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 
@@ -29,20 +30,18 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	httputil "github.com/wutong-paas/wutong/util/http"
 
-	"io/ioutil"
-
 	"github.com/bitly/go-simplejson"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/discover"
 )
 
 func AddCodeCheck(w http.ResponseWriter, r *http.Request) {
-	//b,_:=ioutil.ReadAll(r.Body)
+	//b,_:=io.ReadAll(r.Body)
 	//{\"url_repos\": \"https://github.com/bay1ts/zk_cluster_mini.git\", \"check_type\": \"first_check\", \"code_from\": \"gitlab_manual\", \"service_id\": \"c24dea8300b9401b1461dd975768881a\", \"code_version\": \"master\", \"git_project_id\": 0, \"condition\": \"{\\\"language\\\":\\\"docker\\\",\\\"runtimes\\\":\\\"false\\\", \\\"dependencies\\\":\\\"false\\\",\\\"procfile\\\":\\\"false\\\"}\", \"git_url\": \"--branch master --depth 1 https://github.com/bay1ts/zk_cluster_mini.git\"}
 	//logrus.Infof("request recive %s",string(b))
 	result := new(model.CodeCheckResult)
 
-	b, _ := ioutil.ReadAll(r.Body)
+	b, _ := io.ReadAll(r.Body)
 	j, err := simplejson.NewJson(b)
 	if err != nil {
 		logrus.Errorf("error decode json,details %s", err.Error())
@@ -69,7 +68,7 @@ func Update(w http.ResponseWriter, r *http.Request) {
 	serviceID := strings.TrimSpace(chi.URLParam(r, "serviceID"))
 	result := new(model.CodeCheckResult)
 
-	b, _ := ioutil.ReadAll(r.Body)
+	b, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	logrus.Infof("update receive %s", string(b))
 	j, err := simplejson.NewJson(b)

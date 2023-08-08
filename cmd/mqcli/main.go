@@ -21,7 +21,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -50,7 +49,7 @@ func main() {
 	defer c.Close()
 	if mode == "enqueue" {
 		if taskbody == "" && taskfile != "" {
-			body, _ := ioutil.ReadFile(taskfile)
+			body, _ := os.ReadFile(taskfile)
 			taskbody = string(body)
 		}
 		fmt.Println("taskbody:" + taskbody)

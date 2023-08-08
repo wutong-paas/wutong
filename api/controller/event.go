@@ -19,7 +19,7 @@
 package controller
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -51,7 +51,7 @@ func (t *TenantEnvStruct) Event(w http.ResponseWriter, r *http.Request) {
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
 	//     description: 统一返回格式
-	b, _ := ioutil.ReadAll(r.Body)
+	b, _ := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	j, err := simplejson.NewJson(b)
 	if err != nil {

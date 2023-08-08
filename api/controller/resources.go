@@ -21,7 +21,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -92,7 +92,7 @@ func (v2 *V2Routes) Health(w http.ResponseWriter, r *http.Request) {
 // AlertManagerWebHook -
 func (v2 *V2Routes) AlertManagerWebHook(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("=======>webhook")
-	in, err := ioutil.ReadAll(r.Body)
+	in, err := io.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(err)
 		httputil.ReturnError(r, w, 400, "")

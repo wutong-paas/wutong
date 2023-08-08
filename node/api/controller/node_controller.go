@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -245,7 +245,7 @@ func UnCordon(w http.ResponseWriter, r *http.Request) {
 func PutLabel(w http.ResponseWriter, r *http.Request) {
 	nodeUID := strings.TrimSpace(chi.URLParam(r, "node_id"))
 	var label = make(map[string]string)
-	in, error := ioutil.ReadAll(r.Body)
+	in, error := io.ReadAll(r.Body)
 	if error != nil {
 		logrus.Errorf("error read from request ,details %s", error.Error())
 		return
@@ -267,7 +267,7 @@ func PutLabel(w http.ResponseWriter, r *http.Request) {
 func DeleteLabel(w http.ResponseWriter, r *http.Request) {
 	nodeUID := strings.TrimSpace(chi.URLParam(r, "node_id"))
 	var label = make(map[string]string)
-	in, error := ioutil.ReadAll(r.Body)
+	in, error := io.ReadAll(r.Body)
 	if error != nil {
 		logrus.Errorf("error read from request ,details %s", error.Error())
 		return

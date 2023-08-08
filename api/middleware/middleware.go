@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -263,14 +263,14 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 		}
 
 		if r.Method != "GET" {
-			body, err := ioutil.ReadAll(r.Body)
+			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				logrus.Warningf("error reading request body: %v", err)
 			} else {
 				logrus.Debugf("method: %s; uri: %s; body: %s", r.Method, r.RequestURI, string(body))
 			}
 			// set a new body, which will simulate the same data we read
-			r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+			r.Body = io.NopCloser(bytes.NewBuffer(body))
 			var targetID string
 			var ok bool
 			if targetID, ok = r.Context().Value(ctxutil.ContextKey("service_id")).(string); !ok {
@@ -325,13 +325,13 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 
 func debugRequestBody(r *http.Request) {
 	if !apiExclude(r) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			logrus.Warningf("error reading request body: %v", err)
 		}
 		logrus.Debugf("method: %s; uri: %s; body: %s", r.Method, r.RequestURI, string(body))
 
 		// set a new body, which will simulate the same data we read
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 	}
 }

@@ -24,14 +24,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
-//LicenseInfo license data
+// LicenseInfo license data
 type LicenseInfo struct {
 	Code      string    `json:"code"`
 	Company   string    `json:"company"`
@@ -58,7 +57,7 @@ type Feature struct {
 
 var licenseInfo *LicenseInfo
 
-//ReadLicense -
+// ReadLicense -
 func ReadLicense() *LicenseInfo {
 	if licenseInfo != nil {
 		return licenseInfo
@@ -73,7 +72,7 @@ func ReadLicense() *LicenseInfo {
 		logrus.Error("read LICENSE file failure：" + err.Error())
 		return nil
 	}
-	infoBody, err := ioutil.ReadFile(licenseFile)
+	infoBody, err := os.ReadFile(licenseFile)
 	if err != nil {
 		logrus.Error("read LICENSE file failure：" + err.Error())
 		return nil

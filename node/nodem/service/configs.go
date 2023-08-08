@@ -20,7 +20,6 @@ package service
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,7 +30,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-//LoadServicesFromLocal load all service config from config file
+// LoadServicesFromLocal load all service config from config file
 func LoadServicesFromLocal(serviceListFile string) []*Service {
 	var serviceList []*Service
 	ok, err := util.IsDir(serviceListFile)
@@ -63,7 +62,7 @@ func LoadServicesFromLocal(serviceListFile string) []*Service {
 	return result
 }
 
-//LoadServicesWithFileFromLocal load service with file
+// LoadServicesWithFileFromLocal load service with file
 func LoadServicesWithFileFromLocal(serviceListFile string) []*Services {
 	var serviceList []*Services
 	ok, err := util.IsDir(serviceListFile)
@@ -94,7 +93,7 @@ func LoadServicesWithFileFromLocal(serviceListFile string) []*Services {
 	return serviceList
 }
 
-//WriteServicesWithFile write services config file
+// WriteServicesWithFile write services config file
 func WriteServicesWithFile(serviceLists ...*Services) error {
 	for _, serviceList := range serviceLists {
 		if serviceList.FromFile != "" {
@@ -152,7 +151,7 @@ func removeRepByLoop(source []*Service) (target []*Service) {
 
 func loadServicesFromFile(serviceListFile string) (*Services, error) {
 	// load default-configs.yaml
-	content, err := ioutil.ReadFile(serviceListFile)
+	content, err := os.ReadFile(serviceListFile)
 	if err != nil {
 		err = fmt.Errorf("Failed to read service list file: %s", err.Error())
 		return nil, err

@@ -20,7 +20,7 @@ package code
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -29,10 +29,10 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-//ErrRuntimeNotSupport runtime not support
+// ErrRuntimeNotSupport runtime not support
 var ErrRuntimeNotSupport = fmt.Errorf("runtime version not support")
 
-//CheckRuntime CheckRuntime
+// CheckRuntime CheckRuntime
 func CheckRuntime(buildPath string, lang Lang) (map[string]string, error) {
 	switch lang {
 	case PHP:
@@ -62,7 +62,7 @@ func readPHPRuntimeInfo(buildPath string) (map[string]string, error) {
 	if ok, _ := util.FileExists(path.Join(buildPath, "composer.json")); !ok {
 		return phpRuntimeInfo, nil
 	}
-	body, err := ioutil.ReadFile(path.Join(buildPath, "composer.json"))
+	body, err := os.ReadFile(path.Join(buildPath, "composer.json"))
 	if err != nil {
 		return phpRuntimeInfo, nil
 	}
@@ -127,7 +127,7 @@ func readPythonRuntimeInfo(buildPath string) (map[string]string, error) {
 	if ok, _ := util.FileExists(path.Join(buildPath, "runtime.txt")); !ok {
 		return runtimeInfo, nil
 	}
-	body, err := ioutil.ReadFile(path.Join(buildPath, "runtime.txt"))
+	body, err := os.ReadFile(path.Join(buildPath, "runtime.txt"))
 	if err != nil {
 		return runtimeInfo, nil
 	}
@@ -163,7 +163,7 @@ func readNodeRuntimeInfo(buildPath string) (map[string]string, error) {
 	if ok, _ := util.FileExists(path.Join(buildPath, "package-lock.json")); ok {
 		runtimeInfo["PACKAGE_TOOL"] = "npm"
 	}
-	body, err := ioutil.ReadFile(path.Join(buildPath, "package.json"))
+	body, err := os.ReadFile(path.Join(buildPath, "package.json"))
 	if err != nil {
 		return runtimeInfo, nil
 	}

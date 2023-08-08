@@ -2,9 +2,9 @@ package controller
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -98,7 +98,8 @@ func (a *AppStruct) ImportID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		err := os.MkdirAll(dirName, 0755)
-		if err != nil {
+		// ignore File Exists error
+		if err != nil && !errors.Is(err, os.ErrExist) {
 			httputil.ReturnError(r, w, 502, "Failed to create directory by event id: "+err.Error())
 			return
 		}
@@ -291,7 +292,7 @@ func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 
 		if res.Status == "success" {
 			metadatasFile := fmt.Sprintf("%s/metadatas.json", res.SourceDir)
-			data, err := ioutil.ReadFile(metadatasFile)
+			data, err := os.ReadFile(metadatasFile)
 			if err != nil {
 				httputil.ReturnError(r, w, 503, fmt.Sprintf("Can not read apps metadata from metadatas.json file: %v", err))
 				return

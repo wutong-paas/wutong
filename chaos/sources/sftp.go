@@ -20,7 +20,6 @@ package sources
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -114,12 +113,12 @@ func (s *SFTPClient) checkMd5(src, dst string, logger event.Logger) (bool, error
 		if err := s.DownloadFile(dst+".md5", src+".md5.old", logger); err != nil {
 			return false, err
 		}
-		old, err := ioutil.ReadFile(src + ".md5.old")
+		old, err := os.ReadFile(src + ".md5.old")
 		if err != nil {
 			return false, err
 		}
 		os.Remove(src + ".md5.old")
-		new, err := ioutil.ReadFile(src + ".md5")
+		new, err := os.ReadFile(src + ".md5")
 		if err != nil {
 			return false, err
 		}
@@ -189,7 +188,7 @@ func (s *SFTPClient) PushFile(src, dst string, logger event.Logger) error {
 		return err
 	}
 	// write remote md5 file
-	md5, _ := ioutil.ReadFile(src + ".md5")
+	md5, _ := os.ReadFile(src + ".md5")
 	dstMd5File, err := s.sftpClient.Create(dst + ".md5")
 	if err != nil {
 		logrus.Errorf("create md5 file in sftp server error.%s", err.Error())

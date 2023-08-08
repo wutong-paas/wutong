@@ -21,7 +21,6 @@ package controller
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -42,7 +41,7 @@ type ControllerSystemd struct {
 	ServiceCli   string
 }
 
-//NewController At the stage you want to load the configurations of all wutong components
+// NewController At the stage you want to load the configurations of all wutong components
 func NewController(conf *option.Conf, manager *ManagerService) Controller {
 	logrus.Infof("Create linux systemd controller")
 	cli, err := exec.LookPath("systemctl")
@@ -57,7 +56,7 @@ func NewController(conf *option.Conf, manager *ManagerService) Controller {
 	}
 }
 
-//CheckBeforeStart check before start
+// CheckBeforeStart check before start
 func (m *ControllerSystemd) CheckBeforeStart() bool {
 	logrus.Info("Checking environments.")
 	if m.ServiceCli == "" {
@@ -67,7 +66,7 @@ func (m *ControllerSystemd) CheckBeforeStart() bool {
 	return true
 }
 
-//StartService start service
+// StartService start service
 func (m *ControllerSystemd) StartService(serviceName string) error {
 	err := m.run("start", serviceName)
 	if err != nil {
@@ -77,7 +76,7 @@ func (m *ControllerSystemd) StartService(serviceName string) error {
 	return nil
 }
 
-//StopService stop service
+// StopService stop service
 func (m *ControllerSystemd) StopService(serviceName string) error {
 	err := m.run("stop", serviceName)
 	if err != nil {
@@ -87,7 +86,7 @@ func (m *ControllerSystemd) StopService(serviceName string) error {
 	return nil
 }
 
-//RestartService restart service
+// RestartService restart service
 func (m *ControllerSystemd) RestartService(s *service.Service) error {
 	err := m.run("restart", s.Name)
 	if err != nil {
@@ -98,7 +97,7 @@ func (m *ControllerSystemd) RestartService(s *service.Service) error {
 	return nil
 }
 
-//StartList start some service
+// StartList start some service
 func (m *ControllerSystemd) StartList(list []*service.Service) error {
 	logrus.Infof("Starting %d all services.", len(list))
 	for _, s := range list {
@@ -107,7 +106,7 @@ func (m *ControllerSystemd) StartList(list []*service.Service) error {
 	return nil
 }
 
-//StopList stop some service
+// StopList stop some service
 func (m *ControllerSystemd) StopList(list []*service.Service) error {
 	logrus.Info("Stop all services.")
 	for _, s := range list {
@@ -116,7 +115,7 @@ func (m *ControllerSystemd) StopList(list []*service.Service) error {
 	return nil
 }
 
-//EnableService enable service
+// EnableService enable service
 func (m *ControllerSystemd) EnableService(serviceName string) error {
 	logrus.Info("Enable service config by systemd.")
 	err := m.run("enable", serviceName)
@@ -127,7 +126,7 @@ func (m *ControllerSystemd) EnableService(serviceName string) error {
 	return nil
 }
 
-//DisableService disable service
+// DisableService disable service
 func (m *ControllerSystemd) DisableService(serviceName string) error {
 	logrus.Info("Disable service config by systemd.")
 	err := m.run("disable", serviceName)
@@ -138,9 +137,9 @@ func (m *ControllerSystemd) DisableService(serviceName string) error {
 	return nil
 }
 
-//WriteConfig write config
-//The first parameter returned represents whether there has been a change
-//If I write it the first time, there is no change
+// WriteConfig write config
+// The first parameter returned represents whether there has been a change
+// If I write it the first time, there is no change
 func (m *ControllerSystemd) WriteConfig(s *service.Service) (bool, error) {
 	var isChange = false
 	fileName := fmt.Sprintf("%s/%s.service", m.SysConfigDir, s.Name)
@@ -151,14 +150,14 @@ func (m *ControllerSystemd) WriteConfig(s *service.Service) (bool, error) {
 		logrus.Error(err)
 		return isChange, err
 	}
-	if old, err := ioutil.ReadFile(fileName); err == nil && old != nil {
+	if old, err := os.ReadFile(fileName); err == nil && old != nil {
 		if string(old) != content {
 			isChange = true
 		} else {
 			return isChange, nil
 		}
 	}
-	if err := ioutil.WriteFile(fileName, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(fileName, []byte(content), 0644); err != nil {
 		logrus.Errorf("Generate config file %s: %v", fileName, err)
 		return isChange, err
 	}
@@ -171,7 +170,7 @@ func (m *ControllerSystemd) WriteConfig(s *service.Service) (bool, error) {
 	return isChange, nil
 }
 
-//RemoveConfig remove config
+// RemoveConfig remove config
 func (m *ControllerSystemd) RemoveConfig(name string) error {
 	logrus.Info("Remote service config by systemd.")
 	fileName := fmt.Sprintf("%s/%s.service", m.SysConfigDir, name)
@@ -199,7 +198,7 @@ func (m *ControllerSystemd) run(args ...string) error {
 	return nil
 }
 
-//InitStart init start. will start some required service
+// InitStart init start. will start some required service
 func (m *ControllerSystemd) InitStart(services []*service.Service) error {
 	for _, s := range services {
 		if s.IsInitStart && !s.Disable && !s.OnlyHealthCheck {
@@ -216,7 +215,7 @@ func (m *ControllerSystemd) InitStart(services []*service.Service) error {
 				}
 				//init service start before etcd ready. so it can not set
 				//content = m.manager.InjectConfig(content)
-				if err := ioutil.WriteFile(fileName, []byte(content), 0644); err != nil {
+				if err := os.WriteFile(fileName, []byte(content), 0644); err != nil {
 					fmt.Printf("Generate config file %s: %v", fileName, err)
 					return err
 				}

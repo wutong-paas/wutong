@@ -21,7 +21,7 @@ package model
 import (
 	//"github.com/sirupsen/logrus"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	url2 "net/url"
 	"strings"
@@ -196,7 +196,7 @@ func DoRequest(baseAPI, query, queryType, method string, body []byte) ([]byte, i
 		return nil, 0, err
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, 0, err
 	}

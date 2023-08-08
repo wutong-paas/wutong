@@ -20,7 +20,7 @@ package controller
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -682,7 +682,7 @@ type limitMemory struct {
 // LimitTenantEnvMemory -
 func (t *TenantEnvStruct) LimitTenantEnvMemory(w http.ResponseWriter, r *http.Request) {
 	var lm limitMemory
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())

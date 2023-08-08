@@ -61,7 +61,7 @@ package main
 // 		logrus.Error(err)
 // 		return
 // 	}
-// 	body, err := ioutil.ReadAll(res.Body)
+// 	body, err := io.ReadAll(res.Body)
 // 	if err != nil {
 // 		logrus.Error(err)
 // 		return

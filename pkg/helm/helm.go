@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -104,13 +103,13 @@ func NewHelm(namespace, repoFile, repoCache string) (*Helm, error) {
 
 // PreInstall -
 func (h *Helm) PreInstall(name, chart, version string) error {
-	_, err := h.install(name, chart, version, nil, true, ioutil.Discard)
+	_, err := h.install(name, chart, version, nil, true, io.Discard)
 	return err
 }
 
 // Install -
 func (h *Helm) Install(name, chart, version string, overrides []string) error {
-	_, err := h.install(name, chart, version, overrides, false, ioutil.Discard)
+	_, err := h.install(name, chart, version, overrides, false, io.Discard)
 	return err
 }
 

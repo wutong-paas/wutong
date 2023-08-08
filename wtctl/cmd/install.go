@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -90,13 +89,13 @@ func writeCertFile(apiClientSecrit *v1.Secret) error {
 	if _, err := os.Stat(pemDirPath); err != nil {
 		os.MkdirAll(pemDirPath, os.ModeDir)
 	}
-	if err := ioutil.WriteFile(clientPemPath, apiClientSecrit.Data["client.pem"], 0411); err != nil && !os.IsExist(err) {
+	if err := os.WriteFile(clientPemPath, apiClientSecrit.Data["client.pem"], 0411); err != nil && !os.IsExist(err) {
 		return err
 	}
-	if err := ioutil.WriteFile(clientKeyPemPath, apiClientSecrit.Data["client.key.pem"], 0411); err != nil && !os.IsExist(err) {
+	if err := os.WriteFile(clientKeyPemPath, apiClientSecrit.Data["client.key.pem"], 0411); err != nil && !os.IsExist(err) {
 		return err
 	}
-	if err := ioutil.WriteFile(clientCAPemPath, apiClientSecrit.Data["ca.pem"], 0411); err != nil && !os.IsExist(err) {
+	if err := os.WriteFile(clientCAPemPath, apiClientSecrit.Data["ca.pem"], 0411); err != nil && !os.IsExist(err) {
 		return err
 	}
 	return nil

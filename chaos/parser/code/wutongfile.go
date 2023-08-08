@@ -20,7 +20,7 @@ package code
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 
 	"github.com/sirupsen/logrus"
@@ -28,7 +28,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-//WutongFileConfig 云帮源码配置文件
+// WutongFileConfig 云帮源码配置文件
 type WutongFileConfig struct {
 	Language  string                 `yaml:"language"`
 	BuildPath string                 `yaml:"buildpath"`
@@ -45,13 +45,13 @@ type Service struct {
 	Envs  map[string]string `yaml:"envs"`
 }
 
-//Port Port
+// Port Port
 type Port struct {
 	Port     int    `yaml:"port"`
 	Protocol string `yaml:"protocol"`
 }
 
-//ReadWutongFile
+// ReadWutongFile
 func ReadWutongFile(homepath string) (*WutongFileConfig, error) {
 	filename := "wutongfile"
 	if ok, _ := util.FileExists(path.Join(homepath, filename)); !ok {
@@ -60,7 +60,7 @@ func ReadWutongFile(homepath string) (*WutongFileConfig, error) {
 			return nil, ErrWutongFileNotFound
 		}
 	}
-	body, err := ioutil.ReadFile(path.Join(homepath, filename))
+	body, err := os.ReadFile(path.Join(homepath, filename))
 	if err != nil {
 		logrus.Error("read wutong file error,", err.Error())
 		return nil, fmt.Errorf("read wutong file error")

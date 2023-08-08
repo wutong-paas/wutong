@@ -20,7 +20,7 @@ package controller
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/wutong-paas/wutong/mq/api/mq"
@@ -137,7 +137,7 @@ func (u *MQSource) enqueue(request *restful.Request, response *restful.Response)
 		NewFaliResponse(400, "topic can not be empty or topic is not define", "主题不能为空或者当前主题未注册", response)
 		return
 	}
-	body, err := ioutil.ReadAll(request.Request.Body)
+	body, err := io.ReadAll(request.Request.Body)
 	if err != nil {
 		NewFaliResponse(500, "request body error."+err.Error(), "读取数据错误", response)
 		return

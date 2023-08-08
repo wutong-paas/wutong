@@ -24,7 +24,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"io/ioutil"
 	"math/big"
 	rd "math/rand"
 	"net"
@@ -110,7 +109,7 @@ func Parse(crtPath, keyPath string) (rootcertificate *x509.Certificate, rootPriv
 
 // ParseCrt ParseCrt
 func ParseCrt(path string) (*x509.Certificate, error) {
-	buf, err := ioutil.ReadFile(path)
+	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +119,7 @@ func ParseCrt(path string) (*x509.Certificate, error) {
 
 // ParseKey ParseKey
 func ParseKey(path string) (*rsa.PrivateKey, error) {
-	buf, err := ioutil.ReadFile(path)
+	buf, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

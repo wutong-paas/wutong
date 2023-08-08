@@ -21,7 +21,6 @@ package exector
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -131,7 +130,7 @@ func (b *BackupAPPRestore) Run(timeout time.Duration) error {
 	}
 
 	//read metadata file
-	metadata, err := ioutil.ReadFile(path.Join(b.cacheDir, "region_apps_metadata.json"))
+	metadata, err := os.ReadFile(path.Join(b.cacheDir, "region_apps_metadata.json"))
 	if err != nil {
 		return fmt.Errorf("error reading file: %v", err)
 	}

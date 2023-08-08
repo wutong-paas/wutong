@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -852,7 +851,7 @@ func (a *ApplicationAction) ChangeVolumes(app *dbmodel.Application) error {
 }
 
 func changeVolumeDirectoryNames(parentDir, newPath string) error {
-	files, _ := ioutil.ReadDir(parentDir)
+	files, _ := os.ReadDir(parentDir)
 	for _, f := range files {
 		if !f.IsDir() {
 			continue

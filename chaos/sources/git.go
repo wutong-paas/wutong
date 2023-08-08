@@ -21,7 +21,6 @@ package sources
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -456,7 +455,7 @@ func GetPublicKey(tenantEnvID string) string {
 	PrivateKey := tenantEnvID
 
 	if ok, _ := util.FileExists(path.Join(home, "/.ssh/"+PublicKey)); ok {
-		body, _ := ioutil.ReadFile(path.Join(home, "/.ssh/"+PublicKey))
+		body, _ := os.ReadFile(path.Join(home, "/.ssh/"+PublicKey))
 		return string(body)
 	}
 	Private, Public, err := MakeSSHKeyPair()
@@ -476,7 +475,7 @@ func GetPublicKey(tenantEnvID string) string {
 	} else {
 		PublicKeyFile.WriteString(Public)
 	}
-	body, _ := ioutil.ReadFile(path.Join(home, "/.ssh/"+PublicKey))
+	body, _ := os.ReadFile(path.Join(home, "/.ssh/"+PublicKey))
 	return string(body)
 
 }

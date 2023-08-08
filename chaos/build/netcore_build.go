@@ -20,7 +20,6 @@ package build
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -88,7 +87,7 @@ func (d *netcoreBuild) writeDockerfile(sourceDir string, envs map[string]string)
 	dockerfile := util.ParseVariable(dockerfileTmpl, envs)
 	dfpath := path.Join(sourceDir, "Dockerfile")
 	logrus.Debugf("dest: %s; write dockerfile: %s", dfpath, dockerfile)
-	return ioutil.WriteFile(dfpath, []byte(dockerfile), 0755)
+	return os.WriteFile(dfpath, []byte(dockerfile), 0755)
 }
 
 func (d *netcoreBuild) createResponse() *Response {

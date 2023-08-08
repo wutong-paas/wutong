@@ -19,14 +19,14 @@
 package code
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
 	"github.com/wutong-paas/wutong/util"
 )
 
-//Specification 规范
+// Specification 规范
 type Specification struct {
 	//是否符合规范
 	Conform bool
@@ -36,7 +36,7 @@ type Specification struct {
 	Advice map[string]string
 }
 
-//各类型语言规范
+// 各类型语言规范
 var specification map[Lang]func(buildPath string) Specification
 
 func init() {
@@ -49,7 +49,7 @@ func init() {
 	specification[Golang] = golangCheck
 }
 
-//CheckCodeSpecification 检查语言规范
+// CheckCodeSpecification 检查语言规范
 func CheckCodeSpecification(buildPath string, lang Lang, serverType string) Specification {
 	if serverType == "oss" && lang == JavaJar {
 		return common()
@@ -60,8 +60,8 @@ func CheckCodeSpecification(buildPath string, lang Lang, serverType string) Spec
 	return common()
 }
 
-//必须定义Procfile文件
-//Procfile文件中定义的jar包必须存在
+// 必须定义Procfile文件
+// Procfile文件中定义的jar包必须存在
 func javaJarCheck(buildPath string) Specification {
 	procfile, spec := checkProcfile(buildPath)
 	if spec != nil {
@@ -114,12 +114,12 @@ func javaMavenCheck(buildPath string) Specification {
 	return common()
 }
 
-//checkProcfile 检查Procfile文件
+// checkProcfile 检查Procfile文件
 func checkProcfile(buildPath string) (bool, *Specification) {
 	if ok, _ := util.FileExists(path.Join(buildPath, "Procfile")); !ok {
 		return false, nil
 	}
-	procfile, err := ioutil.ReadFile(path.Join(buildPath, "Procfile"))
+	procfile, err := os.ReadFile(path.Join(buildPath, "Procfile"))
 	if err != nil {
 		return false, nil
 	}

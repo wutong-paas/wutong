@@ -23,20 +23,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
-//trustedRegistryClient
+// trustedRegistryClient
 type trustedRegistryClient struct {
 	httpCli            *http.Client
 	server, user, pass string
 }
 
-//Repostory repostory info
+// Repostory repostory info
 type Repostory struct {
 	ID               int    `json:"id,omitempty"`
 	Namespace        string `json:"namespace,omitempty"`
@@ -134,7 +133,7 @@ func (t *trustedRegistryClient) CreateRepository(namespace string, rep *Repostor
 func (t *trustedRegistryClient) handleErrorResponse(res *http.Response) error {
 	if res.Body != nil {
 		defer res.Body.Close()
-		body, _ := ioutil.ReadAll(res.Body)
+		body, _ := io.ReadAll(res.Body)
 		logrus.Debugf("registry request error:%s", string(body))
 	}
 	switch res.StatusCode {

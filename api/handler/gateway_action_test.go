@@ -20,7 +20,7 @@ package handler
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -88,7 +88,7 @@ func waitReady(domain string) bool {
 		res, _ := http.DefaultClient.Do(req)
 		if res != nil && res.StatusCode == 200 {
 			if res.Body != nil {
-				body, _ := ioutil.ReadAll(res.Body)
+				body, _ := io.ReadAll(res.Body)
 				res.Body.Close()
 				if strings.Contains(string(body), "2048") {
 					logrus.Infof("%s is ready take %s", domain, time.Since(start))

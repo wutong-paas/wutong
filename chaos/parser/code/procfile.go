@@ -19,16 +19,16 @@
 package code
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 
 	"github.com/wutong-paas/wutong/util"
 )
 
-//CheckProcfile check runtime with lang
+// CheckProcfile check runtime with lang
 func CheckProcfile(buildPath string, lang Lang) (bool, string) {
 	if ok, _ := util.FileExists(path.Join(buildPath, "Procfile")); ok {
-		body, _ := ioutil.ReadFile(path.Join(buildPath, "Procfile"))
+		body, _ := os.ReadFile(path.Join(buildPath, "Procfile"))
 		return true, string(body)
 	}
 	return false, ""

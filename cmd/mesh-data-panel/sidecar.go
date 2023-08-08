@@ -21,7 +21,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -200,7 +200,7 @@ func checkEnvoyIfReady(client *http.Client, envoyReadyURL string) error {
 		return err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	reBody, err := ioutil.ReadAll(resp.Body)
+	reBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func checkEnvoyListenerIfReady(client *http.Client, url string, port string) err
 		return err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	reBody, err := ioutil.ReadAll(resp.Body)
+	reBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,7 @@
 package cloudos
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"strconv"
 
@@ -60,12 +60,12 @@ func (s *s3Driver) GetObject(objkey, filePath string) error {
 		return err
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
-	ioutil.WriteFile(filePath, b, os.ModePerm)
+	os.WriteFile(filePath, b, os.ModePerm)
 	return nil
 }
 

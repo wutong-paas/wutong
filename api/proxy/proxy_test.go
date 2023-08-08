@@ -20,7 +20,7 @@ package proxy
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -52,7 +52,7 @@ func TestHttpProxy(t *testing.T) {
 		// var qres queryResult
 		// err = json.NewDecoder(result.Body).Decode(&qres)
 		// fmt.Println(qres)
-		B, _ := ioutil.ReadAll(result.Body)
+		B, _ := io.ReadAll(result.Body)
 		fmt.Println(string(B))
 	}
 }

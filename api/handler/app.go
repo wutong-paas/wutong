@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -125,9 +124,9 @@ func (a *AppAction) exportHelmChartOrK8sYaml(format string, service *dbmodel.Ten
 	body := dmodel.ExportHelmChartOrK8sYamlTaskBody{
 		TenantEnvID: service.TenantEnvID,
 		ServiceID:   service.ServiceID,
-		AppVersion: a.appVersion,
-		AppName:    a.appName,
-		End:        a.end,
+		AppVersion:  a.appVersion,
+		AppName:     a.appName,
+		End:         a.end,
 	}
 	var taskType string
 	switch format {
@@ -180,10 +179,10 @@ func (a *AppAction) saveMetadata(tr *model.ExportAppStruct) error {
 	}
 
 	// 写入元数据到文件
-	if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
+	if err := os.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
 		if retry && strings.Contains(err.Error(), "no such file or directory") {
 			os.MkdirAll(tr.SourceDir, 0755)
-			if err := ioutil.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
+			if err := os.WriteFile(fmt.Sprintf("%s/metadata.json", tr.SourceDir), []byte(tr.Body.GroupMetadata), 0644); err != nil {
 				logrus.Error("Failed to write metadata: ", err)
 				return err
 			}

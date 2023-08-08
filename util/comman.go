@@ -20,9 +20,10 @@ package util
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"net"
 	"os"
@@ -44,7 +45,7 @@ import (
 // CheckAndCreateDir check and create dir
 func CheckAndCreateDir(path string) error {
 	if subPathExists, err := FileExists(path); err != nil {
-		return fmt.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", path)
+		return fmt.Errorf("could not determine if subPath %s exists; will not attempt to change its permissions", path)
 	} else if !subPathExists {
 		// Create the sub path now because if it's auto-created later when referenced, it may have an
 		// incorrect ownership and mode. For example, the sub path directory must have at least g+rwx
@@ -64,7 +65,7 @@ func CheckAndCreateDir(path string) error {
 // CheckAndCreateDirByMode check and create dir
 func CheckAndCreateDirByMode(path string, mode os.FileMode) error {
 	if subPathExists, err := FileExists(path); err != nil {
-		return fmt.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", path)
+		return fmt.Errorf("could not determine if subPath %s exists; will not attempt to change its permissions", path)
 	} else if !subPathExists {
 		// Create the sub path now because if it's auto-created later when referenced, it may have an
 		// incorrect ownership and mode. For example, the sub path directory must have at least g+rwx
@@ -83,7 +84,7 @@ func CheckAndCreateDirByMode(path string, mode os.FileMode) error {
 
 // DirIsEmpty 验证目录是否为空
 func DirIsEmpty(dir string) bool {
-	infos, err := ioutil.ReadDir(dir)
+	infos, err := os.ReadDir(dir)
 	if len(infos) == 0 || err != nil {
 		return true
 	}
@@ -107,14 +108,14 @@ func FileExists(filename string) (bool, error) {
 
 // SearchFileBody 搜索文件中是否含有指定字符串
 func SearchFileBody(filename, searchStr string) bool {
-	body, _ := ioutil.ReadFile(filename)
+	body, _ := os.ReadFile(filename)
 	return strings.Contains(string(body), searchStr)
 }
 
 // IsHaveFile 指定目录是否含有文件
 // .开头文件除外
 func IsHaveFile(path string) bool {
-	files, _ := ioutil.ReadDir(path)
+	files, _ := os.ReadDir(path)
 	for _, file := range files {
 		if !strings.HasPrefix(file.Name(), ".") {
 			return true
@@ -128,8 +129,8 @@ func SearchFile(pathDir, name string, level int) bool {
 	if level == 0 {
 		return false
 	}
-	files, _ := ioutil.ReadDir(pathDir)
-	var dirs []os.FileInfo
+	files, _ := os.ReadDir(pathDir)
+	var dirs []fs.DirEntry
 	for _, file := range files {
 		if file.IsDir() {
 			dirs = append(dirs, file)
@@ -153,7 +154,7 @@ func SearchFile(pathDir, name string, level int) bool {
 
 // FileExistsWithSuffix 指定目录是否含有指定后缀的文件
 func FileExistsWithSuffix(pathDir, suffix string) bool {
-	files, _ := ioutil.ReadDir(pathDir)
+	files, _ := os.ReadDir(pathDir)
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), suffix) {
 			return true
@@ -210,7 +211,7 @@ func ReadHostID(filePath string) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			err = ioutil.WriteFile(filePath, []byte("host_uuid="+uid), 0777)
+			err = os.WriteFile(filePath, []byte("host_uuid="+uid), 0777)
 			if err != nil {
 				logrus.Error("Write host_uuid file error.", err.Error())
 			}
@@ -218,7 +219,7 @@ func ReadHostID(filePath string) (string, error) {
 		}
 		return "", err
 	}
-	body, err := ioutil.ReadFile(filePath)
+	body, err := os.ReadFile(filePath)
 	if err != nil {
 		return "", err
 	}
@@ -226,7 +227,7 @@ func ReadHostID(filePath string) (string, error) {
 	if len(info) == 2 {
 		return info[1], nil
 	}
-	return "", fmt.Errorf("Invalid host uuid from file")
+	return "", errors.New("invalid host uuid from file")
 }
 
 // CreateHostID create host id by mac addr
@@ -402,7 +403,8 @@ func walkDir(dir string, wg *sync.WaitGroup, fileSizes chan<- int64, concurrent 
 			subDir := filepath.Join(dir, entry.Name())
 			go walkDir(subDir, wg, fileSizes, concurrent)
 		} else {
-			fileSizes <- entry.Size()
+			ei, _ := entry.Info()
+			fileSizes <- ei.Size()
 		}
 	}
 }
@@ -410,31 +412,19 @@ func walkDir(dir string, wg *sync.WaitGroup, fileSizes chan<- int64, concurrent 
 // sema is a counting semaphore for limiting concurrency in listDir
 var sema = make(chan struct{}, 20)
 
-// 读取目录dir下的文件信息
-func listDir(dir string) []os.FileInfo {
-	sema <- struct{}{}
-	defer func() { <-sema }()
-	entries, err := ioutil.ReadDir(dir)
-	if err != nil {
-		logrus.Errorf("get file sizt: %v\n", err)
-		return nil
-	}
-	return entries
-}
-
 // 列出指定目录下的非软链类型的所有条目
-func listDirNonSymlink(dir string) []os.FileInfo {
+func listDirNonSymlink(dir string) []fs.DirEntry {
 	sema <- struct{}{}
 	defer func() { <-sema }()
-	entries, err := ioutil.ReadDir(dir)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		logrus.Errorf("get file sizt: %v\n", err)
 		return nil
 	}
 
-	var result []os.FileInfo
+	var result []fs.DirEntry
 	for i := range entries {
-		if entries[i].Mode()&os.ModeSymlink == 0 {
+		if entries[i].Type()&os.ModeSymlink == 0 {
 			result = append(result, entries[i])
 		}
 	}
@@ -663,7 +653,7 @@ func Rename(old, new string) error {
 // MergeDir MergeDir
 // if Subdirectories already exist, Don't replace
 func MergeDir(fromdir, todir string) error {
-	files, err := ioutil.ReadDir(fromdir)
+	files, err := os.ReadDir(fromdir)
 	if err != nil {
 		return err
 	}
@@ -686,7 +676,7 @@ func CreateVersionByTime() string {
 // GetDirList get all lower level dir
 func GetDirList(dirpath string, level int) ([]string, error) {
 	var dirlist []string
-	list, err := ioutil.ReadDir(dirpath)
+	list, err := os.ReadDir(dirpath)
 	if err != nil {
 		return nil, err
 	}
@@ -709,7 +699,7 @@ func GetDirList(dirpath string, level int) ([]string, error) {
 // GetFileList -
 func GetFileList(dirpath string, level int) ([]string, error) {
 	var dirlist []string
-	list, err := ioutil.ReadDir(dirpath)
+	list, err := os.ReadDir(dirpath)
 	if err != nil {
 		return nil, err
 	}
@@ -730,7 +720,7 @@ func GetFileList(dirpath string, level int) ([]string, error) {
 // GetDirNameList get all lower level dir
 func GetDirNameList(dirpath string, level int) ([]string, error) {
 	var dirlist []string
-	list, err := ioutil.ReadDir(dirpath)
+	list, err := os.ReadDir(dirpath)
 	if err != nil {
 		return nil, err
 	}

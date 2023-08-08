@@ -23,7 +23,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -80,7 +79,7 @@ func NewManager(config *option.Config, a *AlertingRulesManager) *Manager {
 		panic(err)
 	}
 
-	ioutil.WriteFile(config.ConfigFile, []byte(""), 0644)
+	os.WriteFile(config.ConfigFile, []byte(""), 0644)
 
 	m := &Manager{
 		Opt: config,
@@ -174,7 +173,7 @@ func (p *Manager) ReloadConfig() error {
 // LoadConfig load config
 func (p *Manager) LoadConfig() error {
 	logrus.Info("Load prometheus config file.")
-	content, err := ioutil.ReadFile(p.Opt.ConfigFile)
+	content, err := os.ReadFile(p.Opt.ConfigFile)
 	if err != nil {
 		logrus.Error("Failed to read prometheus config file: ", err)
 		logrus.Info("Init config file by default values.")
@@ -202,7 +201,7 @@ func (p *Manager) SaveConfig() error {
 		logrus.Debug("updating Prometheus configuration skipped, no configuration change")
 		return nil
 	}
-	err = ioutil.WriteFile(p.Opt.ConfigFile, currentConf, 0644)
+	err = os.WriteFile(p.Opt.ConfigFile, currentConf, 0644)
 	if err != nil {
 		logrus.Error("Write prometheus config file error.", err.Error())
 		return err

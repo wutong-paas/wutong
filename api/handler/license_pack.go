@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"time"
@@ -59,7 +58,7 @@ func ReadLicenseFromFile(licenseFile string) (Info, error) {
 	if err != nil {
 		return info, err
 	}
-	infoBody, err := ioutil.ReadFile(licenseFile)
+	infoBody, err := os.ReadFile(licenseFile)
 	if err != nil {
 		return info, errors.New("LICENSE文件不可读")
 	}

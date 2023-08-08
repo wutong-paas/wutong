@@ -20,7 +20,7 @@ package controller
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -51,7 +51,7 @@ func UpdateVersionByEventID(w http.ResponseWriter, r *http.Request) {
 		httputil.ReturnError(r, w, 404, err.Error())
 		return
 	}
-	in, _ := ioutil.ReadAll(r.Body)
+	in, _ := io.ReadAll(r.Body)
 	json, err := simplejson.NewJson(in)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
@@ -121,7 +121,7 @@ func DeleteVersionByEventID(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 func UpdateDeliveredPath(w http.ResponseWriter, r *http.Request) {
-	in, err := ioutil.ReadAll(r.Body)
+	in, err := io.ReadAll(r.Body)
 	if err != nil {
 		httputil.ReturnError(r, w, 400, err.Error())
 		return

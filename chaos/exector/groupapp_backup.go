@@ -20,7 +20,6 @@ package exector
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -128,7 +127,7 @@ type RegionServiceSnapshot struct {
 // Run Run
 func (b *BackupAPPNew) Run(timeout time.Duration) error {
 	//read region group app metadata
-	metadata, err := ioutil.ReadFile(fmt.Sprintf("%s/region_apps_metadata.json", b.SourceDir))
+	metadata, err := os.ReadFile(fmt.Sprintf("%s/region_apps_metadata.json", b.SourceDir))
 	if err != nil {
 		return err
 	}

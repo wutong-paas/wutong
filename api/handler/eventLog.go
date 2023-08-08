@@ -24,7 +24,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -69,7 +68,7 @@ func (l *LogAction) GetLogList(serviceAlias string) ([]*model.HistoryLogFile, er
 	if os.IsNotExist(err) {
 		return nil, err
 	}
-	fileList, err := ioutil.ReadDir(logDIR)
+	fileList, err := os.ReadDir(logDIR)
 	if err != nil {
 		return nil, err
 	}

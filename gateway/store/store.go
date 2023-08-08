@@ -23,7 +23,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"reflect"
@@ -1110,10 +1109,10 @@ func (s *k8sStore) getCertificatePem(secrKey string) (*v1.SSLCert, error) {
 		return nil, fmt.Errorf("cant not create directory %s: %v", CertificatePath, e)
 	}
 
-	if e := ioutil.WriteFile(filename, buffer.Bytes(), 0666); e != nil {
+	if e := os.WriteFile(filename, buffer.Bytes(), 0666); e != nil {
 		return nil, fmt.Errorf("cant not write data to %s: %v", filename, e)
 	}
-	fileContent, err := ioutil.ReadFile(filename)
+	fileContent, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("read certificate file failed: %s", err.Error())
 	}

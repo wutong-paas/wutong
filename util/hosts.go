@@ -54,7 +54,7 @@ func NewHostsLine(raw string) HostsLine {
 	if !output.IsComment() {
 		rawIP := fields[0]
 		if net.ParseIP(rawIP) == nil {
-			output.Err = fmt.Errorf("Bad hosts line: %q", raw)
+			output.Err = fmt.Errorf("bad hosts line: %q", raw)
 		}
 
 		output.IP = rawIP
@@ -77,7 +77,7 @@ type Hosts struct {
 	Lines []HostsLine
 }
 
-// NewHosts return a new instance of ``Hosts``.
+// NewHosts return a new instance of “Hosts“.
 func NewHosts(hostsFile string) (Hosts, error) {
 	hosts := Hosts{Path: hostsFile}
 

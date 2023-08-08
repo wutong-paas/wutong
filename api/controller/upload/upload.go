@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -150,7 +149,7 @@ func (up *uploader) tempFile() (*os.File, error) {
 
 // Returns the newly created temporary file.
 func tempFile() (*os.File, error) {
-	return ioutil.TempFile(os.TempDir(), "coquelicot")
+	return os.CreateTemp(os.TempDir(), "coquelicot")
 }
 
 // Returns a temporary file to download chunk.

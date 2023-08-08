@@ -21,7 +21,7 @@ package multi
 import (
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -175,7 +175,7 @@ func listModules(prefix, topPref, finalName string) ([]*module, error) {
 
 // parsePom parses the pom.xml file into a pom struct
 func parsePom(pomPath string) (*pom, error) {
-	bytes, err := ioutil.ReadFile(pomPath)
+	bytes, err := os.ReadFile(pomPath)
 	if err != nil {
 		return nil, err
 	}

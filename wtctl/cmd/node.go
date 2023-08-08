@@ -21,7 +21,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -64,7 +63,7 @@ func showSuccessMsg(m string) {
 func getExternalIP(path string, node []*client.HostNode) []string {
 	var result []string
 	if fileExist(path) {
-		externalIP, err := ioutil.ReadFile(path)
+		externalIP, err := os.ReadFile(path)
 		if err != nil {
 			return nil
 		}

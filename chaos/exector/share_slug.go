@@ -21,7 +21,6 @@ package exector
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -105,7 +104,7 @@ func createMD5(packageName string) (string, error) {
 		return "", err
 	}
 	md5In := strings.Split(string(f), "")
-	if err := ioutil.WriteFile(md5Path, []byte(md5In[0]), 0644); err != nil {
+	if err := os.WriteFile(md5Path, []byte(md5In[0]), 0644); err != nil {
 		return "", err
 	}
 	return md5Path, nil

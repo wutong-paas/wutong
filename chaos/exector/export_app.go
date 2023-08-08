@@ -21,7 +21,6 @@ package exector
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -225,7 +224,7 @@ func (i *ExportApp) CleanSourceDir() error {
 	logrus.Debug("Ready clean the source directory.")
 	metaFile := fmt.Sprintf("%s/metadata.json", i.SourceDir)
 
-	data, err := ioutil.ReadFile(metaFile)
+	data, err := os.ReadFile(metaFile)
 	if err != nil {
 		logrus.Error("Failed to read metadata file: ", err)
 		return err
@@ -234,7 +233,7 @@ func (i *ExportApp) CleanSourceDir() error {
 	os.RemoveAll(i.SourceDir)
 	os.MkdirAll(i.SourceDir, 0755)
 
-	if err := ioutil.WriteFile(metaFile, data, 0644); err != nil {
+	if err := os.WriteFile(metaFile, data, 0644); err != nil {
 		logrus.Error("Failed to write metadata file: ", err)
 		return err
 	}
@@ -242,7 +241,7 @@ func (i *ExportApp) CleanSourceDir() error {
 	return nil
 }
 func (i *ExportApp) parseRAM() (*v1alpha1.WutongApplicationConfig, error) {
-	data, err := ioutil.ReadFile(fmt.Sprintf("%s/metadata.json", i.SourceDir))
+	data, err := os.ReadFile(fmt.Sprintf("%s/metadata.json", i.SourceDir))
 	if err != nil {
 		i.Logger.Error("导出应用失败，没有找到应用信息", map[string]string{"step": "read-metadata", "status": "failure"})
 		logrus.Error("Failed to read metadata file: ", err)

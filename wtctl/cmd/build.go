@@ -21,7 +21,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -171,7 +170,7 @@ func NewSourceBuildCmd() cli.Command {
 							if err != nil {
 								showError(err.Error())
 							}
-							body, err := ioutil.ReadFile(ctx.String("f"))
+							body, err := os.ReadFile(ctx.String("f"))
 							if err != nil {
 								showError(err.Error())
 							}
@@ -216,7 +215,7 @@ func NewSourceBuildCmd() cli.Command {
 								showError("Please specify the task pod name")
 							}
 							namespace := ctx.String("namespace")
-							body, err := ioutil.ReadFile(ctx.String("f"))
+							body, err := os.ReadFile(ctx.String("f"))
 							if err != nil {
 								showError(err.Error())
 							}

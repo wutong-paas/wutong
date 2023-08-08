@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -473,7 +472,7 @@ func NewRulesManager(config *option.Config) *AlertingRulesManager {
 // LoadAlertingRulesConfig load alerting rule config
 func (a *AlertingRulesManager) LoadAlertingRulesConfig() error {
 	logrus.Info("Load AlertingRules config file.")
-	content, err := ioutil.ReadFile(a.config.AlertingRulesFile)
+	content, err := os.ReadFile(a.config.AlertingRulesFile)
 	if err != nil {
 		logrus.Error("Failed to read AlertingRules config file: ", err)
 		logrus.Info("Init config file by default values.")
@@ -498,7 +497,7 @@ func (a *AlertingRulesManager) SaveAlertingRulesConfig() error {
 		return err
 	}
 
-	err = ioutil.WriteFile(a.config.AlertingRulesFile, data, 0644)
+	err = os.WriteFile(a.config.AlertingRulesFile, data, 0644)
 	if err != nil {
 		logrus.Error("Write alerting rules config file error.", err.Error())
 		return err

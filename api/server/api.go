@@ -22,7 +22,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -176,7 +175,7 @@ func (m *Manager) Run() {
 	if m.conf.APISSL {
 		go func() {
 			pool := x509.NewCertPool()
-			caCrt, err := ioutil.ReadFile(m.conf.APICaFile)
+			caCrt, err := os.ReadFile(m.conf.APICaFile)
 			if err != nil {
 				logrus.Fatal("ReadFile ca err:", err)
 				return

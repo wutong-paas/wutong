@@ -21,7 +21,6 @@ package group
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -121,7 +120,7 @@ func (h *BackupHandle) NewBackup(b Backup) (*dbmodel.AppBackup, *util.APIHandleE
 	}
 	logger.Info(core_util.Translation("write region level metadata success"), map[string]string{"step": "back-api"})
 	//write console level metadata.
-	if err := ioutil.WriteFile(fmt.Sprintf("%s/console_apps_metadata.json", sourceDir), []byte(b.Body.Metadata), 0755); err != nil {
+	if err := os.WriteFile(fmt.Sprintf("%s/console_apps_metadata.json", sourceDir), []byte(b.Body.Metadata), 0755); err != nil {
 		return nil, util.CreateAPIHandleError(500, fmt.Errorf("write metadata file error,%s", err))
 	}
 	logger.Info(core_util.Translation("write console level metadata success"), map[string]string{"step": "back-api"})
@@ -349,7 +348,7 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 		return err
 	}
 	//write region level metadata.
-	if err := ioutil.WriteFile(fmt.Sprintf("%s/region_apps_metadata.json", sourceDir), body, 0755); err != nil {
+	if err := os.WriteFile(fmt.Sprintf("%s/region_apps_metadata.json", sourceDir), body, 0755); err != nil {
 		return util.CreateAPIHandleError(500, fmt.Errorf("write region_apps_metadata file error,%s", err))
 	}
 	return nil
@@ -463,7 +462,7 @@ func (h *BackupHandle) RestoreBackupResult(restoreID string) (*RestoreResult, *u
 	}
 	if rr.Status == "success" {
 		//write console level metadata.
-		body, err := ioutil.ReadFile(fmt.Sprintf("%s/console_apps_metadata.json", rr.CacheDir))
+		body, err := os.ReadFile(fmt.Sprintf("%s/console_apps_metadata.json", rr.CacheDir))
 		if err != nil {
 			return nil, util.CreateAPIHandleError(500, fmt.Errorf("read metadata file error,%s", err))
 		}

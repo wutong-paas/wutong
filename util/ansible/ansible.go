@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path"
@@ -17,7 +16,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
-//WriteHostsFile write hosts file
+// WriteHostsFile write hosts file
 func WriteHostsFile(filePath, installConfPath string, hosts []*client.HostNode) error {
 	if os.Getenv("NOT_WRITE_ANSIBLE_HOSTS") != "" {
 		return nil
@@ -29,7 +28,7 @@ func WriteHostsFile(filePath, installConfPath string, hosts []*client.HostNode) 
 	return config.WriteFile()
 }
 
-//Host ansible host config
+// Host ansible host config
 type Host struct {
 	AnsibleHostIP net.IP
 	//ssh port
@@ -63,13 +62,13 @@ func (list HostsList) Swap(i, j int) {
 	list[i], list[j] = list[j], list[i]
 }
 
-//HostGroup ansible host group config
+// HostGroup ansible host group config
 type HostGroup struct {
 	Name     string
 	HostList HostsList
 }
 
-//AddHost add host
+// AddHost add host
 func (a *HostGroup) AddHost(h *Host) {
 	for _, old := range a.HostList {
 		if old.AnsibleHostIP.String() == h.AnsibleHostIP.String() {
@@ -95,13 +94,13 @@ func (a *HostGroup) String() string {
 	return rebuffer.String()
 }
 
-//HostConfig ansible hosts config
+// HostConfig ansible hosts config
 type HostConfig struct {
 	FileName  string
 	GroupList map[string]*HostGroup
 }
 
-//GetAnsibleHostConfig get config
+// GetAnsibleHostConfig get config
 func GetAnsibleHostConfig(name string) *HostConfig {
 	return &HostConfig{
 		FileName: name,
@@ -118,12 +117,12 @@ func GetAnsibleHostConfig(name string) *HostConfig {
 	}
 }
 
-//Content return config file content
+// Content return config file content
 func (c *HostConfig) Content() string {
 	return c.ContentBuffer().String()
 }
 
-//ContentBuffer content buffer
+// ContentBuffer content buffer
 func (c *HostConfig) ContentBuffer() *bytes.Buffer {
 	rebuffer := bytes.NewBuffer(nil)
 	for i := range c.GroupList {
@@ -133,7 +132,7 @@ func (c *HostConfig) ContentBuffer() *bytes.Buffer {
 	return rebuffer
 }
 
-//WriteFile write config file
+// WriteFile write config file
 func (c *HostConfig) WriteFile() error {
 	if c.FileName == "" {
 		return fmt.Errorf("config file name can not be empty")
@@ -141,7 +140,7 @@ func (c *HostConfig) WriteFile() error {
 	if err := util.CheckAndCreateDir(path.Dir(c.FileName)); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(c.FileName+".tmp", c.ContentBuffer().Bytes(), 0755); err != nil {
+	if err := os.WriteFile(c.FileName+".tmp", c.ContentBuffer().Bytes(), 0755); err != nil {
 		return err
 	}
 	return os.Rename(c.FileName+".tmp", c.FileName)
@@ -179,7 +178,7 @@ func getSSHPort(configFile string) int {
 	return 22
 }
 
-//AddHost add host
+// AddHost add host
 func (c *HostConfig) AddHost(h *client.HostNode, installConfPath string) {
 	//check role
 	//check status

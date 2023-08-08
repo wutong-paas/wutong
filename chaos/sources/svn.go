@@ -22,7 +22,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -250,7 +249,7 @@ func (c *svnclient) readBranchs() []string {
 	re := []string{""}
 	exist, _ := util.FileExists(path.Join(c.svnDir, "Branches"))
 	if exist {
-		list, err := ioutil.ReadDir(path.Join(c.svnDir, "Branches"))
+		list, err := os.ReadDir(path.Join(c.svnDir, "Branches"))
 		if err != nil {
 			return re
 		}
@@ -261,7 +260,7 @@ func (c *svnclient) readBranchs() []string {
 	}
 	exist, _ = util.FileExists(path.Join(c.svnDir, "branches"))
 	if exist {
-		list, err := ioutil.ReadDir(path.Join(c.svnDir, "Branches"))
+		list, err := os.ReadDir(path.Join(c.svnDir, "Branches"))
 		if err != nil {
 			return re
 		}
@@ -277,7 +276,7 @@ func (c *svnclient) readTags() []string {
 	re := []string{}
 	exist, _ := util.FileExists(path.Join(c.svnDir, "Tags"))
 	if exist {
-		list, err := ioutil.ReadDir(path.Join(c.svnDir, "Tags"))
+		list, err := os.ReadDir(path.Join(c.svnDir, "Tags"))
 		if err != nil {
 			return re
 		}
@@ -288,7 +287,7 @@ func (c *svnclient) readTags() []string {
 	}
 	exist, _ = util.FileExists(path.Join(c.svnDir, "tags"))
 	if exist {
-		list, err := ioutil.ReadDir(path.Join(c.svnDir, "tags"))
+		list, err := os.ReadDir(path.Join(c.svnDir, "tags"))
 		if err != nil {
 			return re
 		}

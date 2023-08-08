@@ -597,7 +597,7 @@ func ImageImport(dockerCli *client.Client, image, source string, logger event.Lo
 // CopyToFile writes the content of the reader to the specified file
 func CopyToFile(outfile string, r io.Reader) error {
 	// We use sequential file access here to avoid depleting the standby list
-	// on Windows. On Linux, this is a call directly to ioutil.TempFile
+	// on Windows. On Linux, this is a call directly to os.TempFile
 	tmpFile, err := os.OpenFile(path.Join(filepath.Dir(outfile), ".docker_temp_"), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

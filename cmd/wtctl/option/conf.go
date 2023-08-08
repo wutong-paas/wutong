@@ -19,7 +19,6 @@
 package option
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -69,7 +68,7 @@ func LoadConfig(ctx *cli.Context) (Config, error) {
 	if err != nil {
 		return config, nil
 	}
-	data, err := ioutil.ReadFile(configfile)
+	data, err := os.ReadFile(configfile)
 	if err != nil {
 		logrus.Warning("Read config file error ,will get config from region.", err.Error())
 		return config, err

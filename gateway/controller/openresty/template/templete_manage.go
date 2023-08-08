@@ -20,7 +20,6 @@ package template
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -113,7 +112,7 @@ func (n *NginxConfigFileTemplete) writeFileNotCheck(first bool, configBody []byt
 	}
 	hasOldConfig = true
 	//backup
-	oldBody, err := ioutil.ReadFile(configFile)
+	oldBody, err := os.ReadFile(configFile)
 	if err != nil {
 		if err != os.ErrNotExist && strings.Contains(err.Error(), "no such file or directory") && !os.IsNotExist(err) {
 			logrus.Errorf("read old server config file failure %s", err.Error())
@@ -216,7 +215,7 @@ func (n *NginxConfigFileTemplete) writeFile(first bool, configBody []byte, confi
 	}
 	//backup
 	noOldConfig := false
-	oldBody, err := ioutil.ReadFile(configFile)
+	oldBody, err := os.ReadFile(configFile)
 	if err != nil {
 		if err != os.ErrNotExist && strings.Contains(err.Error(), "no such file or directory") && !os.IsNotExist(err) {
 			logrus.Errorf("read old server config file failure %s", err.Error())
@@ -302,7 +301,7 @@ type Template struct {
 // NewTemplate returns a new Template instance or an
 // error if the specified template file contains errors
 func NewTemplate(fileName string) (*Template, error) {
-	tmplFile, err := ioutil.ReadFile(fileName)
+	tmplFile, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unexpected error reading template %v", tmplFile)
 	}
