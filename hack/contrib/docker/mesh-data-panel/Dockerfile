@@ -1,4 +1,4 @@
-FROM envoyproxy/envoy:v1.16.5
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/envoy:v1.16.5
 ARG RELEASE_DESC
 LABEL "author"="dingpeng24001"
 RUN apt-get update && apt-get install -y bash curl net-tools wget vim && \

@@ -42,7 +42,7 @@ build::binary() {
 	echo "---> build binary:$1"
 	home=$(pwd)
 	local go_mod_cache="${home}/.cache"
-	local OUTPATH="./_output/binary/$GOOS/${BASE_NAME}-$1"
+	local OUTPATH="./_output/binary/linux/${BASE_NAME}-$1"
 	local DOCKER_PATH="./hack/contrib/docker/$1"
 	local build_image="golang:${GO_VERSION}"
 	local build_args="-w -s -X github.com/wutong-paas/wutong/cmd.version=${release_desc}"
@@ -64,20 +64,16 @@ build::binary() {
 		CGO_ENABLED=0
 	fi
 	docker run --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS="${GOOS}" -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${OUTPATH}" ${build_dir}
-	if [ "$GOOS" = "windows" ]; then
-		mv "$OUTPATH" "${OUTPATH}.exe"
-	fi
 }
 
 build::image() {
-	local build_binary_dir="./_output/binary"
-	local OUTPATH="${build_binary_dir}/$GOOS/${BASE_NAME}-$1"
+	local build_binary_dir=./_output/binary/linux
+	local OUTPATH="${build_binary_dir}/${BASE_NAME}-$1"
 	local build_image_dir="./_output/image/$1/"
 	local source_dir="./hack/contrib/docker/$1"
-	local BASE_IMAGE_VERSION="3.15"
 	local DOCKERFILE_BASE="Dockerfile"
-	mkdir -p "${build_image_dir}"
-	chmod 777 "${build_image_dir}"
+	mkdir -p "${build_image_dir}" "${build_binary_dir}"
+	chmod 777 "${build_image_dir}" "${build_binary_dir}"
 	if [ ! -f "${source_dir}/ignorebuild" ]; then
 		if [ ! ${CACHE} ] || [ ! -f "${OUTPATH}" ]; then
 			build::binary "$1"
@@ -88,19 +84,13 @@ build::image() {
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
 	if [ "$GOARCH" = "arm64" ]; then
-		if [ "$1" = "gateway" ]; then
-			BASE_IMAGE_VERSION="1.19.3.2-alpine"
-		elif [ "$1" = "eventlog" ];then
+		if [ "$1" = "eventlog" ];then
 			DOCKERFILE_BASE="Dockerfile.arm"
 		elif [ "$1" = "mesh-data-panel" ];then
 			DOCKERFILE_BASE="Dockerfile.arm"
 		fi
-	else
-		if [ "$1" = "gateway" ]; then
-			BASE_IMAGE_VERSION="1.19.3.2"
-		fi
 	fi
-	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg BASE_IMAGE_VERSION="${BASE_IMAGE_VERSION}" --build-arg GOARCH="${GOARCH}" -t wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
+	docker build --build-arg RELEASE_DESC="${release_desc}" --build-arg GOARCH="${GOARCH}" -t wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 
 	if [ -f "${source_dir}/test.sh" ]; then
 		"${source_dir}/test.sh" wt-$1:${VERSION}
@@ -111,10 +101,7 @@ build::image() {
 	fi
 	popd
 	rm -rf "${build_image_dir}"
-
-	if [ ! $GITHUB_ACTIONS ]; then
-		rm -rf "${build_binary_dir}"
-	fi
+	rm -rf "${build_binary_dir}"
 }
 
 build::image::all() {

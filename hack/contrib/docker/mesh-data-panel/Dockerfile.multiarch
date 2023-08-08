@@ -1,4 +1,4 @@
-FROM envoyproxy/envoy:v1.16.5
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/envoy:v1.16.5
 ARG RELEASE_DESC
 ARG TARGETARCH
 

@@ -1,4 +1,4 @@
-FROM prom/prometheus:v2.20.0
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/prometheus:v2.20.0
 ARG RELEASE_DESC
 ARG TARGETARCH
 

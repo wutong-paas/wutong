@@ -44,9 +44,7 @@ build::binary() {
 	CGO_ENABLED=0
 	if [ "$1" = "eventlog" ]; then
 		CGO_ENABLED=1
-		build_image="wutongpaas/eventlog-builder:v1"
-	elif [ "$1" = "gateway" ]; then
-		build_image="golang:${GO_VERSION}-alpine"
+		build_image="swr.cn-southwest-2.myhuaweicloud.com/wutongpaas/eventlog-builder:v1"
 	fi
 	if [ "$1" = "eventlog" ]; then
 		docker run --platform=linux/amd64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=amd64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${AMD64_OUTPATH}" ${build_dir}
@@ -79,7 +77,6 @@ build::image() {
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
 	docker buildx use gobuilder || docker buildx create --use --name gobuilder
-	# docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" --build-arg -t ${WUTONG_REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t ${WUTONG_REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	# docker buildx rm gobuilder
 	popd

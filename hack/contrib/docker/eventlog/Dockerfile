@@ -1,5 +1,4 @@
-ARG BASE_IMAGE_VERSION
-FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:${BASE_IMAGE_VERSION}
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
 ARG RELEASE_DESC
 RUN apk --no-cache add libstdc++ ca-certificates openssl openssl-dev
 

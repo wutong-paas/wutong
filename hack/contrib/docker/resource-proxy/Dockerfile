@@ -1,4 +1,4 @@
-FROM nginx:1.19
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/nginx:1.19
 ARG RELEASE_DESC
 
 COPY entrypoint.sh /run/entrypoint.sh
