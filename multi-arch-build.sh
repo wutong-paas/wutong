@@ -53,19 +53,17 @@ build::binary() {
 		CGO_ENABLED=${CGO_ENABLED} GOPROXY=${GOPROXY} GOOS=linux GOARCH=amd64 CC=x86_64-unknown-linux-gnu-gcc CXX=x86_64-unknown-linux-gnu-g++ go build -o "${AMD64_OUTPATH}" ${build_dir}
 		CGO_ENABLED=${CGO_ENABLED} GOPROXY=${GOPROXY} GOOS=linux GOARCH=arm64 CC=aarch64-unknown-linux-gnu-gcc CXX=aarch64-unknown-linux-gnu-g++ go build -o "${ARM64_OUTPATH}" ${build_dir}
 	fi
-	# docker run --platform=linux/amd64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=amd64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${AMD64_OUTPATH}" ${build_dir}
-	# docker run --platform=linux/arm64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=arm64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${ARM64_OUTPATH}" ${build_dir}
 }
 
 build::image() {
-	local build_binary_dir="./_output/binary"
-	local AMD64_OUTPATH="${build_binary_dir}/linux/amd64/${BASE_NAME}-$1"
-	local ARM64_OUTPATH="${build_binary_dir}/linux/arm64/${BASE_NAME}-$1"
+	local build_binary_dir="./_output/binary/linux"
+	local AMD64_OUTPATH="${build_binary_dir}/amd64/${BASE_NAME}-$1"
+	local ARM64_OUTPATH="${build_binary_dir}/arm64/${BASE_NAME}-$1"
 	local build_image_dir="./_output/image/$1/"
 	local source_dir="./hack/contrib/docker/$1"
 	local DOCKERFILE_BASE="Dockerfile.multiarch"
-	mkdir -p "${build_image_dir}/amd64/" "${build_image_dir}/arm64/"
-	chmod 777 "${build_image_dir}"
+	mkdir -p "${build_image_dir}/amd64/" "${build_image_dir}/arm64/" "${build_binary_dir}/amd64" "${build_binary_dir}/arm64"
+	chmod -R 777 "${build_image_dir}" "${build_binary_dir}"
 	if [ ! -f "${source_dir}/ignorebuild" ]; then
 		if [ ! ${CACHE} ] || [ ! -f "${AMD64_OUTPATH}" ] || [ ! -f "${ARM64_OUTPATH}" ]; then
 			build::binary "$1"
@@ -81,10 +79,8 @@ build::image() {
 	# docker buildx rm gobuilder
 	popd
 	rm -rf "${build_image_dir}"
+	rm -rf "${build_binary_dir}"
 
-	if [ ! ${GITHUB_ACTIONS} ]; then
-		rm -rf "${build_binary_dir}"
-	fi
 }
 
 build::image::all() {
