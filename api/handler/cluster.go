@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -423,17 +425,16 @@ type clusterEventsCache struct {
 var cachedClusterEvents *clusterEventsCache
 
 func (c *clusterAction) GetClusterEvents(ctx context.Context) ([]model.ClusterEvent, error) {
-	if cachedClusterEvents == nil || time.Since(cachedClusterEvents.cacheTime) > time.Minute*10 {
-		events, err := c.clientset.CoreV1().Events("").List(ctx, metav1.ListOptions{
-			FieldSelector: "type=Warning",
-		})
+	//  5 分钟内的事件缓存
+	if cachedClusterEvents == nil || time.Since(cachedClusterEvents.cacheTime) > time.Minute*5 {
+		events, err := kube.GetCachedResources(c.clientset).EventLister.List(labels.Everything())
 		if err != nil {
 			return nil, err
 		}
 
 		clusterEvents := make([]model.ClusterEvent, 0)
-		for _, event := range events.Items {
-			clusterEvent := model.ClusterEventFrom(&event, c.clientset)
+		for _, event := range events {
+			clusterEvent := model.ClusterEventFrom(event, c.clientset)
 			if clusterEvent == nil {
 				continue
 			}
