@@ -176,6 +176,7 @@ func (s *ServiceAction) buildFromMarketSlug(r *api_model.BuildServiceStruct, ser
 		Topic:    topic,
 		TaskType: "build_from_market_slug",
 		TaskBody: body,
+		Operator: r.Body.Operator,
 	})
 }
 
@@ -213,6 +214,7 @@ func (s *ServiceAction) buildFromImage(r *api_model.BuildServiceStruct, service 
 		Topic:    topic,
 		TaskType: "build_from_image",
 		TaskBody: body,
+		Operator: r.Body.Operator,
 	})
 }
 
@@ -253,6 +255,7 @@ func (s *ServiceAction) buildFromSourceCode(r *api_model.BuildServiceStruct, ser
 		Topic:    topic,
 		TaskType: "build_from_source_code",
 		TaskBody: body,
+		Operator: r.Body.Operator,
 	})
 }
 

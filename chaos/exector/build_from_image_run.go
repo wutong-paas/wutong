@@ -50,6 +50,7 @@ type ImageBuildItem struct {
 	HubPassword   string
 	Action        string
 	Configs       map[string]gjson.Result `json:"configs"`
+	Operator      string                  `json:"operator"`
 }
 
 // NewImageBuildItem 创建实体

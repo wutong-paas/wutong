@@ -318,7 +318,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 				logrus.Errorf("Update app service deploy version failure %s, service %s do not auto upgrade", err.Error(), i.ServiceID)
 				break
 			}
-			err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, configs, i.Logger)
+			err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, task.User, configs, i.Logger)
 			if err != nil {
 				i.Logger.Error("应用组件构建失败，向消息队列发送更新操作事件错误："+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 			} else {
@@ -382,7 +382,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 			logrus.Errorf("Update app service deploy version failure %s, service %s do not auto upgrade", err.Error(), i.ServiceID)
 			return
 		}
-		err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, configs, i.Logger)
+		err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, task.User, configs, i.Logger)
 		if err != nil {
 			i.Logger.Error("应用组件构建失败，向消息队列发送更新操作事件错误："+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 		} else {
@@ -427,7 +427,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 					logrus.Errorf("Update app service deploy version failure %s, service %s do not auto upgrade", err.Error(), i.ServiceID)
 					break
 				}
-				err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, i.Configs, i.Logger)
+				err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, task.User, i.Configs, i.Logger)
 				if err != nil {
 					i.Logger.Error("应用组件构建失败，向消息队列发送更新操作事件错误："+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 				} else {
@@ -440,7 +440,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 
 }
 
-func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion, actionType string, configs map[string]string, logger event.Logger) error {
+func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion, actionType, operator string, configs map[string]string, logger event.Logger) error {
 	// update build event complete status
 	switch actionType {
 	case "upgrade":
@@ -453,7 +453,7 @@ func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion,
 			OptType:     "upgrade",
 			Target:      "service",
 			TargetID:    serviceID,
-			UserName:    "",
+			UserName:    operator,
 			SynType:     dbmodel.ASYNEVENTTYPE,
 		}
 		if err := db.GetManager().ServiceEventDao().AddModel(event); err != nil {
@@ -471,6 +471,7 @@ func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion,
 			Topic:    mqclient.WorkerTopic,
 			TaskType: "rolling_upgrade", // TODO(huangrh 20190816): Separate from build
 			TaskBody: body,
+			Operator: operator,
 		}); err != nil {
 			return err
 		}

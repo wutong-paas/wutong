@@ -31,16 +31,16 @@ import (
 	grpc "google.golang.org/grpc"
 )
 
-//BuilderTopic builder for linux
+// BuilderTopic builder for linux
 var BuilderTopic = "builder"
 
-//WindowsBuilderTopic builder for windows
+// WindowsBuilderTopic builder for windows
 var WindowsBuilderTopic = "windows_builder"
 
-//WorkerTopic worker topic
+// WorkerTopic worker topic
 var WorkerTopic = "worker"
 
-//MQClient mq  client
+// MQClient mq  client
 type MQClient interface {
 	pb.TaskQueueClient
 	Close()
@@ -53,7 +53,7 @@ type mqClient struct {
 	cancel context.CancelFunc
 }
 
-//NewMqClient new a mq client
+// NewMqClient new a mq client
 func NewMqClient(etcdClientArgs *etcdutil.ClientArgs, defaultserver string) (MQClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	var conn *grpc.ClientConn
@@ -84,19 +84,20 @@ func NewMqClient(etcdClientArgs *etcdutil.ClientArgs, defaultserver string) (MQC
 	return client, nil
 }
 
-//Close mq grpc client must be closed after uesd
+// Close mq grpc client must be closed after uesd
 func (m *mqClient) Close() {
 	m.cancel()
 }
 
-//TaskStruct task struct
+// TaskStruct task struct
 type TaskStruct struct {
 	Topic    string
 	TaskType string
+	Operator string
 	TaskBody interface{}
 }
 
-//buildTask build task
+// buildTask build task
 func buildTask(t TaskStruct) (*pb.EnqueueRequest, error) {
 	var er pb.EnqueueRequest
 	taskJSON, err := json.Marshal(t.TaskBody)
@@ -109,7 +110,7 @@ func buildTask(t TaskStruct) (*pb.EnqueueRequest, error) {
 		TaskType:   t.TaskType,
 		CreateTime: time.Now().Format(time.RFC3339),
 		TaskBody:   taskJSON,
-		User:       "wutong",
+		User:       t.Operator,
 	}
 	return &er, nil
 }

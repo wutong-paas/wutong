@@ -267,6 +267,7 @@ func (o *OperationHandler) RollBack(rollback model.RollbackInfoRequestStruct) (r
 
 func (o *OperationHandler) buildFromMarketSlug(r *model.ComponentBuildReq, service *dbmodel.TenantEnvServices) error {
 	body := make(map[string]interface{})
+	body["operator"] = r.Operator
 	body["deploy_version"] = r.DeployVersion
 	body["event_id"] = r.GetEventID()
 	body["action"] = r.Action
@@ -276,10 +277,10 @@ func (o *OperationHandler) buildFromMarketSlug(r *model.ComponentBuildReq, servi
 	body["service_alias"] = service.ServiceAlias
 	body["slug_info"] = r.SlugInfo
 	body["configs"] = r.Configs
-	return o.sendBuildTopic(service.ServiceID, "build_from_market_slug", body)
+	return o.sendBuildTopic(service.ServiceID, "build_from_market_slug", r.Operator, body)
 }
-func (o *OperationHandler) sendBuildTopic(serviceID, taskType string, body map[string]interface{}) error {
 
+func (o *OperationHandler) sendBuildTopic(serviceID, taskType, operator string, body map[string]interface{}) error {
 	topic := gclient.BuilderTopic
 	if o.isWindowsService(serviceID) {
 		topic = gclient.WindowsBuilderTopic
@@ -288,6 +289,7 @@ func (o *OperationHandler) sendBuildTopic(serviceID, taskType string, body map[s
 		Topic:    topic,
 		TaskType: taskType,
 		TaskBody: body,
+		Operator: operator,
 	})
 }
 
@@ -300,6 +302,7 @@ func (o *OperationHandler) buildFromImage(r *model.ComponentBuildReq, service *d
 		return fmt.Errorf("build from image failure, args error")
 	}
 	body := make(map[string]interface{})
+	body["operator"] = r.Operator
 	body["image"] = r.ImageInfo.ImageURL
 	body["service_id"] = service.ServiceID
 	body["deploy_version"] = r.DeployVersion
@@ -314,7 +317,7 @@ func (o *OperationHandler) buildFromImage(r *model.ComponentBuildReq, service *d
 		body["password"] = r.ImageInfo.Password
 	}
 	body["configs"] = r.Configs
-	return o.sendBuildTopic(service.ServiceID, "build_from_image", body)
+	return o.sendBuildTopic(service.ServiceID, "build_from_image", r.Operator, body)
 }
 
 func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, service *dbmodel.TenantEnvServices) error {
@@ -322,6 +325,7 @@ func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, servi
 		return fmt.Errorf("build from code failure, args error")
 	}
 	body := make(map[string]interface{})
+	body["operator"] = r.Operator
 	body["tenant_env_id"] = service.TenantEnvID
 	body["service_id"] = service.ServiceID
 	body["repo_url"] = r.CodeInfo.RepoURL
@@ -341,7 +345,7 @@ func (o *OperationHandler) buildFromSourceCode(r *model.ComponentBuildReq, servi
 	}
 	body["expire"] = 180
 	body["configs"] = r.Configs
-	return o.sendBuildTopic(service.ServiceID, "build_from_source_code", body)
+	return o.sendBuildTopic(service.ServiceID, "build_from_source_code", r.Operator, body)
 }
 
 func (o *OperationHandler) isWindowsService(serviceID string) bool {

@@ -74,6 +74,7 @@ type SourceCodeBuildItem struct {
 	commit        Commit
 	Configs       map[string]gjson.Result `json:"configs"`
 	Ctx           context.Context
+	Operator      string `json:"operator"`
 }
 
 // Commit code Commit
