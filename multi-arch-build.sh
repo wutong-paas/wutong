@@ -74,9 +74,9 @@ build::image() {
 	cp -r ${source_dir}/* "${build_image_dir}"
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
-	docker buildx use gobuilder || docker buildx create --use --name gobuilder
+    docker buildx use swrbuilder || docker buildx create --use --name swrbuilder --driver docker-container --driver-opt image=swr.cn-southwest-2.myhuaweicloud.com/wutong/buildkit:stable
 	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t ${WUTONG_REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
-	# docker buildx rm gobuilder
+	# docker buildx rm swrbuilder
 	popd
 	rm -rf "${build_image_dir}"
 	rm -rf "${build_binary_dir}"
