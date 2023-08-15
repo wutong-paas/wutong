@@ -8,7 +8,7 @@ COPY ${TARGETARCH}/ /run/
 COPY entrypoint.sh /run/entrypoint.sh
 COPY build/libzmq/lib/libzmq.so.3 /tmp
 
-RUN if [ ${TARGETARCH} = "arm64" ]; then \
+RUN if [ ${TARGETARCH} = "amd64" ]; then \
         cp /tmp/libzmq.so.3 /usr/lib/libzmq.so.3 && rm /tmp/libzmq.so.3; \
     fi
 
