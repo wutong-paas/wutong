@@ -1203,11 +1203,20 @@ func (s *ServiceAction) EnvAttr(action string, at *dbmodel.TenantEnvServiceEnvVa
 	switch action {
 	case "add":
 		if err := db.GetManager().TenantEnvServiceEnvVarDao().AddModel(at); err != nil {
+			if err == dberr.ErrRecordAlreadyExist {
+				if err = db.GetManager().TenantEnvServiceEnvVarDao().UpdateModel(at); err == nil {
+					return nil
+				}
+			}
 			logrus.Errorf("add env %v error, %v", at.AttrName, err)
 			return err
 		}
 	case "delete":
 		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteModel(at.ServiceID, at.AttrName); err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return nil
+			}
+
 			logrus.Errorf("delete env %v error, %v", at.AttrName, err)
 			return err
 		}

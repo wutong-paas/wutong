@@ -29,9 +29,27 @@ var ErrLicenseNotValid = errors.New("wutong region license not valid")
 
 var licensePlaintextKey = "wutong-region-license"
 
+var skipedLicenseMiddlewarePaths = []string{
+	"/v2/health",
+}
+
+func slicesContaines(slices []string, str string) bool {
+	for _, s := range slices {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 // License
 func License(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
+		if slicesContaines(skipedLicenseMiddlewarePaths, r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// 缓存 2 小时
 		if licenseCache != nil && time.Since(licenseCache.CacheTime) < 2*time.Hour {
 			if licenseCache.Valid {
