@@ -404,10 +404,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := deployment.Labels["version"]
 		createrID := deployment.Labels["creater_id"]
 		if serviceID != "" && version != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.AppsV1().Deployments(deployment.Namespace).Delete(context.Background(), deployment.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetDeployment(deployment)
 				return
@@ -419,10 +416,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := statefulset.Labels["version"]
 		createrID := statefulset.Labels["creater_id"]
 		if serviceID != "" && version != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.AppsV1().StatefulSets(statefulset.Namespace).Delete(context.Background(), statefulset.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetStatefulSet(statefulset)
 				return
@@ -434,10 +428,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := replicaset.Labels["version"]
 		createrID := replicaset.Labels["creater_id"]
 		if serviceID != "" && version != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.AppsV1().Deployments(replicaset.Namespace).Delete(context.Background(), replicaset.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetReplicaSets(replicaset)
 				a.checkReplicasetWhetherDelete(appservice, replicaset)
@@ -450,10 +441,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := secret.Labels["version"]
 		createrID := secret.Labels["creater_id"]
 		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.CoreV1().Secrets(secret.Namespace).Delete(context.Background(), secret.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetSecret(secret)
 				return
@@ -465,10 +453,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := service.Labels["version"]
 		createrID := service.Labels["creater_id"]
 		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.CoreV1().Services(service.Namespace).Delete(context.Background(), service.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetService(service)
 				return
@@ -480,10 +465,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := ingress.Labels["version"]
 		createrID := ingress.Labels["creater_id"]
 		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.NetworkingV1().Ingresses(ingress.Namespace).Delete(context.Background(), ingress.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetIngress(ingress)
 				return
@@ -495,10 +477,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := ingress.Labels["version"]
 		createrID := ingress.Labels["creater_id"]
 		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.NetworkingV1beta1().Ingresses(ingress.Namespace).Delete(context.Background(), ingress.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetIngress(ingress)
 				return
@@ -510,10 +489,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := configmap.Labels["version"]
 		createrID := configmap.Labels["creater_id"]
 		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.CoreV1().ConfigMaps(configmap.Namespace).Delete(context.Background(), configmap.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetConfigMap(configmap)
 				return
@@ -525,10 +501,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := hpa.Labels["version"]
 		createrID := hpa.Labels["creater_id"]
 		if serviceID != "" && version != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.AutoscalingV2beta2().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(context.Background(), hpa.GetName(), metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetHPA(hpa)
 			}
@@ -550,10 +523,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := claim.Labels["version"]
 		createrID := claim.Labels["creater_id"]
 		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				a.conf.KubeClient.CoreV1().PersistentVolumeClaims(claim.Namespace).Delete(context.Background(), claim.Name, metav1.DeleteOptions{})
-			}
+			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetClaim(claim)
 				return

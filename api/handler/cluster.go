@@ -138,10 +138,10 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	}
 
 	result := &model.ClusterResource{
-		CapCPU:               totalCapCPU,
-		CapMem:               totalCapMem,
-		ReqCPU:               totalReqCPU,
-		ReqMem:               totalReqMem,
+		CapCPU:               util.DecimalFromFloat32(totalCapCPU),
+		CapMem:               util.DecimalFromFloat32(totalCapMem),
+		ReqCPU:               util.DecimalFromFloat32(totalReqCPU),
+		ReqMem:               util.DecimalFromFloat32(totalReqMem),
 		WutongReqCPU:         util.DecimalFromFloat32(float32(wtCPUR / 1000)),
 		WutongReqMem:         util.DecimalFromFloat32(float32(wtMemR / 1024 / 1024 / 1024)),
 		ComputeNode:          len(nodes),
