@@ -24,7 +24,7 @@ fi
 buildTime=$(date +%F-%H)
 git_commit=$(git log -n 1 --pretty --format=%h)
 
-release_desc=${VERSION}-${git_commit}-${buildTime}
+# release_desc=${VERSION}-${git_commit}-${buildTime}
 build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel wtctl node resource-proxy)
 
 build::binary() {
@@ -35,7 +35,7 @@ build::binary() {
 	local ARM64_OUTPATH="./_output/binary/linux/arm64/${BASE_NAME}-$1"
 	local DOCKER_PATH="./hack/contrib/docker/$1"
 	local build_image="golang:${GO_VERSION}"
-	local build_args="-w -s -X github.com/wutong-paas/wutong/cmd.version=${release_desc}"
+	local build_args="-w -s -X github.com/wutong-paas/wutong/cmd.version=${VERSION}"
 	local build_dir="./cmd/$1"
 	local DOCKERFILE_BASE="Dockerfile.multiarch"
 	if [ -f "${DOCKER_PATH}/ignorebuild" ]; then
@@ -50,8 +50,8 @@ build::binary() {
 		docker run --platform=linux/amd64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=amd64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${AMD64_OUTPATH}" ${build_dir}
 		docker run --platform=linux/arm64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=arm64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${ARM64_OUTPATH}" ${build_dir}
 	else
-		CGO_ENABLED=${CGO_ENABLED} GOPROXY=${GOPROXY} GOOS=linux GOARCH=amd64 CC=x86_64-unknown-linux-gnu-gcc CXX=x86_64-unknown-linux-gnu-g++ go build -o "${AMD64_OUTPATH}" ${build_dir}
-		CGO_ENABLED=${CGO_ENABLED} GOPROXY=${GOPROXY} GOOS=linux GOARCH=arm64 CC=aarch64-unknown-linux-gnu-gcc CXX=aarch64-unknown-linux-gnu-g++ go build -o "${ARM64_OUTPATH}" ${build_dir}
+		CGO_ENABLED=${CGO_ENABLED} GOPROXY=${GOPROXY} GOOS=linux GOARCH=amd64 CC=x86_64-unknown-linux-gnu-gcc CXX=x86_64-unknown-linux-gnu-g++ go build -ldflags "${build_args}" -o "${AMD64_OUTPATH}" ${build_dir}
+		CGO_ENABLED=${CGO_ENABLED} GOPROXY=${GOPROXY} GOOS=linux GOARCH=arm64 CC=aarch64-unknown-linux-gnu-gcc CXX=aarch64-unknown-linux-gnu-g++ go build -ldflags "${build_args}" -o "${ARM64_OUTPATH}" ${build_dir}
 	fi
 }
 
