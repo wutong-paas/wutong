@@ -15,7 +15,7 @@ import (
 	"github.com/wutong-paas/wutong/chaos"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	appv1 "k8s.io/api/apps/v1"
-	"k8s.io/api/autoscaling/v2beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -336,7 +336,7 @@ func (s *exportHelmChartController) exportOne(app v1.AppService, r *WutongExport
 			hpa.Kind = "HorizontalPodAutoscaler"
 			hpa.Namespace = ""
 			hpa.APIVersion = APIVersionHorizontalPodAutoscaler
-			hpa.Status = v2beta2.HorizontalPodAutoscalerStatus{}
+			hpa.Status = autoscalingv1.HorizontalPodAutoscalerStatus{}
 			if len(hpa.ResourceVersion) == 0 {
 				hpaBytes, err := yaml.Marshal(hpa)
 				if err != nil {

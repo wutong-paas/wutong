@@ -61,7 +61,7 @@ func (a *refreshXPAController) applyOne(clientset kubernetes.Interface, app *v1.
 
 	for _, hpa := range app.GetDelHPAs() {
 		logrus.Debugf("hpa name: %s; start deleting hpa.", hpa.GetName())
-		err := clientset.AutoscalingV2beta2().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(context.Background(), hpa.GetName(), metav1.DeleteOptions{})
+		err := clientset.AutoscalingV1().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(context.Background(), hpa.GetName(), metav1.DeleteOptions{})
 		if err != nil {
 			// don't return error, hope it is ok next time
 			logrus.Warningf("error deleting secret(%#v): %v", hpa, err)

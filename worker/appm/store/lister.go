@@ -22,14 +22,14 @@ import (
 	"github.com/wutong-paas/wutong/pkg/generated/listers/wutong/v1alpha1"
 	crdlisters "k8s.io/apiextensions-apiserver/pkg/client/listers/apiextensions/v1"
 	appsv1 "k8s.io/client-go/listers/apps/v1"
-	autoscalingv2 "k8s.io/client-go/listers/autoscaling/v2beta2"
+	autoscalingv1 "k8s.io/client-go/listers/autoscaling/v1"
 	corev1 "k8s.io/client-go/listers/core/v1"
 	networkingv1 "k8s.io/client-go/listers/networking/v1"
 	betav1 "k8s.io/client-go/listers/networking/v1beta1"
 	storagev1 "k8s.io/client-go/listers/storage/v1"
 )
 
-//Lister kube-api client cache
+// Lister kube-api client cache
 type Lister struct {
 	Ingress                 networkingv1.IngressLister
 	BetaIngress             betav1.IngressLister
@@ -44,7 +44,7 @@ type Lister struct {
 	Nodes                   corev1.NodeLister
 	StorageClass            storagev1.StorageClassLister
 	Claims                  corev1.PersistentVolumeClaimLister
-	HorizontalPodAutoscaler autoscalingv2.HorizontalPodAutoscalerLister
+	HorizontalPodAutoscaler autoscalingv1.HorizontalPodAutoscalerLister
 	CRD                     crdlisters.CustomResourceDefinitionLister
 	HelmApp                 v1alpha1.HelmAppLister
 	ComponentDefinition     v1alpha1.ComponentDefinitionLister

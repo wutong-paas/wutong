@@ -20,12 +20,6 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 )
 
-const (
-	DockerContainerdSock    = "/var/run/docker/containerd/containerd.sock"
-	RunDockerContainerdSock = "/run/docker/containerd/containerd.sock"
-	ContainerdSock          = "/run/containerd/containerd.sock"
-)
-
 type containerdClientFactory struct{}
 
 func (f containerdClientFactory) NewClient(endpoint string, timeout time.Duration) (ContainerImageCli, error) {

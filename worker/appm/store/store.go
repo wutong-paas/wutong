@@ -49,7 +49,7 @@ import (
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	workerutil "github.com/wutong-paas/wutong/worker/util"
 	appsv1 "k8s.io/api/apps/v1"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -235,8 +235,8 @@ func NewStore(
 
 	store.informers.Events = infFactory.Core().V1().Events().Informer()
 
-	store.informers.HorizontalPodAutoscaler = infFactory.Autoscaling().V2beta2().HorizontalPodAutoscalers().Informer()
-	store.listers.HorizontalPodAutoscaler = infFactory.Autoscaling().V2beta2().HorizontalPodAutoscalers().Lister()
+	store.informers.HorizontalPodAutoscaler = infFactory.Autoscaling().V1().HorizontalPodAutoscalers().Informer()
+	store.listers.HorizontalPodAutoscaler = infFactory.Autoscaling().V1().HorizontalPodAutoscalers().Lister()
 
 	// wutong custom resource
 	wutongInformer := externalversions.NewSharedInformerFactoryWithOptions(wutongClient, 10*time.Second,
@@ -311,7 +311,7 @@ func NewStore(
 	store.informers.ConfigMap.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Endpoints.AddEventHandlerWithResyncPeriod(epEventHandler, time.Second*10)
-	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
+	// store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
 	store.informers.StorageClass.AddEventHandlerWithResyncPeriod(store, time.Second*300)
 	store.informers.Claims.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Events.AddEventHandlerWithResyncPeriod(store.evtEventHandler(), time.Second*10)
@@ -496,7 +496,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 			}
 		}
 	}
-	if hpa, ok := obj.(*autoscalingv2.HorizontalPodAutoscaler); ok {
+	if hpa, ok := obj.(*autoscalingv1.HorizontalPodAutoscaler); ok {
 		serviceID := hpa.Labels["service_id"]
 		version := hpa.Labels["version"]
 		createrID := hpa.Labels["creater_id"]
@@ -726,7 +726,7 @@ func (a *appRuntimeStore) OnDeletes(objs ...interface{}) {
 				}
 			}
 		}
-		if hpa, ok := obj.(*autoscalingv2.HorizontalPodAutoscaler); ok {
+		if hpa, ok := obj.(*autoscalingv1.HorizontalPodAutoscaler); ok {
 			serviceID := hpa.Labels["service_id"]
 			version := hpa.Labels["version"]
 			createrID := hpa.Labels["creater_id"]

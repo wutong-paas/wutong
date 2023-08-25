@@ -2,7 +2,7 @@ package kube
 
 import (
 	api_model "github.com/wutong-paas/wutong/api/model"
-	autosaclingv1 "k8s.io/api/autoscaling/v1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
@@ -10,7 +10,7 @@ import (
 
 type HorizontalPodAutoscalers struct {
 	kubernetes.Interface
-	HorizontalPodAutoscalers []*autosaclingv1.HorizontalPodAutoscaler `json:"horizontalpodautoscalers"`
+	HorizontalPodAutoscalers []*autoscalingv1.HorizontalPodAutoscaler `json:"horizontalpodautoscalers"`
 }
 
 func (h *HorizontalPodAutoscalers) SetClientset(clientset kubernetes.Interface) {
@@ -43,7 +43,7 @@ func (h *HorizontalPodAutoscalers) Decorate(setting *api_model.KubeResourceCusto
 				Name:   h.HorizontalPodAutoscalers[i].Name,
 				Labels: labels,
 			}
-			h.HorizontalPodAutoscalers[i].Status = autosaclingv1.HorizontalPodAutoscalerStatus{}
+			h.HorizontalPodAutoscalers[i].Status = autoscalingv1.HorizontalPodAutoscalerStatus{}
 		}
 		if setting != nil {
 			if setting.Namespace != "" {

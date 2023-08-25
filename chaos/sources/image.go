@@ -46,6 +46,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker/config"
 	"github.com/eapache/channels"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
@@ -657,10 +658,16 @@ func CheckIfImageExists(containerdClient *containerd.Client, image string) (imag
 // ImagesPullAndPush Used to process mirroring of non local components, example: builder, runner, /wt-mesh-data-panel
 // Deprecated: ImagesPullAndPush
 func ImagesPullAndPush(sourceImage, targetImage, username, password string, logger event.Logger) error {
-	var sock string
-	sock = os.Getenv("CONTAINERD_SOCK")
+	t, err := toml.LoadFile("/newetc/containerd/config.toml")
+	if err != nil {
+		return err
+	}
+	sock := t.Get("grpc.address").(string)
 	if sock == "" {
-		sock = "/run/containerd/containerd.sock"
+		sock = os.Getenv("CONTAINERD_SOCK")
+		if sock == "" {
+			sock = DefaultContainerdSock
+		}
 	}
 	containerdClient, err := containerd.New(sock)
 	if err != nil {

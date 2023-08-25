@@ -16,10 +16,10 @@ const (
 	ContainerRuntimeDocker = "docker"
 	// ContainerRuntimeContainerd containerd runtime
 	ContainerRuntimeContainerd = "containerd"
-	// RuntimeEndpointDocker docker runtime endpoint
-	RuntimeEndpointDocker = "/var/run/dockershim.sock"
-	// RuntimeEndpointContainerd containerd runtime endpoint
-	RuntimeEndpointContainerd = "/run/containerd/containerd.sock"
+	// DefaultDockerSock docker runtime endpoint
+	DefaultDockerSock = "/var/run/dockershim.sock"
+	// DefaultContainerdSock containerd runtime endpoint
+	DefaultContainerdSock = "/run/containerd/containerd.sock"
 )
 
 const (

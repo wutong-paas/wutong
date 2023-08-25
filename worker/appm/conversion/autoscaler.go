@@ -23,7 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,13 +52,13 @@ func TenantEnvServiceAutoscaler(as *v1.AppService, dbmanager db.Manager) error {
 	return nil
 }
 
-func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv2.HorizontalPodAutoscaler, error) {
+func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv1.HorizontalPodAutoscaler, error) {
 	xpaRules, err := dbmanager.TenantEnvServceAutoscalerRulesDao().ListEnableOnesByServiceID(as.ServiceID)
 	if err != nil {
 		return nil, err
 	}
 
-	var hpas []*autoscalingv2.HorizontalPodAutoscaler
+	var hpas []*autoscalingv1.HorizontalPodAutoscaler
 	for _, rule := range xpaRules {
 		metrics, err := dbmanager.TenantEnvServceAutoscalerRuleMetricsDao().ListByRuleID(rule.RuleID)
 		if err != nil {
@@ -85,36 +85,38 @@ func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv2.Horizont
 	return hpas, nil
 }
 
-func createResourceMetrics(metric *model.TenantEnvServiceAutoscalerRuleMetrics) autoscalingv2.MetricSpec {
-	ms := autoscalingv2.MetricSpec{
-		Type: autoscalingv2.ResourceMetricSourceType,
-		Resource: &autoscalingv2.ResourceMetricSource{
+func createResourceMetrics(metric *model.TenantEnvServiceAutoscalerRuleMetrics) autoscalingv1.MetricSpec {
+	ms := autoscalingv1.MetricSpec{
+		Type: autoscalingv1.ResourceMetricSourceType,
+		Resource: &autoscalingv1.ResourceMetricSource{
 			Name: str2ResourceName[metric.MetricsName],
 		},
 	}
 
 	if metric.MetricTargetType == "utilization" {
 		value := int32(metric.MetricTargetValue)
-		ms.Resource.Target = autoscalingv2.MetricTarget{
-			Type:               autoscalingv2.UtilizationMetricType,
-			AverageUtilization: &value,
-		}
+		ms.Resource.TargetAverageUtilization = &value
+		// ms.Resource.Target = autoscalingv1.MetricTarget{
+		// 	Type:               autoscalingv1.UtilizationMetricType,
+		// 	AverageUtilization: &value,
+		// }
 	}
 	if metric.MetricTargetType == "average_value" {
-		ms.Resource.Target.Type = autoscalingv2.AverageValueMetricType
-		if metric.MetricsName == "cpu" {
-			ms.Resource.Target.AverageValue = resource.NewMilliQuantity(int64(metric.MetricTargetValue), resource.DecimalSI)
-		}
-		if metric.MetricsName == "memory" {
-			ms.Resource.Target.AverageValue = resource.NewQuantity(int64(metric.MetricTargetValue*1024*1024), resource.BinarySI)
-		}
+		ms.Resource.TargetAverageValue = resource.NewMilliQuantity(int64(metric.MetricTargetValue), resource.DecimalSI)
+		// ms.Resource.Target.Type = autoscalingv1.AverageValueMetricType
+		// if metric.MetricsName == "cpu" {
+		// 	ms.Resource.Target.AverageValue = resource.NewMilliQuantity(int64(metric.MetricTargetValue), resource.DecimalSI)
+		// }
+		// if metric.MetricsName == "memory" {
+		// 	ms.Resource.Target.AverageValue = resource.NewQuantity(int64(metric.MetricTargetValue*1024*1024), resource.BinarySI)
+		// }
 	}
 
 	return ms
 }
 
-func newHPA(namespace, kind, name string, labels map[string]string, rule *model.TenantEnvServiceAutoscalerRules, metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) *autoscalingv2.HorizontalPodAutoscaler {
-	hpa := &autoscalingv2.HorizontalPodAutoscaler{
+func newHPA(namespace, kind, name string, labels map[string]string, rule *model.TenantEnvServiceAutoscalerRules, metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) *autoscalingv1.HorizontalPodAutoscaler {
+	hpa := &autoscalingv1.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rule.RuleID,
 			Namespace: namespace,
@@ -122,33 +124,33 @@ func newHPA(namespace, kind, name string, labels map[string]string, rule *model.
 		},
 	}
 
-	spec := autoscalingv2.HorizontalPodAutoscalerSpec{
+	spec := autoscalingv1.HorizontalPodAutoscalerSpec{
 		MinReplicas: util.Int32(int32(rule.MinReplicas)),
 		MaxReplicas: int32(rule.MaxReplicas),
-		ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
+		ScaleTargetRef: autoscalingv1.CrossVersionObjectReference{
 			Kind:       kind,
 			Name:       name,
 			APIVersion: "apps/v1",
 		},
 	}
 
-	for _, metric := range metrics {
-		if metric.MetricsType != "resource_metrics" {
-			logrus.Warningf("rule id:  %s; unsupported metric type: %s", rule.RuleID, metric.MetricsType)
-			continue
-		}
-		if metric.MetricTargetValue <= 0 {
-			// TODO: If the target value of cpu and memory is 0, it will not take effect.
-			// TODO: The target value of the custom indicator can be 0.
-			continue
-		}
+	// for _, metric := range metrics {
+	// 	if metric.MetricsType != "resource_metrics" {
+	// 		logrus.Warningf("rule id:  %s; unsupported metric type: %s", rule.RuleID, metric.MetricsType)
+	// 		continue
+	// 	}
+	// 	if metric.MetricTargetValue <= 0 {
+	// 		// TODO: If the target value of cpu and memory is 0, it will not take effect.
+	// 		// TODO: The target value of the custom indicator can be 0.
+	// 		continue
+	// 	}
 
-		ms := createResourceMetrics(metric)
-		spec.Metrics = append(spec.Metrics, ms)
-	}
-	if len(spec.Metrics) == 0 {
-		return nil
-	}
+	// 	ms := createResourceMetrics(metric)
+	// 	spec.Metrics = append(spec.Metrics, ms)
+	// }
+	// if len(spec.Metrics) == 0 {
+	// 	return nil
+	// }
 	hpa.Spec = spec
 
 	return hpa

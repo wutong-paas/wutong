@@ -29,7 +29,7 @@ import (
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/util/k8s"
 	v1 "k8s.io/api/apps/v1"
-	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	betav1 "k8s.io/api/networking/v1beta1"
@@ -152,8 +152,8 @@ type AppService struct {
 	statefulset      *v1.StatefulSet
 	deployment       *v1.Deployment
 	workload         client.Object
-	hpas             []*autoscalingv2.HorizontalPodAutoscaler
-	delHPAs          []*autoscalingv2.HorizontalPodAutoscaler
+	hpas             []*autoscalingv1.HorizontalPodAutoscaler
+	delHPAs          []*autoscalingv1.HorizontalPodAutoscaler
 	replicasets      []*v1.ReplicaSet
 	services         []*corev1.Service
 	delServices      []*corev1.Service
@@ -791,12 +791,12 @@ func (a *AppService) DeleteClaim(claim *corev1.PersistentVolumeClaim) {
 }
 
 // SetHPAs -
-func (a *AppService) SetHPAs(hpas []*autoscalingv2.HorizontalPodAutoscaler) {
+func (a *AppService) SetHPAs(hpas []*autoscalingv1.HorizontalPodAutoscaler) {
 	a.hpas = hpas
 }
 
 // SetHPA -
-func (a *AppService) SetHPA(hpa *autoscalingv2.HorizontalPodAutoscaler) {
+func (a *AppService) SetHPA(hpa *autoscalingv1.HorizontalPodAutoscaler) {
 	if len(a.hpas) > 0 {
 		for i, old := range a.hpas {
 			if old.GetName() == hpa.GetName() {
@@ -841,17 +841,17 @@ func (a *AppService) GetServiceMonitors(canCopy bool) []*monitorv1.ServiceMonito
 }
 
 // GetHPAs -
-func (a *AppService) GetHPAs() []*autoscalingv2.HorizontalPodAutoscaler {
+func (a *AppService) GetHPAs() []*autoscalingv1.HorizontalPodAutoscaler {
 	return a.hpas
 }
 
 // GetDelHPAs -
-func (a *AppService) GetDelHPAs() []*autoscalingv2.HorizontalPodAutoscaler {
+func (a *AppService) GetDelHPAs() []*autoscalingv1.HorizontalPodAutoscaler {
 	return a.delHPAs
 }
 
 // DelHPA -
-func (a *AppService) DelHPA(hpa *autoscalingv2.HorizontalPodAutoscaler) {
+func (a *AppService) DelHPA(hpa *autoscalingv1.HorizontalPodAutoscaler) {
 	if len(a.hpas) == 0 {
 		return
 	}

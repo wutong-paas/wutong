@@ -104,7 +104,7 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.CacheMode, "cache-mode", "sharefile", "volume cache mount type, can be hostpath and sharefile, default is sharefile, which mount using pvc")
 	fs.StringVar(&a.CachePath, "cache-path", "/cache", "volume cache mount path, when cache-mode using hostpath, default path is /cache")
 	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
-	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.RuntimeEndpointDocker, "container runtime endpoint")
+	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.DefaultDockerSock, "container runtime endpoint")
 }
 
 // SetLog 设置log

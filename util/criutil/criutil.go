@@ -12,17 +12,8 @@ import (
 	"k8s.io/kubernetes/pkg/kubelet/util"
 )
 
-const (
-	defaultTimeout = 2 * time.Second
-	// use same message size as cri remote client in kubelet.
-	maxMsgSize = 1024 * 1024 * 16
-)
-
-var RuntimeEndpoint string
-var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///run/docker/containerd/containerd.sock", "unix:///run/containerd/containerd.sock", "unix:///run/crio/crio.sock", "unix:///var/run/cri-dockerd.sock"}
-
 func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn, error) {
-	if endPoints == nil || len(endPoints) == 0 {
+	if len(endPoints) == 0 {
 		return nil, fmt.Errorf("endpoint is not set")
 	}
 	endPointsLen := len(endPoints)
