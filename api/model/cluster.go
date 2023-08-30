@@ -1,14 +1,11 @@
 package model
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/wutong-paas/wutong/db"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -64,47 +61,19 @@ func ClusterEventFrom(event *corev1.Event, clientset *kubernetes.Clientset) *Clu
 	return nil
 }
 
-func podInfo(pod *corev1.Pod) (string, bool) {
-	tenantEnvID, ok := pod.Labels["tenant_env_id"]
-	if !ok {
-		return "", false
-	}
-	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
-	if err != nil {
-		return "", false
-	}
-	serviceID, ok := pod.Labels["service_id"]
-	if !ok {
-		return "", false
-	}
-	servie, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
-	if err != nil {
-		return "", false
-	}
-	return fmt.Sprintf("%s/%s", tenantEnv.Name, servie.K8sComponentName), true
-}
-
 func podEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
-	pod, err := clientset.CoreV1().Pods(event.InvolvedObject.Namespace).Get(context.TODO(), event.InvolvedObject.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil
-	}
-	podInfo, ok := podInfo(pod)
-	if !ok {
-		return nil
-	}
 	var message string
 	switch event.Reason {
 	case "FailedKillPod":
-		message = fmt.Sprintf("容器[%s]退出失败", podInfo)
+		message = fmt.Sprintf("容器[%s/%s]退出失败", event.InvolvedObject.Namespace, event.InvolvedObject.Name)
 	case "BackOff":
-		message = fmt.Sprintf("容器[%s]意外退出", podInfo)
-	case "FailedMount":
-		message = fmt.Sprintf("容器[%s]挂载错误：", podInfo)
+		message = fmt.Sprintf("容器[%s/%s]意外退出", event.InvolvedObject.Namespace, event.InvolvedObject.Name)
+	case "FailedMount", "FailedAttachVolume":
+		message = fmt.Sprintf("容器[%s/%s]挂载错误", event.InvolvedObject.Namespace, event.InvolvedObject.Name)
 	case "Unhealthy":
-		message = fmt.Sprintf("容器[%s]未通过健康检查", podInfo)
+		message = fmt.Sprintf("容器[%s/%s]未通过健康检查", event.InvolvedObject.Namespace, event.InvolvedObject.Name)
 	case "FailedScheduling":
-		message = fmt.Sprintf("容器[%s]调度失败", podInfo)
+		message = fmt.Sprintf("容器[%s/%s]调度失败", event.InvolvedObject.Namespace, event.InvolvedObject.Name)
 	default:
 		return nil
 	}
