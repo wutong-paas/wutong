@@ -12,7 +12,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dockercli "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 var handleAction = []string{CONTAINER_ACTION_CREATE, CONTAINER_ACTION_START, CONTAINER_ACTION_STOP, CONTAINER_ACTION_DIE, CONTAINER_ACTION_DESTROY}

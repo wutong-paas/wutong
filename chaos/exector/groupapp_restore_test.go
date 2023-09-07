@@ -69,7 +69,7 @@ func TestModify(t *testing.T) {
 	appSnapshot := AppSnapshot{
 		Services: appSnapshots,
 	}
-	b.modify(&appSnapshot)
+	b.modify(&appSnapshot, false)
 	re, _ := ffjson.Marshal(appSnapshot)
 	t.Log(string(re))
 }

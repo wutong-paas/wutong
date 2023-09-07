@@ -108,4 +108,10 @@ type ServiceHandler interface {
 	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantEnvServices, podName, containerName string, follow bool) error
 
 	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
+	Backup(tenantEnvID, serviceID, desc string) error
+	DeleteBackup(backupID string) error
+	Restore(tenantEnvID, serviceID, BackupID string) error
+	DeleteRestore(restoreID string) error
+	BackupRecords(tenantEnvID, serviceID string) ([]*api_model.BackupRecord, error)
+	RestoreRecords(tenantEnvID, serviceID string) ([]*api_model.RestoreRecord, error)
 }

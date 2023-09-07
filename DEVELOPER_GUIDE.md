@@ -11,7 +11,7 @@
 基础工具：
 
 - docker
-- golang 1.17+
+- golang 1.20+
 
 **linux/amd64 环境**
 

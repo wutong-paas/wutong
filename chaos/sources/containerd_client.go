@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/wutong-paas/wutong/util/criutil"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 type containerdClientFactory struct{}

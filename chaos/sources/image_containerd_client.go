@@ -31,7 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/util/criutil"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 type containerdImageCliFactory struct{}

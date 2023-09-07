@@ -159,11 +159,11 @@ func (b *BackupAPPRestore) Run(timeout time.Duration) error {
 	b.Logger.Info("读取备份元数据完成", map[string]string{"step": "restore_builder", "status": "running"})
 	logrus.Infof("backup id: %s; successfully read metadata.", b.BackupID)
 	//modify the metadata
-	if err := b.modify(&appSnapshot); err != nil {
+	if err := b.modify(&appSnapshot, backup.WithImageData); err != nil {
 		return err
 	}
 	//restore metadata to db
-	if err := b.restoreMetadata(&appSnapshot); err != nil {
+	if err := b.restoreMetadata(&appSnapshot, backup.WithImageData); err != nil {
 		return err
 	}
 	b.Logger.Info("恢复备份元数据完成", map[string]string{"step": "restore_builder", "status": "success"})
@@ -426,12 +426,14 @@ func (b *BackupAPPRestore) clear() {
 	//clear cache data
 	os.RemoveAll(b.cacheDir)
 }
+
 func getNewImageName(imageName string) string {
 	image := parser.ParseImageName(imageName)
 	newImageName := fmt.Sprintf("%s/%s:%s", chaos.REGISTRYDOMAIN, image.GetSimpleName(), image.GetTag())
 	return newImageName
 }
-func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
+
+func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot, withImageData bool) error {
 	for _, app := range appSnapshot.Services {
 		oldServiceID := app.ServiceID
 		//compatible component type
@@ -488,7 +490,7 @@ func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
 			a.ServiceID = newServiceID
 		}
 		for _, a := range app.Versions {
-			if a.DeliveredType == "image" {
+			if a.DeliveredType == "image" && withImageData {
 				a.ImageName = getNewImageName(a.ImageName)
 				a.DeliveredPath = getNewImageName(a.DeliveredPath)
 			}
@@ -539,7 +541,7 @@ func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot) error {
 
 	return nil
 }
-func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
+func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot, withImageData bool) error {
 	tx := db.GetManager().Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -683,7 +685,10 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot) error {
 	}
 	for _, p := range appSnapshot.PluginBuildVersions {
 		p.ID = 0
-		p.BuildLocalImage = getNewImageName(p.BuildLocalImage)
+
+		if withImageData {
+			p.BuildLocalImage = getNewImageName(p.BuildLocalImage)
+		}
 		if err := db.GetManager().TenantEnvPluginBuildVersionDaoTransactions(tx).AddModel(p); err != nil {
 			if err == errors.ErrRecordAlreadyExist {
 				continue

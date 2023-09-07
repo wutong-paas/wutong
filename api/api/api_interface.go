@@ -94,6 +94,12 @@ type ServiceInterface interface {
 	DeleteServiceMonitors(w http.ResponseWriter, r *http.Request)
 	UpdateServiceMonitors(w http.ResponseWriter, r *http.Request)
 	GetServiceKubeResources(w http.ResponseWriter, r *http.Request)
+	Backup(w http.ResponseWriter, r *http.Request)
+	DeleteBackup(w http.ResponseWriter, r *http.Request)
+	Restore(w http.ResponseWriter, r *http.Request)
+	DeleteRestore(w http.ResponseWriter, r *http.Request)
+	BackupRecords(w http.ResponseWriter, r *http.Request)
+	RestoreRecords(w http.ResponseWriter, r *http.Request)
 }
 
 // TenantEnvInterfaceWithV1 funcs for both v2 and v1

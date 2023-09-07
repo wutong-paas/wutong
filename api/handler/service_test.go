@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestABCService(t *testing.T) {
@@ -111,4 +112,13 @@ func TestGetServicesDisk(t *testing.T) {
 	}
 	disk := GetServicesDiskDeprecated([]string{"ef75e1d5e3df412a8af06129dae42869"}, prometheusCli)
 	t.Log(disk)
+}
+
+func TestMetav1Time(t *testing.T) {
+	var time1 *metav1.Time
+	if time1 == nil {
+		t.Log("time1 is nil")
+	}
+	var time2 = convertMetaV1Time(time1)
+	t.Log(time1, time2)
 }

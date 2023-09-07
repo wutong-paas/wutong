@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 const (

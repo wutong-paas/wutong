@@ -32,7 +32,7 @@ import (
 	"github.com/docker/cli/templates"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/node/option"
-	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	// Register grpc event types
 	_ "github.com/containerd/containerd/api/events"

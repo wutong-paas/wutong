@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine
+FROM golang:1.20-alpine
 
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && apk --no-cache add pkgconfig gcc musl-dev
 
@@ -11,6 +11,6 @@ RUN cp /opt/libzmq/include/* /usr/include/ && cp -r /opt/libzmq/share/* /usr/sha
 
 WORKDIR /go
 
-    
+
 
 

@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/api/controller"
 	"github.com/wutong-paas/wutong/api/db"
 	"github.com/wutong-paas/wutong/api/discover"
@@ -38,6 +39,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/client"
+	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -90,6 +92,8 @@ func Run(s *option.APIServer) error {
 	if err != nil {
 		return errors.WithMessage(err, "create k8s client")
 	}
+	apiextClient := apiextclient.NewForConfigOrDie(config)
+	veleroClient, _ := veleroversioned.NewForConfig(config)
 
 	if err := event.NewManager(event.EventConfig{
 		EventLogServers: s.Config.EventLogServers,
@@ -120,7 +124,7 @@ func Run(s *option.APIServer) error {
 	//初始化 middleware
 	handler.InitProxy(s.Config)
 	//创建handle
-	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, config, clientset, wutongClient, k8sClient); err != nil {
+	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, config, clientset, wutongClient, k8sClient, apiextClient, veleroClient); err != nil {
 		logrus.Errorf("init all handle error, %v", err)
 		return err
 	}

@@ -21,6 +21,7 @@ package handler
 import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
+	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_db "github.com/wutong-paas/wutong/api/db"
 	"github.com/wutong-paas/wutong/api/handler/group"
@@ -30,6 +31,7 @@ import (
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	"github.com/wutong-paas/wutong/worker/client"
+	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,6 +46,8 @@ func InitHandle(conf option.Config,
 	kubeClient *kubernetes.Clientset,
 	wutongClient versioned.Interface,
 	k8sClient k8sclient.Client,
+	apiextClient apiextclient.Interface,
+	veleroClient veleroversioned.Interface,
 ) error {
 	mq := api_db.MQManager{
 		EtcdClientArgs: etcdClientArgs,
@@ -62,7 +66,7 @@ func InitHandle(conf option.Config,
 		return err
 	}
 	dbmanager := db.GetManager()
-	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient)
+	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, apiextClient, veleroClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
 	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)

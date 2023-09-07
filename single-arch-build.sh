@@ -6,7 +6,7 @@ WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
 GOARCH=${BUILD_ARCH:-'amd64'}
 
-GO_VERSION=1.17
+GO_VERSION=1.20
 
 GOPROXY=${GOPROXY:-'https://goproxy.io'}
 

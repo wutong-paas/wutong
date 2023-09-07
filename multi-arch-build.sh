@@ -6,7 +6,7 @@ WUTONG_REGISTRY=${WUTONG_REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
 
-GO_VERSION=1.17
+GO_VERSION=1.20
 
 GOPROXY=${GOPROXY:-'https://goproxy.io'}
 
@@ -44,7 +44,7 @@ build::binary() {
 	CGO_ENABLED=0
 	if [ "$1" = "eventlog" ]; then
 		CGO_ENABLED=1
-		build_image="swr.cn-southwest-2.myhuaweicloud.com/wutong/eventlog-builder:v1"
+		build_image="swr.cn-southwest-2.myhuaweicloud.com/wutong/eventlog-builder:golang${GO_VERSION}"
 	fi
 	if [ "$1" = "eventlog" ]; then
 		docker run --platform=linux/amd64 --rm -e CGO_ENABLED=${CGO_ENABLED} -e GOPROXY=${GOPROXY} -e GOOS=linux -e GOARCH=amd64 -v "${go_mod_cache}":/go/pkg/mod -v "$(pwd)":${WORK_DIR} -w ${WORK_DIR} ${build_image} go build -ldflags "${build_args}" -o "${AMD64_OUTPATH}" ${build_dir}

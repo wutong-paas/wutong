@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/util/constants"
 
 	"github.com/coreos/etcd/clientv3"
@@ -37,6 +38,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
@@ -57,6 +59,7 @@ import (
 	"github.com/wutong-paas/wutong/worker/server"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	corev1 "k8s.io/api/core/v1"
+	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -77,6 +80,8 @@ type ServiceAction struct {
 	conf          option.Config
 	wutongClient  versioned.Interface
 	kubeClient    kubernetes.Interface
+	apiextClient  apiextclient.Interface
+	veleroClient  veleroversioned.Interface
 }
 
 type dCfg struct {
@@ -94,7 +99,9 @@ func CreateManager(conf option.Config,
 	statusCli *client.AppRuntimeSyncClient,
 	prometheusCli prometheus.Interface,
 	wutongClient versioned.Interface,
-	kubeClient kubernetes.Interface) *ServiceAction {
+	kubeClient kubernetes.Interface,
+	apiextClient apiextclient.Interface,
+	veleroClient veleroversioned.Interface) *ServiceAction {
 	return &ServiceAction{
 		MQClient:      mqClient,
 		EtcdCli:       etcdCli,
@@ -103,6 +110,8 @@ func CreateManager(conf option.Config,
 		prometheusCli: prometheusCli,
 		wutongClient:  wutongClient,
 		kubeClient:    kubeClient,
+		apiextClient:  apiextClient,
+		veleroClient:  veleroClient,
 	}
 }
 
@@ -3096,4 +3105,212 @@ func TransStatus(eStatus string) string {
 		return "已部署"
 	}
 	return ""
+}
+
+// Backup service resources and data
+func (s *ServiceAction) Backup(tenantEnvID, serviceID, desc string) error {
+	if kube.IsVeleroInstalled(s.apiextClient) {
+		return errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
+	}
+	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
+	if err != nil {
+		return errors.New("环境不存在！")
+	}
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
+	if err != nil {
+		return errors.New("组件不存在！")
+	}
+	app, err := db.GetManager().ApplicationDao().GetAppByID(service.AppID)
+	if err != nil {
+		return errors.New("应用不存在！")
+	}
+	selector := labels.SelectorFromSet(labels.Set{
+		"wutong.io/service_id": serviceID,
+	})
+
+	histories, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(selector)
+	if err != nil {
+		logrus.Error(err)
+		return errors.New("校验历史备份数据失败！")
+	}
+	for _, history := range histories {
+		if history.Status.Phase != "Completed" {
+			return errors.New("当前组件还存在未完成的备份任务！")
+		}
+	}
+	backup := &velerov1.Backup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-backup-%s", app.K8sApp+"-"+service.K8sComponentName, time.Now().Format("20060102150405")),
+			Namespace: "velero",
+			Labels: map[string]string{
+				"wutong.io/service_id":  serviceID,
+				"wutong.io/description": desc,
+			},
+		},
+		Spec: velerov1.BackupSpec{
+			CSISnapshotTimeout: metav1.Duration{Duration: 10 * time.Minute},
+			DefaultVolumesToFsBackup: func() *bool {
+				b := true
+				return &b
+			}(),
+			IncludedNamespaces: []string{tenantEnv.Namespace},
+			LabelSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"service_id": serviceID, // 梧桐组件的 Label
+				},
+			},
+			StorageLocation: "default",
+		},
+	}
+	_, err = s.veleroClient.VeleroV1().Backups("velero").Create(context.Background(), backup, metav1.CreateOptions{})
+	if err != nil {
+		logrus.Error(err)
+		return errors.New("创建备份任务失败！")
+	}
+	return nil
+}
+
+// DeleteBackup -
+func (s *ServiceAction) DeleteBackup(backupID string) error {
+	err := s.veleroClient.VeleroV1().Backups("velero").Delete(context.Background(), backupID, metav1.DeleteOptions{})
+	if err != nil {
+		logrus.Error(err)
+		return errors.New("删除备份历史失败！")
+	}
+	return nil
+}
+
+// Restore service resources and data from backup
+func (s *ServiceAction) Restore(tenantEnvID, serviceID, BackupID string) error {
+	if kube.IsVeleroInstalled(s.apiextClient) {
+		return errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
+	}
+	// tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
+	// if err != nil {
+	// 	return errors.New("环境不存在！")
+	// }
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
+	if err != nil {
+		return errors.New("组件不存在！")
+	}
+	app, err := db.GetManager().ApplicationDao().GetAppByID(service.AppID)
+	if err != nil {
+		return errors.New("应用不存在！")
+	}
+
+	// 1、TODO: 如果当前组件处于运行中，则先关闭组件
+
+	// 2、校验备份数据是否存在
+	backup, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).BackupLister.Backups("velero").Get(BackupID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return errors.New("备份数据不存在！")
+		}
+		return errors.New("获取备份数据失败！")
+	}
+
+	restore := &velerov1.Restore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-restore-%s", app.K8sApp+"-"+service.K8sComponentName, time.Now().Format("20060102150405")),
+			Namespace: "velero",
+			Labels:    backup.Labels,
+		},
+		Spec: velerov1.RestoreSpec{
+			BackupName: BackupID,
+			ExcludedResources: []string{
+				"nodes",
+				"events",
+				"events.events.k8s.io",
+				"backups.velero.io",
+				"restores.velero.io",
+				"resticrepositories.velero.io",
+				"csinodes.storage.k8s.io",
+				"volumeattachments.storage.k8s.io",
+				"backuprepositories.velero.io",
+			},
+		},
+	}
+
+	_, err = s.veleroClient.VeleroV1().Restores("velero").Create(context.Background(), restore, metav1.CreateOptions{})
+	if err != nil {
+		logrus.Error(err)
+		return errors.New("创建还原任务失败！")
+	}
+	return nil
+}
+
+// DeleteRestore -
+func (s *ServiceAction) DeleteRestore(restoreID string) error {
+	err := s.veleroClient.VeleroV1().Restores("velero").Delete(context.Background(), restoreID, metav1.DeleteOptions{})
+	if err != nil {
+		logrus.Error(err)
+		return errors.New("删除恢复历史失败！")
+	}
+	return nil
+}
+
+// BackupRecords get velero backup histories
+func (s *ServiceAction) BackupRecords(tenantEnvID, serviceID string) ([]*api_model.BackupRecord, error) {
+	if s.veleroClient == nil {
+		return nil, nil
+	}
+	var result []*api_model.BackupRecord
+	backups, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/service_id": serviceID,
+	}))
+	if err != nil {
+		return nil, errors.New("获取历史备份数据失败！")
+	}
+	for _, backup := range backups {
+		result = append(result, &api_model.BackupRecord{
+			BackupID:       backup.Name,
+			ServiceID:      serviceID,
+			Desc:           backup.Labels["wutong.io/description"],
+			Mode:           "velero",
+			CreatedAt:      convertMetaV1Time(backup.Status.StartTimestamp),
+			CompletedAt:    convertMetaV1Time(backup.Status.CompletionTimestamp),
+			Size:           "-",
+			CompletedItems: backup.Status.Progress.ItemsBackedUp,
+			TotalItems:     backup.Status.Progress.TotalItems,
+			Status:         string(backup.Status.Phase),
+			DownloadUrl:    "-",
+		})
+	}
+	return result, nil
+}
+
+// RestoreRecords get velero restore histories
+func (s *ServiceAction) RestoreRecords(tenantEnvID, serviceID string) ([]*api_model.RestoreRecord, error) {
+	if s.veleroClient == nil {
+		return nil, nil
+	}
+	var result []*api_model.RestoreRecord
+	restores, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).RestoreLister.Restores("velero").List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/service_id": serviceID,
+	}))
+	if err != nil {
+		return nil, errors.New("获取历史恢复数据失败！")
+	}
+	for _, restore := range restores {
+		result = append(result, &api_model.RestoreRecord{
+			RestoreID:      restore.Name,
+			BackupID:       restore.Spec.BackupName,
+			ServiceID:      serviceID,
+			Mode:           "velero",
+			CreatedAt:      convertMetaV1Time(restore.Status.StartTimestamp),
+			CompletedAt:    convertMetaV1Time(restore.Status.CompletionTimestamp),
+			Size:           "-",
+			CompletedItems: restore.Status.Progress.ItemsRestored,
+			TotalItems:     restore.Status.Progress.TotalItems,
+			Status:         string(restore.Status.Phase),
+		})
+	}
+	return result, nil
+}
+
+func convertMetaV1Time(t *metav1.Time) string {
+	if t == nil {
+		return "-"
+	}
+	return t.Format("2006-01-02 15:04:05")
 }
