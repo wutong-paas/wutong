@@ -1,11 +1,11 @@
 name: build
 
 env:
-  VERSION: v1.5.0
+  VERSION: v1.5.1
 
 on:
   push:
-    branches: [v1.5.0]
+    branches: [v1.5.1]
   workflow_dispatch:
 
 jobs:
