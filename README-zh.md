@@ -8,7 +8,6 @@
 
 | ![notification](./docs/bell-outline-badge.svg) What is NEW!                                                      |
 | ---------------------------------------------------------------------------------------------------------------- |
-| 2021 年 12 月 13 日 Wutong 5.5.0 发布 [查看发布文案](https://github.com/wutong-paas/wutong-docs/community/change/5.4.0-5.5.0?channel=github)        |
 
 ## Wutong 初识
 
@@ -121,7 +120,7 @@ Wutong 完成与龙芯、飞腾、麒麟操作系统等为代表的国产化计�
 
 ## 贡献
 
-参考 [贡献指南](https://github.com/wutong-paas/wutong/blob/V5.4/CONTRIBUTING.md) ，查看如何开发 Wutong 
+参考 [贡献指南](https://github.com/wutong-paas/wutong/blob/master/CONTRIBUTING.md) ，查看如何开发 Wutong
 
 ## License
 
