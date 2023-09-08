@@ -1,7 +1,6 @@
 #!/bin/bash
 set -o errexit
 WUTONG_REGISTRY=${WUTONG_REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'}
-# WUTONG_REGISTRY=swr.cn-southwest-2.myhuaweicloud.com/wutong
 
 base_items=(chaos eventlog gateway mesh-data-panel)
 

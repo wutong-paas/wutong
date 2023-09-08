@@ -51,7 +51,7 @@ func RunAsLeader(ctx context.Context, clientset kubernetes.Interface, namespace 
 		Identity:      identity,
 		EventRecorder: eventRecorder,
 	}
-	lock, err := resourcelock.New(resourcelock.ConfigMapsResourceLock, namespace, SanitizeDriverName(lockName), clientset.CoreV1(), clientset.CoordinationV1(), rlConfig)
+	lock, err := resourcelock.New(resourcelock.ConfigMapsLeasesResourceLock, namespace, SanitizeDriverName(lockName), clientset.CoreV1(), clientset.CoordinationV1(), rlConfig)
 	if err != nil {
 		logrus.Error(err)
 		os.Exit(1)
@@ -80,9 +80,9 @@ func RunAsLeader(ctx context.Context, clientset kubernetes.Interface, namespace 
 	leaderelection.RunOrDie(ctx, leaderConfig)
 }
 
-//SanitizeDriverName a DNS-1123 subdomain must consist of lower case alphanumeric characters,
+// SanitizeDriverName a DNS-1123 subdomain must consist of lower case alphanumeric characters,
 // '-' or '.', and must start and end with an alphanumeric character
-//(e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')
+// (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')
 func SanitizeDriverName(driver string) string {
 	re := regexp.MustCompile("[^a-z0-9-]")
 	name := re.ReplaceAllString(driver, "-")

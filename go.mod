@@ -1,6 +1,6 @@
 module github.com/wutong-paas/wutong
 
-go 1.20
+go 1.21
 
 require (
 	cuelang.org/go v0.2.2

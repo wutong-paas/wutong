@@ -6,7 +6,7 @@ WUTONG_REGISTRY=${WUTONG_REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
 
-GO_VERSION=1.20
+GO_VERSION=1.21
 
 GOPROXY=${GOPROXY:-'https://goproxy.io'}
 
