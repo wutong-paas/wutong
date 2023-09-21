@@ -24,6 +24,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	httputil "github.com/wutong-paas/wutong/util/http"
 
@@ -245,6 +246,16 @@ func (e *EventLogStruct) Events(w http.ResponseWriter, r *http.Request) {
 	for i := range list {
 		if list[i].EndTime != "" && len(list[i].EndTime) > 20 {
 			list[i].EndTime = strings.Replace(list[i].EndTime[0:19]+"+08:00", " ", "T", 1)
+		}
+		start, err := time.Parse(time.RFC3339, list[i].StartTime)
+		if err != nil {
+			logrus.Errorf("parse start time error, %v", err)
+			continue
+		}
+
+		// set timeout status if event is not end and start time is more than 2 minutes
+		if list[i].Status == "" && list[i].FinalStatus == "" && time.Since(start) > time.Second*160 {
+			list[i].FinalStatus = "timeout"
 		}
 	}
 	httputil.ReturnList(r, w, total, page, list)
