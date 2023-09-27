@@ -26,7 +26,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -3155,7 +3154,7 @@ func (s *ServiceAction) Backup(tenantEnvID, serviceID, desc string) error {
 	// 2、校验是否存在未完成的备份任务
 	histories, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(selector)
 	if err != nil {
-		logrus.Error(err)
+		logrus.Errorf("get velero backup history failed, error: %s", err.Error())
 		return errors.New("校验历史备份数据失败！")
 	}
 	for _, history := range histories {
@@ -3189,7 +3188,7 @@ func (s *ServiceAction) Backup(tenantEnvID, serviceID, desc string) error {
 	}
 	_, err = s.veleroClient.VeleroV1().Backups("velero").Create(context.Background(), backup, metav1.CreateOptions{})
 	if err != nil {
-		logrus.Error(err)
+		logrus.Errorf("create velero backup failed, error: %s", err.Error())
 		return errors.New("创建备份任务失败！")
 	}
 	return nil
@@ -3203,6 +3202,7 @@ func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, erro
 
 	backup, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").Get(backupID)
 	if err != nil {
+		logrus.Errorf("download backup data failed, error: %s", err.Error())
 		return nil, errors.New("获取备份失败！")
 	}
 
@@ -3225,7 +3225,8 @@ func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, erro
 	// useSSL := u.Scheme == "https"
 	// minioClient, err := minio.NewWithRegion(u.Host, accessKey, secretKey, useSSL, region)
 	// if err != nil {
-	// 	log.Fatalln(err)
+	// 	logrus.Errorf("download backup data failed, bucket: %s, object: %s, error: %s", veleroStatus.S3Bucket, object, err.Error())
+	// 	return nil, errors.New("下载备份数据失败！")
 	// }
 
 	// obj, err := minioClient.GetObject(bucket, object, minio.GetObjectOptions{})
@@ -3249,7 +3250,7 @@ func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, erro
 		DisableSSL:       util.Ptr(disableSSL),
 	})
 	if err != nil {
-		log.Println(err)
+		logrus.Errorf("download backup data failed, bucket: %s, object: %s, error: %s", veleroStatus.S3Bucket, object, err.Error())
 		return nil, errors.New("下载备份数据失败！")
 	}
 
@@ -3258,7 +3259,7 @@ func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, erro
 		Key:    util.Ptr(object),
 	})
 	if err != nil {
-		log.Println(err)
+		logrus.Errorf("download backup data failed, bucket: %s, object: %s, error: %s", veleroStatus.S3Bucket, object, err.Error())
 		return nil, errors.New("下载备份数据失败！")
 	}
 	defer out.Body.Close()
@@ -3281,11 +3282,12 @@ func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, erro
 		switch pvb.Spec.UploaderType {
 		case velerov1.BackupRepositoryTypeKopia:
 			// TODO:
+			logrus.Warningf("uploader type %s is not supported to download yet.", pvb.Spec.UploaderType)
 		case velerov1.BackupRepositoryTypeRestic:
 			dumpCmd := exec.Command("restic", "-r", pvb.Spec.RepoIdentifier, "--verbose", "dump", pvb.Status.SnapshotID, "/")
 			volumeData, err := dumpCmd.Output()
 			if err != nil {
-				log.Println("restic dump error:", err)
+				logrus.Warningf("restic dump error: %s", err.Error())
 				continue
 			}
 			if len(volumeData) > 0 {
@@ -3345,7 +3347,6 @@ func (s *ServiceAction) DeleteBackup(serviceID, backupID string) error {
 			BackupName: backupID,
 		},
 	}, metav1.CreateOptions{})
-
 	if err != nil {
 		return errors.New("创建删除备份请求失败！")
 	}
@@ -3419,7 +3420,6 @@ func (s *ServiceAction) Restore(tenantEnvID, serviceID, BackupID string) error {
 
 	_, err = s.veleroClient.VeleroV1().Restores("velero").Create(context.Background(), restore, metav1.CreateOptions{})
 	if err != nil {
-		logrus.Error(err)
 		return errors.New("创建还原任务失败！")
 	}
 	return nil
