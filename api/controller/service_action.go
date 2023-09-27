@@ -871,10 +871,27 @@ func (t *TenantEnvStruct) Backup(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
+// DownloadBackup
+func (t *TenantEnvStruct) DownloadBackup(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	backupID := chi.URLParam(r, "backup_id")
+	bytes, err := handler.GetServiceManager().DownloadBackup(serviceID, backupID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/gzip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", backupID))
+	w.Header().Set("Content-Length", strconv.Itoa(len(bytes)))
+	w.Write(bytes)
+}
+
 // DeleteBackup -
 func (t *TenantEnvStruct) DeleteBackup(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	backupID := chi.URLParam(r, "backup_id")
-	err := handler.GetServiceManager().DeleteBackup(backupID)
+	err := handler.GetServiceManager().DeleteBackup(serviceID, backupID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -903,8 +920,9 @@ func (t *TenantEnvStruct) Restore(w http.ResponseWriter, r *http.Request) {
 
 // DeleteRestore -
 func (t *TenantEnvStruct) DeleteRestore(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	restoreID := chi.URLParam(r, "restore_id")
-	err := handler.GetServiceManager().DeleteRestore(restoreID)
+	err := handler.GetServiceManager().DeleteRestore(serviceID, restoreID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return

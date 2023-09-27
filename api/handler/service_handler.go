@@ -109,9 +109,10 @@ type ServiceHandler interface {
 
 	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
 	Backup(tenantEnvID, serviceID, desc string) error
-	DeleteBackup(backupID string) error
+	DownloadBackup(serviceID, backupID string) ([]byte, error)
+	DeleteBackup(serviceID, backupID string) error
 	Restore(tenantEnvID, serviceID, BackupID string) error
-	DeleteRestore(restoreID string) error
+	DeleteRestore(serviceID, restoreID string) error
 	BackupRecords(tenantEnvID, serviceID string) ([]*api_model.BackupRecord, error)
 	RestoreRecords(tenantEnvID, serviceID string) ([]*api_model.RestoreRecord, error)
 }

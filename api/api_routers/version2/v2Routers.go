@@ -325,8 +325,9 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Get("/kube-resources", controller.GetManager().GetServiceKubeResources)
 
 	r.Post("/backup", controller.GetManager().Backup)
-	r.Delete("/backup/{backup_id}", controller.GetManager().DeleteBackup)
+	r.Get("/backup/{backup_id}/download", controller.GetManager().DownloadBackup)
 	r.Post("/restore", controller.GetManager().Restore)
+	r.Delete("/backup/{backup_id}", controller.GetManager().DeleteBackup)
 	r.Delete("/restore/{restore_id}", controller.GetManager().DeleteRestore)
 	r.Get("/backup/records", controller.GetManager().BackupRecords)
 	r.Get("/restore/records", controller.GetManager().RestoreRecords)

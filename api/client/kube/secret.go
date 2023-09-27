@@ -19,7 +19,9 @@ func (s *Secrets) SetClientset(clientset kubernetes.Interface) {
 }
 
 func (s *Secrets) Migrate(namespace string, seletcor labels.Selector) {
-	secrets, err := GetCachedResources(s).SecretLister.Secrets(namespace).List(labels.SelectorFromSet(wutongSelectorLabels))
+	secrets, err := GetCachedResources(s).SecretLister.Secrets(namespace).List(labels.SelectorFromSet(labels.Set{
+		"creator": "Wutong",
+	}))
 	if err == nil {
 		s.Secrets = secrets
 	}

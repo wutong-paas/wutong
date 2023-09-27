@@ -95,6 +95,7 @@ type ServiceInterface interface {
 	UpdateServiceMonitors(w http.ResponseWriter, r *http.Request)
 	GetServiceKubeResources(w http.ResponseWriter, r *http.Request)
 	Backup(w http.ResponseWriter, r *http.Request)
+	DownloadBackup(w http.ResponseWriter, r *http.Request)
 	DeleteBackup(w http.ResponseWriter, r *http.Request)
 	Restore(w http.ResponseWriter, r *http.Request)
 	DeleteRestore(w http.ResponseWriter, r *http.Request)

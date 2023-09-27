@@ -281,10 +281,10 @@ type BackupRecord struct {
 	CreatedAt      string `json:"created_at"`
 	CompletedAt    string `json:"completed_at"`
 	Size           string `json:"size"`
+	ProgressRate   string `json:"progress_rate"`
 	CompletedItems int    `json:"completed_items"`
 	TotalItems     int    `json:"total_items"`
 	Status         string `json:"status"`
-	DownloadUrl    string `json:"download_url"`
 }
 
 type RestoreRecord struct {
@@ -295,6 +295,7 @@ type RestoreRecord struct {
 	CreatedAt      string `json:"created_at"`
 	CompletedAt    string `json:"completed_at"`
 	Size           string `json:"size"`
+	ProgressRate   string `json:"progress_rate"`
 	CompletedItems int    `json:"completed_items"`
 	TotalItems     int    `json:"total_items"`
 	Status         string `json:"status"`

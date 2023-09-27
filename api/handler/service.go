@@ -19,16 +19,26 @@
 package handler
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/dustin/go-humanize"
 	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/util/constants"
 
@@ -42,7 +52,7 @@ import (
 	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/api/util"
+	apiutil "github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	"github.com/wutong-paas/wutong/chaos/parser"
 	"github.com/wutong-paas/wutong/cmd/api/option"
@@ -52,7 +62,7 @@ import (
 	"github.com/wutong-paas/wutong/event"
 	gclient "github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
-	core_util "github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util"
 	typesv1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/client"
 	"github.com/wutong-paas/wutong/worker/discover/model"
@@ -679,7 +689,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				case dbmodel.LocalVolumeType.String():
 					if !dbmodel.ServiceType(sc.ExtendMethod).IsState() {
 						tx.Rollback()
-						return util.CreateAPIHandleError(400, fmt.Errorf("local volume type only support state component"))
+						return apiutil.CreateAPIHandleError(400, fmt.Errorf("local volume type only support state component"))
 					}
 					v.HostPath = fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", localPath, sc.TenantEnvID, ts.ServiceID, volumn.VolumePath)
 				case dbmodel.ConfigFileVolumeType.String(), dbmodel.MemoryFSVolumeType.String():
@@ -687,7 +697,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				default:
 					if !dbmodel.ServiceType(sc.ExtendMethod).IsState() {
 						tx.Rollback()
-						return util.CreateAPIHandleError(400, fmt.Errorf("custom volume type only support state component"))
+						return apiutil.CreateAPIHandleError(400, fmt.Errorf("custom volume type only support state component"))
 					}
 				}
 			}
@@ -707,7 +717,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				}
 				if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).AddModel(cf); err != nil {
 					tx.Rollback()
-					return util.CreateAPIHandleErrorFromDBError("error creating config file", err)
+					return apiutil.CreateAPIHandleErrorFromDBError("error creating config file", err)
 				}
 			}
 		}
@@ -777,7 +787,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 			for _, o := range sc.Endpoints.Static {
 				ep := &dbmodel.Endpoint{
 					ServiceID: sc.ServiceID,
-					UUID:      core_util.NewUUID(),
+					UUID:      util.NewUUID(),
 				}
 				address := o
 				port := 0
@@ -861,10 +871,10 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	labelModel := dbmodel.TenantEnvServiceLable{
 		ServiceID:  ts.ServiceID,
 		LabelKey:   dbmodel.LabelKeyServiceType,
-		LabelValue: core_util.StatelessServiceType,
+		LabelValue: util.StatelessServiceType,
 	}
 	if ts.IsState() {
-		labelModel.LabelValue = core_util.StatefulServiceType
+		labelModel.LabelValue = util.StatefulServiceType
 	}
 	if err := db.GetManager().TenantEnvServiceLabelDaoTransactions(tx).AddModel(&labelModel); err != nil {
 		tx.Rollback()
@@ -1067,7 +1077,7 @@ func (s *ServiceAction) GetPagedTenantEnvRes(offset, len int) ([]*api_model.Tena
 // GetTenantEnvRes get pagedTenantEnvServiceRes(s)
 func (s *ServiceAction) GetTenantEnvRes(uuid string) (*api_model.TenantEnvResource, error) {
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
-		defer core_util.Elapsed("[ServiceAction] get tenant env resource")()
+		defer util.Elapsed("[ServiceAction] get tenant env resource")()
 	}
 
 	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(uuid)
@@ -1116,7 +1126,7 @@ func (s *ServiceAction) GetTenantEnvRes(uuid string) (*api_model.TenantEnvResour
 // // GetTenantEnvMemoryCPU get pagedTenantEnvServiceRes(s)
 // func (s *ServiceAction) GetAllocableResources(tenantEnvID string) (*api_model.TenantEnvResource, error) {
 // 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
-// 		defer core_util.Elapsed("[ServiceAction] get allocable resources")()
+// 		defer util.Elapsed("[ServiceAction] get allocable resources")()
 // 	}
 
 // 	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
@@ -1149,7 +1159,7 @@ func (s *ServiceAction) GetTenantEnvRes(uuid string) (*api_model.TenantEnvResour
 // Deprecated
 func GetServicesDiskDeprecated(ids []string, prometheusCli prometheus.Interface) map[string]float64 {
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
-		defer core_util.Elapsed("[GetServicesDiskDeprecated] get tenant env resource")()
+		defer util.Elapsed("[GetServicesDiskDeprecated] get tenant env resource")()
 	}
 
 	result := make(map[string]float64)
@@ -1660,7 +1670,7 @@ func (s *ServiceAction) PortInner(tenantEnvName, serviceID, operation string, po
 }
 
 // VolumnVar var volumn
-func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnvID, fileContent, action string) *util.APIHandleError {
+func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnvID, fileContent, action string) *apiutil.APIHandleError {
 	localPath := os.Getenv("LOCAL_DATA_PATH")
 	sharePath := os.Getenv("SHARE_DATA_PATH")
 	if localPath == "" {
@@ -1682,16 +1692,16 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 			case dbmodel.LocalVolumeType.String():
 				serviceInfo, err := db.GetManager().TenantEnvServiceDao().GetServiceTypeByID(tsv.ServiceID)
 				if err != nil {
-					return util.CreateAPIHandleErrorFromDBError("service type", err)
+					return apiutil.CreateAPIHandleErrorFromDBError("service type", err)
 				}
 				// local volume just only support state component
 				if serviceInfo == nil || !serviceInfo.IsState() {
-					return util.CreateAPIHandleError(400, fmt.Errorf("应用类型为'无状态'.不支持本地存储"))
+					return apiutil.CreateAPIHandleError(400, fmt.Errorf("应用类型为'无状态'.不支持本地存储"))
 				}
 				tsv.HostPath = fmt.Sprintf("%s/tenantEnv/%s/service/%s%s", localPath, tenantEnvID, tsv.ServiceID, tsv.VolumePath)
 			}
 		}
-		util.SetVolumeDefaultValue(tsv)
+		apiutil.SetVolumeDefaultValue(tsv)
 		// begin transaction
 		tx := db.GetManager().Begin()
 		defer func() {
@@ -1702,7 +1712,7 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 		}()
 		if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).AddModel(tsv); err != nil {
 			tx.Rollback()
-			return util.CreateAPIHandleErrorFromDBError("add volume", err)
+			return apiutil.CreateAPIHandleErrorFromDBError("add volume", err)
 		}
 		if fileContent != "" {
 			cf := &dbmodel.TenantEnvServiceConfigFile{
@@ -1712,13 +1722,13 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 			}
 			if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).AddModel(cf); err != nil {
 				tx.Rollback()
-				return util.CreateAPIHandleErrorFromDBError("error creating config file", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("error creating config file", err)
 			}
 		}
 		// end transaction
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
-			return util.CreateAPIHandleErrorFromDBError("error ending transaction", err)
+			return apiutil.CreateAPIHandleErrorFromDBError("error ending transaction", err)
 		}
 	case "delete":
 		// begin transaction
@@ -1733,12 +1743,12 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 			volume, err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).GetVolumeByServiceIDAndName(tsv.ServiceID, tsv.VolumeName)
 			if err != nil {
 				tx.Rollback()
-				return util.CreateAPIHandleErrorFromDBError("find volume", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("find volume", err)
 			}
 
 			if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).DeleteModel(tsv.ServiceID, tsv.VolumeName); err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 				tx.Rollback()
-				return util.CreateAPIHandleErrorFromDBError("delete volume", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("delete volume", err)
 			}
 
 			err = s.MQClient.SendBuilderTopic(gclient.TaskStruct{
@@ -1754,22 +1764,22 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 			if err != nil {
 				logrus.Errorf("send 'volume_gc' task: %v", err)
 				tx.Rollback()
-				return util.CreateAPIHandleErrorFromDBError("send 'volume_gc' task", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("send 'volume_gc' task", err)
 			}
 		} else {
 			if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).DeleteByServiceIDAndVolumePath(tsv.ServiceID, tsv.VolumePath); err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 				tx.Rollback()
-				return util.CreateAPIHandleErrorFromDBError("delete volume", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("delete volume", err)
 			}
 		}
 		if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DelByVolumeID(tsv.ServiceID, tsv.VolumeName); err != nil {
 			tx.Rollback()
-			return util.CreateAPIHandleErrorFromDBError("error deleting config files", err)
+			return apiutil.CreateAPIHandleErrorFromDBError("error deleting config files", err)
 		}
 		// end transaction
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
-			return util.CreateAPIHandleErrorFromDBError("error ending transaction", err)
+			return apiutil.CreateAPIHandleErrorFromDBError("error ending transaction", err)
 		}
 	}
 	return nil
@@ -1812,11 +1822,11 @@ func (s *ServiceAction) UpdVolume(sid string, req *api_model.UpdVolumeReq) error
 }
 
 // GetVolumes 获取应用全部存储
-func (s *ServiceAction) GetVolumes(serviceID string) ([]*api_model.VolumeWithStatusStruct, *util.APIHandleError) {
+func (s *ServiceAction) GetVolumes(serviceID string) ([]*api_model.VolumeWithStatusStruct, *apiutil.APIHandleError) {
 	volumeWithStatusList := make([]*api_model.VolumeWithStatusStruct, 0)
 	vs, err := db.GetManager().TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(serviceID)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-		return nil, util.CreateAPIHandleErrorFromDBError("get volumes", err)
+		return nil, apiutil.CreateAPIHandleErrorFromDBError("get volumes", err)
 	}
 
 	volumeStatusList, err := s.statusCli.GetAppVolumeStatus(serviceID)
@@ -1857,34 +1867,34 @@ func (s *ServiceAction) GetVolumes(serviceID string) ([]*api_model.VolumeWithSta
 }
 
 // VolumeDependency VolumeDependency
-func (s *ServiceAction) VolumeDependency(tsr *dbmodel.TenantEnvServiceMountRelation, action string) *util.APIHandleError {
+func (s *ServiceAction) VolumeDependency(tsr *dbmodel.TenantEnvServiceMountRelation, action string) *apiutil.APIHandleError {
 	switch action {
 	case "add":
 		if tsr.VolumeName != "" {
 			vm, err := db.GetManager().TenantEnvServiceVolumeDao().GetVolumeByServiceIDAndName(tsr.DependServiceID, tsr.VolumeName)
 			if err != nil {
-				return util.CreateAPIHandleErrorFromDBError("get volume", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("get volume", err)
 			}
 			tsr.HostPath = vm.HostPath
 			if err := db.GetManager().TenantEnvServiceMountRelationDao().AddModel(tsr); err != nil {
-				return util.CreateAPIHandleErrorFromDBError("add volume mount relation", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("add volume mount relation", err)
 			}
 		} else {
 			if tsr.HostPath == "" {
-				return util.CreateAPIHandleError(400, fmt.Errorf("host path can not be empty when create volume dependency in api v2"))
+				return apiutil.CreateAPIHandleError(400, fmt.Errorf("host path can not be empty when create volume dependency in api v2"))
 			}
 			if err := db.GetManager().TenantEnvServiceMountRelationDao().AddModel(tsr); err != nil {
-				return util.CreateAPIHandleErrorFromDBError("add volume mount relation", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("add volume mount relation", err)
 			}
 		}
 	case "delete":
 		if tsr.VolumeName != "" {
 			if err := db.GetManager().TenantEnvServiceMountRelationDao().DElTenantEnvServiceMountRelationByServiceAndName(tsr.ServiceID, tsr.VolumeName); err != nil {
-				return util.CreateAPIHandleErrorFromDBError("delete mount relation", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("delete mount relation", err)
 			}
 		} else {
 			if err := db.GetManager().TenantEnvServiceMountRelationDao().DElTenantEnvServiceMountRelationByDepService(tsr.ServiceID, tsr.DependServiceID); err != nil {
-				return util.CreateAPIHandleErrorFromDBError("delete mount relation", err)
+				return apiutil.CreateAPIHandleErrorFromDBError("delete mount relation", err)
 			}
 		}
 	}
@@ -1892,11 +1902,11 @@ func (s *ServiceAction) VolumeDependency(tsr *dbmodel.TenantEnvServiceMountRelat
 }
 
 // GetDepVolumes 获取依赖存储
-func (s *ServiceAction) GetDepVolumes(serviceID string) ([]*dbmodel.TenantEnvServiceMountRelation, *util.APIHandleError) {
+func (s *ServiceAction) GetDepVolumes(serviceID string) ([]*dbmodel.TenantEnvServiceMountRelation, *apiutil.APIHandleError) {
 	dbManager := db.GetManager()
 	mounts, err := dbManager.TenantEnvServiceMountRelationDao().GetTenantEnvServiceMountRelationsByService(serviceID)
 	if err != nil {
-		return nil, util.CreateAPIHandleErrorFromDBError("get dep volume", err)
+		return nil, apiutil.CreateAPIHandleErrorFromDBError("get dep volume", err)
 	}
 	return mounts, nil
 }
@@ -2004,15 +2014,15 @@ func (s *ServiceAction) GetServicesStatus(tenantEnvID string, serviceIDs []strin
 }
 
 // GetAllRunningServices get running services
-func (s *ServiceAction) GetAllRunningServices() ([]string, *util.APIHandleError) {
+func (s *ServiceAction) GetAllRunningServices() ([]string, *apiutil.APIHandleError) {
 	var tenantEnvIDs []string
 	tenantEnvs, err := db.GetManager().TenantEnvDao().GetAllTenantEnvs("")
 	if err != nil {
 		logrus.Errorf("list tenant env failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
+		return nil, apiutil.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
 	}
 	if len(tenantEnvs) == 0 {
-		return nil, util.CreateAPIHandleErrorf(400, "not found any tenantEnvs")
+		return nil, apiutil.CreateAPIHandleErrorf(400, "not found any tenantEnvs")
 	}
 	for _, tenantEnv := range tenantEnvs {
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnv.UUID)
@@ -2020,7 +2030,7 @@ func (s *ServiceAction) GetAllRunningServices() ([]string, *util.APIHandleError)
 	services, err := db.GetManager().TenantEnvServiceDao().GetServicesByTenantEnvIDs(tenantEnvIDs)
 	if err != nil {
 		logrus.Errorf("list tenantEnvs service failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorf(500, "get service failed: %s", err.Error())
+		return nil, apiutil.CreateAPIHandleErrorf(500, "get service failed: %s", err.Error())
 	}
 	var serviceIDs []string
 	for _, svc := range services {
@@ -2042,15 +2052,15 @@ type ServicesStatus struct {
 	AbnormalServices  []string `json:"abnormal_services"`
 }
 
-func (s *ServiceAction) GetAllServicesStatus() (*ServicesStatus, *util.APIHandleError) {
+func (s *ServiceAction) GetAllServicesStatus() (*ServicesStatus, *apiutil.APIHandleError) {
 	var tenantEnvIDs []string
 	tenantEnvs, err := db.GetManager().TenantEnvDao().GetAllTenantEnvs("")
 	if err != nil {
 		logrus.Errorf("list tenant env failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
+		return nil, apiutil.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
 	}
 	if len(tenantEnvs) == 0 {
-		return nil, util.CreateAPIHandleErrorf(400, "not found any tenant envs")
+		return nil, apiutil.CreateAPIHandleErrorf(400, "not found any tenant envs")
 	}
 	for _, tenantEnv := range tenantEnvs {
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnv.UUID)
@@ -2058,7 +2068,7 @@ func (s *ServiceAction) GetAllServicesStatus() (*ServicesStatus, *util.APIHandle
 	services, err := db.GetManager().TenantEnvServiceDao().GetServicesByTenantEnvIDs(tenantEnvIDs)
 	if err != nil {
 		logrus.Errorf("list tenant envs service failed: %s", err.Error())
-		return nil, util.CreateAPIHandleErrorf(500, "get service failed: %s", err.Error())
+		return nil, apiutil.CreateAPIHandleErrorf(500, "get service failed: %s", err.Error())
 	}
 	var serviceIDs []string
 	for _, svc := range services {
@@ -2234,7 +2244,7 @@ func (s *ServiceAction) GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, 
 // GetComponentPodNums get pods
 func (s *ServiceAction) GetComponentPodNums(ctx context.Context, componentIDs []string) (map[string]int32, error) {
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
-		defer core_util.Elapsed(fmt.Sprintf("[AppRuntimeSyncClient] [GetComponentPodNums] component nums: %d", len(componentIDs)))()
+		defer util.Elapsed(fmt.Sprintf("[AppRuntimeSyncClient] [GetComponentPodNums] component nums: %d", len(componentIDs)))()
 	}
 
 	podNums, err := s.statusCli.GetComponentPodNums(ctx, componentIDs)
@@ -2450,10 +2460,10 @@ func (s *ServiceAction) gcTaskBody(tenantEnvID, serviceID string) (map[string]in
 }
 
 // GetServiceDeployInfo get service deploy info
-func (s *ServiceAction) GetServiceDeployInfo(tenantEnvID, serviceID string) (*pb.DeployInfo, *util.APIHandleError) {
+func (s *ServiceAction) GetServiceDeployInfo(tenantEnvID, serviceID string) (*pb.DeployInfo, *apiutil.APIHandleError) {
 	info, err := s.statusCli.GetServiceDeployInfo(serviceID)
 	if err != nil {
-		return nil, util.CreateAPIHandleError(500, err)
+		return nil, apiutil.CreateAPIHandleError(500, err)
 	}
 	return info, nil
 }
@@ -3034,7 +3044,7 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 	request := s.kubeClient.CoreV1().Pods(tenantEnv.Namespace).GetLogs(podName, &corev1.PodLogOptions{
 		Container: containerName,
 		Follow:    follow,
-		TailLines: core_util.Int64(500),
+		TailLines: util.Int64(500),
 	})
 
 	out, err := request.Stream(context.TODO())
@@ -3109,7 +3119,7 @@ func TransStatus(eStatus string) string {
 
 // Backup service resources and data
 func (s *ServiceAction) Backup(tenantEnvID, serviceID, desc string) error {
-	if kube.IsVeleroInstalled(s.apiextClient) {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
 		return errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
 	}
 	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
@@ -3124,11 +3134,26 @@ func (s *ServiceAction) Backup(tenantEnvID, serviceID, desc string) error {
 	if err != nil {
 		return errors.New("应用不存在！")
 	}
+	volumes, _ := db.GetManager().TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(serviceID)
+	if len(volumes) == 0 {
+		return errors.New("当前组件没有挂载存储！")
+	}
+
+	// 1、如果当前组件没有处于运行中，则需要先启动组件
+	pods, err := s.GetPods(serviceID)
+	if err != nil {
+		return errors.New("获取组件状态失败！")
+	}
+	if pods == nil || (len(pods.NewPods) == 0 && len(pods.OldPods) == 0) {
+		return errors.New("当前组件未运行，请先启动组件！")
+	}
+
 	selector := labels.SelectorFromSet(labels.Set{
 		"wutong.io/service_id": serviceID,
 	})
 
-	histories, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(selector)
+	// 2、校验是否存在未完成的备份任务
+	histories, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(selector)
 	if err != nil {
 		logrus.Error(err)
 		return errors.New("校验历史备份数据失败！")
@@ -3170,19 +3195,166 @@ func (s *ServiceAction) Backup(tenantEnvID, serviceID, desc string) error {
 	return nil
 }
 
-// DeleteBackup -
-func (s *ServiceAction) DeleteBackup(backupID string) error {
-	err := s.veleroClient.VeleroV1().Backups("velero").Delete(context.Background(), backupID, metav1.DeleteOptions{})
+// DownloadBackup
+func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, error) {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
+		return nil, errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
+	}
+
+	backup, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").Get(backupID)
 	if err != nil {
-		logrus.Error(err)
-		return errors.New("删除备份历史失败！")
+		return nil, errors.New("获取备份失败！")
+	}
+
+	if backup.Labels["wutong.io/service_id"] != serviceID {
+		return nil, errors.New("当前备份不属于该组件！")
+	}
+
+	if backup.Status.Phase != "Completed" {
+		return nil, errors.New("当前备份还未完成！")
+	}
+
+	veleroStatus := kube.GetVeleroStatus(s.kubeClient, s.veleroClient, s.apiextClient)
+	if veleroStatus == nil {
+		return nil, errors.New("获取 Velero 存储信息失败！")
+	}
+
+	object := fmt.Sprintf("/backups/%s/%s.tar.gz", backupID, backupID)
+
+	// Minio client
+	// useSSL := u.Scheme == "https"
+	// minioClient, err := minio.NewWithRegion(u.Host, accessKey, secretKey, useSSL, region)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// obj, err := minioClient.GetObject(bucket, object, minio.GetObjectOptions{})
+	// if err != nil {
+	// 	return nil, errors.New("下载备份数据失败！")
+	// }
+	// defer obj.Close()
+
+	// bytes, err := io.ReadAll(obj)
+	// if err != nil {
+	// 	return nil, errors.New("下载备份数据失败！")
+	// }
+
+	// S3 standard client
+	disableSSL := veleroStatus.S3UrlScheme != "https"
+	sess, err := session.NewSession(&aws.Config{
+		Endpoint:         &veleroStatus.S3Host,
+		Region:           &veleroStatus.S3Region,
+		S3ForcePathStyle: util.Ptr(true),
+		Credentials:      credentials.NewStaticCredentials(veleroStatus.S3AccessKeyID, veleroStatus.S3SecretAccessKey, ""),
+		DisableSSL:       util.Ptr(disableSSL),
+	})
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("下载备份数据失败！")
+	}
+
+	out, err := s3.New(sess).GetObject(&s3.GetObjectInput{
+		Bucket: util.Ptr(veleroStatus.S3Bucket),
+		Key:    util.Ptr(object),
+	})
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("下载备份数据失败！")
+	}
+	defer out.Body.Close()
+
+	tarBuffer := new(bytes.Buffer)
+	tarWriter := tar.NewWriter(tarBuffer)
+
+	manifests, err := io.ReadAll(out.Body)
+	if err != nil {
+		return nil, errors.New("下载备份数据失败！")
+	}
+	addFileToTar(tarWriter, "manifests.tar", manifests)
+
+	pvbl, _ := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).PodVolumeBackupLister.List(labels.SelectorFromSet(labels.Set{
+		"velero.io/backup-name": backupID,
+		"wutong.io/service_id":  serviceID,
+	}))
+
+	for _, pvb := range pvbl {
+		switch pvb.Spec.UploaderType {
+		case velerov1.BackupRepositoryTypeKopia:
+			// TODO:
+		case velerov1.BackupRepositoryTypeRestic:
+			dumpCmd := exec.Command("restic", "-r", pvb.Spec.RepoIdentifier, "--verbose", "dump", pvb.Status.SnapshotID, "/")
+			volumeData, err := dumpCmd.Output()
+			if err != nil {
+				log.Println("restic dump error:", err)
+				continue
+			}
+			if len(volumeData) > 0 {
+				addFileToTar(tarWriter, fmt.Sprintf("volumes/%s.tar", pvb.Name), volumeData)
+			}
+		}
+	}
+
+	// 关闭 tar.Writer，完成归档文件的创建
+	tarWriter.Close()
+
+	gzipBuffer := new(bytes.Buffer)
+	gzipWriter := gzip.NewWriter(gzipBuffer)
+
+	_, err = io.Copy(gzipWriter, tarBuffer)
+	if err != nil {
+		return nil, errors.New("下载备份数据失败！")
+	}
+
+	// 关闭 gzip.Writer，完成压缩文件的创建
+	gzipWriter.Close()
+
+	return gzipBuffer.Bytes(), nil
+}
+
+// DeleteBackup -
+func (s *ServiceAction) DeleteBackup(serviceID, backupID string) error {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
+		return errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
+	}
+
+	backup, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").Get(backupID)
+	if err != nil {
+		return errors.New("获取待删除备份记录失败！")
+	}
+
+	if backup.Labels["wutong.io/service_id"] != serviceID {
+		return errors.New("当前备份不属于该组件！")
+	}
+
+	dbrl, _ := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).DeleteBackupRequestLister.List(labels.SelectorFromSet(labels.Set{
+		"velero.io/backup-name": backupID,
+	}))
+	if len(dbrl) > 0 {
+		return errors.New("当前备份记录已存在删除请求，请稍后再试！")
+	}
+
+	_, err = s.veleroClient.VeleroV1().DeleteBackupRequests("velero").Create(context.Background(), &velerov1.DeleteBackupRequest{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s", backupID, time.Now().Format("20060102150405")),
+			Namespace: "velero",
+			Labels: map[string]string{
+				"velero.io/backup-name": backupID,
+			},
+		},
+		Spec: velerov1.DeleteBackupRequestSpec{
+			BackupName: backupID,
+		},
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		return errors.New("创建删除备份请求失败！")
 	}
 	return nil
 }
 
 // Restore service resources and data from backup
 func (s *ServiceAction) Restore(tenantEnvID, serviceID, BackupID string) error {
-	if kube.IsVeleroInstalled(s.apiextClient) {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
 		return errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
 	}
 	// tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
@@ -3198,15 +3370,28 @@ func (s *ServiceAction) Restore(tenantEnvID, serviceID, BackupID string) error {
 		return errors.New("应用不存在！")
 	}
 
-	// 1、TODO: 如果当前组件处于运行中，则先关闭组件
+	// 1、如果当前组件处于运行中，则先关闭组件
+	pods, err := s.GetPods(serviceID)
+	if err != nil {
+		return errors.New("获取组件状态失败！")
+	}
+	if pods != nil {
+		if len(pods.NewPods) > 0 || len(pods.OldPods) > 0 {
+			return errors.New("当前组件处于运行中，请先关闭组件！")
+		}
+	}
 
 	// 2、校验备份数据是否存在
-	backup, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).BackupLister.Backups("velero").Get(BackupID)
+	backup, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").Get(BackupID)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return errors.New("备份数据不存在！")
 		}
 		return errors.New("获取备份数据失败！")
+	}
+
+	if backup.Labels["wutong.io/service_id"] != serviceID {
+		return errors.New("当前备份不属于该组件！")
 	}
 
 	restore := &velerov1.Restore{
@@ -3220,6 +3405,7 @@ func (s *ServiceAction) Restore(tenantEnvID, serviceID, BackupID string) error {
 			ExcludedResources: []string{
 				"nodes",
 				"events",
+				"endpoints",
 				"events.events.k8s.io",
 				"backups.velero.io",
 				"restores.velero.io",
@@ -3240,8 +3426,21 @@ func (s *ServiceAction) Restore(tenantEnvID, serviceID, BackupID string) error {
 }
 
 // DeleteRestore -
-func (s *ServiceAction) DeleteRestore(restoreID string) error {
-	err := s.veleroClient.VeleroV1().Restores("velero").Delete(context.Background(), restoreID, metav1.DeleteOptions{})
+func (s *ServiceAction) DeleteRestore(serviceID, restoreID string) error {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
+		return errors.New("集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
+	}
+
+	r, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).RestoreLister.Restores("velero").Get(restoreID)
+	if err != nil {
+		return errors.New("获取待删除还原记录失败！")
+	}
+
+	if r.Labels["wutong.io/service_id"] != serviceID {
+		return errors.New("当前还原记录不属于该组件！")
+	}
+
+	err = s.veleroClient.VeleroV1().Restores("velero").Delete(context.Background(), restoreID, metav1.DeleteOptions{})
 	if err != nil {
 		logrus.Error(err)
 		return errors.New("删除恢复历史失败！")
@@ -3251,17 +3450,32 @@ func (s *ServiceAction) DeleteRestore(restoreID string) error {
 
 // BackupRecords get velero backup histories
 func (s *ServiceAction) BackupRecords(tenantEnvID, serviceID string) ([]*api_model.BackupRecord, error) {
-	if s.veleroClient == nil {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
 		return nil, nil
 	}
 	var result []*api_model.BackupRecord
-	backups, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(labels.SelectorFromSet(labels.Set{
+	backups, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).BackupLister.Backups("velero").List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/service_id": serviceID,
 	}))
 	if err != nil {
 		return nil, errors.New("获取历史备份数据失败！")
 	}
 	for _, backup := range backups {
+		pvbs, _ := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).PodVolumeBackupLister.PodVolumeBackups("velero").List(labels.SelectorFromSet(labels.Set{
+			"velero.io/backup-name": backup.Name,
+		}))
+		var totalBytes, completedBytes int64
+		for _, pvb := range pvbs {
+			if pvb != nil {
+				totalBytes += pvb.Status.Progress.TotalBytes
+				completedBytes += pvb.Status.Progress.BytesDone
+			}
+		}
+		var totalItems, completedItems int
+		if backup.Status.Progress != nil {
+			totalItems = backup.Status.Progress.TotalItems
+			completedItems = backup.Status.Progress.ItemsBackedUp
+		}
 		result = append(result, &api_model.BackupRecord{
 			BackupID:       backup.Name,
 			ServiceID:      serviceID,
@@ -3269,11 +3483,11 @@ func (s *ServiceAction) BackupRecords(tenantEnvID, serviceID string) ([]*api_mod
 			Mode:           "velero",
 			CreatedAt:      convertMetaV1Time(backup.Status.StartTimestamp),
 			CompletedAt:    convertMetaV1Time(backup.Status.CompletionTimestamp),
-			Size:           "-",
-			CompletedItems: backup.Status.Progress.ItemsBackedUp,
-			TotalItems:     backup.Status.Progress.TotalItems,
+			Size:           formatBytesSize(totalBytes),
+			ProgressRate:   formatProcessRate(totalBytes, completedBytes),
+			CompletedItems: completedItems,
+			TotalItems:     totalItems,
 			Status:         string(backup.Status.Phase),
-			DownloadUrl:    "-",
 		})
 	}
 	return result, nil
@@ -3281,17 +3495,32 @@ func (s *ServiceAction) BackupRecords(tenantEnvID, serviceID string) ([]*api_mod
 
 // RestoreRecords get velero restore histories
 func (s *ServiceAction) RestoreRecords(tenantEnvID, serviceID string) ([]*api_model.RestoreRecord, error) {
-	if s.veleroClient == nil {
+	if !kube.IsVeleroInstalled(s.kubeClient, s.apiextClient) {
 		return nil, nil
 	}
 	var result []*api_model.RestoreRecord
-	restores, err := kube.GetVeleroCachedResources(s.veleroClient, s.apiextClient).RestoreLister.Restores("velero").List(labels.SelectorFromSet(labels.Set{
+	restores, err := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).RestoreLister.Restores("velero").List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/service_id": serviceID,
 	}))
 	if err != nil {
 		return nil, errors.New("获取历史恢复数据失败！")
 	}
 	for _, restore := range restores {
+		pvbs, _ := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).PodVolumeRestoreLister.PodVolumeRestores("velero").List(labels.SelectorFromSet(labels.Set{
+			"velero.io/restore-name": restore.Name,
+		}))
+		var totalBytes, completedBytes int64
+		for _, pvb := range pvbs {
+			if pvb != nil {
+				totalBytes += pvb.Status.Progress.TotalBytes
+				completedBytes += pvb.Status.Progress.BytesDone
+			}
+		}
+		var totalItems, completedItems int
+		if restore.Status.Progress != nil {
+			totalItems = restore.Status.Progress.TotalItems
+			completedItems = restore.Status.Progress.ItemsRestored
+		}
 		result = append(result, &api_model.RestoreRecord{
 			RestoreID:      restore.Name,
 			BackupID:       restore.Spec.BackupName,
@@ -3299,13 +3528,28 @@ func (s *ServiceAction) RestoreRecords(tenantEnvID, serviceID string) ([]*api_mo
 			Mode:           "velero",
 			CreatedAt:      convertMetaV1Time(restore.Status.StartTimestamp),
 			CompletedAt:    convertMetaV1Time(restore.Status.CompletionTimestamp),
-			Size:           "-",
-			CompletedItems: restore.Status.Progress.ItemsRestored,
-			TotalItems:     restore.Status.Progress.TotalItems,
+			Size:           formatBytesSize(totalBytes),
+			ProgressRate:   formatProcessRate(totalBytes, completedBytes),
+			CompletedItems: completedItems,
+			TotalItems:     totalItems,
 			Status:         string(restore.Status.Phase),
 		})
 	}
 	return result, nil
+}
+
+func formatBytesSize(size int64) string {
+	if size == 0 {
+		return "-"
+	}
+	return humanize.Bytes(uint64(size))
+}
+
+func formatProcessRate(total, completed int64) string {
+	if total == 0 {
+		return "-"
+	}
+	return fmt.Sprintf("%s%%", fmt.Sprintf("%.2f", float64(completed)/float64(total)*100))
 }
 
 func convertMetaV1Time(t *metav1.Time) string {
@@ -3313,4 +3557,20 @@ func convertMetaV1Time(t *metav1.Time) string {
 		return "-"
 	}
 	return t.Format("2006-01-02 15:04:05")
+}
+
+func addFileToTar(tarWriter *tar.Writer, fileName string, content []byte) {
+	header := &tar.Header{
+		Name: fileName,
+		Mode: 0644,
+		Size: int64(len(content)),
+	}
+	err := tarWriter.WriteHeader(header)
+	if err != nil {
+		panic(err)
+	}
+	_, err = tarWriter.Write(content)
+	if err != nil {
+		panic(err)
+	}
 }
