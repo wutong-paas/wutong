@@ -49,7 +49,6 @@ require (
 	github.com/kr/pty v1.1.8
 	github.com/mattn/go-runewidth v0.0.9
 	github.com/melbahja/got v0.5.0
-	github.com/minio/minio-go/v6 v6.0.57
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/mitchellh/hashstructure/v2 v2.0.1
@@ -191,7 +190,6 @@ require (
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20190725054713-01f96b0aa0cd // indirect
 	github.com/klauspost/compress v1.16.7 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -207,8 +205,6 @@ require (
 	github.com/mdlayher/genetlink v1.0.0 // indirect
 	github.com/mdlayher/netlink v1.1.0 // indirect
 	github.com/mdlayher/wifi v0.0.0-20190303161829-b1436901ddee // indirect
-	github.com/minio/md5-simd v1.1.2 // indirect
-	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -298,7 +294,6 @@ replace (
 	github.com/envoyproxy/go-control-plane => github.com/envoyproxy/go-control-plane v0.9.5
 	github.com/godbus/dbus => github.com/godbus/dbus/v5 v5.0.4
 	github.com/prometheus/common => github.com/prometheus/common v0.15.0
-	github.com/wutong-paas/restic => ../restic
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 	k8s.io/api => k8s.io/api v0.24.0
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.0
