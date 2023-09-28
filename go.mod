@@ -26,7 +26,7 @@ require (
 	github.com/emicklei/go-restful v2.14.2+incompatible
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6
 	github.com/envoyproxy/go-control-plane v0.10.1
-	github.com/fatih/color v1.13.0
+	github.com/fatih/color v1.15.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -65,21 +65,21 @@ require (
 	github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.45.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
-	github.com/prometheus/client_golang v1.12.2
-	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.34.0
+	github.com/prometheus/client_golang v1.15.0
+	github.com/prometheus/client_model v0.3.0
+	github.com/prometheus/common v0.42.0
 	github.com/prometheus/node_exporter v1.0.1
-	github.com/prometheus/procfs v0.7.3
+	github.com/prometheus/procfs v0.9.0
 	github.com/shirou/gopsutil v3.21.3+incompatible
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.2
 	github.com/testcontainers/testcontainers-go v0.8.0
 	github.com/thejerf/suture v3.0.3+incompatible
 	github.com/tidwall/gjson v1.6.8
 	github.com/urfave/cli v1.22.2
-	github.com/vmware-tanzu/velero v1.11.1
+	github.com/vmware-tanzu/velero v1.12.0
 	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
 	github.com/wutong-paas/wutong-oam v1.4.1
 	github.com/wutong-paas/wutong-operator v1.0.1
@@ -198,10 +198,10 @@ require (
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/lufia/iostat v1.1.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-xmlrpc v0.0.3 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mdlayher/genetlink v1.0.0 // indirect
 	github.com/mdlayher/netlink v1.1.0 // indirect
 	github.com/mdlayher/wifi v0.0.0-20190303161829-b1436901ddee // indirect
@@ -246,9 +246,9 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.starlark.net v0.0.0-20201006213952-227f4aabceb5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/mod v0.8.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
+	go.uber.org/zap v1.24.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
@@ -293,7 +293,9 @@ replace (
 	github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
 	github.com/envoyproxy/go-control-plane => github.com/envoyproxy/go-control-plane v0.9.5
 	github.com/godbus/dbus => github.com/godbus/dbus/v5 v5.0.4
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/common => github.com/prometheus/common v0.15.0
+	github.com/prometheus/procfs => github.com/prometheus/procfs v0.7.3
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
 	k8s.io/api => k8s.io/api v0.24.0
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.0

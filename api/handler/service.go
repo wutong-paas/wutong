@@ -3275,14 +3275,45 @@ func (s *ServiceAction) DownloadBackup(serviceID, backupID string) ([]byte, erro
 
 	pvbl, _ := kube.GetVeleroCachedResources(s.kubeClient, s.veleroClient, s.apiextClient).PodVolumeBackupLister.List(labels.SelectorFromSet(labels.Set{
 		"velero.io/backup-name": backupID,
-		"wutong.io/service_id":  serviceID,
 	}))
 
 	for _, pvb := range pvbl {
 		switch pvb.Spec.UploaderType {
 		case velerov1.BackupRepositoryTypeKopia:
-			// TODO:
-			logrus.Warningf("uploader type %s is not supported to download yet.", pvb.Spec.UploaderType)
+			// TODO: 不是很好的解决方案，后续需要优化
+			// 1. 如果不存在，添加 kopia 操作用户，以命名空间名作为用户名
+			kopiaUser := "kopia-" + pvb.Spec.Pod.Namespace
+			exec.Command("adduser", kopiaUser, "-D").Run()
+
+			// 2. 当前用户执行 kopia 用户命令
+			rawConnectCmd := fmt.Sprintf("kopia repository connect s3 --endpoint %s --region %s --bucket %s --prefix kopia/%s/", veleroStatus.S3Host, veleroStatus.S3Region, veleroStatus.S3Bucket, pvb.Spec.Pod.Namespace)
+			if disableSSL {
+				rawConnectCmd = rawConnectCmd + " --disable-tls"
+			}
+			connetctCmd := exec.Command("su", kopiaUser, "-c", rawConnectCmd)
+			err := connetctCmd.Run()
+			if err != nil {
+				logrus.Warningf("kopia repository connect error: %s", err.Error())
+				continue
+			}
+
+			tmpFile := fmt.Sprintf("/home/%s/kopia-%s.tar", kopiaUser, pvb.Status.SnapshotID)
+			rawRestoreCmd := fmt.Sprintf("kopia snapshot restore %s %s", pvb.Status.SnapshotID, tmpFile)
+			restoreCmd := exec.Command("su", kopiaUser, "-c", rawRestoreCmd)
+			err = restoreCmd.Run()
+			if err != nil {
+				logrus.Warningf("kopia snapshot restore error: %s", err.Error())
+				continue
+			}
+			volumeData, err := os.ReadFile(tmpFile)
+			if err != nil {
+				logrus.Warningf("read kopia snapshot file error: %s", err.Error())
+				continue
+			}
+			if len(volumeData) > 0 {
+				addFileToTar(tarWriter, fmt.Sprintf("volumes/%s.tar", pvb.Name), volumeData)
+			}
+			os.Remove(tmpFile)
 		case velerov1.BackupRepositoryTypeRestic:
 			dumpCmd := exec.Command("restic", "-r", pvb.Spec.RepoIdentifier, "--verbose", "dump", pvb.Status.SnapshotID, "/")
 			volumeData, err := dumpCmd.Output()

@@ -164,6 +164,7 @@ func initializeVeleroStatus(kubeClient kubernetes.Interface, veleroClient versio
 		return nil
 	}
 	os.Setenv("RESTIC_PASSWORD", veleroRepositoryPassword)
+	os.Setenv("KOPIA_PASSWORD", veleroRepositoryPassword)
 
 	s3Url := bsl.Spec.Config["s3Url"]
 	u, err := url.Parse(s3Url)
