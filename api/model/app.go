@@ -23,6 +23,7 @@ type AppStatus struct {
 	Phase             string                `json:"phase"`
 	Version           string                `json:"version"`
 	Overrides         []string              `json:"overrides"`
+	ServiceNum        int                   `json:"service_num"`
 	ServiceRunningNum int                   `json:"service_running_num"`
 	Conditions        []*AppStatusCondition `json:"conditions"`
 	K8sApp            string                `json:"k8s_app"`

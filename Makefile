@@ -1,8 +1,11 @@
-export WUTONG_REGISTRY=swr.cn-southwest-2.myhuaweicloud.com/wutong
-export VERSION=v1.5.1
+REGISTRY ?= swr.cn-southwest-2.myhuaweicloud.com/wutong
+VERSION ?= v1.5.1
 
-.PHONY: build-region
-build:
+export REGISTRY
+export VERSION
+
+.PHONY: build
+build-all:
 	./multi-arch-build.sh all
 
 build-api:
