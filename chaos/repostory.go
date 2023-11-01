@@ -48,8 +48,8 @@ func init() {
 		CIVERSION = os.Getenv("CI_VERSION")
 	}
 
-	RUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "runner"), CIVERSION)
-	BUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "builder"), CIVERSION)
+	RUNNERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "runner"), "latest")
+	BUILDERIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "builder"), "latest")
 	PROBEMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-init-probe"), CIVERSION)
 	TCPMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-mesh-data-panel"), CIVERSION)
 	NODESHELLIMAGENAME = path.Join(constants.WutongOnlineImageRepository, "node-shell")
