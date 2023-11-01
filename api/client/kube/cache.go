@@ -16,8 +16,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-var wutongSelectorLabels = map[string]string{"creator": "Wutong"}
-
 var cachedResources *CachedResources
 
 type CachedResources struct {
@@ -67,7 +65,6 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	hpaV1SharedInformer := hpaV1Informer.Informer()
 	eventSharedInformer := eventInformer.Informer()
 
-	//
 	informers := map[string]cache.SharedInformer{
 		"deploymentSharedInformer":   deploymentSharedInformer,
 		"statefuleSetSharedInformer": statefuleSetSharedInformer,

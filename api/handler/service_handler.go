@@ -108,10 +108,14 @@ type ServiceHandler interface {
 	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantEnvServices, podName, containerName string, follow bool) error
 
 	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
-	Backup(tenantEnvID, serviceID, desc string) error
-	DeleteBackup(backupID string) error
-	Restore(tenantEnvID, serviceID, BackupID string) error
-	DeleteRestore(restoreID string) error
+	CreateBackup(tenantEnvID, serviceID string) error
+	CreateBackupSchedule(tenantEnvID, serviceID, cron string) error
+	DeleteBackupSchedule(serviceID string) error
+	DownloadBackup(serviceID, backupID string) ([]byte, error)
+	DeleteBackup(serviceID, backupID string) error
+	CreateRestore(tenantEnvID, serviceID, BackupID string) error
+	DeleteRestore(serviceID, restoreID string) error
 	BackupRecords(tenantEnvID, serviceID string) ([]*api_model.BackupRecord, error)
 	RestoreRecords(tenantEnvID, serviceID string) ([]*api_model.RestoreRecord, error)
+	GetBackupSchedule(tenantEnvID, serviceID string) (*api_model.BackupSchedule, bool)
 }

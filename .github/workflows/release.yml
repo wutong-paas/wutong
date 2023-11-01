@@ -1,18 +1,18 @@
-name: build
-
-env:
-  VERSION: v1.5.1
+name: release
 
 on:
-  push:
-    branches: [v1.5.1]
-  workflow_dispatch:
+  release:
+    types: [created]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set ENV
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -38,4 +38,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build
-        run: ./multi-arch-build.sh all
+        run: VERSION=${{ env.VERSION }} ./multi-arch-build.sh all

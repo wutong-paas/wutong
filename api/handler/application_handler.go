@@ -761,7 +761,8 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 		}
 
 		services := db.GetManager().TenantEnvServiceDao().GetServiceIDsByAppID(appStatus.AppId)
-		var ServiceRunningNum int
+		serviceNum := len(services)
+		var serviceRunningNum int
 		if len(services) > 0 {
 			serviceIDs := make([]string, 0, len(services))
 			for _, service := range services {
@@ -772,7 +773,7 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 				if a.statusCli.IsClosedStatus(serviceStatus) {
 					continue
 				}
-				ServiceRunningNum++
+				serviceRunningNum++
 			}
 		}
 
@@ -786,7 +787,8 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 			Version:           appStatus.Version,
 			AppID:             appStatus.AppId,
 			AppName:           appStatus.AppName,
-			ServiceRunningNum: ServiceRunningNum,
+			ServiceNum:        serviceNum,
+			ServiceRunningNum: serviceRunningNum,
 			K8sApp:            k8sApps[appStatus.AppId],
 		})
 	}

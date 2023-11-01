@@ -6,11 +6,7 @@
 [![GoDoc](https://godoc.org/github.com/wutong-paas/wutong?status.svg)](https://godoc.org/github.com/wutong-paas/wutong)
 
 [Website](http://www.wutong-paas.com?channel=github) • [Documentation](https://github.com/wutong-paas/wutong-docs?channel=github)
-
-| ![notification](./docs/bell-outline-badge.svg) What is NEW!                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------- |
-| December 13, 2021 ,Wutong 5.5.0 version is officially released [View Release](https://github.com/wutong-paas/wutong-docs/community/change/5.4.0-5.5.0?channel=github)        |
-
+                                                                       |
 ## Wutong Introduction
 
 <b>Cloud native and easy-to-use application management platform</b>
@@ -70,7 +66,7 @@ DingTalk Search Group : 31096419
 
 ## Contributing
 
-Check out [CONTRIBUTING](https://github.com/wutong-paas/wutong/blob/V5.4/CONTRIBUTING.md) to see how to develop with Wutong.
+Check out [CONTRIBUTING](https://github.com/wutong-paas/wutong/blob/master/CONTRIBUTING.md) to see how to develop with Wutong.
 
 ## License
 

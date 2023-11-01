@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"text/tabwriter"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/images/archive"
 	"github.com/containerd/containerd/namespaces"
+	criconfig "github.com/containerd/containerd/pkg/cri/config"
 	"github.com/containerd/containerd/pkg/progress"
 	"github.com/containerd/containerd/platforms"
 	refdocker "github.com/containerd/containerd/reference/docker"
@@ -24,6 +26,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker/config"
 	dockercli "github.com/docker/docker/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/pelletier/go-toml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos"
@@ -121,15 +124,26 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 		}
 		return nil, nil
 	})
-	defaultTLS := &tls.Config{
-		InsecureSkipVerify: true,
+
+	registry := refdocker.Domain(named)
+	registryInfo := getRegistryInfo(registry)
+
+	hostOpt := config.HostOptions{
+		DefaultTLS: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		DefaultScheme: registryInfo.schema,
 	}
-	hostOpt := config.HostOptions{}
-	hostOpt.DefaultTLS = defaultTLS
+
+	if username == "" && password == "" {
+		// try to set credentials from config.toml
+		username = registryInfo.username
+		password = registryInfo.password
+	}
 	hostOpt.Credentials = func(host string) (string, string, error) {
 		return username, password, nil
 	}
-	registry := refdocker.Domain(named)
+
 	hosts := getContianerdHosts()
 	for _, host := range hosts {
 		if host == registry {
@@ -138,6 +152,7 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 			}
 		}
 	}
+
 	Tracker := docker.NewInMemoryTracker()
 	options := docker.ResolverOptions{
 		Tracker: Tracker,
@@ -147,7 +162,6 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 	platformMC := platforms.Ordered([]ocispec.Platform{platforms.DefaultSpec()}...)
 	opts := []containerd.RemoteOpt{
 		containerd.WithImageHandler(h),
-		//nolint:staticcheck
 		containerd.WithSchema1Conversion,
 		containerd.WithPlatformMatcher(platformMC),
 		containerd.WithResolver(docker.NewResolver(options)),
@@ -177,6 +191,50 @@ func getContianerdHosts() []string {
 	}
 
 	return hosts
+}
+
+const defaultHttpSchema = "https"
+
+type registryInfo struct {
+	schema   string
+	username string
+	password string
+}
+
+func getRegistryInfo(registry string) *registryInfo {
+	var result = &registryInfo{
+		schema: defaultHttpSchema,
+	}
+
+	// 获取目录下的子目录
+	data, err := toml.LoadFile("/etc/containerd/config.toml")
+	if err != nil {
+		return result
+	}
+	var config criconfig.PluginConfig
+	registryData, ok := data.Get("plugins.cri").(*toml.Tree)
+	if !ok {
+		return result
+	}
+	err = registryData.Unmarshal(&config)
+	if err != nil {
+		return result
+	}
+
+	if len(config.Registry.Mirrors[registry].Endpoints) > 0 {
+		ep := config.Registry.Mirrors[registry].Endpoints[0]
+		u, _ := url.Parse(ep)
+		if u != nil && u.Scheme != "" {
+			result.schema = u.Scheme
+		}
+	}
+
+	if auth := config.Registry.Configs[registry].Auth; auth != nil {
+		result.username = auth.Username
+		result.password = auth.Password
+	}
+
+	return result
 }
 
 func getImageConfig(ctx context.Context, image containerd.Image) (*ocispec.ImageConfig, error) {

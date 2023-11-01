@@ -276,26 +276,33 @@ type BackupStatus string
 type BackupRecord struct {
 	BackupID       string `json:"backup_id"`
 	ServiceID      string `json:"service_id"`
-	Desc           string `json:"desc"`
 	Mode           string `json:"mode"`
 	CreatedAt      string `json:"created_at"`
 	CompletedAt    string `json:"completed_at"`
+	ExpiredAt      string `json:"expired_at"`
 	Size           string `json:"size"`
+	ProgressRate   string `json:"progress_rate"`
 	CompletedItems int    `json:"completed_items"`
 	TotalItems     int    `json:"total_items"`
+	Scheduled      bool   `json:"scheduled"`
 	Status         string `json:"status"`
-	DownloadUrl    string `json:"download_url"`
 }
 
 type RestoreRecord struct {
 	RestoreID      string `json:"restore_id"`
 	BackupID       string `json:"backup_id"`
 	ServiceID      string `json:"service_id"`
-	Mode           string `json:"mode"`
 	CreatedAt      string `json:"created_at"`
 	CompletedAt    string `json:"completed_at"`
 	Size           string `json:"size"`
+	ProgressRate   string `json:"progress_rate"`
 	CompletedItems int    `json:"completed_items"`
 	TotalItems     int    `json:"total_items"`
 	Status         string `json:"status"`
+}
+
+type BackupSchedule struct {
+	ScheduleID string `json:"schedule_id"`
+	ServiceID  string `json:"service_id"`
+	Cron       string `json:"cron"`
 }

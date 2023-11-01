@@ -1,4 +1,4 @@
-FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-api-base:stable
 ARG RELEASE_DESC
 
 ADD wutong-api /run/wutong-api

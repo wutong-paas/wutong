@@ -2,7 +2,8 @@
 set -o errexit
 
 # define package name
-WUTONG_REGISTRY=${WUTONG_REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'}
+REGISTRY=${REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'}
+VERSION=${VERSION:-'latest'}
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
 BASE_NAME=wutong
 
@@ -75,7 +76,7 @@ build::image() {
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
     docker buildx use swrbuilder || docker buildx create --use --name swrbuilder --driver docker-container --driver-opt image=swr.cn-southwest-2.myhuaweicloud.com/wutong/buildkit:stable
-	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t ${WUTONG_REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
+	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t ${REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	# docker buildx rm swrbuilder
 	popd
 	rm -rf "${build_image_dir}"

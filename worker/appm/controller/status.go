@@ -64,7 +64,8 @@ func WaitReady(store store.Storer, a *v1.AppService, timeout time.Duration, logg
 			err = ErrWaitCancel
 			return
 		case <-timer.C:
-			err = ErrWaitTimeOut
+			logger.Info("等待应用组件就绪超时，请检查组件信息或查看日志", map[string]string{"step": "appruntime", "status": "notready"})
+			// err = ErrWaitTimeOut
 			return
 		case <-ticker.C:
 		}
@@ -123,7 +124,9 @@ func WaitStop(store store.Storer, a *v1.AppService, timeout time.Duration, logge
 		case <-cancel:
 			return ErrWaitCancel
 		case <-timer.C:
-			return ErrWaitTimeOut
+			logger.Info("等待应用组件关闭超时，请检查组件信息或查看日志", map[string]string{"step": "appruntime", "status": "stopping"})
+			// return ErrWaitTimeOut
+			return nil
 		case <-ticker.C:
 		}
 	}
@@ -157,7 +160,8 @@ func WaitUpgradeReady(store store.Storer, a *v1.AppService, timeout time.Duratio
 			err = ErrWaitCancel
 			return
 		case <-timer.C:
-			err = ErrWaitTimeOut
+			logger.Info("等待应用组件更新完成超时，请检查组件信息或查看日志", map[string]string{"step": "appruntime", "status": "notready"})
+			// err = ErrWaitTimeOut
 			return
 		case <-ticker.C:
 		}

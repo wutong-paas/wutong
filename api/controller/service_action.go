@@ -853,17 +853,29 @@ func (t *TenantEnvStruct) GetServiceKubeResources(w http.ResponseWriter, r *http
 	httputil.ReturnSuccess(r, w, resources)
 }
 
-// Backup service resource and data
-func (t *TenantEnvStruct) Backup(w http.ResponseWriter, r *http.Request) {
+// CreateBackup create backup for service resource and data
+func (t *TenantEnvStruct) CreateBackup(w http.ResponseWriter, r *http.Request) {
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	var backup api_model.BackupServiceRequestStruct
-	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &backup, nil)
+	err := handler.GetServiceManager().CreateBackup(tenantEnvID, serviceID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// CreateBackupSchedule create backup schedule for service resource and data
+func (t *TenantEnvStruct) CreateBackupSchedule(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	var schedule api_model.CreateBackupScheduleRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &schedule, nil)
 	if !ok {
 		logrus.Errorf("start operation validate request body failure")
 		return
 	}
-	err := handler.GetServiceManager().Backup(tenantEnvID, serviceID, backup.Desc)
+	err := handler.GetServiceManager().CreateBackupSchedule(tenantEnvID, serviceID, schedule.Cron)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -871,10 +883,38 @@ func (t *TenantEnvStruct) Backup(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-// DeleteBackup -
-func (t *TenantEnvStruct) DeleteBackup(w http.ResponseWriter, r *http.Request) {
+// DeleteBackupSchedule delete backup schedule for service resource and data
+func (t *TenantEnvStruct) DeleteBackupSchedule(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	err := handler.GetServiceManager().DeleteBackupSchedule(serviceID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// DownloadBackup download backup for service resource and data
+func (t *TenantEnvStruct) DownloadBackup(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	backupID := chi.URLParam(r, "backup_id")
-	err := handler.GetServiceManager().DeleteBackup(backupID)
+	bytes, err := handler.GetServiceManager().DownloadBackup(serviceID, backupID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/gzip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", backupID))
+	w.Header().Set("Content-Length", strconv.Itoa(len(bytes)))
+	w.Write(bytes)
+}
+
+// DeleteBackup delete backup for service resource and data
+func (t *TenantEnvStruct) DeleteBackup(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	backupID := chi.URLParam(r, "backup_id")
+	err := handler.GetServiceManager().DeleteBackup(serviceID, backupID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -882,18 +922,18 @@ func (t *TenantEnvStruct) DeleteBackup(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-// Restore service resource and data from backup
-func (t *TenantEnvStruct) Restore(w http.ResponseWriter, r *http.Request) {
+// CreateRestore create restore for service resource and data
+func (t *TenantEnvStruct) CreateRestore(w http.ResponseWriter, r *http.Request) {
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
-	var restore api_model.RestoreServiceRequestStruct
+	var restore api_model.CreateRestoreRequest
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &restore, nil)
 	if !ok {
 		logrus.Errorf("start operation validate request body failure")
 		return
 	}
-	err := handler.GetServiceManager().Restore(tenantEnvID, serviceID, restore.BackupID)
+	err := handler.GetServiceManager().CreateRestore(tenantEnvID, serviceID, restore.BackupID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -901,10 +941,11 @@ func (t *TenantEnvStruct) Restore(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-// DeleteRestore -
+// DeleteRestore delete restore for service resource and data
 func (t *TenantEnvStruct) DeleteRestore(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	restoreID := chi.URLParam(r, "restore_id")
-	err := handler.GetServiceManager().DeleteRestore(restoreID)
+	err := handler.GetServiceManager().DeleteRestore(serviceID, restoreID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -923,6 +964,15 @@ func (t *TenantEnvStruct) BackupRecords(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	httputil.ReturnSuccess(r, w, records)
+}
+
+// GetBackupSchedule get backup schedule
+func (t *TenantEnvStruct) GetBackupSchedule(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+
+	schedule, _ := handler.GetServiceManager().GetBackupSchedule(tenantEnvID, serviceID)
+	httputil.ReturnSuccess(r, w, schedule)
 }
 
 // RestoreRecords get restore histories
