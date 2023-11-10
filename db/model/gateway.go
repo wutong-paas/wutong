@@ -74,6 +74,7 @@ type HTTPRule struct {
 	Model
 	UUID          string `gorm:"column:uuid"`
 	ServiceID     string `gorm:"column:service_id"`
+	VMID          string `gorm:"column:vm_id"`
 	ContainerPort int    `gorm:"column:container_port"`
 	Domain        string `gorm:"column:domain"`
 	Path          string `gorm:"column:path;type:longtext"`
@@ -110,6 +111,7 @@ type TCPRule struct {
 	Model
 	UUID          string `gorm:"column:uuid"`
 	ServiceID     string `gorm:"column:service_id"`
+	VMID          string `gorm:"column:vm_id"`
 	ContainerPort int    `gorm:"column:container_port"`
 	// external access ip
 	IP string `gorm:"column:ip"`

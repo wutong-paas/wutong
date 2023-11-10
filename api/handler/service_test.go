@@ -22,10 +22,12 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -121,4 +123,16 @@ func TestMetav1Time(t *testing.T) {
 	}
 	var time2 = convertMetaV1Time(time1)
 	t.Log(time1, time2)
+
+	var ttlStr = "16h"
+	if strings.HasSuffix(ttlStr, "d") {
+		dayNoStr := strings.TrimSuffix(ttlStr, "d")
+		dayNo := cast.ToInt(dayNoStr)
+		ttlStr = fmt.Sprintf("%dh", dayNo*24)
+	}
+	ttl, err := time.ParseDuration(ttlStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ttl)
 }

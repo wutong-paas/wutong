@@ -471,7 +471,6 @@ func (t *TenantEnvStruct) AddTenantEnv(w http.ResponseWriter, r *http.Request) {
 	rc["tenant_env_name"] = name
 	rc["namespace"] = dbts.Namespace
 	httputil.ReturnSuccess(r, w, rc)
-	return
 }
 
 // GetAllTenantEnvs GetAllTenantEnvs

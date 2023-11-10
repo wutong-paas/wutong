@@ -188,6 +188,11 @@ func (v2 *V2) tenantEnvNameRouter() chi.Router {
 
 	r.Get("/kube-resources", controller.GetManager().GetTenantEnvKubeResources)
 
+	// kubevirt
+	r.Post("/vms", controller.GetManager().CreateVM)
+	r.Get("/vms", controller.GetManager().ListVMs)
+	r.Mount("/vms/{vm_id}", v2.vmRouter())
+
 	return r
 }
 
@@ -326,6 +331,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 
 	r.Post("/backup", controller.GetManager().CreateBackup)
 	r.Post("/backup/schedule", controller.GetManager().CreateBackupSchedule)
+	r.Put("/backup/schedule", controller.GetManager().UpdateBackupSchedule)
 	r.Delete("/backup/schedule", controller.GetManager().DeleteBackupSchedule)
 	r.Get("/backup/schedule", controller.GetManager().GetBackupSchedule)
 	r.Get("/backup/{backup_id}/download", controller.GetManager().DownloadBackup)
@@ -370,6 +376,25 @@ func (v2 *V2) applicationRouter() chi.Router {
 	r.Post("/app-config-groups", controller.GetManager().SyncAppConfigGroups)
 
 	r.Get("/kube-resources", controller.GetManager().GetApplicationKubeResources)
+	return r
+}
+
+func (v2 *V2) vmRouter() chi.Router {
+	r := chi.NewRouter()
+	// InitVM
+	r.Use(middleware.InitVM)
+	r.Delete("/", controller.GetManager().DeleteVM)
+	r.Put("/", controller.GetManager().UpdateVM)
+	r.Post("/start", controller.GetManager().StartVM)
+	r.Post("/stop", controller.GetManager().StopVM)
+	r.Post("/restart", controller.GetManager().RestartVM)
+	r.Post("/ports", controller.GetManager().AddVMPort)
+	r.Get("/ports", controller.GetManager().GetVMPorts)
+	r.Post("/gateways", controller.GetManager().CreateVMPortGateway)
+	r.Put("/gateways/{gateway_id}", controller.GetManager().UpdateVMPortGateway)
+	r.Delete("/gateways/{gateway_id}", controller.GetManager().DeleteVMPortGateway)
+	r.Delete("/ports", controller.GetManager().DeleteVMPort)
+	r.Get("/", controller.GetManager().GetVM)
 	return r
 }
 

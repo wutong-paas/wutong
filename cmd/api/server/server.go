@@ -41,6 +41,7 @@ import (
 	"github.com/wutong-paas/wutong/worker/client"
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -92,6 +93,10 @@ func Run(s *option.APIServer) error {
 	if err != nil {
 		return errors.WithMessage(err, "create k8s client")
 	}
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return errors.WithMessage(err, "create dynamic client")
+	}
 	apiextClient := apiextclient.NewForConfigOrDie(config)
 	veleroClient, _ := veleroversioned.NewForConfig(config)
 
@@ -124,7 +129,7 @@ func Run(s *option.APIServer) error {
 	//初始化 middleware
 	handler.InitProxy(s.Config)
 	//创建handle
-	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, config, clientset, wutongClient, k8sClient, apiextClient, veleroClient); err != nil {
+	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, config, clientset, wutongClient, k8sClient, dynamicClient, apiextClient, veleroClient); err != nil {
 		logrus.Errorf("init all handle error, %v", err)
 		return err
 	}

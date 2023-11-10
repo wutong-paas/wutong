@@ -271,11 +271,41 @@ type SyncComponentReq struct {
 	DeleteComponentIDs []string     `json:"delete_component_ids"`
 }
 
+// CreateBackupRequest
+type CreateBackupRequest struct {
+	Desc     string `json:"desc"`
+	TTL      string `json:"ttl"`
+	Operator string `json:"operator"`
+}
+
+// CreateBackupScheduleRequest
+type CreateBackupScheduleRequest struct {
+	Desc     string `json:"desc"`
+	Cron     string `json:"cron"`
+	TTL      string `json:"ttl"`
+	Operator string `json:"operator"`
+}
+
+type UpdateBackupScheduleRequest struct {
+	Desc     string `json:"desc"`
+	Cron     string `json:"cron"`
+	TTL      string `json:"ttl"`
+	Operator string `json:"operator"`
+}
+
+// CreateRestoreRequest
+type CreateRestoreRequest struct {
+	BackupID string `json:"backup_id"`
+	Operator string `json:"operator"`
+}
+
 type BackupStatus string
 
 type BackupRecord struct {
 	BackupID       string `json:"backup_id"`
 	ServiceID      string `json:"service_id"`
+	Desc           string `json:"desc"`
+	TTL            string `json:"ttl"`
 	Mode           string `json:"mode"`
 	CreatedAt      string `json:"created_at"`
 	CompletedAt    string `json:"completed_at"`
@@ -286,6 +316,9 @@ type BackupRecord struct {
 	TotalItems     int    `json:"total_items"`
 	Scheduled      bool   `json:"scheduled"`
 	Status         string `json:"status"`
+	FailureReason  string `json:"failure_reason"`
+	Operator       string `json:"operator"`
+	Restorable     bool   `json:"restorable"`
 }
 
 type RestoreRecord struct {
@@ -299,10 +332,16 @@ type RestoreRecord struct {
 	CompletedItems int    `json:"completed_items"`
 	TotalItems     int    `json:"total_items"`
 	Status         string `json:"status"`
+	FailureReason  string `json:"failure_reason"`
+	Operator       string `json:"operator"`
 }
 
 type BackupSchedule struct {
-	ScheduleID string `json:"schedule_id"`
-	ServiceID  string `json:"service_id"`
-	Cron       string `json:"cron"`
+	ScheduleID   string `json:"schedule_id"`
+	ServiceID    string `json:"service_id"`
+	Desc         string `json:"desc"`
+	TTL          string `json:"ttl"`
+	Cron         string `json:"cron"`
+	Creator      string `json:"creator"`
+	LastModifier string `json:"last_modifier"`
 }

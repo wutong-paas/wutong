@@ -108,14 +108,33 @@ type ServiceHandler interface {
 	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantEnvServices, podName, containerName string, follow bool) error
 
 	GetKubeResources(namespace, serviceID string, customSetting api_model.KubeResourceCustomSetting) (string, error)
-	CreateBackup(tenantEnvID, serviceID string) error
-	CreateBackupSchedule(tenantEnvID, serviceID, cron string) error
+
+	// Velero integration
+	CreateBackup(tenantEnvID, serviceID string, req api_model.CreateBackupRequest) error
+	CreateBackupSchedule(tenantEnvID, serviceID string, req api_model.CreateBackupScheduleRequest) error
+	UpdateBackupSchedule(tenantEnvID, serviceID string, req api_model.UpdateBackupScheduleRequest) error
 	DeleteBackupSchedule(serviceID string) error
 	DownloadBackup(serviceID, backupID string) ([]byte, error)
 	DeleteBackup(serviceID, backupID string) error
-	CreateRestore(tenantEnvID, serviceID, BackupID string) error
+	CreateRestore(tenantEnvID, serviceID string, req api_model.CreateRestoreRequest) error
 	DeleteRestore(serviceID, restoreID string) error
 	BackupRecords(tenantEnvID, serviceID string) ([]*api_model.BackupRecord, error)
 	RestoreRecords(tenantEnvID, serviceID string) ([]*api_model.RestoreRecord, error)
 	GetBackupSchedule(tenantEnvID, serviceID string) (*api_model.BackupSchedule, bool)
+
+	// Kubevirt integration
+	CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error)
+	GetVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMResponse, error)
+	UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.UpdateVMRequest) (*api_model.UpdateVMResponse, error)
+	StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StartVMResponse, error)
+	StopVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StopVMResponse, error)
+	RestartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.RestartVMResponse, error)
+	AddVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMPortRequest) error
+	GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMPortsResponse, error)
+	CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMPortGatewayRequest) error
+	UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID, gatewayID string, req *api_model.UpdateVMPortGatewayRequest) error
+	DeleteVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID, gatewayID string) error
+	DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DeleteVMPortRequest) error
+	DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) error
+	ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListVMsResponse, error)
 }

@@ -39,7 +39,7 @@ import (
 )
 
 // createDefaultDomain create default domain
-func createDefaultDomain(tenantEnvName, serviceAlias string, servicePort int) string {
+func createDefaultDomain(namespace, serviceAlias string, servicePort int) string {
 	exDomain := os.Getenv("EX_DOMAIN")
 	if exDomain == "" {
 		return ""
@@ -51,7 +51,7 @@ func createDefaultDomain(tenantEnvName, serviceAlias string, servicePort int) st
 		exDomain = exDomain[1:]
 	}
 	exDomain = strings.TrimSpace(exDomain)
-	return fmt.Sprintf("%d.%s.%s.%s", servicePort, serviceAlias, tenantEnvName, exDomain)
+	return fmt.Sprintf("%d.%s.%s.%s", servicePort, serviceAlias, namespace, exDomain)
 }
 
 // TenantEnvServiceRegist conv inner and outer service regist
@@ -251,7 +251,7 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 	}
 	domain := strings.Replace(rule.Domain, " ", "", -1)
 	if domain == "" {
-		domain = createDefaultDomain(a.tenantEnv.Name, a.service.ServiceAlias, containerPort)
+		domain = createDefaultDomain(a.tenantEnv.Namespace, a.service.ServiceAlias, containerPort)
 	}
 	// create ingress
 	labels := a.appService.GetCommonLabels()

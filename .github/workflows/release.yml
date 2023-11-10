@@ -38,4 +38,4 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build
-        run: VERSION=${{ env.VERSION }} ./multi-arch-build.sh all
+        run: VERSION=${{ env.VERSION }} make build-all

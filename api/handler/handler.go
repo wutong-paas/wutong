@@ -32,6 +32,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	"github.com/wutong-paas/wutong/worker/client"
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -46,6 +47,7 @@ func InitHandle(conf option.Config,
 	kubeClient *kubernetes.Clientset,
 	wutongClient versioned.Interface,
 	k8sClient k8sclient.Client,
+	dynamicClient dynamic.Interface,
 	apiextClient apiextclient.Interface,
 	veleroClient veleroversioned.Interface,
 ) error {
@@ -66,7 +68,7 @@ func InitHandle(conf option.Config,
 		return err
 	}
 	dbmanager := db.GetManager()
-	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, apiextClient, veleroClient)
+	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, dynamicClient, apiextClient, veleroClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
 	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)

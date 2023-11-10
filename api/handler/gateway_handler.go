@@ -32,7 +32,7 @@ type ComponentIngressTask struct {
 	IsInner     bool   `json:"is_inner"`
 }
 
-//GatewayHandler gateway api handler
+// GatewayHandler gateway api handler
 type GatewayHandler interface {
 	AddHTTPRule(req *apimodel.AddHTTPRuleStruct) error
 	CreateHTTPRule(tx *gorm.DB, req *apimodel.AddHTTPRuleStruct) error
@@ -50,6 +50,7 @@ type GatewayHandler interface {
 	DeleteTCPRuleByServiceIDWithTransaction(sid string, tx *gorm.DB) error
 	AddRuleExtensions(ruleID string, ruleExtensions []*apimodel.RuleExtensionStruct, tx *gorm.DB) error
 	GetAvailablePort(ip string, lock bool) (int, error)
+	IsPortAvailable(ip string, port int) bool
 	TCPIPPortExists(ip string, port int) bool
 	// Deprecated.
 	SendTaskDeprecated(in map[string]interface{}) error

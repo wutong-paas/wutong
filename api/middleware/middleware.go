@@ -120,6 +120,15 @@ func InitApplication(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+// InitVM -
+func InitVM(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("vm_id"), chi.URLParam(r, "vm_id"))
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+	return http.HandlerFunc(fn)
+}
+
 // InitPlugin 实现plugin init中间件
 func InitPlugin(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {

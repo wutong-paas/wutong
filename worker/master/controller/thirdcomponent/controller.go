@@ -72,7 +72,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (res recon
 	log := logrus.WithField("thirdcomponent", req)
 	commonResult := ctrl.Result{RequeueAfter: time.Second * 5}
 	component := &v1alpha1.ThirdComponent{}
-	ctx, cancel := context.WithTimeout(context.TODO(), reconcileTimeOut)
+	ctx, cancel := context.WithTimeout(ctx, reconcileTimeOut)
 	defer cancel()
 	defer func() {
 		if retErr == nil {

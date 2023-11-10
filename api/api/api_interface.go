@@ -59,6 +59,22 @@ type TenantEnvInterface interface {
 	Log(w http.ResponseWriter, r *http.Request)
 	GetKubeConfig(w http.ResponseWriter, r *http.Request)
 	GetTenantEnvKubeResources(w http.ResponseWriter, r *http.Request)
+
+	// kubevirt
+	CreateVM(w http.ResponseWriter, r *http.Request)
+	GetVM(w http.ResponseWriter, r *http.Request)
+	StartVM(w http.ResponseWriter, r *http.Request)
+	StopVM(w http.ResponseWriter, r *http.Request)
+	RestartVM(w http.ResponseWriter, r *http.Request)
+	UpdateVM(w http.ResponseWriter, r *http.Request)
+	AddVMPort(w http.ResponseWriter, r *http.Request)
+	GetVMPorts(w http.ResponseWriter, r *http.Request)
+	CreateVMPortGateway(w http.ResponseWriter, r *http.Request)
+	UpdateVMPortGateway(w http.ResponseWriter, r *http.Request)
+	DeleteVMPortGateway(w http.ResponseWriter, r *http.Request)
+	DeleteVMPort(w http.ResponseWriter, r *http.Request)
+	DeleteVM(w http.ResponseWriter, r *http.Request)
+	ListVMs(w http.ResponseWriter, r *http.Request)
 }
 
 // ServiceInterface ServiceInterface
@@ -97,6 +113,7 @@ type ServiceInterface interface {
 	CreateBackup(w http.ResponseWriter, r *http.Request)
 	DownloadBackup(w http.ResponseWriter, r *http.Request)
 	CreateBackupSchedule(w http.ResponseWriter, r *http.Request)
+	UpdateBackupSchedule(w http.ResponseWriter, r *http.Request)
 	DeleteBackupSchedule(w http.ResponseWriter, r *http.Request)
 	DeleteBackup(w http.ResponseWriter, r *http.Request)
 	CreateRestore(w http.ResponseWriter, r *http.Request)

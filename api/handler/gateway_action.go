@@ -649,6 +649,55 @@ func selectAvailablePort(used []int) int {
 	return 0
 }
 
+func (g *GatewayAction) usedPorts(ip string) ([]int, error) {
+	roles, err := g.dbmanager.TCPRuleDao().GetUsedPortsByIP(ip)
+	if err != nil {
+		return nil, err
+	}
+	var ports []int
+	for _, p := range roles {
+		ports = append(ports, p.Port)
+	}
+	resp, err := clientv3.KV(g.etcdCli).Get(context.TODO(), "/wutong/gateway/lockports", clientv3.WithPrefix())
+	if err != nil {
+		logrus.Info("get lock ports failed")
+	}
+	for _, etcdValue := range resp.Kvs {
+		port, err := strconv.Atoi(string(etcdValue.Value))
+		if err != nil {
+			continue
+		}
+		ports = append(ports, port)
+	}
+	return ports, nil
+}
+
+func (g *GatewayAction) IsPortAvailable(ip string, port int) bool {
+	used, err := g.usedPorts(ip)
+	if err != nil {
+		return false
+	}
+	for _, p := range used {
+		if p == port {
+			return false
+		}
+	}
+
+	maxPort, _ := strconv.Atoi(os.Getenv("MAX_LB_PORT"))
+	minPort, _ := strconv.Atoi(os.Getenv("MIN_LB_PORT"))
+	if minPort == 0 {
+		minPort = 10000
+	}
+	if maxPort == 0 {
+		maxPort = 65535
+	}
+	if port < minPort || port > maxPort {
+		return false
+	}
+
+	return true
+}
+
 // TCPIPPortExists returns if the port exists
 func (g *GatewayAction) TCPIPPortExists(host string, port int) bool {
 	roles, _ := db.GetManager().TCPRuleDao().GetUsedPortsByIP(host)
