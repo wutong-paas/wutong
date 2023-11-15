@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -87,7 +86,6 @@ func (d *DynamicCachedResources) GetVMILister() cache.GenericLister {
 
 func UnDynamicObject[O runtime.Object](obj runtime.Object) (O, error) {
 	var result O
-	_ = corev1.Pod{}
 	if obj == nil {
 		return result, fmt.Errorf("obj is nil")
 	}
@@ -96,12 +94,7 @@ func UnDynamicObject[O runtime.Object](obj runtime.Object) (O, error) {
 		return result, err
 	}
 
-	// unstructedVM := obj.(*unstructured.Unstructured)
-	// vm := new(kubevirtcorev1.VirtualMachine)
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj, &result)
-	// if err!=nil{
-	// 	return result, err
-	// }
 	return result, err
 }
 

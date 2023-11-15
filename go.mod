@@ -106,8 +106,9 @@ require (
 	k8s.io/component-base v0.24.2
 	k8s.io/cri-api v0.23.1
 	k8s.io/klog/v2 v2.90.1
-	k8s.io/kubernetes v1.20.0
+	k8s.io/kubernetes v1.24.0
 	kubevirt.io/api v1.0.1
+	kubevirt.io/containerized-data-importer-api v1.57.0-alpha1
 	sigs.k8s.io/controller-runtime v0.12.2
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -177,7 +178,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/hodgesds/perf-utils v0.0.8 // indirect
@@ -211,7 +212,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
-	github.com/moby/sys/mountinfo v0.5.0 // indirect
+	github.com/moby/sys/mountinfo v0.6.0 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -236,7 +237,7 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/siebenmann/go-kstat v0.0.0-20200303194639-4e8294f9e9d5 // indirect
-	github.com/smartystreets/assertions v1.0.1 // indirect
+	github.com/smartystreets/assertions v1.1.0 // indirect
 	github.com/soundcloud/go-runit v0.0.0-20150630195641-06ad41a06c4a // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
@@ -271,7 +272,6 @@ require (
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
 	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
 	k8s.io/kubectl v0.24.0 // indirect
-	kubevirt.io/containerized-data-importer-api v1.57.0-alpha1 // indirect
 	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	oras.land/oras-go v1.1.1 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
@@ -310,6 +310,7 @@ replace (
 	k8s.io/cli-runtime => k8s.io/cli-runtime v0.24.0
 	k8s.io/client-go => k8s.io/client-go v0.24.0
 	k8s.io/cloud-provider => k8s.io/cloud-provider v0.24.0
+	k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.24.0
 	k8s.io/code-generator => k8s.io/code-generator v0.24.0
 	k8s.io/component-base => k8s.io/component-base v0.24.0
 	k8s.io/component-helpers => k8s.io/component-helpers v0.24.0
@@ -322,10 +323,10 @@ replace (
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.24.0
 	k8s.io/kubectl => k8s.io/kubectl v0.24.0
 	k8s.io/kubelet => k8s.io/kubelet v0.24.0
-	k8s.io/kubernetes => k8s.io/kubernetes v1.20.0
 	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.24.0
 	k8s.io/metrics => k8s.io/metrics v0.24.0
 	k8s.io/mount-utils => k8s.io/mount-utils v0.24.0
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.24.0
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.24.0
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.0
 )

@@ -18,18 +18,6 @@ func TestGetKubeVirtResource(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// for _, v := range ret {
-	// 	// unstructedVM := v.(*unstructured.Unstructured)
-	// 	// vm := new(kubevirtcorev1.VirtualMachine)
-	// 	// runtime.DefaultUnstructuredConverter.FromUnstructured(unstructedVM.Object, vm)
-	// 	// t.Log(vm.Name)
-
-	// 	vm, err := UnDynamicObject[*kubevirtcorev1.VirtualMachine](v)
-	// 	if err != nil {
-	// 		t.Fatal(err)
-	// 	}
-	// 	t.Log(vm.Name)
-	// }
 
 	vms, err := UnDynamicObjectList[*kubevirtcorev1.VirtualMachine](ret)
 	if err != nil {

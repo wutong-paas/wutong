@@ -21,24 +21,24 @@ package model
 import "time"
 
 type VMProfile struct {
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
-	Desc        string `json:"desc"`
-	// Size   VMSize            `json:"size"`
-	OSSourceFrom  OSSourceFrom `json:"osSourceFrom"`
-	OSSourceURL   string       `json:"osSourceURL"`
-	OSDiskSize    int64        `json:"osDiskSize"`
-	RequestCPU    int64        `json:"requestCPU"`
-	RequestMemory int64        `json:"requestMemory"`
-	// Labels        map[string]string `json:"labels"`
-	Status         string    `json:"status"`
-	IP             string    `json:"ip"`
-	OSInfo         VMOSInfo  `json:"osInfo"`
-	ScheduleNode   string    `json:"scheduleNode"`
-	CreatedAt      time.Time `json:"createdAt"`
-	LastModifiedAt time.Time `json:"lastModifiedAt"`
-	CreatedBy      string    `json:"createdBy"`
-	LastModifiedBy string    `json:"lastModifiedBy"`
+	Name             string       `json:"name"`
+	DisplayName      string       `json:"displayName"`
+	Desc             string       `json:"desc"`
+	OSSourceFrom     OSSourceFrom `json:"osSourceFrom"`
+	OSSourceURL      string       `json:"osSourceURL"`
+	OSDiskSize       int64        `json:"osDiskSize"`
+	RequestCPU       int64        `json:"requestCPU"`
+	RequestMemory    int64        `json:"requestMemory"`
+	Namespace        string       `json:"namespace"`
+	DefaultLoginUser string       `json:"defaultLoginUser"`
+	Status           string       `json:"status"`
+	IP               string       `json:"ip"`
+	OSInfo           VMOSInfo     `json:"osInfo"`
+	ScheduleNode     string       `json:"scheduleNode"`
+	CreatedAt        time.Time    `json:"createdAt"`
+	LastModifiedAt   time.Time    `json:"lastModifiedAt"`
+	CreatedBy        string       `json:"createdBy"`
+	LastModifiedBy   string       `json:"lastModifiedBy"`
 }
 
 type VMOSInfo struct {
@@ -88,14 +88,6 @@ type VMPortGateway struct {
 	GatewayPath string `json:"gatewayPath"`
 }
 
-// type VMSize string
-
-// const (
-// 	VMSizeSmall  VMSize = "small"
-// 	VMSizeMedium VMSize = "medium"
-// 	VMSizeLarge  VMSize = "large"
-// )
-
 type OSSourceFrom string
 
 const (
@@ -132,15 +124,12 @@ type GetVMResponse struct {
 
 // UpdateVMRequest
 type UpdateVMRequest struct {
-	DisplayName   string `json:"displayName"`
-	Desc          string `json:"desc"`
-	RequestCPU    int64  `json:"requestCPU"`
-	RequestMemory int64  `json:"requestMemory"`
-	// Size        VMSize            `json:"size"`
-	// OSSourceFrom OSSourceFrom      `json:"osSourceFrom"`
-	// OSSourceURL  string            `json:"osSourceURL"`
-	// Labels   map[string]string `json:"labels"`
-	Operator string `json:"operator"`
+	DisplayName      string `json:"displayName"`
+	Desc             string `json:"desc"`
+	RequestCPU       int64  `json:"requestCPU"`
+	RequestMemory    int64  `json:"requestMemory"`
+	DefaultLoginUser string `json:"defaultLoginUser"`
+	Operator         string `json:"operator"`
 }
 
 type AddVMPortRequest struct {
@@ -166,8 +155,6 @@ type CreateVMPortGatewayRequest struct {
 }
 
 type UpdateVMPortGatewayRequest struct {
-	// VMPort    int            `json:"vmPort" validate:"vmPort|required"`
-	// Protocol      VMPortProtocol `json:"protocol" validate:"protocol|required"`
 	VMPortGateway `json:",inline"`
 }
 

@@ -50,6 +50,8 @@ import (
 
 var defailtOSDiskSize int64 = 40
 
+var defaultVMPassword = "VM_Cube@1024"
+
 func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error) {
 	ok := kube.IsKubevirtInstalled(s.kubeClient, s.apiextClient)
 	if !ok {
@@ -58,6 +60,14 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 
 	if req.OSDiskSize == 0 {
 		req.OSDiskSize = defailtOSDiskSize
+	}
+
+	if req.User == "" {
+		req.User = "root"
+	}
+
+	if req.Password == "" {
+		req.Password = defaultVMPassword
 	}
 
 	wutongLabels := labelsFromTenantEnv(tenantEnv)
@@ -103,6 +113,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 				"wutong.io/vm-request-memory":           fmt.Sprintf("%d", req.RequestMemory),
 				"wutong.io/vm-os-source-from":           string(req.OSSourceFrom),
 				"wutong.io/vm-os-source-url":            req.OSSourceURL,
+				"wutong.io/vm-default-login-user":       req.User,
 				"wutong.io/last-modification-timestamp": metav1.Now().UTC().Format(time.RFC3339),
 			},
 		},
@@ -270,6 +281,9 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 	vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
 	vm.Annotations["wutong.io/last-modifier"] = req.Operator
 	vm.Annotations["wutong.io/last-modification-timestamp"] = metav1.Now().UTC().Format(time.RFC3339)
+	if req.DefaultLoginUser != "" {
+		vm.Annotations["wutong.io/vm-default-login-user"] = req.DefaultLoginUser
+	}
 
 	vm.Spec.Template.Spec.Domain.Resources.Requests["cpu"] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
 	vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory))
@@ -910,14 +924,16 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 	}
 
 	result := api_model.VMProfile{
-		Name:          vm.Name,
-		DisplayName:   vm.Annotations["wutong.io/display-name"],
-		Desc:          vm.Annotations["wutong.io/desc"],
-		OSSourceFrom:  api_model.OSSourceFrom(vm.Annotations["wutong.io/vm-os-source-from"]),
-		OSSourceURL:   vm.Annotations["wutong.io/vm-os-source-url"],
-		OSDiskSize:    cast.ToInt64(vm.Annotations["wutong.io/vm-disk-size"]),
-		RequestCPU:    cast.ToInt64(vm.Annotations["wutong.io/vm-request-cpu"]),
-		RequestMemory: cast.ToInt64(vm.Annotations["wutong.io/vm-request-memory"]),
+		Name:             vm.Name,
+		DisplayName:      vm.Annotations["wutong.io/display-name"],
+		Desc:             vm.Annotations["wutong.io/desc"],
+		OSSourceFrom:     api_model.OSSourceFrom(vm.Annotations["wutong.io/vm-os-source-from"]),
+		OSSourceURL:      vm.Annotations["wutong.io/vm-os-source-url"],
+		OSDiskSize:       cast.ToInt64(vm.Annotations["wutong.io/vm-disk-size"]),
+		RequestCPU:       cast.ToInt64(vm.Annotations["wutong.io/vm-request-cpu"]),
+		RequestMemory:    cast.ToInt64(vm.Annotations["wutong.io/vm-request-memory"]),
+		Namespace:        vm.Namespace,
+		DefaultLoginUser: vm.Annotations["wutong.io/vm-default-login-user"],
 		// Labels:        vm.Labels,
 		Status:         string(vm.Status.PrintableStatus),
 		CreatedBy:      vm.Annotations["wutong.io/creator"],
