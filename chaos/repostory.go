@@ -53,6 +53,7 @@ func init() {
 	PROBEMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-init-probe"), CIVERSION)
 	TCPMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-mesh-data-panel"), CIVERSION)
 	NODESHELLIMAGENAME = path.Join(constants.WutongOnlineImageRepository, "node-shell")
+	WTCHANNELIMAGENAME = path.Join(constants.WutongOnlineImageRepository, "wt-channel")
 }
 
 // GetImageUserInfoV2 -
@@ -97,6 +98,9 @@ var TCPMESHIMAGENAME string
 
 // NODESHELLIMAGENAME nodeshell image name
 var NODESHELLIMAGENAME string
+
+// WTCHANNELIMAGENAME wt-channel image name
+var WTCHANNELIMAGENAME string
 
 // CIVERSION -
 var CIVERSION string
