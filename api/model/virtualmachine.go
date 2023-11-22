@@ -106,8 +106,9 @@ type CreateVMRequest struct {
 	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`
 	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"`
 	// Size        VMSize            `json:"size"`
-	User     string `json:"user"`
-	Password string `json:"password"`
+	HostNodeName string `json:"hostNodeName"`
+	User         string `json:"user"`
+	Password     string `json:"password"`
 	// Labels   map[string]string `json:"labels"`
 	Operator string `json:"operator"`
 }

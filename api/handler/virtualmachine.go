@@ -33,9 +33,9 @@ import (
 	"github.com/wutong-paas/wutong/api/client/kube"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
-	db_model "github.com/wutong-paas/wutong/db/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/util"
+	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -43,14 +43,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
 	kubevirtcorev1 "kubevirt.io/api/core/v1"
 	cdicorev1beta1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 )
 
 var defailtOSDiskSize int64 = 40
-
-var defaultVMPassword = "VM_Cube@1024"
 
 func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error) {
 	ok := kube.IsKubevirtInstalled(s.kubeClient, s.apiextClient)
@@ -62,18 +61,27 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		req.OSDiskSize = defailtOSDiskSize
 	}
 
+	req.User = strings.TrimSpace(req.User)
 	if req.User == "" {
-		req.User = "root"
+		return nil, fmt.Errorf("虚拟机初始用户名称不能为空！")
 	}
 
+	req.Password = strings.TrimSpace(req.Password)
 	if req.Password == "" {
-		req.Password = defaultVMPassword
+		return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
 	}
 
 	wutongLabels := labelsFromTenantEnv(tenantEnv)
 	wutongLabels = labels.Merge(wutongLabels, map[string]string{
 		"wutong.io/vm-id": req.Name,
 	})
+
+	var nodeSelector map[string]string
+	if req.HostNodeName != "" {
+		nodeSelector = map[string]string{
+			"kubernetes.io/hostname": req.HostNodeName,
+		}
+	}
 
 	var source cdicorev1beta1.DataVolumeSource
 	var sourceUrl string
@@ -94,10 +102,12 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		}
 	}
 
+	vmUserData := vmUserData(s.kubeClient, req.User, req.Password)
+
 	vm := &kubevirtcorev1.VirtualMachine{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VirtualMachine",
-			APIVersion: "kubevirt.io/v1",
+			APIVersion: kubevirtcorev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      req.Name,
@@ -186,7 +196,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 							},
 						},
 					},
-
+					NodeSelector: nodeSelector,
 					Networks: []kubevirtcorev1.Network{
 						{
 							Name: "default",
@@ -196,18 +206,6 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 						},
 					},
 					Volumes: []kubevirtcorev1.Volume{
-						{
-							Name: "cloudinitdisk",
-							VolumeSource: kubevirtcorev1.VolumeSource{
-								CloudInitNoCloud: &kubevirtcorev1.CloudInitNoCloudSource{
-									UserData: fmt.Sprintf(`#cloud-config
-chpasswd: { expired: False }
-user: %s
-password: %s
-ssh_pwauth: True`, req.User, req.Password),
-								},
-							},
-						},
 						{
 							Name: "containerdisk",
 							VolumeSource: kubevirtcorev1.VolumeSource{
@@ -226,6 +224,26 @@ ssh_pwauth: True`, req.User, req.Password),
 		VMProfile: vmProfileFromKubeVirtVM(vm, nil),
 	}
 
+	bcrypt.GenerateFromPassword([]byte("ubuntu"), bcrypt.DefaultCost)
+	bcryptedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		logrus.Errorf("bcrypt password failed, error: %s", err.Error())
+		return nil, fmt.Errorf("虚拟机初始用户密码加密失败！")
+	}
+
+	vmUserData += fmt.Sprintf(`runcmd:
+%s`, filebrowserRunCmd(req.User, string(bcryptedPassword)))
+
+	// set cloudinit
+	vm.Spec.Template.Spec.Volumes = append(vm.Spec.Template.Spec.Volumes, kubevirtcorev1.Volume{
+		Name: "cloudinitdisk",
+		VolumeSource: kubevirtcorev1.VolumeSource{
+			CloudInitNoCloud: &kubevirtcorev1.CloudInitNoCloudSource{
+				UserData: vmUserData,
+			},
+		},
+	})
+
 	created, err := kube.CreateKubevirtVM(s.dynamicClient, vm)
 	if err != nil {
 		if k8sErrors.IsAlreadyExists(err) {
@@ -235,12 +253,22 @@ ssh_pwauth: True`, req.User, req.Password),
 		return result, fmt.Errorf("创建虚拟机 %s 失败！", req.Name)
 	}
 
+	// create ssh, filebrowser port
+	s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
+		VMPort:   22,
+		Protocol: api_model.VMPortProtocolSSH,
+	})
+
+	s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
+		VMPort:   6173,
+		Protocol: api_model.VMPortProtocolHTTP,
+	})
+
 	result.Status = string(created.Status.PrintableStatus)
 	return result, nil
 }
 
 func (s *ServiceAction) GetVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMResponse, error) {
-
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -575,7 +603,7 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 
 	if protocol == string(api_model.VMPortProtocolHTTP) {
 		// register http domain and host
-		err := db.GetManager().HTTPRuleDao().CreateOrUpdateHTTPRuleInBatch([]*db_model.HTTPRule{
+		err := db.GetManager().HTTPRuleDao().CreateOrUpdateHTTPRuleInBatch([]*dbmodel.HTTPRule{
 			{
 				UUID:          gatewayID,
 				VMID:          vmID,
@@ -591,7 +619,7 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 		}
 	} else {
 		// register tcp port
-		err := db.GetManager().TCPRuleDao().CreateOrUpdateTCPRuleInBatch([]*db_model.TCPRule{
+		err := db.GetManager().TCPRuleDao().CreateOrUpdateTCPRuleInBatch([]*dbmodel.TCPRule{
 			{
 				UUID:          gatewayID,
 				VMID:          vmID,
@@ -721,14 +749,14 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 		}
 
 		if httpRule == nil {
-			httpRule = &db_model.HTTPRule{
+			httpRule = &dbmodel.HTTPRule{
 				UUID: gatewayID,
 			}
 		}
 		httpRule.VMID = vmID
 		httpRule.Domain = req.GatewayHost
 		httpRule.Path = req.GatewayPath
-		err = db.GetManager().HTTPRuleDao().CreateOrUpdateHTTPRuleInBatch([]*db_model.HTTPRule{httpRule})
+		err = db.GetManager().HTTPRuleDao().CreateOrUpdateHTTPRuleInBatch([]*dbmodel.HTTPRule{httpRule})
 		if err != nil {
 			logrus.Errorf("register http domain and path failed, error: %s", err.Error())
 			updateVMPortGatewayFunc(ingBeforUpdate)
@@ -743,7 +771,7 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 		}
 
 		if tcpRule == nil {
-			tcpRule = &db_model.TCPRule{
+			tcpRule = &dbmodel.TCPRule{
 				UUID: gatewayID,
 			}
 		}
@@ -751,7 +779,7 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 		tcpRule.ContainerPort = port
 		tcpRule.IP = req.GatewayIP
 		tcpRule.Port = req.GatewayPort
-		err = db.GetManager().TCPRuleDao().CreateOrUpdateTCPRuleInBatch([]*db_model.TCPRule{tcpRule})
+		err = db.GetManager().TCPRuleDao().CreateOrUpdateTCPRuleInBatch([]*dbmodel.TCPRule{tcpRule})
 		if err != nil {
 			logrus.Errorf("register tcp port failed, error: %s", err.Error())
 			updateVMPortGatewayFunc(ingBeforUpdate)
@@ -854,6 +882,7 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		}
 	}
 
+	// 2、删除虚拟机
 	err = kube.DeleteKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		logrus.Errorf("delete vm failed, error: %s", err.Error())
@@ -883,7 +912,43 @@ func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListV
 	return result, nil
 }
 
-func labelsFromTenantEnv(te *db_model.TenantEnvs) map[string]string {
+func vmUserData(kubeClient kubernetes.Interface, username, password string) string {
+	vmUserData := fmt.Sprintf("#cloud-config\nchpasswd: { expire: False }\nuser: %s\npassword: %s\nssh_pwauth: True\n", username, password)
+	vmSSHPubKey, _ := kube.GetWTChannelSSHPubKey(kubeClient)
+	if len(vmSSHPubKey) > 0 {
+		vmUserData += fmt.Sprintf("ssh_authorized_keys:\n  - %s\n", string(vmSSHPubKey))
+	}
+	return vmUserData
+}
+
+func filebrowserRunCmd(username, bcryptedPassword string) string {
+	// `sudo sh -c 'cat <<\EOF` cat 命令使用单引号， `\EOF` 前添加 \ 是为了防止文本转义，bcryptedPassword 中一般包含 $ 符号
+	return fmt.Sprintf(`  - sudo wget -O /usr/local/bin/filebrowser https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/linux/$(uname -m)/filebrowser
+  - sudo chmod +x /usr/local/bin/filebrowser
+  - |
+    sudo sh -c 'cat <<\EOF > /etc/systemd/system/filebrowser.service
+    [Unit]
+    Description=FileBrowser Service
+    After=network.target
+    
+    [Service]
+    ExecStartPre=mkdir -p /filebrowser
+    ExecStart=/usr/local/bin/filebrowser -a 0.0.0.0 -r /filebrowser -p 6173
+    Restart=always
+    User=root
+    Group=root
+    Environment=FB_USERNAME=%s
+    Environment=FB_PASSWORD=%s
+    
+    [Install]
+    WantedBy=multi-user.target
+    EOF'
+  - sudo systemctl daemon-reload
+  - sudo systemctl enable filebrowser
+  - sudo systemctl start filebrowser`, username, bcryptedPassword)
+}
+
+func labelsFromTenantEnv(te *dbmodel.TenantEnvs) map[string]string {
 	return map[string]string{
 		"creator":         "Wutong",
 		"tenant_env_id":   te.UUID,

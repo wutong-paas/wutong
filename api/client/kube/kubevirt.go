@@ -34,6 +34,15 @@ func IsKubevirtInstalled(kubeClient kubernetes.Interface, apiextClient apiextcli
 	return *isKubevirtInstalled
 }
 
+func GetWTChannelSSHPubKey(kubeClient kubernetes.Interface) (string, error) {
+	secret, err := GetCachedResources(kubeClient).SecretLister.Secrets("wt-system").Get("wt-channel")
+	if err != nil {
+		return "", err
+	}
+
+	return string(secret.Data["id_rsa.pub"]), nil
+}
+
 func CreateKubevirtVM(dynamicClient dynamic.Interface, vm *kubevirtcorev1.VirtualMachine) (*kubevirtcorev1.VirtualMachine, error) {
 	if vm == nil {
 		return vm, fmt.Errorf("vm is nil")

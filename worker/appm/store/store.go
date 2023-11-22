@@ -1645,6 +1645,32 @@ func (a *appRuntimeStore) keepWTChannel() error {
 		a.clientset.CoreV1().ServiceAccounts(a.conf.WTNamespace).Create(context.Background(), sa, metav1.CreateOptions{})
 	}
 
+	if _, err := a.listers.Secret.Secrets(a.conf.WTNamespace).Get(resourceName); err != nil && k8sErrors.IsNotFound(err) {
+		pri, pub, err := util.GenOpenSSHKeyPair()
+		if err != nil {
+			logrus.Errorf("generate ssh key err: %v", err)
+			return err
+		}
+
+		var s = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      resourceName,
+				Namespace: a.conf.WTNamespace,
+				Labels: map[string]string{
+					"creator": "Wutong",
+				},
+			},
+			Data: map[string][]byte{
+				"id_rsa":     pri,
+				"id_rsa.pub": pub,
+			},
+		}
+		if _, err := a.clientset.CoreV1().Secrets(a.conf.WTNamespace).Create(context.Background(), s, metav1.CreateOptions{}); err != nil {
+			logrus.Errorf("create wt-channel secret err: %v", err)
+			return err
+		}
+	}
+
 	if _, err := a.clientset.RbacV1().ClusterRoles().Get(context.Background(), resourceName, metav1.GetOptions{}); err != nil && k8sErrors.IsNotFound(err) {
 		var r = &rbacv1.ClusterRole{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1718,11 +1744,28 @@ func (a *appRuntimeStore) keepWTChannel() error {
 						},
 					},
 					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: resourceName + "-ssh",
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName:  resourceName,
+										DefaultMode: util.Int32(0400),
+									},
+								},
+							},
+						},
 						ServiceAccountName: resourceName,
 						Containers: []corev1.Container{
 							{
 								Name:  resourceName,
 								Image: chaos.WTCHANNELIMAGENAME,
+								VolumeMounts: []corev1.VolumeMount{
+									{
+										Name:      resourceName + "-ssh",
+										MountPath: "/root/.ssh",
+									},
+								},
 							},
 						},
 					},
