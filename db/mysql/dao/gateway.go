@@ -30,12 +30,12 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 )
 
-//CertificateDaoImpl -
+// CertificateDaoImpl -
 type CertificateDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel add model
+// AddModel add model
 func (c *CertificateDaoImpl) AddModel(mo model.Interface) error {
 	certificate, ok := mo.(*model.Certificate)
 	if !ok {
@@ -52,7 +52,7 @@ func (c *CertificateDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel update Certificate
+// UpdateModel update Certificate
 func (c *CertificateDaoImpl) UpdateModel(mo model.Interface) error {
 	cert, ok := mo.(*model.Certificate)
 	if !ok {
@@ -63,7 +63,7 @@ func (c *CertificateDaoImpl) UpdateModel(mo model.Interface) error {
 		Save(cert).Error
 }
 
-//AddOrUpdate add or update Certificate
+// AddOrUpdate add or update Certificate
 func (c *CertificateDaoImpl) AddOrUpdate(mo model.Interface) error {
 	cert, ok := mo.(*model.Certificate)
 	if !ok {
@@ -97,12 +97,12 @@ func (c *CertificateDaoImpl) GetCertificateByID(certificateID string) (*model.Ce
 	return &certificate, nil
 }
 
-//RuleExtensionDaoImpl rule extension dao
+// RuleExtensionDaoImpl rule extension dao
 type RuleExtensionDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel add
+// AddModel add
 func (c *RuleExtensionDaoImpl) AddModel(mo model.Interface) error {
 	re, ok := mo.(*model.RuleExtension)
 	if !ok {
@@ -116,12 +116,12 @@ func (c *RuleExtensionDaoImpl) AddModel(mo model.Interface) error {
 		re.RuleID, re.Value)
 }
 
-//UpdateModel update model,do not impl
+// UpdateModel update model,do not impl
 func (c *RuleExtensionDaoImpl) UpdateModel(model.Interface) error {
 	return nil
 }
 
-//GetRuleExtensionByRuleID get extension by rule
+// GetRuleExtensionByRuleID get extension by rule
 func (c *RuleExtensionDaoImpl) GetRuleExtensionByRuleID(ruleID string) ([]*model.RuleExtension, error) {
 	var ruleExtension []*model.RuleExtension
 	if err := c.DB.Where("rule_id = ?", ruleID).Find(&ruleExtension).Error; err != nil {
@@ -161,12 +161,12 @@ func (c *RuleExtensionDaoImpl) CreateOrUpdateRuleExtensionsInBatch(exts []*model
 	return nil
 }
 
-//HTTPRuleDaoImpl http rule
+// HTTPRuleDaoImpl http rule
 type HTTPRuleDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel -
+// AddModel -
 func (h *HTTPRuleDaoImpl) AddModel(mo model.Interface) error {
 	httpRule, ok := mo.(*model.HTTPRule)
 	if !ok {
@@ -183,7 +183,7 @@ func (h *HTTPRuleDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel -
+// UpdateModel -
 func (h *HTTPRuleDaoImpl) UpdateModel(mo model.Interface) error {
 	hr, ok := mo.(*model.HTTPRule)
 	if !ok {
@@ -230,7 +230,18 @@ func (h *HTTPRuleDaoImpl) GetHTTPRulesByCertificateID(certificateID string) ([]*
 	return httpRules, nil
 }
 
-//DeleteHTTPRuleByID delete http rule by rule id
+func (h *HTTPRuleDaoImpl) GetHTTPRuleByDomainAndHost(domain, path string) ([]*model.HTTPRule, error) {
+	var httpRules []*model.HTTPRule
+	if err := h.DB.Where("domain = ? and path = ?", domain, path).Find(&httpRules).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return httpRules, nil
+		}
+		return nil, err
+	}
+	return httpRules, nil
+}
+
+// DeleteHTTPRuleByID delete http rule by rule id
 func (h *HTTPRuleDaoImpl) DeleteHTTPRuleByID(id string) error {
 	httpRule := &model.HTTPRule{}
 	if err := h.DB.Where("uuid = ? ", id).Delete(httpRule).Error; err != nil {
@@ -251,7 +262,7 @@ func (h *HTTPRuleDaoImpl) DeleteByComponentPort(componentID string, port int) er
 	return nil
 }
 
-//DeleteHTTPRuleByServiceID delete http rule by service id
+// DeleteHTTPRuleByServiceID delete http rule by service id
 func (h *HTTPRuleDaoImpl) DeleteHTTPRuleByServiceID(serviceID string) error {
 	httpRule := &model.HTTPRule{}
 	if err := h.DB.Where("service_id = ? ", serviceID).Delete(httpRule).Error; err != nil {
@@ -287,7 +298,7 @@ func (h *HTTPRuleDaoImpl) ListByCertID(certID string) ([]*model.HTTPRule, error)
 	return rules, nil
 }
 
-//DeleteByComponentIDs delete http rule by component ids
+// DeleteByComponentIDs delete http rule by component ids
 func (h *HTTPRuleDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
 	return h.DB.Where("service_id in (?) ", componentIDs).Delete(&model.HTTPRule{}).Error
 }
@@ -318,7 +329,7 @@ type HTTPRuleRewriteDaoTmpl struct {
 	DB *gorm.DB
 }
 
-//AddModel -
+// AddModel -
 func (h *HTTPRuleRewriteDaoTmpl) AddModel(mo model.Interface) error {
 	httpRuleRewrite, ok := mo.(*model.HTTPRuleRewrite)
 	if !ok {
@@ -331,7 +342,7 @@ func (h *HTTPRuleRewriteDaoTmpl) AddModel(mo model.Interface) error {
 	return h.DB.Create(httpRuleRewrite).Error
 }
 
-//UpdateModel -
+// UpdateModel -
 func (h *HTTPRuleRewriteDaoTmpl) UpdateModel(mo model.Interface) error {
 	hr, ok := mo.(*model.HTTPRuleRewrite)
 	if !ok {
@@ -466,8 +477,8 @@ func (t *TCPRuleDaoTmpl) DeleteByComponentPort(componentID string, port int) err
 	return nil
 }
 
-//GetUsedPortsByIP get used port by ip
-//sort by port
+// GetUsedPortsByIP get used port by ip
+// sort by port
 func (t *TCPRuleDaoTmpl) GetUsedPortsByIP(ip string) ([]*model.TCPRule, error) {
 	var rules []*model.TCPRule
 	if ip == "0.0.0.0" {
@@ -491,7 +502,7 @@ func (t *TCPRuleDaoTmpl) ListByServiceID(serviceID string) ([]*model.TCPRule, er
 	return rules, nil
 }
 
-//DeleteByComponentIDs delete tcp rule by component ids
+// DeleteByComponentIDs delete tcp rule by component ids
 func (t *TCPRuleDaoTmpl) DeleteByComponentIDs(componentIDs []string) error {
 	return t.DB.Where("service_id in (?) ", componentIDs).Delete(&model.TCPRule{}).Error
 }

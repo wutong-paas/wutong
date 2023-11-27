@@ -19,6 +19,7 @@
 package controller
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -857,7 +858,13 @@ func (t *TenantEnvStruct) GetServiceKubeResources(w http.ResponseWriter, r *http
 func (t *TenantEnvStruct) CreateBackup(w http.ResponseWriter, r *http.Request) {
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	err := handler.GetServiceManager().CreateBackup(tenantEnvID, serviceID)
+	var req api_model.CreateBackupRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().CreateBackup(tenantEnvID, serviceID, req)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -869,13 +876,31 @@ func (t *TenantEnvStruct) CreateBackup(w http.ResponseWriter, r *http.Request) {
 func (t *TenantEnvStruct) CreateBackupSchedule(w http.ResponseWriter, r *http.Request) {
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	var schedule api_model.CreateBackupScheduleRequest
-	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &schedule, nil)
+	var req api_model.CreateBackupScheduleRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
 	if !ok {
 		logrus.Errorf("start operation validate request body failure")
 		return
 	}
-	err := handler.GetServiceManager().CreateBackupSchedule(tenantEnvID, serviceID, schedule.Cron)
+	err := handler.GetServiceManager().CreateBackupSchedule(tenantEnvID, serviceID, req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// UpdateBackupSchedule update backup schedule for service resource and data
+func (t *TenantEnvStruct) UpdateBackupSchedule(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	var req api_model.UpdateBackupScheduleRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().UpdateBackupSchedule(tenantEnvID, serviceID, req)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -895,19 +920,37 @@ func (t *TenantEnvStruct) DeleteBackupSchedule(w http.ResponseWriter, r *http.Re
 }
 
 // DownloadBackup download backup for service resource and data
+// func (t *TenantEnvStruct) DownloadBackup(w http.ResponseWriter, r *http.Request) {
+// 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+// 	backupID := chi.URLParam(r, "backup_id")
+// 	bytes, err := handler.GetServiceManager().DownloadBackup(serviceID, backupID)
+// 	if err != nil {
+// 		httputil.ReturnError(r, w, 500, err.Error())
+// 		return
+// 	}
+
+// 	w.Header().Set("Content-Type", "application/gzip")
+// 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", backupID))
+// 	w.Header().Set("Content-Length", strconv.Itoa(len(bytes)))
+// 	w.Write(bytes)
+// }
+
 func (t *TenantEnvStruct) DownloadBackup(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	backupID := chi.URLParam(r, "backup_id")
-	bytes, err := handler.GetServiceManager().DownloadBackup(serviceID, backupID)
+	result, err := handler.GetServiceManager().DownloadBackup(serviceID, backupID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/gzip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", backupID))
-	w.Header().Set("Content-Length", strconv.Itoa(len(bytes)))
-	w.Write(bytes)
+	buf := bytes.NewBuffer(result)
+
+	_, err = io.Copy(w, buf)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
 }
 
 // DeleteBackup delete backup for service resource and data
@@ -927,13 +970,13 @@ func (t *TenantEnvStruct) CreateRestore(w http.ResponseWriter, r *http.Request) 
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
-	var restore api_model.CreateRestoreRequest
-	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &restore, nil)
+	var req api_model.CreateRestoreRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
 	if !ok {
 		logrus.Errorf("start operation validate request body failure")
 		return
 	}
-	err := handler.GetServiceManager().CreateRestore(tenantEnvID, serviceID, restore.BackupID)
+	err := handler.GetServiceManager().CreateRestore(tenantEnvID, serviceID, req)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
@@ -986,4 +1029,211 @@ func (t *TenantEnvStruct) RestoreRecords(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	httputil.ReturnSuccess(r, w, records)
+}
+
+func (t *TenantEnvStruct) CreateVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	var req api_model.CreateVMRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	resp, err := handler.GetServiceManager().CreateVM(tenantEnv, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) GetVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().GetVM(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) StartVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().StartVM(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) StopVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().StopVM(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) RestartVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().RestartVM(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) UpdateVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	var req api_model.UpdateVMRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	resp, err := handler.GetServiceManager().UpdateVM(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) AddVMPort(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	var req api_model.AddVMPortRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().AddVMPort(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) GetVMPorts(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().GetVMPorts(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) CreateVMPortGateway(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	var req api_model.CreateVMPortGatewayRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().CreateVMPortGateway(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) UpdateVMPortGateway(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	gatewayID := chi.URLParam(r, "gateway_id")
+	if gatewayID == "" {
+		httputil.ReturnError(r, w, 400, "gateway id is required")
+		return
+	}
+	var req api_model.UpdateVMPortGatewayRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+
+	err := handler.GetServiceManager().UpdateVMPortGateway(tenantEnv, vmID, gatewayID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) DeleteVMPortGateway(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	gatewayID := chi.URLParam(r, "gateway_id")
+	if gatewayID == "" {
+		httputil.ReturnError(r, w, 400, "gateway id is required")
+		return
+	}
+
+	err := handler.GetServiceManager().DeleteVMPortGateway(tenantEnv, vmID, gatewayID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) DeleteVMPort(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	var req api_model.DeleteVMPortRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().DeleteVMPort(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) DeleteVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	err := handler.GetServiceManager().DeleteVM(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) ListVMs(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+
+	resp, err := handler.GetServiceManager().ListVMs(tenantEnv)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
 }

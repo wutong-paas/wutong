@@ -24,10 +24,12 @@ import (
 	"github.com/go-chi/chi"
 )
 
-//Routes routes
+// Routes routes
 func Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/docker_console", controller.GetDockerConsole().Get)
+	r.Get("/docker_virtctl_console", controller.GetDockerConsole().Get)
+	r.Get("/docker_vm_ssh", controller.GetDockerConsole().Get)
 	r.Get("/docker_log", controller.GetDockerLog().Get)
 	r.Get("/monitor_message", controller.GetMonitorMessage().Get)
 	r.Get("/new_monitor_message", controller.GetMonitorMessage().Get)
@@ -36,7 +38,7 @@ func Routes() chi.Router {
 	return r
 }
 
-//LogRoutes 日志下载路由
+// LogRoutes 日志下载路由
 func LogRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/{gid}/{filename}", controller.GetLogFile().Get)
@@ -44,7 +46,7 @@ func LogRoutes() chi.Router {
 	return r
 }
 
-//AppRoutes 应用导出包下载路由
+// AppRoutes 应用导出包下载路由
 func AppRoutes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/download/{format}/{fileName}", controller.GetManager().Download)

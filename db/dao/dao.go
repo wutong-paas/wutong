@@ -505,6 +505,7 @@ type HTTPRuleDao interface {
 	GetHTTPRuleByID(id string) (*model.HTTPRule, error)
 	GetHTTPRuleByServiceIDAndContainerPort(serviceID string, containerPort int) ([]*model.HTTPRule, error)
 	GetHTTPRulesByCertificateID(certificateID string) ([]*model.HTTPRule, error)
+	GetHTTPRuleByDomainAndHost(domain, path string) ([]*model.HTTPRule, error)
 	DeleteHTTPRuleByID(id string) error
 	DeleteHTTPRuleByServiceID(serviceID string) error
 	ListByServiceID(serviceID string) ([]*model.HTTPRule, error)

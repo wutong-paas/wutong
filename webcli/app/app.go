@@ -21,16 +21,19 @@ package app
 import (
 	"context"
 	"crypto/md5"
+
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/http/pprof"
 	"strings"
 	"text/template"
 
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -40,14 +43,17 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/wutong-paas/wutong/util"
 	httputil "github.com/wutong-paas/wutong/util/http"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/yudai/umutex"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	kubevirtcorev1 "kubevirt.io/api/core/v1"
 )
 
 // ExecuteCommandTotal metric
@@ -64,10 +70,11 @@ type App struct {
 
 	titleTemplate *template.Template
 
-	onceMutex  *umutex.UnblockingMutex
-	restClient *rest.RESTClient
-	coreClient *kubernetes.Clientset
-	config     *rest.Config
+	onceMutex     *umutex.UnblockingMutex
+	restClient    *rest.RESTClient
+	dynamicClient dynamic.Interface
+	coreClient    *kubernetes.Clientset
+	config        *rest.Config
 }
 
 // Options options
@@ -114,6 +121,16 @@ type InitMessage struct {
 	// NodeName      string `json:"nodeName"`
 }
 
+type InitVMMessage struct {
+	// TenantEnvID   string `json:"T_id"`
+	Md5         string `json:"Md5"`
+	VMID        string `json:"vmID"`
+	VMNamespace string `json:"vmNamespace"`
+	// VMIP        string `json:"vmIP"`
+	VMPort string `json:"vmPort"`
+	VMUser string `json:"vmUser"`
+}
+
 func checkSameOrigin(r *http.Request) bool {
 	return true
 }
@@ -145,6 +162,8 @@ func (app *App) Run() error {
 	endpoint := net.JoinHostPort(app.options.Address, app.options.Port)
 
 	wsHandler := http.HandlerFunc(app.handleWS)
+	virtctlConsoleChannelWSHandler := http.HandlerFunc(app.handleVirtctlConsoleChannelWS)
+	virtualMachineSSHChannelWSHandler := http.HandlerFunc(app.handleVirtualMachineSSHChannelWS)
 	health := http.HandlerFunc(app.healthCheck)
 
 	var siteMux = http.NewServeMux()
@@ -159,6 +178,8 @@ func (app *App) Run() error {
 	wsMux := http.NewServeMux()
 	wsMux.Handle("/", siteHandler)
 	wsMux.Handle("/docker_console", wsHandler)
+	wsMux.Handle("/docker_virtctl_console", virtctlConsoleChannelWSHandler)
+	wsMux.Handle("/docker_vm_ssh", virtualMachineSSHChannelWSHandler)
 	wsMux.Handle("/health", health)
 	wsMux.Handle("/metrics", promhttp.Handler())
 	wsMux.HandleFunc("/debug/pprof/", pprof.Index)
@@ -285,6 +306,152 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Request) {
+	logrus.Printf("New client connected: %s", r.RemoteAddr)
+
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	conn, err := app.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Print("Failed to upgrade connection: " + err.Error())
+		return
+	}
+
+	_, stream, err := conn.ReadMessage()
+	if err != nil {
+		logrus.Print("Failed to authenticate websocket connection " + err.Error())
+		conn.Close()
+		return
+	}
+
+	message := string(stream)
+	logrus.Print("message=", message)
+
+	var init InitVMMessage
+
+	json.Unmarshal(stream, &init)
+
+	containerName, podName, args, err := app.GetVirtctlConsoleChannelArgs(init.VMNamespace, init.VMID)
+	if err != nil {
+		logrus.Errorf("get default container failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("Get default container name failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+
+	slave, err := app.tryExecRequest("wt-system", podName, containerName, args)
+	if err != nil {
+		logrus.Errorf("open exec context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	defer slave.Close()
+	opts := []webtty.Option{
+		webtty.WithWindowTitle([]byte(podName)),
+		webtty.WithReconnect(10),
+		webtty.WithPermitWrite(),
+	}
+	// create web tty and run
+	tty, err := webtty.New(&WsWrapper{conn}, slave, opts...)
+	if err != nil {
+		logrus.Errorf("open web tty context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	err = tty.Run(ctx)
+	if err != nil {
+		if strings.Contains(err.Error(), "master closed") {
+			logrus.Infof("client close connection")
+			return
+		}
+		logrus.Errorf("run web tty failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("run tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+}
+
+func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.Request) {
+	logrus.Printf("New client connected: %s", r.RemoteAddr)
+
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	conn, err := app.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Print("Failed to upgrade connection: " + err.Error())
+		return
+	}
+
+	_, stream, err := conn.ReadMessage()
+	if err != nil {
+		logrus.Print("Failed to authenticate websocket connection " + err.Error())
+		conn.Close()
+		return
+	}
+
+	chi.URLParam(r, "vmID")
+
+	message := string(stream)
+	logrus.Print("message=", message)
+
+	var init InitVMMessage
+
+	json.Unmarshal(stream, &init)
+
+	containerName, podName, args, err := app.GetVirtualMachineSSHChannelArgs(init.VMNamespace, init.VMID, init.VMPort, init.VMUser)
+	if err != nil {
+		logrus.Errorf("get default container failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("Get default container name failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+
+	slave, err := app.tryExecRequest("wt-system", podName, containerName, args)
+	if err != nil {
+		logrus.Errorf("open exec context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	defer slave.Close()
+	opts := []webtty.Option{
+		webtty.WithWindowTitle([]byte(podName)),
+		webtty.WithReconnect(10),
+		webtty.WithPermitWrite(),
+	}
+	// create web tty and run
+	tty, err := webtty.New(&WsWrapper{conn}, slave, opts...)
+	if err != nil {
+		logrus.Errorf("open web tty context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	err = tty.Run(ctx)
+	if err != nil {
+		if strings.Contains(err.Error(), "master closed") {
+			logrus.Infof("client close connection")
+			return
+		}
+		logrus.Errorf("run web tty failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("run tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+}
+
 func (app *App) tryExecRequest(ns, pod, c string, args []string) (server.Slave, error) {
 	request := app.NewRequest(pod, ns, c, args)
 	var slave server.Slave
@@ -321,6 +488,11 @@ func (app *App) createKubeClient() error {
 		return err
 	}
 	app.restClient = restClient
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	app.dynamicClient = dynamicClient
 	app.coreClient = coreAPI
 	return nil
 }
@@ -360,6 +532,81 @@ func (app *App) GetContainerArgs(namespace, podname, containerName string) (stri
 		}
 	}
 	return "", "", args, fmt.Errorf("not have container in pod %s/%s", namespace, podname)
+}
+
+// GetVirtctlConsoleChannelArgs return containerName, podName, args, error
+func (app *App) GetVirtctlConsoleChannelArgs(vmNamespace, vmID string) (string, string, []string, error) {
+	// var args = []string{"/bin/bash", "-c", "ssh root@[vm-ssh-22][namespace]"}
+	var args = []string{"virtctl", "console", "-n", vmNamespace, vmID}
+
+	virtctlSts, err := app.coreClient.AppsV1().StatefulSets("wt-system").Get(context.Background(), "wt-channel", metav1.GetOptions{})
+	if err != nil {
+		return "wt-channel", "", args, fmt.Errorf("wt-channel is not ready")
+	}
+
+	randPodNo := rand.Int31n(util.Value(virtctlSts.Spec.Replicas))
+	podName := fmt.Sprintf("wt-channel-%d", randPodNo)
+
+	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil || pod.Status.Phase == api.PodRunning {
+		return "wt-channel", podName, args, fmt.Errorf("wt-channel is not ready")
+	}
+
+	return "wt-channel", podName, args, nil
+}
+
+var vmGVR = schema.GroupVersionResource{
+	Group:    "kubevirt.io",
+	Version:  "v1",
+	Resource: "virtualmachineinstances",
+}
+
+// GetVirtualMachineSSHChannelArgs return containerName, podName, args, error
+func (app *App) GetVirtualMachineSSHChannelArgs(vmNamespace, vmID, vmPort, vmUser string) (string, string, []string, error) {
+	unstructuredVM, err := app.dynamicClient.Resource(vmGVR).Namespace(vmNamespace).Get(context.Background(), vmID, metav1.GetOptions{})
+	if err != nil {
+		logrus.Errorf("failed to get vm %s/%s error %s", vmNamespace, vmID, err.Error())
+		return "wt-channel", "", nil, fmt.Errorf("failed to get vm %s/%s", vmNamespace, vmID)
+	}
+	var vm = &kubevirtcorev1.VirtualMachineInstance{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredVM.Object, vm)
+	if err != nil {
+		logrus.Errorf("failed to convert unstructured vm %s/%s error %s", vmNamespace, vmID, err.Error())
+		return "wt-channel", "", nil, fmt.Errorf("failed to convert unstructured vm %s/%s", vmNamespace, vmID)
+	}
+
+	var vmIP string
+	if len(vm.Status.Interfaces) > 0 {
+		vmIP = vm.Status.Interfaces[0].IP
+	}
+	if vmIP == "" {
+		return "wt-channel", "", nil, fmt.Errorf("vm %s/%s has no an available IP address", vmNamespace, vmID)
+	}
+
+	if vmUser == "" {
+		vmUser = "root"
+	}
+
+	if vmPort == "" {
+		vmPort = "22"
+	}
+
+	var args = []string{"ssh", fmt.Sprintf("%s@%s", vmUser, vmIP), "-p", vmPort}
+
+	virtctlSts, err := app.coreClient.AppsV1().StatefulSets("wt-system").Get(context.Background(), "wt-channel", metav1.GetOptions{})
+	if err != nil {
+		return "wt-channel", "", args, fmt.Errorf("wt-channel is not ready")
+	}
+
+	randPodNo := rand.Int31n(util.Value(virtctlSts.Spec.Replicas))
+	podName := fmt.Sprintf("wt-channel-%d", randPodNo)
+
+	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil || pod.Status.Phase != api.PodRunning {
+		return "wt-channel", podName, args, fmt.Errorf("wt-channel is not ready")
+	}
+
+	return "wt-channel", podName, args, nil
 }
 
 // NewRequest new exec request

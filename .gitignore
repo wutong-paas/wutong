@@ -53,6 +53,7 @@ hack/deb/ubuntu-trusty
 hack/contrib/docker/node/release.sh
 admin.kubeconfig
 test/*
+testdata/
 test.db
 *.bak
 temp

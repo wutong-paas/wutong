@@ -2035,15 +2035,3 @@ type SyncAppConfigGroup struct {
 type AppStatusesReq struct {
 	AppIDs []string `json:"app_ids"`
 }
-
-// CreateBackupScheduleRequest
-type CreateBackupScheduleRequest struct {
-	Cron      string `json:"cron"`
-	ServiceID string `json:"service_id"`
-}
-
-// CreateRestoreRequest
-type CreateRestoreRequest struct {
-	BackupID  string `json:"backup_id"`
-	ServiceID string `json:"service_id"`
-}

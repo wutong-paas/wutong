@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
@@ -13,6 +14,7 @@ import (
 	autoscalingv1 "k8s.io/client-go/listers/autoscaling/v1"
 	v1 "k8s.io/client-go/listers/core/v1"
 	networkingv1 "k8s.io/client-go/listers/networking/v1"
+	storagev1 "k8s.io/client-go/listers/storage/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -27,6 +29,7 @@ type CachedResources struct {
 	IngressV1Lister    networkingv1.IngressLister
 	HPAV1Lister        autoscalingv1.HorizontalPodAutoscalerLister
 	EventLister        v1.EventLister
+	StorageClassLister storagev1.StorageClassLister
 }
 
 func GetCachedResources(clientset kubernetes.Interface) *CachedResources {
@@ -34,6 +37,16 @@ func GetCachedResources(clientset kubernetes.Interface) *CachedResources {
 		cachedResources = initializeCachedResources(clientset)
 	}
 	return cachedResources
+}
+
+func GetDefaultStorageClass(clientset kubernetes.Interface) string {
+	scs, _ := GetCachedResources(clientset).StorageClassLister.List(labels.Everything())
+	for _, sc := range scs {
+		if sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
+			return sc.Name
+		}
+	}
+	return ""
 }
 
 func initializeCachedResources(clientset kubernetes.Interface) *CachedResources {
@@ -54,6 +67,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	ingressV1Informer := sharedInformers.Networking().V1().Ingresses()
 	hpaV1Informer := sharedInformers.Autoscaling().V1().HorizontalPodAutoscalers()
 	eventInformer := filteredSharedInformer.Core().V1().Events()
+	storageClassInformer := sharedInformers.Storage().V1().StorageClasses()
 
 	// shared informers
 	deploymentSharedInformer := deploymentInformer.Informer()
@@ -64,6 +78,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	ingressV1SharedInformer := ingressV1Informer.Informer()
 	hpaV1SharedInformer := hpaV1Informer.Informer()
 	eventSharedInformer := eventInformer.Informer()
+	storageClassSharedInformer := storageClassInformer.Informer()
 
 	informers := map[string]cache.SharedInformer{
 		"deploymentSharedInformer":   deploymentSharedInformer,
@@ -74,6 +89,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		"ingressV1SharedInformer":    ingressV1SharedInformer,
 		"hpaV1SharedInformer":        hpaV1SharedInformer,
 		"eventSharedInformer":        eventSharedInformer,
+		"storageClassSharedInformer": storageClassSharedInformer,
 	}
 	var wg sync.WaitGroup
 	wg.Add(len(informers))
@@ -99,5 +115,6 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		IngressV1Lister:    ingressV1Informer.Lister(),
 		HPAV1Lister:        hpaV1Informer.Lister(),
 		EventLister:        eventInformer.Lister(),
+		StorageClassLister: storageClassInformer.Lister(),
 	}
 }

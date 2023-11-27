@@ -18,7 +18,9 @@
 
 package v1
 
-import "github.com/wutong-paas/wutong/db"
+import (
+	"github.com/wutong-paas/wutong/db"
+)
 
 // GetCommonLabels get common labels
 func (a *AppService) GetCommonLabels(labels ...map[string]string) map[string]string {
@@ -38,6 +40,7 @@ func (a *AppService) GetCommonLabels(labels ...map[string]string) map[string]str
 	resultLabel["creator"] = "Wutong"
 	resultLabel["creater_id"] = a.CreaterID
 	resultLabel["service_id"] = a.ServiceID
+	resultLabel["workload_name"] = a.GetK8sWorkloadName()
 	resultLabel["service_alias"] = a.ServiceAlias
 	resultLabel["tenant_id"] = tenantID
 	resultLabel["tenant_name"] = tenantName

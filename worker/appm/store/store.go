@@ -52,6 +52,7 @@ import (
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	internalclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -65,6 +66,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+	kubevirtcorev1 "kubevirt.io/api/core/v1"
 )
 
 var rc2RecordType = map[string]string{
@@ -312,6 +314,7 @@ func NewStore(
 	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Endpoints.AddEventHandlerWithResyncPeriod(epEventHandler, time.Second*10)
 	// store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
+	store.informers.CRD.AddEventHandlerWithResyncPeriod(store.crdEventHandler(), time.Second*10)
 	store.informers.StorageClass.AddEventHandlerWithResyncPeriod(store, time.Second*300)
 	store.informers.Claims.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Events.AddEventHandlerWithResyncPeriod(store.evtEventHandler(), time.Second*10)
@@ -1386,6 +1389,37 @@ func (a *appRuntimeStore) nodeEventHandler() cache.ResourceEventHandlerFuncs {
 	}
 }
 
+func (a *appRuntimeStore) crdEventHandler() cache.ResourceEventHandlerFuncs {
+	var isKubevirtVMCRD = func(crd *apiextensions.CustomResourceDefinition) bool {
+		return crd.Spec.Group == kubevirtcorev1.SchemeGroupVersion.Group && crd.Spec.Names.Kind == "VirtualMachine"
+	}
+
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			crd := obj.(*apiextensions.CustomResourceDefinition)
+			if isKubevirtVMCRD(crd) {
+				if err := a.keepWTChannel(); err != nil {
+					logrus.Errorf("keep vm-channel pod err: %v", err)
+				}
+			}
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			crd := cur.(*apiextensions.CustomResourceDefinition)
+			if isKubevirtVMCRD(crd) {
+				if err := a.keepWTChannel(); err != nil {
+					logrus.Errorf("keep vm-channel pod err: %v", err)
+				}
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			crd := obj.(*apiextensions.CustomResourceDefinition)
+			if isKubevirtVMCRD(crd) {
+				a.recycleWTChannel()
+			}
+		},
+	}
+}
+
 func (a *appRuntimeStore) scalingRecordServiceAndRuleID(evt *corev1.Event) (string, string) {
 	var ruleID, serviceID string
 	switch evt.InvolvedObject.Kind {
@@ -1593,6 +1627,172 @@ func (a *appRuntimeStore) keepNodeShellPod(node string) error {
 	}
 	_, err = a.clientset.CoreV1().Pods(a.conf.WTNamespace).Create(context.Background(), pod, metav1.CreateOptions{})
 	return err
+}
+
+// keepWTChannel 启动 wt-channel
+func (a *appRuntimeStore) keepWTChannel() error {
+	resourceName := "wt-channel"
+	if _, err := a.clientset.CoreV1().ServiceAccounts(a.conf.WTNamespace).Get(context.Background(), resourceName, metav1.GetOptions{}); err != nil && k8sErrors.IsNotFound(err) {
+		var sa = &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      resourceName,
+				Namespace: a.conf.WTNamespace,
+				Labels: map[string]string{
+					"creator": "Wutong",
+				},
+			},
+		}
+		a.clientset.CoreV1().ServiceAccounts(a.conf.WTNamespace).Create(context.Background(), sa, metav1.CreateOptions{})
+	}
+
+	if _, err := a.listers.Secret.Secrets(a.conf.WTNamespace).Get(resourceName); err != nil && k8sErrors.IsNotFound(err) {
+		pri, pub, err := util.GenOpenSSHKeyPair()
+		if err != nil {
+			logrus.Errorf("generate ssh key err: %v", err)
+			return err
+		}
+
+		var s = &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      resourceName,
+				Namespace: a.conf.WTNamespace,
+				Labels: map[string]string{
+					"creator": "Wutong",
+				},
+			},
+			Data: map[string][]byte{
+				"id_rsa":     pri,
+				"id_rsa.pub": pub,
+			},
+		}
+		if _, err := a.clientset.CoreV1().Secrets(a.conf.WTNamespace).Create(context.Background(), s, metav1.CreateOptions{}); err != nil {
+			logrus.Errorf("create wt-channel secret err: %v", err)
+			return err
+		}
+	}
+
+	if _, err := a.clientset.RbacV1().ClusterRoles().Get(context.Background(), resourceName, metav1.GetOptions{}); err != nil && k8sErrors.IsNotFound(err) {
+		var r = &rbacv1.ClusterRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: resourceName,
+				Labels: map[string]string{
+					"creator": "Wutong",
+				},
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{"kubevirt.io", "subresources.kubevirt.io"},
+					Resources: []string{"*"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"pods", "services", "namespaces"},
+					Verbs:     []string{"get", "list", "watch"},
+				},
+			},
+		}
+		a.clientset.RbacV1().ClusterRoles().Create(context.Background(), r, metav1.CreateOptions{})
+	}
+
+	if _, err := a.clientset.RbacV1().ClusterRoleBindings().Get(context.Background(), resourceName, metav1.GetOptions{}); err != nil && k8sErrors.IsNotFound(err) {
+		var rb = &rbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: resourceName,
+				Labels: map[string]string{
+					"creator": "Wutong",
+				},
+			},
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: rbacv1.GroupName,
+				Kind:     "ClusterRole",
+				Name:     resourceName,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Name:      resourceName,
+					Namespace: a.conf.WTNamespace,
+				},
+			},
+		}
+		a.clientset.RbacV1().ClusterRoleBindings().Create(context.Background(), rb, metav1.CreateOptions{})
+	}
+
+	if _, err := a.listers.StatefulSet.StatefulSets(a.conf.WTNamespace).Get(resourceName); err != nil && k8sErrors.IsNotFound(err) {
+		var sts = &appsv1.StatefulSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      resourceName,
+				Namespace: a.conf.WTNamespace,
+				Labels: map[string]string{
+					"creator": "Wutong",
+				},
+			},
+			Spec: appsv1.StatefulSetSpec{
+				Selector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"wutong.io/component": resourceName,
+					},
+				},
+				ServiceName: resourceName,
+				Replicas:    util.Ptr(int32(3)),
+				Template: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"creator":             "Wutong",
+							"wutong.io/component": resourceName,
+						},
+					},
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: resourceName + "-ssh",
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName:  resourceName,
+										DefaultMode: util.Int32(0400),
+									},
+								},
+							},
+						},
+						ServiceAccountName: resourceName,
+						Containers: []corev1.Container{
+							{
+								Name:  resourceName,
+								Image: chaos.WTCHANNELIMAGENAME,
+								VolumeMounts: []corev1.VolumeMount{
+									{
+										Name:      resourceName + "-ssh",
+										MountPath: "/root/.ssh",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		a.clientset.AppsV1().StatefulSets(a.conf.WTNamespace).Create(context.Background(), sts, metav1.CreateOptions{})
+	}
+	return nil
+}
+
+// recycleWTChannel 回收 wt-channel
+func (a *appRuntimeStore) recycleWTChannel() error {
+	resourceName := "wt-channel"
+	if err := a.clientset.AppsV1().StatefulSets(a.conf.WTNamespace).Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	if err := a.clientset.RbacV1().ClusterRoleBindings().Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	if err := a.clientset.RbacV1().ClusterRoles().Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	if err := a.clientset.CoreV1().ServiceAccounts(a.conf.WTNamespace).Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *appRuntimeStore) GetHelmApp(namespace, name string) (*v1alpha1.HelmApp, error) {

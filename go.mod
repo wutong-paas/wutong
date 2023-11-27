@@ -23,7 +23,7 @@ require (
 	github.com/docker/libcompose v0.4.1-0.20190808084053-143e0f3f1ab9
 	github.com/dustin/go-humanize v1.0.1
 	github.com/eapache/channels v1.1.0
-	github.com/emicklei/go-restful v2.14.2+incompatible
+	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6
 	github.com/envoyproxy/go-control-plane v0.10.1
 	github.com/fatih/color v1.15.0
@@ -96,17 +96,19 @@ require (
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
 	helm.sh/helm/v3 v3.9.0
-	k8s.io/api v0.25.6
-	k8s.io/apiextensions-apiserver v0.24.2
-	k8s.io/apimachinery v0.25.6
+	k8s.io/api v0.27.1
+	k8s.io/apiextensions-apiserver v0.26.3
+	k8s.io/apimachinery v0.27.1
 	k8s.io/apiserver v0.24.0
 	k8s.io/cli-runtime v0.24.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/code-generator v0.24.0
 	k8s.io/component-base v0.24.2
 	k8s.io/cri-api v0.23.1
-	k8s.io/klog/v2 v2.70.1
-	k8s.io/kubernetes v1.20.0
+	k8s.io/klog/v2 v2.90.1
+	k8s.io/kubernetes v1.24.0
+	kubevirt.io/api v1.0.1
+	kubevirt.io/containerized-data-importer-api v1.57.0-alpha1
 	sigs.k8s.io/controller-runtime v0.12.2
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -161,11 +163,11 @@ require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/go-logfmt/logfmt v0.5.0 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/zapr v1.2.0 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/swag v0.21.1 // indirect
+	github.com/go-openapi/jsonpointer v0.19.6 // indirect
+	github.com/go-openapi/jsonreference v0.20.1 // indirect
+	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -176,7 +178,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/hodgesds/perf-utils v0.0.8 // indirect
@@ -210,7 +212,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/locker v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
-	github.com/moby/sys/mountinfo v0.5.0 // indirect
+	github.com/moby/sys/mountinfo v0.6.0 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -224,6 +226,9 @@ require (
 	github.com/opencontainers/runc v1.1.4 // indirect
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417 // indirect
 	github.com/opencontainers/selinux v1.10.1 // indirect
+	github.com/openshift/api v0.0.0-20230503133300-8bbcb7ca7183 // indirect
+	github.com/openshift/custom-resource-status v1.1.2 // indirect
+	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rubenv/sql-migrate v1.1.1 // indirect
@@ -232,7 +237,7 @@ require (
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/siebenmann/go-kstat v0.0.0-20200303194639-4e8294f9e9d5 // indirect
-	github.com/smartystreets/assertions v1.0.1 // indirect
+	github.com/smartystreets/assertions v1.1.0 // indirect
 	github.com/soundcloud/go-runit v0.0.0-20150630195641-06ad41a06c4a // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
@@ -252,7 +257,7 @@ require (
 	golang.org/x/oauth2 v0.11.0 // indirect
 	golang.org/x/term v0.12.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
-	golang.org/x/tools v0.6.0 // indirect
+	golang.org/x/tools v0.7.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -265,10 +270,11 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
-	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
+	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
 	k8s.io/kubectl v0.24.0 // indirect
+	kubevirt.io/controller-lifecycle-operator-sdk/api v0.0.0-20220329064328-f3cc58c6ed90 // indirect
 	oras.land/oras-go v1.1.1 // indirect
-	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
+	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.11.4 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
@@ -282,7 +288,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/pelletier/go-toml v1.9.4
 	github.com/spf13/cast v1.4.1
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
+	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 )
 
 // Pinned to kubernetes-1.20.0
@@ -297,7 +303,7 @@ replace (
 	github.com/prometheus/common => github.com/prometheus/common v0.15.0
 	github.com/prometheus/procfs => github.com/prometheus/procfs v0.7.3
 	google.golang.org/grpc => google.golang.org/grpc v1.27.1
-	k8s.io/api => k8s.io/api v0.24.0
+	k8s.io/api => k8s.io/api v0.26.0
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.0
 	k8s.io/apimachinery => k8s.io/apimachinery v0.24.0
 	k8s.io/apiserver => k8s.io/apiserver v0.24.0
@@ -317,10 +323,10 @@ replace (
 	k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.24.0
 	k8s.io/kubectl => k8s.io/kubectl v0.24.0
 	k8s.io/kubelet => k8s.io/kubelet v0.24.0
-	k8s.io/kubernetes => k8s.io/kubernetes v1.20.0
 	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.24.0
 	k8s.io/metrics => k8s.io/metrics v0.24.0
 	k8s.io/mount-utils => k8s.io/mount-utils v0.24.0
+	k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.24.0
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.24.0
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.11.0
 )
