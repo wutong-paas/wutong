@@ -15,7 +15,7 @@ require (
 	github.com/containerd/typeurl v1.0.2
 	github.com/coreos/etcd v3.3.17+incompatible
 	github.com/crossplane/crossplane-runtime v0.10.0
-	github.com/docker/cli v20.10.11+incompatible
+	github.com/docker/cli v20.10.23+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/docker/docker v20.10.14+incompatible
 	github.com/docker/go-metrics v0.0.1
@@ -56,7 +56,7 @@ require (
 	github.com/ncabatoff/process-exporter v0.7.1
 	github.com/oam-dev/kubevela v1.1.0-alpha.4.0.20210625105426-e176fcfc56f0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.20.1
+	github.com/onsi/gomega v1.22.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/pebbe/zmq4 v1.2.1
@@ -74,7 +74,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.4
 	github.com/testcontainers/testcontainers-go v0.8.0
 	github.com/thejerf/suture v3.0.3+incompatible
 	github.com/tidwall/gjson v1.6.8
@@ -82,7 +82,7 @@ require (
 	github.com/vmware-tanzu/velero v1.12.0
 	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
 	github.com/wutong-paas/wutong-oam v1.4.1
-	github.com/wutong-paas/wutong-operator v1.0.1
+	github.com/wutong-paas/wutong-operator v1.8.0
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
 	golang.org/x/crypto v0.12.0
 	golang.org/x/net v0.14.0
