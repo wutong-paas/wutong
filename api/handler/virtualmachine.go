@@ -76,11 +76,12 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		"wutong.io/vm-id": req.Name,
 	})
 
-	var nodeSelector map[string]string
-	if req.HostNodeName != "" {
-		nodeSelector = map[string]string{
-			"kubernetes.io/hostname": req.HostNodeName,
-		}
+	var nodeSelector = map[string]string{
+		"wutong.io/vm-schedulable": "true",
+	}
+
+	for _, labelKey := range req.NodeSelectorLabels {
+		nodeSelector["vm-node-selector.wutong.io/"+labelKey] = ""
 	}
 
 	var source cdicorev1beta1.DataVolumeSource
@@ -303,18 +304,34 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
 	}
 
-	vm.Annotations["wutong.io/display-name"] = req.DisplayName
-	vm.Annotations["wutong.io/desc"] = req.Desc
-	vm.Annotations["wutong.io/vm-request-cpu"] = fmt.Sprintf("%d", req.RequestCPU)
-	vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
+	if req.DisplayName != "" {
+		vm.Annotations["wutong.io/display-name"] = req.DisplayName
+	}
+	if req.Desc != "" {
+		vm.Annotations["wutong.io/desc"] = req.Desc
+	}
+	if req.RequestCPU > 0 {
+		vm.Annotations["wutong.io/vm-request-cpu"] = fmt.Sprintf("%d", req.RequestCPU)
+		vm.Spec.Template.Spec.Domain.Resources.Requests["cpu"] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
+	}
+	if req.RequestMemory > 0 {
+		vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
+		vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory))
+	}
 	vm.Annotations["wutong.io/last-modifier"] = req.Operator
 	vm.Annotations["wutong.io/last-modification-timestamp"] = metav1.Now().UTC().Format(time.RFC3339)
+
 	if req.DefaultLoginUser != "" {
 		vm.Annotations["wutong.io/vm-default-login-user"] = req.DefaultLoginUser
 	}
 
-	vm.Spec.Template.Spec.Domain.Resources.Requests["cpu"] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
-	vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory))
+	var nodeSelector = map[string]string{
+		"wutong.io/vm-schedulable": "true",
+	}
+	for _, labelKey := range req.NodeSelectorLabels {
+		nodeSelector["vm-node-selector.wutong.io/"+labelKey] = ""
+	}
+	vm.Spec.Template.Spec.NodeSelector = nodeSelector
 
 	updated, err := kube.UpdateKubeVirtVM(s.dynamicClient, vm)
 	if err != nil {
@@ -1008,6 +1025,12 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		OSInfo: api_model.VMOSInfo{
 			Arch: vm.Spec.Template.Spec.Architecture,
 		},
+	}
+
+	for k := range vm.Spec.Template.Spec.NodeSelector {
+		if label, ok := strings.CutPrefix(k, "vm-node-selector.wutong.io/"); ok {
+			result.NodeSelectorLabels = append(result.NodeSelectorLabels, label)
+		}
 	}
 
 	if vmi != nil {

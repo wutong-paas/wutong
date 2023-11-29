@@ -33,6 +33,10 @@ type ClusterInterface interface {
 	MavenSettingDetail(w http.ResponseWriter, r *http.Request)
 }
 
+type NodeInterface interface {
+	ListVMNodeSelectorLabels(w http.ResponseWriter, r *http.Request)
+}
+
 // TenantEnvInterface interface
 type TenantEnvInterface interface {
 	TenantEnvInterfaceWithV1
