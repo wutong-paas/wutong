@@ -32,6 +32,7 @@ type VMProfile struct {
 	Namespace          string       `json:"namespace"`
 	DefaultLoginUser   string       `json:"defaultLoginUser"`
 	Status             string       `json:"status"`
+	StatusMessage      string       `json:"statusMessage"`
 	IP                 string       `json:"ip"`
 	OSInfo             VMOSInfo     `json:"osInfo"`
 	ScheduleNode       string       `json:"scheduleNode"`
@@ -108,11 +109,14 @@ type CreateVMRequest struct {
 	Name          string       `json:"name" validate:"name|required"`
 	DisplayName   string       `json:"displayName" validate:"displayName|required"`
 	Desc          string       `json:"desc"`
+	OSName        string       `json:"osName"`
+	OSVersion     string       `json:"osVersion"`
 	OSSourceFrom  OSSourceFrom `json:"osSourceFrom" validate:"osSourceFrom|required"`
 	OSSourceURL   string       `json:"osSourceURL" validate:"osSourceURL|required"`
 	OSDiskSize    int64        `json:"osDiskSize" validate:"osDiskSize|required"`
 	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`
 	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"`
+	Running       bool         `json:"running"`
 	// Size        VMSize            `json:"size"`
 	// HostNodeName string `json:"hostNodeName"`
 	User     string `json:"user"`
@@ -167,6 +171,16 @@ type CreateVMPortGatewayRequest struct {
 
 type UpdateVMPortGatewayRequest struct {
 	VMPortGateway `json:",inline"`
+}
+
+type EnableVMPortRequest struct {
+	VMPort   int            `json:"vmPort" validate:"vmPort|required"`
+	Protocol VMPortProtocol `json:"protocol" validate:"protocol|required"`
+}
+
+type DisableVMPortRequest struct {
+	VMPort   int            `json:"vmPort" validate:"vmPort|required"`
+	Protocol VMPortProtocol `json:"protocol" validate:"protocol|required"`
 }
 
 // UpdateVMResponse

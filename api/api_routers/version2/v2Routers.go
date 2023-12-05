@@ -397,6 +397,8 @@ func (v2 *V2) vmRouter() chi.Router {
 	r.Post("/restart", controller.GetManager().RestartVM)
 	r.Post("/ports", controller.GetManager().AddVMPort)
 	r.Get("/ports", controller.GetManager().GetVMPorts)
+	r.Post("/ports/enable", controller.GetManager().EnableVMPort)
+	r.Post("/ports/disable", controller.GetManager().DisableVMPort)
 	r.Post("/gateways", controller.GetManager().CreateVMPortGateway)
 	r.Put("/gateways/{gateway_id}", controller.GetManager().UpdateVMPortGateway)
 	r.Delete("/gateways/{gateway_id}", controller.GetManager().DeleteVMPortGateway)

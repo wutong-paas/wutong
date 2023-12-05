@@ -73,6 +73,8 @@ type TenantEnvInterface interface {
 	UpdateVM(w http.ResponseWriter, r *http.Request)
 	AddVMPort(w http.ResponseWriter, r *http.Request)
 	GetVMPorts(w http.ResponseWriter, r *http.Request)
+	EnableVMPort(w http.ResponseWriter, r *http.Request)
+	DisableVMPort(w http.ResponseWriter, r *http.Request)
 	CreateVMPortGateway(w http.ResponseWriter, r *http.Request)
 	UpdateVMPortGateway(w http.ResponseWriter, r *http.Request)
 	DeleteVMPortGateway(w http.ResponseWriter, r *http.Request)

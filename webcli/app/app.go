@@ -127,8 +127,9 @@ type InitVMMessage struct {
 	VMID        string `json:"vmID"`
 	VMNamespace string `json:"vmNamespace"`
 	// VMIP        string `json:"vmIP"`
-	VMPort string `json:"vmPort"`
-	VMUser string `json:"vmUser"`
+	VMPort     string `json:"vmPort"`
+	VMUser     string `json:"vmUser"`
+	VMPassword string `json:"vmPassword"`
 }
 
 func checkSameOrigin(r *http.Request) bool {
