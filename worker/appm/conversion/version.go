@@ -346,6 +346,18 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 			config[k] = string(v)
 		}
 	}
+
+	// plugin envs has WT_INJECT_ prefix, inject to main container
+	appPlugins, _ := dbmanager.TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(as.ServiceID)
+	for _, plugin := range appPlugins {
+		versionEnvs, _ := dbmanager.TenantEnvPluginVersionENVDao().GetVersionEnvByServiceID(as.ServiceID, plugin.PluginID)
+		for _, env := range versionEnvs {
+			if injectedEnvName, ok := strings.CutPrefix(env.EnvName, "WT_INJECT_"); ok && len(injectedEnvName) > 0 {
+				envs = append(envs, corev1.EnvVar{Name: injectedEnvName, Value: env.EnvValue})
+			}
+		}
+	}
+
 	// component env priority over the app configuration group
 	for _, env := range envs {
 		config[env.Name] = env.Value
