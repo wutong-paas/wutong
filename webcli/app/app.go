@@ -127,9 +127,8 @@ type InitVMMessage struct {
 	VMID        string `json:"vmID"`
 	VMNamespace string `json:"vmNamespace"`
 	// VMIP        string `json:"vmIP"`
-	VMPort     string `json:"vmPort"`
-	VMUser     string `json:"vmUser"`
-	VMPassword string `json:"vmPassword"`
+	VMPort string `json:"vmPort"`
+	VMUser string `json:"vmUser"`
 }
 
 func checkSameOrigin(r *http.Request) bool {
@@ -338,7 +337,7 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	containerName, podName, args, err := app.GetVirtctlConsoleChannelArgs(init.VMNamespace, init.VMID)
 	if err != nil {
 		logrus.Errorf("get default container failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("Get default container name failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "Get default container name failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -346,7 +345,7 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	slave, err := app.tryExecRequest("wt-system", podName, containerName, args)
 	if err != nil {
 		logrus.Errorf("open exec context failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "open tty failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -360,7 +359,7 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	tty, err := webtty.New(&WsWrapper{conn}, slave, opts...)
 	if err != nil {
 		logrus.Errorf("open web tty context failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "open tty failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -373,7 +372,7 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 			return
 		}
 		logrus.Errorf("run web tty failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("run tty failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "run tty failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -412,7 +411,7 @@ func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.
 	containerName, podName, args, err := app.GetVirtualMachineSSHChannelArgs(init.VMNamespace, init.VMID, init.VMPort, init.VMUser)
 	if err != nil {
 		logrus.Errorf("get default container failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("Get default container name failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "Get default container name failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -420,7 +419,7 @@ func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.
 	slave, err := app.tryExecRequest("wt-system", podName, containerName, args)
 	if err != nil {
 		logrus.Errorf("open exec context failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "open tty failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -434,7 +433,7 @@ func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.
 	tty, err := webtty.New(&WsWrapper{conn}, slave, opts...)
 	if err != nil {
 		logrus.Errorf("open web tty context failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "open tty failure!"))
 		ExecuteCommandFailed++
 		return
 	}
@@ -447,10 +446,26 @@ func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.
 			return
 		}
 		logrus.Errorf("run web tty failure %s", err.Error())
-		conn.WriteMessage(websocket.TextMessage, []byte("run tty failure!"))
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "run tty failure!"))
 		ExecuteCommandFailed++
 		return
 	}
+}
+
+func httpResult(code int, msg string) []byte {
+	result := struct {
+		Code int    `json:"code"`
+		Msg  string `json:"msg"`
+	}{
+		Code: code,
+		Msg:  msg,
+	}
+
+	b, err := json.Marshal(result)
+	if err != nil {
+		return []byte(fmt.Sprintf(`{"code":"%d","msg":"%s"}`, code, msg))
+	}
+	return b
 }
 
 func (app *App) tryExecRequest(ns, pod, c string, args []string) (server.Slave, error) {
@@ -549,7 +564,7 @@ func (app *App) GetVirtctlConsoleChannelArgs(vmNamespace, vmID string) (string, 
 	podName := fmt.Sprintf("wt-channel-%d", randPodNo)
 
 	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
-	if err != nil || pod.Status.Phase == api.PodRunning {
+	if err != nil || pod.Status.Phase != api.PodRunning {
 		return "wt-channel", podName, args, fmt.Errorf("wt-channel is not ready")
 	}
 
