@@ -331,8 +331,20 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	logrus.Print("message=", message)
 
 	var init InitVMMessage
-
 	json.Unmarshal(stream, &init)
+	if init.VMID == "" {
+		logrus.Print("Parameter is error, vm id is empty")
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusBadRequest, "vm id can not be empty"))
+		conn.Close()
+		return
+	}
+
+	if init.VMNamespace == "" {
+		logrus.Print("Parameter is error, vm namespace is empty")
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusBadRequest, "vm namespace can not be empty"))
+		conn.Close()
+		return
+	}
 
 	containerName, podName, args, err := app.GetVirtctlConsoleChannelArgs(init.VMNamespace, init.VMID)
 	if err != nil {
@@ -351,7 +363,7 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	}
 	defer slave.Close()
 	opts := []webtty.Option{
-		webtty.WithWindowTitle([]byte(podName)),
+		webtty.WithWindowTitle([]byte(fmt.Sprintf("%s/%s", init.VMNamespace, init.VMID))),
 		webtty.WithReconnect(10),
 		webtty.WithPermitWrite(),
 	}
@@ -365,6 +377,7 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	}
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
+	conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusOK, "run tty success!"))
 	err = tty.Run(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), "master closed") {
@@ -405,8 +418,19 @@ func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.
 	logrus.Print("message=", message)
 
 	var init InitVMMessage
-
 	json.Unmarshal(stream, &init)
+	if init.VMID == "" {
+		logrus.Print("Parameter is error, vm id is empty")
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusBadRequest, "vm id can not be empty"))
+		conn.Close()
+		return
+	}
+	if init.VMNamespace == "" {
+		logrus.Print("Parameter is error, vm namespace is empty")
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusBadRequest, "vm namespace can not be empty"))
+		conn.Close()
+		return
+	}
 
 	containerName, podName, args, err := app.GetVirtualMachineSSHChannelArgs(init.VMNamespace, init.VMID, init.VMPort, init.VMUser)
 	if err != nil {
@@ -439,6 +463,8 @@ func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.
 	}
 	ctx, cancel := context.WithCancel(r.Context())
 	defer cancel()
+
+	conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusOK, "run tty success!"))
 	err = tty.Run(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), "master closed") {
@@ -553,7 +579,7 @@ func (app *App) GetContainerArgs(namespace, podname, containerName string) (stri
 // GetVirtctlConsoleChannelArgs return containerName, podName, args, error
 func (app *App) GetVirtctlConsoleChannelArgs(vmNamespace, vmID string) (string, string, []string, error) {
 	// var args = []string{"/bin/bash", "-c", "ssh root@[vm-ssh-22][namespace]"}
-	var args = []string{"virtctl", "console", "-n", vmNamespace, vmID}
+	var args = []string{"/bin/sh", "-c", fmt.Sprintf("virtctl console -n %s %s", vmNamespace, vmID)}
 
 	virtctlSts, err := app.coreClient.AppsV1().StatefulSets("wt-system").Get(context.Background(), "wt-channel", metav1.GetOptions{})
 	if err != nil {
@@ -607,7 +633,7 @@ func (app *App) GetVirtualMachineSSHChannelArgs(vmNamespace, vmID, vmPort, vmUse
 		vmPort = "22"
 	}
 
-	var args = []string{"ssh", fmt.Sprintf("%s@%s", vmUser, vmIP), "-p", vmPort}
+	var args = []string{"/bin/sh", "-c", fmt.Sprintf("ssh %s@%s -p %s", vmUser, vmIP, vmPort)}
 
 	virtctlSts, err := app.coreClient.AppsV1().StatefulSets("wt-system").Get(context.Background(), "wt-channel", metav1.GetOptions{})
 	if err != nil {
