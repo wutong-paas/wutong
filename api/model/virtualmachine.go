@@ -27,8 +27,8 @@ type VMProfile struct {
 	OSSourceFrom       OSSourceFrom `json:"osSourceFrom"`
 	OSSourceURL        string       `json:"osSourceURL"`
 	OSDiskSize         int64        `json:"osDiskSize"`
-	RequestCPU         int64        `json:"requestCPU"`
-	RequestMemory      int64        `json:"requestMemory"`
+	RequestCPU         int64        `json:"requestCPU"`    // m
+	RequestMemory      int64        `json:"requestMemory"` // GiB
 	Namespace          string       `json:"namespace"`
 	DefaultLoginUser   string       `json:"defaultLoginUser"`
 	Status             string       `json:"status"`
@@ -114,8 +114,8 @@ type CreateVMRequest struct {
 	OSSourceFrom  OSSourceFrom `json:"osSourceFrom" validate:"osSourceFrom|required"`
 	OSSourceURL   string       `json:"osSourceURL" validate:"osSourceURL|required"`
 	OSDiskSize    int64        `json:"osDiskSize" validate:"osDiskSize|required"`
-	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`
-	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"`
+	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`       // m
+	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"` // GiB
 	Running       bool         `json:"running"`
 	// Size        VMSize            `json:"size"`
 	// HostNodeName string `json:"hostNodeName"`
@@ -140,8 +140,8 @@ type GetVMResponse struct {
 type UpdateVMRequest struct {
 	DisplayName        string   `json:"displayName"`
 	Desc               string   `json:"desc"`
-	RequestCPU         int64    `json:"requestCPU"`
-	RequestMemory      int64    `json:"requestMemory"`
+	RequestCPU         int64    `json:"requestCPU"`    // m
+	RequestMemory      int64    `json:"requestMemory"` // GiB
 	DefaultLoginUser   string   `json:"defaultLoginUser"`
 	Operator           string   `json:"operator"`
 	NodeSelectorLabels []string `json:"nodeSelectorLabels"`

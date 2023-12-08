@@ -195,7 +195,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 						Resources: kubevirtcorev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								"cpu":    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
-								"memory": resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory)),
+								"memory": resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
 							},
 						},
 					},
@@ -318,7 +318,7 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 	}
 	if req.RequestMemory > 0 {
 		vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
-		vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory))
+		vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
 	}
 	vm.Annotations["wutong.io/last-modifier"] = req.Operator
 	vm.Annotations["wutong.io/last-modification-timestamp"] = metav1.Now().UTC().Format(time.RFC3339)
