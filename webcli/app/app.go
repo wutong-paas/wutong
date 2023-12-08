@@ -489,9 +489,9 @@ func httpResult(code int, msg string) []byte {
 
 	b, err := json.Marshal(result)
 	if err != nil {
-		return []byte(fmt.Sprintf(`{"code":"%d","msg":"%s"}`, code, msg))
+		return []byte(fmt.Sprintf(`6{"code":"%d","msg":"%s"}`, code, msg))
 	}
-	return b
+	return []byte(fmt.Sprintf("6%s", string(b)))
 }
 
 func (app *App) tryExecRequest(ns, pod, c string, args []string) (server.Slave, error) {
