@@ -28,7 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-//Config config server
+// Config config server
 type Config struct {
 	EtcdEndPoints           []string
 	EtcdCaFile              string
@@ -56,6 +56,7 @@ type Config struct {
 	WTNamespace             string
 	WTDataPVCName           string
 	Helm                    Helm
+	DefaultOTELServerHost   string // WT_OTEL_SERVER
 }
 
 // Helm helm configuration.
@@ -66,19 +67,19 @@ type Helm struct {
 	ChartCache string
 }
 
-//Worker  worker server
+// Worker  worker server
 type Worker struct {
 	Config
 	LogLevel string
 	RunMode  string //default,sync
 }
 
-//NewWorker new server
+// NewWorker new server
 func NewWorker() *Worker {
 	return &Worker{}
 }
 
-//AddFlags config
+// AddFlags config
 func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the worker log level")
 	fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://127.0.0.1:2379"}, "etcd v3 cluster endpoints.")
@@ -106,6 +107,7 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.WTNamespace, "wt-system-namespace", "wt-system", "wt components kubernetes namespace")
 	fs.StringVar(&a.WTDataPVCName, "wtdata-pvc-name", "wt-cpt-wtdata", "The name of wtdata persistent volume claim")
 	fs.StringVar(&a.Helm.DataDir, "helm-data-dir", "helm-data-dir", "The data directory of Helm.")
+	fs.StringVar(&a.DefaultOTELServerHost, "otel-server-host", "obs-otel-biz-collector.wutong-obs", "The default OpenTelemetry server host.")
 
 	if a.Helm.DataDir == "" {
 		a.Helm.DataDir = "/wtdata/helm"
@@ -115,7 +117,7 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	a.Helm.ChartCache = path.Join(a.Helm.DataDir, "chart")
 }
 
-//SetLog 设置log
+// SetLog 设置log
 func (a *Worker) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
@@ -125,7 +127,7 @@ func (a *Worker) SetLog() {
 	logrus.SetLevel(level)
 }
 
-//CheckEnv 检测环境变量
+// CheckEnv 检测环境变量
 func (a *Worker) CheckEnv() error {
 	if err := os.Setenv("WTDATA_PVC_NAME", a.Config.WTDataPVCName); err != nil {
 		return fmt.Errorf("set env 'WTDATA_PVC_NAME': %v", err)
@@ -133,5 +135,10 @@ func (a *Worker) CheckEnv() error {
 	if os.Getenv("EX_DOMAIN") == "" {
 		return fmt.Errorf("please set env `EX_DOMAIN`")
 	}
+
+	if err := os.Setenv("WT_OTEL_SERVER_HOST", a.Config.DefaultOTELServerHost); err != nil {
+		return fmt.Errorf("set env 'WT_OTEL_SERVER_HOST': %v", err)
+	}
+
 	return nil
 }
