@@ -30,13 +30,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
-	"github.com/wutong-paas/wutong/db/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	"github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/envutil"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/appm/volume"
+	"github.com/wutong-paas/wutong/worker/currentruntime"
 	workerutil "github.com/wutong-paas/wutong/worker/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -242,7 +242,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 		envs = append(envs, corev1.EnvVar{Name: "DEPEND_SERVICE_COUNT", Value: strconv.Itoa(len(serviceAliases))})
 		envs = append(envs, corev1.EnvVar{Name: "STARTUP_SEQUENCE_DEPENDENCIES", Value: strings.Join(startupSequenceDependencies, ",")})
 
-		if as.GovernanceMode == model.GovernanceModeBuildInServiceMesh {
+		if as.GovernanceMode == dbmodel.GovernanceModeBuildInServiceMesh {
 			as.NeedProxy = true
 		}
 	}
@@ -321,6 +321,7 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 		{Name: "WT_SERVICE_NAME", Value: as.GetK8sWorkloadName()},
 		{Name: "WT_SERVICE_ALIAS", Value: as.ServiceAlias},
 		{Name: "WT_SERVICE_POD_NUM", Value: strconv.Itoa(as.Replicas)},
+		{Name: "WT_OTEL_SERVER", Value: currentruntime.GetOTELServerHost()},
 		// set HOST_IP and POD_IP env variable
 		{Name: "HOST_IP", ValueFrom: &corev1.EnvVarSource{
 			FieldRef: &corev1.ObjectFieldSelector{
@@ -539,7 +540,7 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, error) {
 	inBoundOK, err := dbmanager.TenantEnvServicePluginRelationDao().CheckSomeModelPluginByServiceID(
 		serviceID,
-		model.InBoundNetPlugin)
+		dbmodel.InBoundNetPlugin)
 	if err != nil {
 		return false, err
 	}
@@ -548,7 +549,7 @@ func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, 
 	}
 	return dbmanager.TenantEnvServicePluginRelationDao().CheckSomeModelPluginByServiceID(
 		serviceID,
-		model.InBoundAndOutBoundNetPlugin)
+		dbmodel.InBoundAndOutBoundNetPlugin)
 }
 func createUpstreamPluginMappingPort(
 	ports []*dbmodel.TenantEnvServicesPort,
@@ -685,7 +686,7 @@ func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]stri
 				selector[client.LabelOS] = l.LabelValue
 				continue
 			}
-			if l.LabelValue == model.LabelKeyServicePrivileged {
+			if l.LabelValue == dbmodel.LabelKeyServicePrivileged {
 				continue
 			}
 			if strings.Contains(l.LabelValue, "=") {
