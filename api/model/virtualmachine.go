@@ -18,8 +18,6 @@
 
 package model
 
-import "time"
-
 type VMProfile struct {
 	Name               string       `json:"name"`
 	DisplayName        string       `json:"displayName"`
@@ -36,8 +34,8 @@ type VMProfile struct {
 	IP                 string       `json:"ip"`
 	OSInfo             VMOSInfo     `json:"osInfo"`
 	ScheduleNode       string       `json:"scheduleNode"`
-	CreatedAt          time.Time    `json:"createdAt"`
-	LastModifiedAt     time.Time    `json:"lastModifiedAt"`
+	CreatedAt          string       `json:"createdAt"`
+	LastModifiedAt     string       `json:"lastModifiedAt"`
 	CreatedBy          string       `json:"createdBy"`
 	LastModifiedBy     string       `json:"lastModifiedBy"`
 	NodeSelectorLabels []string     `json:"nodeSelectorLabels"`

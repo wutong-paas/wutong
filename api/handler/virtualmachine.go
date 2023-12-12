@@ -71,6 +71,21 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
 	}
 
+	vmlist, err := kube.ListKubeVirtVMs(s.dynamicClient, tenantEnv.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("环境校验失败！")
+	}
+
+	for _, v := range vmlist {
+		if v.Name == req.Name {
+			return nil, fmt.Errorf("虚拟机标识 %s 被占用，尝试使用其他标识创建虚拟机！", req.Name)
+		}
+
+		if v.Annotations["wutong.io/display-name"] == req.DisplayName {
+			return nil, fmt.Errorf("虚拟机名称 %s 被占用，尝试使用其他名称创建虚拟机！", req.DisplayName)
+		}
+	}
+
 	wutongLabels := labelsFromTenantEnv(tenantEnv)
 	wutongLabels = labels.Merge(wutongLabels, map[string]string{
 		"wutong.io/vm-id": req.Name,
@@ -250,7 +265,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 	created, err := kube.CreateKubevirtVM(s.dynamicClient, vm)
 	if err != nil {
 		if k8sErrors.IsAlreadyExists(err) {
-			return result, fmt.Errorf("虚拟机 %s 名称被占用！", req.Name)
+			return result, fmt.Errorf("虚拟机标识 %s 被占用，尝试使用其他标识创建虚拟机！", req.Name)
 		}
 		logrus.Errorf("create vm failed, error: %s", err.Error())
 		return result, fmt.Errorf("创建虚拟机 %s 失败！", req.Name)
@@ -1078,6 +1093,10 @@ func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListV
 		return nil, errors.New("获取虚拟机列表失败！")
 	}
 
+	sort.Slice(vms, func(i, j int) bool {
+		return vms[i].CreationTimestamp.After(vms[j].CreationTimestamp.Time)
+	})
+
 	var result = new(api_model.ListVMsResponse)
 	for _, vm := range vms {
 		vp := vmProfileFromKubeVirtVM(vm, nil)
@@ -1085,9 +1104,6 @@ func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListV
 	}
 	result.Total = len(result.VMs)
 
-	sort.Slice(result.VMs, func(i, j int) bool {
-		return result.VMs[i].CreatedAt.After(result.VMs[j].CreatedAt)
-	})
 	return result, nil
 }
 
@@ -1182,8 +1198,8 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		Status:           string(vm.Status.PrintableStatus),
 		CreatedBy:        vm.Annotations["wutong.io/creator"],
 		LastModifiedBy:   vm.Annotations["wutong.io/last-modifier"],
-		CreatedAt:        vm.CreationTimestamp.Time.Local(),
-		LastModifiedAt:   cast.ToTime(vm.Annotations["wutong.io/last-modification-timestamp"]).Local(),
+		CreatedAt:        vm.CreationTimestamp.Time.Local().Format("2006-01-02 15:04:05"),
+		LastModifiedAt:   cast.ToTime(vm.Annotations["wutong.io/last-modification-timestamp"]).Local().Format("2006-01-02 15:04:05"),
 		OSInfo: api_model.VMOSInfo{
 			Name:    vm.Annotations["wutong.io/vm-os-name"],
 			Version: vm.Annotations["wutong.io/vm-os-version"],
