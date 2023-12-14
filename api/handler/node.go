@@ -15,14 +15,14 @@ type NodeHandler interface {
 }
 
 // NewClusterHandler -
-func NewNodeHandler(clientset *kubernetes.Clientset) NodeHandler {
+func NewNodeHandler(clientset kubernetes.Interface) NodeHandler {
 	return &nodeAction{
 		clientset: clientset,
 	}
 }
 
 type nodeAction struct {
-	clientset *kubernetes.Clientset
+	clientset kubernetes.Interface
 }
 
 func (a *nodeAction) ListVMNodeSelectorLabels() ([]string, error) {

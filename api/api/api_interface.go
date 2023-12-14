@@ -31,6 +31,7 @@ type ClusterInterface interface {
 	MavenSettingUpdate(w http.ResponseWriter, r *http.Request)
 	MavenSettingDelete(w http.ResponseWriter, r *http.Request)
 	MavenSettingDetail(w http.ResponseWriter, r *http.Request)
+	Features(w http.ResponseWriter, r *http.Request)
 }
 
 type NodeInterface interface {

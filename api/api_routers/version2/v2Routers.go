@@ -101,6 +101,9 @@ func (v2 *V2) clusterRouter() chi.Router {
 	r.Get("/builder/mavensetting/{name}", controller.GetManager().MavenSettingDetail)
 	r.Put("/builder/mavensetting/{name}", controller.GetManager().MavenSettingUpdate)
 	r.Delete("/builder/mavensetting/{name}", controller.GetManager().MavenSettingDelete)
+
+	// features
+	r.Get("/features", controller.GetManager().Features)
 	return r
 }
 
@@ -195,10 +198,8 @@ func (v2 *V2) tenantEnvNameRouter() chi.Router {
 
 	r.Get("/kube-resources", controller.GetManager().GetTenantEnvKubeResources)
 
-	// kubevirt
-	r.Post("/vms", controller.GetManager().CreateVM)
-	r.Get("/vms", controller.GetManager().ListVMs)
-	r.Mount("/vms/{vm_id}", v2.vmRouter())
+	// virtual machine
+	r.Mount("/vms", v2.vmRouter())
 
 	return r
 }
@@ -336,18 +337,33 @@ func (v2 *V2) serviceRouter() chi.Router {
 
 	r.Get("/kube-resources", controller.GetManager().GetServiceKubeResources)
 
-	r.Post("/backup", controller.GetManager().CreateBackup)
-	r.Post("/backup/schedule", controller.GetManager().CreateBackupSchedule)
-	r.Put("/backup/schedule", controller.GetManager().UpdateBackupSchedule)
-	r.Delete("/backup/schedule", controller.GetManager().DeleteBackupSchedule)
-	r.Get("/backup/schedule", controller.GetManager().GetBackupSchedule)
-	r.Get("/backup/{backup_id}/download", controller.GetManager().DownloadBackup)
-	r.Post("/restore", controller.GetManager().CreateRestore)
-	r.Delete("/backup/{backup_id}", controller.GetManager().DeleteBackup)
-	r.Delete("/restore/{restore_id}", controller.GetManager().DeleteRestore)
-	r.Get("/backup/records", controller.GetManager().BackupRecords)
-	r.Get("/restore/records", controller.GetManager().RestoreRecords)
+	// velero backup and restore
+	r.Mount("/backup", v2.backupRouter())
+	r.Mount("/restore", v2.restoreRouter())
 
+	return r
+}
+
+func (v2 *V2) backupRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Use(middleware.InitVeleroBackupOrRestore)
+	r.Post("/", controller.GetManager().CreateBackup)
+	r.Post("/schedule", controller.GetManager().CreateBackupSchedule)
+	r.Put("/schedule", controller.GetManager().UpdateBackupSchedule)
+	r.Delete("/schedule", controller.GetManager().DeleteBackupSchedule)
+	r.Get("/schedule", controller.GetManager().GetBackupSchedule)
+	r.Get("/{backup_id}/download", controller.GetManager().DownloadBackup)
+	r.Delete("/{backup_id}", controller.GetManager().DeleteBackup)
+	r.Get("/records", controller.GetManager().BackupRecords)
+	return r
+}
+
+func (v2 *V2) restoreRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Use(middleware.InitVeleroBackupOrRestore)
+	r.Post("/", controller.GetManager().CreateRestore)
+	r.Delete("/{restore_id}", controller.GetManager().DeleteRestore)
+	r.Get("/records", controller.GetManager().RestoreRecords)
 	return r
 }
 
@@ -388,8 +404,18 @@ func (v2 *V2) applicationRouter() chi.Router {
 
 func (v2 *V2) vmRouter() chi.Router {
 	r := chi.NewRouter()
-	// InitVM
+	// InitVM middleware
 	r.Use(middleware.InitVM)
+	r.Post("/", controller.GetManager().CreateVM)
+	r.Get("/", controller.GetManager().ListVMs)
+	r.Mount("/{vm_id}", v2.vmIDRouter())
+	return r
+}
+
+func (v2 *V2) vmIDRouter() chi.Router {
+	r := chi.NewRouter()
+	// InitVMID middleware
+	r.Use(middleware.InitVMID)
 	r.Delete("/", controller.GetManager().DeleteVM)
 	r.Put("/", controller.GetManager().UpdateVM)
 	r.Post("/start", controller.GetManager().StartVM)

@@ -190,6 +190,7 @@ func IsVeleroInstalled(kubeClient kubernetes.Interface, apiextClient apiextclien
 		if err != nil {
 			log.Println("not found velero crd: backups.velero.io")
 			isVeleroInstalled = util.Ptr(false)
+			return *isVeleroInstalled
 		}
 
 		_, err = GetCachedResources(kubeClient).DeploymentLister.Deployments("velero").Get("velero")

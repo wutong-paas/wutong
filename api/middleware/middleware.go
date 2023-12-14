@@ -29,6 +29,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/handler"
 	"github.com/wutong-paas/wutong/api/util"
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
@@ -120,10 +121,44 @@ func InitApplication(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+// InitVeleroBackupOrRestore
+func InitVeleroBackupOrRestore(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if ok := kube.IsVeleroInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()); !ok {
+			httputil.ReturnError(r, w, 500, "集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(r.Context()))
+	}
+	return http.HandlerFunc(fn)
+}
+
 // InitVM -
 func InitVM(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("vm_id"), chi.URLParam(r, "vm_id"))
+		if ok := kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()); !ok {
+			httputil.ReturnError(r, w, 500, "集群中未检测到 Kubevirt 服务，使用该功能请联系管理员安装 Kubevirt 服务！")
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(r.Context()))
+	}
+	return http.HandlerFunc(fn)
+}
+
+// InitVMID -
+func InitVMID(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if ok := kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()); !ok {
+			httputil.ReturnError(r, w, 500, "集群中未检测到 Kubevirt 服务，使用该功能请联系管理员安装 Kubevirt 服务！")
+			return
+		}
+
+		vmID := chi.URLParam(r, "vm_id")
+		if vmID == "" {
+			httputil.ReturnError(r, w, 404, "need vm id")
+			return
+		}
+		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("vm_id"), vmID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)

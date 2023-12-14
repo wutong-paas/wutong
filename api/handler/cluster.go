@@ -32,10 +32,11 @@ type ClusterHandler interface {
 	MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *util.APIHandleError
 	MavenSettingDelete(ctx context.Context, name string) *util.APIHandleError
 	MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *util.APIHandleError)
+	Features(ctx context.Context) map[string]bool
 }
 
 // NewClusterHandler -
-func NewClusterHandler(clientset *kubernetes.Clientset, WtNamespace, prometheusEndpoint string) ClusterHandler {
+func NewClusterHandler(clientset kubernetes.Interface, WtNamespace, prometheusEndpoint string) ClusterHandler {
 	return &clusterAction{
 		namespace:          WtNamespace,
 		clientset:          clientset,
@@ -45,7 +46,7 @@ func NewClusterHandler(clientset *kubernetes.Clientset, WtNamespace, prometheusE
 
 type clusterAction struct {
 	namespace          string
-	clientset          *kubernetes.Clientset
+	clientset          kubernetes.Interface
 	clusterInfoCache   *model.ClusterResource
 	cacheTime          time.Time
 	prometheusEndpoint string
@@ -339,6 +340,14 @@ func (c *clusterAction) MavenSettingDetail(ctx context.Context, name string) (*M
 		UpdateTime: sm.Annotations["updateTime"],
 		Content:    sm.Data["mavensetting"],
 	}, nil
+}
+
+// Features -
+func (c *clusterAction) Features(ctx context.Context) map[string]bool {
+	return map[string]bool{
+		"velero":   kube.IsVeleroInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()),
+		"kubevirt": kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()),
+	}
 }
 
 type NodeStorageMetric struct {

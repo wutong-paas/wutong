@@ -47,7 +47,7 @@ type ClusterEvent struct {
 	Message string            `json:"message"`
 }
 
-func ClusterEventFrom(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
+func ClusterEventFrom(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
 	if event.Type == ClusterEventLevelNormal.String() {
 		return nil
 	}
@@ -61,7 +61,7 @@ func ClusterEventFrom(event *corev1.Event, clientset *kubernetes.Clientset) *Clu
 	return nil
 }
 
-func podEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
+func podEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
 	var message string
 	switch event.Reason {
 	case "FailedKillPod":
@@ -83,7 +83,7 @@ func podEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEven
 	}
 }
 
-func nodeEvent(event *corev1.Event, clientset *kubernetes.Clientset) *ClusterEvent {
+func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
 	var message string
 	if strings.Contains(event.Reason, "bind: address already in use") {
 		reasonParts := strings.Split(event.Reason, ":")

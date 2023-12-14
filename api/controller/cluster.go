@@ -56,12 +56,12 @@ func (t *ClusterController) GetClusterEvents(w http.ResponseWriter, r *http.Requ
 	httputil.ReturnSuccess(r, w, events)
 }
 
-//MavenSettingList maven setting list
+// MavenSettingList maven setting list
 func (t *ClusterController) MavenSettingList(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, handler.GetClusterHandler().MavenSettingList(r.Context()))
 }
 
-//MavenSettingAdd maven setting add
+// MavenSettingAdd maven setting add
 func (t *ClusterController) MavenSettingAdd(w http.ResponseWriter, r *http.Request) {
 	var set handler.MavenSetting
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &set, nil); !ok {
@@ -74,7 +74,7 @@ func (t *ClusterController) MavenSettingAdd(w http.ResponseWriter, r *http.Reque
 	httputil.ReturnSuccess(r, w, &set)
 }
 
-//MavenSettingUpdate maven setting file update
+// MavenSettingUpdate maven setting file update
 func (t *ClusterController) MavenSettingUpdate(w http.ResponseWriter, r *http.Request) {
 	type SettingUpdate struct {
 		Content string `json:"content" validate:"required"`
@@ -94,7 +94,7 @@ func (t *ClusterController) MavenSettingUpdate(w http.ResponseWriter, r *http.Re
 	httputil.ReturnSuccess(r, w, set)
 }
 
-//MavenSettingDelete maven setting file delete
+// MavenSettingDelete maven setting file delete
 func (t *ClusterController) MavenSettingDelete(w http.ResponseWriter, r *http.Request) {
 	err := handler.GetClusterHandler().MavenSettingDelete(r.Context(), chi.URLParam(r, "name"))
 	if err != nil {
@@ -104,7 +104,7 @@ func (t *ClusterController) MavenSettingDelete(w http.ResponseWriter, r *http.Re
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//MavenSettingDetail maven setting file delete
+// MavenSettingDetail maven setting file delete
 func (t *ClusterController) MavenSettingDetail(w http.ResponseWriter, r *http.Request) {
 	c, err := handler.GetClusterHandler().MavenSettingDetail(r.Context(), chi.URLParam(r, "name"))
 	if err != nil {
@@ -112,4 +112,9 @@ func (t *ClusterController) MavenSettingDetail(w http.ResponseWriter, r *http.Re
 		return
 	}
 	httputil.ReturnSuccess(r, w, c)
+}
+
+// Features
+func (t *ClusterController) Features(w http.ResponseWriter, r *http.Request) {
+	httputil.ReturnSuccess(r, w, handler.GetClusterHandler().Features(r.Context()))
 }

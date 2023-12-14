@@ -24,9 +24,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/controller"
 	"github.com/wutong-paas/wutong/api/db"
 	"github.com/wutong-paas/wutong/api/discover"
@@ -34,17 +33,8 @@ import (
 	"github.com/wutong-paas/wutong/api/server"
 	"github.com/wutong-paas/wutong/cmd/api/option"
 	"github.com/wutong-paas/wutong/event"
-	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
-	wutongscheme "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/client"
-	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // Run start run
@@ -73,32 +63,13 @@ func Run(s *option.APIServer) error {
 		logrus.Debugf("create event manager error, %v", err)
 	}
 
-	config, err := k8sutil.NewRestConfig(s.KubeConfigPath)
-	if err != nil {
-		return err
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-	wutongClient := versioned.NewForConfigOrDie(config)
-
-	// k8s runtime client
-	scheme := runtime.NewScheme()
-	clientgoscheme.AddToScheme(scheme)
-	wutongscheme.AddToScheme(scheme)
-	k8sClient, err := k8sclient.New(config, k8sclient.Options{
-		Scheme: scheme,
-	})
-	if err != nil {
-		return errors.WithMessage(err, "create k8s client")
-	}
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return errors.WithMessage(err, "create dynamic client")
-	}
-	apiextClient := apiextclient.NewForConfigOrDie(config)
-	veleroClient, _ := veleroversioned.NewForConfig(config)
+	config := kube.RegionRESTConfig()
+	clientset := kube.RegionClientset()
+	wutongClient := kube.RegionWutongClientset()
+	k8sClient := kube.RegionRuntimeClient()
+	dynamicClient := kube.RegionDynamicClient()
+	apiextClient := kube.RegionAPIExtClientset()
+	veleroClient := kube.RegionVeleroClientset()
 
 	if err := event.NewManager(event.EventConfig{
 		EventLogServers: s.Config.EventLogServers,

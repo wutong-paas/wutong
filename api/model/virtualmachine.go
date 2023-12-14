@@ -19,26 +19,35 @@
 package model
 
 type VMProfile struct {
-	Name               string       `json:"name"`
-	DisplayName        string       `json:"displayName"`
-	Desc               string       `json:"desc"`
-	OSSourceFrom       OSSourceFrom `json:"osSourceFrom"`
-	OSSourceURL        string       `json:"osSourceURL"`
-	OSDiskSize         int64        `json:"osDiskSize"`
-	RequestCPU         int64        `json:"requestCPU"`    // m
-	RequestMemory      int64        `json:"requestMemory"` // GiB
-	Namespace          string       `json:"namespace"`
-	DefaultLoginUser   string       `json:"defaultLoginUser"`
-	Status             string       `json:"status"`
-	StatusMessage      string       `json:"statusMessage"`
-	IP                 string       `json:"ip"`
-	OSInfo             VMOSInfo     `json:"osInfo"`
-	ScheduleNode       string       `json:"scheduleNode"`
-	CreatedAt          string       `json:"createdAt"`
-	LastModifiedAt     string       `json:"lastModifiedAt"`
-	CreatedBy          string       `json:"createdBy"`
-	LastModifiedBy     string       `json:"lastModifiedBy"`
-	NodeSelectorLabels []string     `json:"nodeSelectorLabels"`
+	Name               string        `json:"name"`
+	DisplayName        string        `json:"displayName"`
+	Desc               string        `json:"desc"`
+	OSSourceFrom       OSSourceFrom  `json:"osSourceFrom"`
+	OSSourceURL        string        `json:"osSourceURL"`
+	OSDiskSize         int64         `json:"osDiskSize"`
+	RequestCPU         int64         `json:"requestCPU"`    // m
+	RequestMemory      int64         `json:"requestMemory"` // GiB
+	Namespace          string        `json:"namespace"`
+	DefaultLoginUser   string        `json:"defaultLoginUser"`
+	Status             string        `json:"status"`
+	StatusMessage      string        `json:"statusMessage"`
+	Situations         []VMSituation `json:"situations"`
+	IP                 string        `json:"ip"`
+	OSInfo             VMOSInfo      `json:"osInfo"`
+	ScheduleNode       string        `json:"scheduleNode"`
+	CreatedAt          string        `json:"createdAt"`
+	LastModifiedAt     string        `json:"lastModifiedAt"`
+	CreatedBy          string        `json:"createdBy"`
+	LastModifiedBy     string        `json:"lastModifiedBy"`
+	NodeSelectorLabels []string      `json:"nodeSelectorLabels"`
+}
+
+type VMSituation struct {
+	Type           string `json:"type"`
+	Reason         string `json:"reason"`
+	Message        string `json:"message"`
+	Status         bool
+	LastReportedAt string `json:"lastReportedAt"`
 }
 
 type VMOSInfo struct {

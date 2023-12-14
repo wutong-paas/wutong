@@ -52,11 +52,6 @@ import (
 var defailtOSDiskSize int64 = 40
 
 func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error) {
-	ok := kube.IsKubevirtInstalled(s.kubeClient, s.apiextClient)
-	if !ok {
-		return nil, errors.New("集群中未检测到 Kubevirt 服务，使用该功能请联系管理员安装 Kubevirt 服务！")
-	}
-
 	if req.OSDiskSize == 0 {
 		req.OSDiskSize = defailtOSDiskSize
 	}
@@ -364,7 +359,6 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 }
 
 func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StartVMResponse, error) {
-
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
@@ -385,7 +379,6 @@ func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*ap
 }
 
 func (s *ServiceAction) StopVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StopVMResponse, error) {
-
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
@@ -1086,7 +1079,6 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 }
 
 func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListVMsResponse, error) {
-
 	vms, err := kube.ListKubeVirtVMs(s.dynamicClient, tenantEnv.Namespace)
 	if err != nil {
 		logrus.Errorf("list vm failed, error: %s", err.Error())
@@ -1196,6 +1188,7 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		Namespace:        vm.Namespace,
 		DefaultLoginUser: vm.Annotations["wutong.io/vm-default-login-user"],
 		Status:           string(vm.Status.PrintableStatus),
+		StatusMessage:    vmStatusMessageFromKubeVirtVM(vm),
 		CreatedBy:        vm.Annotations["wutong.io/creator"],
 		LastModifiedBy:   vm.Annotations["wutong.io/last-modifier"],
 		CreatedAt:        vm.CreationTimestamp.Time.Local().Format("2006-01-02 15:04:05"),
@@ -1208,9 +1201,13 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 	}
 
 	for _, cond := range vm.Status.Conditions {
-		if cond.Type == kubevirtcorev1.VirtualMachineConditionType(kubevirtcorev1.VirtualMachineReady) {
-			result.StatusMessage = cond.Message
-		}
+		result.Situations = append(result.Situations, api_model.VMSituation{
+			Type:           string(cond.Type),
+			Status:         cond.Status == corev1.ConditionTrue,
+			Reason:         cond.Reason,
+			Message:        cond.Message,
+			LastReportedAt: cond.LastTransitionTime.Local().Format("2006-01-02 15:04:05"),
+		})
 	}
 
 	for k := range vm.Spec.Template.Spec.NodeSelector {
@@ -1234,5 +1231,37 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		result.OSInfo.KernelVersion = vmi.Status.GuestOSInfo.KernelVersion
 	}
 
+	return result
+}
+
+var statusMessageMap = map[kubevirtcorev1.VirtualMachinePrintableStatus]string{
+	// kubevirtcorev1.VirtualMachineStatusStopped:                 "虚拟机已停止",
+	// kubevirtcorev1.VirtualMachineStatusProvisioning:            "虚拟机正在创建...",
+	// kubevirtcorev1.VirtualMachineStatusStarting:                "虚拟机正在启动...",
+	// kubevirtcorev1.VirtualMachineStatusRunning:                 "虚拟机运行中",
+	// kubevirtcorev1.VirtualMachineStatusPaused:                  "虚拟机已暂停",
+	// kubevirtcorev1.VirtualMachineStatusStopping:                "虚拟机正在停止",
+	// kubevirtcorev1.VirtualMachineStatusTerminating:             "虚拟机正在删除",
+	kubevirtcorev1.VirtualMachineStatusCrashLoopBackOff: "虚拟机启动失败",
+	// kubevirtcorev1.VirtualMachineStatusMigrating:               "虚拟机正在迁移",
+	kubevirtcorev1.VirtualMachineStatusUnknown:                 "虚拟机状态未知",
+	kubevirtcorev1.VirtualMachineStatusUnschedulable:           "虚拟机调度失败",
+	kubevirtcorev1.VirtualMachineStatusErrImagePull:            "虚拟机镜像拉取失败",
+	kubevirtcorev1.VirtualMachineStatusImagePullBackOff:        "虚拟机镜像拉取失败",
+	kubevirtcorev1.VirtualMachineStatusPvcNotFound:             "虚拟机持久数据卷未找到",
+	kubevirtcorev1.VirtualMachineStatusDataVolumeError:         "虚拟机数据卷错误",
+	kubevirtcorev1.VirtualMachineStatusWaitingForVolumeBinding: "虚拟机数据卷等待绑定中...",
+}
+
+func vmStatusMessageFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine) string {
+	var result = statusMessageMap[vm.Status.PrintableStatus]
+	switch vm.Status.PrintableStatus {
+	case kubevirtcorev1.VirtualMachineStatusUnschedulable:
+		for _, cond := range vm.Status.Conditions {
+			if cond.Type == kubevirtcorev1.VirtualMachineConditionType(corev1.PodScheduled) && cond.Status == corev1.ConditionFalse {
+				result += fmt.Sprintf("，原因：%s", cond.Message)
+			}
+		}
+	}
 	return result
 }
