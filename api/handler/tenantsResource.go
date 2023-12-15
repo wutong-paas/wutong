@@ -9,6 +9,11 @@ import (
 	"github.com/wutong-paas/wutong/util"
 )
 
+var (
+	ErrTenantEnvLackOfMemory = errors.New("tenant_env_lack_of_memory")
+	ErrClusterLackOfMemory   = errors.New("cluster_lack_of_memory")
+)
+
 // CheckTenantEnvResource check tenantEnv's resource is support action or not
 func CheckTenantEnvResource(ctx context.Context, tenantEnv *dbmodel.TenantEnvs, needMemory int) error {
 	ts, err := GetServiceManager().GetTenantEnvRes(tenantEnv.UUID)
@@ -20,7 +25,7 @@ func CheckTenantEnvResource(ctx context.Context, tenantEnv *dbmodel.TenantEnvs, 
 		avaiMemory := tenantEnv.LimitMemory - ts.UsedMEM
 		if needMemory > avaiMemory {
 			logrus.Errorf("tenant env available memory is %d, To apply for %d, not enough", avaiMemory, needMemory)
-			return errors.New("tenant_env_lack_of_memory")
+			return ErrTenantEnvLackOfMemory
 		}
 	}
 
@@ -31,7 +36,7 @@ func CheckTenantEnvResource(ctx context.Context, tenantEnv *dbmodel.TenantEnvs, 
 
 	if int64(needMemory) > allcm {
 		logrus.Errorf("cluster available memory is %d, To apply for %d, not enough", allcm, needMemory)
-		return errors.New("cluster_lack_of_memory")
+		return ErrClusterLackOfMemory
 	}
 
 	return nil

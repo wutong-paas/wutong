@@ -66,6 +66,10 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
 	}
 
+	if err := CheckTenantEnvResource(context.Background(), tenantEnv, int(req.RequestMemory)*1024); err == ErrTenantEnvLackOfMemory {
+		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法创建！", req.RequestMemory)
+	}
+
 	vmlist, err := kube.ListKubeVirtVMs(s.dynamicClient, tenantEnv.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("环境校验失败！")
@@ -167,7 +171,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 					},
 				},
 			},
-			Running: util.Ptr(req.Running), // 默认不启动
+			Running: util.Ptr(req.Running),
 			Template: &kubevirtcorev1.VirtualMachineInstanceTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: wutongLabels,
@@ -202,10 +206,17 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 								},
 							},
 						},
+						Memory: &kubevirtcorev1.Memory{
+							Guest: util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))),
+						},
 						Resources: kubevirtcorev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"cpu":    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
-								"memory": resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
+								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
+								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
+								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
 							},
 						},
 					},
@@ -324,11 +335,14 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 	}
 	if req.RequestCPU > 0 {
 		vm.Annotations["wutong.io/vm-request-cpu"] = fmt.Sprintf("%d", req.RequestCPU)
-		vm.Spec.Template.Spec.Domain.Resources.Requests["cpu"] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
+		vm.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
+		vm.Spec.Template.Spec.Domain.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
 	}
 	if req.RequestMemory > 0 {
 		vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
-		vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
+		vm.Spec.Template.Spec.Domain.Memory.Guest = util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)))
+		vm.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
+		vm.Spec.Template.Spec.Domain.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
 	}
 	vm.Annotations["wutong.io/last-modifier"] = req.Operator
 	vm.Annotations["wutong.io/last-modification-timestamp"] = metav1.Now().UTC().Format(time.RFC3339)
@@ -362,6 +376,15 @@ func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*ap
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
+	}
+
+	memory, err := cast.ToIntE(vm.Annotations["wutong.io/vm-request-memory"])
+	if err != nil {
+		return nil, fmt.Errorf("无法启动虚拟机 %s，获取虚拟机申请内存失败！", vmID)
+	}
+
+	if err := CheckTenantEnvResource(context.Background(), tenantEnv, memory*1024); err == ErrTenantEnvLackOfMemory {
+		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法启动！", memory)
 	}
 
 	vm.Spec.Running = util.Ptr(true)
@@ -409,6 +432,15 @@ func (s *ServiceAction) RestartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*
 	if err != nil {
 		logrus.Errorf("update vm failed, error: %s", err.Error())
 		return nil, fmt.Errorf("重启虚拟机 %s 失败！", vmID)
+	}
+
+	memory, err := cast.ToIntE(got.Annotations["wutong.io/vm-request-memory"])
+	if err != nil {
+		return nil, fmt.Errorf("无法启动虚拟机 %s，获取虚拟机申请内存失败！", vmID)
+	}
+
+	if err := CheckTenantEnvResource(context.Background(), tenantEnv, memory*1024); err == ErrTenantEnvLackOfMemory {
+		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法启动！", memory)
 	}
 
 	vmProfile := vmProfileFromKubeVirtVM(got, nil)
