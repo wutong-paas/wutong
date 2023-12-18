@@ -2053,7 +2053,9 @@ func (s *ServiceAction) GetAllServicesStatus() (*ServicesStatus, *apiutil.APIHan
 		return nil, apiutil.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
 	}
 	if len(tenantEnvs) == 0 {
-		return nil, apiutil.CreateAPIHandleErrorf(400, "not found any tenant envs")
+		// return nil, apiutil.CreateAPIHandleErrorf(400, "not found any tenant envs")
+		// There is no any tenants envs after cluster attached first time
+		return new(ServicesStatus), nil
 	}
 	for _, tenantEnv := range tenantEnvs {
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnv.UUID)
