@@ -26,9 +26,9 @@ func IsKubevirtInstalled(kubeClient kubernetes.Interface, apiextClient apiextcli
 		if err != nil {
 			log.Println("not found kubevirt crd: virtualmachines.kubevirt.io")
 			isKubevirtInstalled = util.Ptr(false)
+		} else {
+			isKubevirtInstalled = util.Ptr(true)
 		}
-
-		isKubevirtInstalled = util.Ptr(true)
 	}
 
 	return *isKubevirtInstalled

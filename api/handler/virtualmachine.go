@@ -52,11 +52,6 @@ import (
 var defailtOSDiskSize int64 = 40
 
 func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error) {
-	ok := kube.IsKubevirtInstalled(s.kubeClient, s.apiextClient)
-	if !ok {
-		return nil, errors.New("集群中未检测到 Kubevirt 服务，使用该功能请联系管理员安装 Kubevirt 服务！")
-	}
-
 	if req.OSDiskSize == 0 {
 		req.OSDiskSize = defailtOSDiskSize
 	}
@@ -65,10 +60,32 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 	if req.User == "" {
 		return nil, fmt.Errorf("虚拟机初始用户名称不能为空！")
 	}
+	if req.User == "root" {
+		return nil, fmt.Errorf("虚拟机初始用户名称不能为root！")
+	}
 
 	req.Password = strings.TrimSpace(req.Password)
 	if req.Password == "" {
 		return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
+	}
+
+	if err := CheckTenantEnvResource(context.Background(), tenantEnv, int(req.RequestMemory)*1024); err == ErrTenantEnvLackOfMemory {
+		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法创建！", req.RequestMemory)
+	}
+
+	vmlist, err := kube.ListKubeVirtVMs(s.dynamicClient, tenantEnv.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("环境校验失败！")
+	}
+
+	for _, v := range vmlist {
+		if v.Name == req.Name {
+			return nil, fmt.Errorf("虚拟机标识 %s 被占用，尝试使用其他标识创建虚拟机！", req.Name)
+		}
+
+		if v.Annotations["wutong.io/display-name"] == req.DisplayName {
+			return nil, fmt.Errorf("虚拟机名称 %s 被占用，尝试使用其他名称创建虚拟机！", req.DisplayName)
+		}
 	}
 
 	wutongLabels := labelsFromTenantEnv(tenantEnv)
@@ -76,11 +93,12 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		"wutong.io/vm-id": req.Name,
 	})
 
-	var nodeSelector map[string]string
-	if req.HostNodeName != "" {
-		nodeSelector = map[string]string{
-			"kubernetes.io/hostname": req.HostNodeName,
-		}
+	var nodeSelector = map[string]string{
+		"wutong.io/vm-schedulable": "true",
+	}
+
+	for _, labelKey := range req.NodeSelectorLabels {
+		nodeSelector["vm-node-selector.wutong.io/"+labelKey] = ""
 	}
 
 	var source cdicorev1beta1.DataVolumeSource
@@ -121,6 +139,8 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 				"wutong.io/vm-disk-size":                fmt.Sprintf("%d", req.OSDiskSize),
 				"wutong.io/vm-request-cpu":              fmt.Sprintf("%d", req.RequestCPU),
 				"wutong.io/vm-request-memory":           fmt.Sprintf("%d", req.RequestMemory),
+				"wutong.io/vm-os-name":                  req.OSName,
+				"wutong.io/vm-os-version":               req.OSVersion,
 				"wutong.io/vm-os-source-from":           string(req.OSSourceFrom),
 				"wutong.io/vm-os-source-url":            req.OSSourceURL,
 				"wutong.io/vm-default-login-user":       req.User,
@@ -154,7 +174,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 					},
 				},
 			},
-			Running: util.Ptr(false), // 默认不启动
+			Running: util.Ptr(req.Running),
 			Template: &kubevirtcorev1.VirtualMachineInstanceTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: wutongLabels,
@@ -189,10 +209,17 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 								},
 							},
 						},
+						Memory: &kubevirtcorev1.Memory{
+							Guest: util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))),
+						},
 						Resources: kubevirtcorev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
-								"cpu":    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
-								"memory": resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory)),
+								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
+								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
+								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
 							},
 						},
 					},
@@ -247,7 +274,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 	created, err := kube.CreateKubevirtVM(s.dynamicClient, vm)
 	if err != nil {
 		if k8sErrors.IsAlreadyExists(err) {
-			return result, fmt.Errorf("虚拟机 %s 名称被占用！", req.Name)
+			return result, fmt.Errorf("虚拟机标识 %s 被占用，尝试使用其他标识创建虚拟机！", req.Name)
 		}
 		logrus.Errorf("create vm failed, error: %s", err.Error())
 		return result, fmt.Errorf("创建虚拟机 %s 失败！", req.Name)
@@ -303,18 +330,37 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
 	}
 
-	vm.Annotations["wutong.io/display-name"] = req.DisplayName
-	vm.Annotations["wutong.io/desc"] = req.Desc
-	vm.Annotations["wutong.io/vm-request-cpu"] = fmt.Sprintf("%d", req.RequestCPU)
-	vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
+	if req.DisplayName != "" {
+		vm.Annotations["wutong.io/display-name"] = req.DisplayName
+	}
+	if req.Desc != "" {
+		vm.Annotations["wutong.io/desc"] = req.Desc
+	}
+	if req.RequestCPU > 0 {
+		vm.Annotations["wutong.io/vm-request-cpu"] = fmt.Sprintf("%d", req.RequestCPU)
+		vm.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
+		vm.Spec.Template.Spec.Domain.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
+	}
+	if req.RequestMemory > 0 {
+		vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
+		vm.Spec.Template.Spec.Domain.Memory.Guest = util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)))
+		vm.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
+		vm.Spec.Template.Spec.Domain.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
+	}
 	vm.Annotations["wutong.io/last-modifier"] = req.Operator
 	vm.Annotations["wutong.io/last-modification-timestamp"] = metav1.Now().UTC().Format(time.RFC3339)
+
 	if req.DefaultLoginUser != "" {
 		vm.Annotations["wutong.io/vm-default-login-user"] = req.DefaultLoginUser
 	}
 
-	vm.Spec.Template.Spec.Domain.Resources.Requests["cpu"] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
-	vm.Spec.Template.Spec.Domain.Resources.Requests["memory"] = resource.MustParse(fmt.Sprintf("%dMi", req.RequestMemory))
+	var nodeSelector = map[string]string{
+		"wutong.io/vm-schedulable": "true",
+	}
+	for _, labelKey := range req.NodeSelectorLabels {
+		nodeSelector["vm-node-selector.wutong.io/"+labelKey] = ""
+	}
+	vm.Spec.Template.Spec.NodeSelector = nodeSelector
 
 	updated, err := kube.UpdateKubeVirtVM(s.dynamicClient, vm)
 	if err != nil {
@@ -330,10 +376,18 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 }
 
 func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StartVMResponse, error) {
-
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
+	}
+
+	memory, err := cast.ToIntE(vm.Annotations["wutong.io/vm-request-memory"])
+	if err != nil {
+		return nil, fmt.Errorf("无法启动虚拟机 %s，获取虚拟机申请内存失败！", vmID)
+	}
+
+	if err := CheckTenantEnvResource(context.Background(), tenantEnv, memory*1024); err == ErrTenantEnvLackOfMemory {
+		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法启动！", memory)
 	}
 
 	vm.Spec.Running = util.Ptr(true)
@@ -351,7 +405,6 @@ func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*ap
 }
 
 func (s *ServiceAction) StopVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StopVMResponse, error) {
-
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
@@ -384,6 +437,15 @@ func (s *ServiceAction) RestartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*
 		return nil, fmt.Errorf("重启虚拟机 %s 失败！", vmID)
 	}
 
+	memory, err := cast.ToIntE(got.Annotations["wutong.io/vm-request-memory"])
+	if err != nil {
+		return nil, fmt.Errorf("无法启动虚拟机 %s，获取虚拟机申请内存失败！", vmID)
+	}
+
+	if err := CheckTenantEnvResource(context.Background(), tenantEnv, memory*1024); err == ErrTenantEnvLackOfMemory {
+		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法启动！", memory)
+	}
+
 	vmProfile := vmProfileFromKubeVirtVM(got, nil)
 
 	return &api_model.RestartVMResponse{
@@ -397,6 +459,7 @@ func (s *ServiceAction) AddVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, re
 	wutongLabels := labelsFromTenantEnv(tenantEnv)
 	wutongLabels = labels.Merge(wutongLabels, map[string]string{
 		"wutong.io/vm-id":            vmID,
+		"wutong.io/vm-port-enabled":  "false",
 		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
 		"wutong.io/vm-port-protocol": string(req.Protocol),
 	})
@@ -425,11 +488,155 @@ func (s *ServiceAction) AddVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, re
 	_, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Create(context.Background(), svc, metav1.CreateOptions{})
 	if err != nil {
 		if k8sErrors.IsAlreadyExists(err) {
-			return fmt.Errorf("虚拟机 %s 端口 %d 已存在！", vmID, req.VMPort)
+			return fmt.Errorf("虚拟机 %s 端口 %d(%s) 已存在！", vmID, req.VMPort, req.Protocol)
 		}
 		logrus.Errorf("create service failed, error: %s", err.Error())
-		return fmt.Errorf("创建虚拟机 %s 端口 %d 失败！", vmID, req.VMPort)
+		return fmt.Errorf("创建虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
 	}
+
+	return nil
+}
+
+func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.EnableVMPortRequest) error {
+	// 1、端口配置
+	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svc, err := kube.GetCachedResources(s.kubeClient).ServiceLister.Services(tenantEnv.Namespace).Get(svcName)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 端口 %d(%s) 不存在！", vmID, req.VMPort, req.Protocol)
+		}
+		logrus.Errorf("get service failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
+	}
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		svc.Labels["wutong.io/vm-port-enabled"] = "true"
+		_, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{})
+		if err != nil {
+			latest, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			svc.SetResourceVersion(latest.ResourceVersion)
+		}
+		return err
+	})
+	if err != nil {
+		logrus.Errorf("update service failed, error: %s", err.Error())
+		return fmt.Errorf("开启虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
+	}
+
+	// 2、网关配置
+	gateways, err := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/vm-id":            vmID,
+		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
+		"wutong.io/vm-port-protocol": string(req.Protocol),
+	}))
+	if err != nil {
+		logrus.Errorf("list ingress failed, error: %s", err.Error())
+		return fmt.Errorf("关闭虚拟机 %s 端口 %d(%s) 下网关失败！", vmID, req.VMPort, req.Protocol)
+	}
+
+	if len(gateways) == 0 {
+		// 2.1、开启了网关并默认创建第一个网关
+		return s.CreateVMPortGateway(tenantEnv, vmID, &api_model.CreateVMPortGatewayRequest{
+			VMPort:   req.VMPort,
+			Protocol: req.Protocol,
+		})
+	} else {
+		// 2.2、网关添加标签，让 wt-gateway 正确识别
+		for _, ing := range gateways {
+			ing.Labels["creator"] = "Wutong"
+			err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				_, err = s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{})
+				if err != nil {
+					latest, err := s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Get(context.Background(), ing.Name, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					ing.SetResourceVersion(latest.ResourceVersion)
+				}
+				return err
+			})
+			if err != nil {
+				logrus.Errorf("update ingress failed, error: %s", err.Error())
+				return fmt.Errorf("开启虚拟机 %s 端口 %d(%s) 下网关失败！", vmID, req.VMPort, req.Protocol)
+			}
+		}
+	}
+	return nil
+}
+
+func (s *ServiceAction) DisableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DisableVMPortRequest) error {
+	// 1、service 添加关闭标签
+	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svc, err := kube.GetCachedResources(s.kubeClient).ServiceLister.Services(tenantEnv.Namespace).Get(svcName)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 端口 %d(%s) 不存在！", vmID, req.VMPort, req.Protocol)
+		}
+		logrus.Errorf("get service failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
+	}
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		svc.Labels["wutong.io/vm-port-enabled"] = "false"
+		_, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{})
+		if err != nil {
+			latest, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			svc.SetResourceVersion(latest.ResourceVersion)
+		}
+		return err
+	})
+	if err != nil {
+		logrus.Errorf("update service failed, error: %s", err.Error())
+		return fmt.Errorf("关闭虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
+	}
+
+	// 2、网关去除标签，让 wt-gateway 失去识别
+	gateways, err := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/vm-id":            vmID,
+		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
+		"wutong.io/vm-port-protocol": string(req.Protocol),
+	}))
+	if err != nil {
+		logrus.Errorf("list ingress failed, error: %s", err.Error())
+		return fmt.Errorf("关闭虚拟机 %s 端口 %d(%s) 下网关失败！", vmID, req.VMPort, req.Protocol)
+	}
+	for _, gateway := range gateways {
+		err = s.DisableVMPortGateway(tenantEnv, vmID, gateway.Name)
+		if err != nil {
+			return fmt.Errorf("关闭虚拟机 %s 端口 %d(%s) 下网关失败！", vmID, req.VMPort, req.Protocol)
+		}
+	}
+	return nil
+}
+
+func (s *ServiceAction) DisableVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID, gatewayID string) error {
+	ing, err := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).Get(gatewayID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil
+		}
+		logrus.Errorf("get ingress failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 网关失败！", vmID)
+	}
+
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		ing.Labels["creator"] = ""
+		_, err = s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{})
+		if err != nil {
+			latest, err := s.kubeClient.NetworkingV1().Ingresses(tenantEnv.TenantName).Get(context.Background(), gatewayID, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			ing.SetResourceVersion(latest.ResourceVersion)
+		}
+		return err
+	})
 
 	return nil
 }
@@ -444,6 +651,15 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 		return nil, fmt.Errorf("获取虚拟机 %s 端口列表失败！", vmID)
 	}
 
+	slices.SortFunc(svcList, func(i, j *corev1.Service) int {
+		if i.CreationTimestamp.Before(&j.CreationTimestamp) {
+			return 1
+		} else if i.CreationTimestamp.After(j.CreationTimestamp.Time) {
+			return -1
+		}
+		return 0
+	})
+
 	for _, svc := range svcList {
 		protocol := svc.Labels["wutong.io/vm-port-protocol"]
 		portNumber := cast.ToInt(svc.Labels["wutong.io/vm-port"])
@@ -453,13 +669,13 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 				Protocol:     api_model.VMPortProtocol(protocol),
 				InnerService: fmt.Sprintf("%s.%s", svc.Name, svc.Namespace),
 			}
+			vmPort.GatewayEnabled = svc.Labels["wutong.io/vm-port-enabled"] == "true"
 			ings, _ := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 				"wutong.io/vm-id":            vmID,
 				"wutong.io/vm-port":          fmt.Sprintf("%d", vmPort.VMPort),
 				"wutong.io/vm-port-protocol": protocol,
 			}))
 			if len(ings) > 0 {
-				vmPort.GatewayEnabled = true
 				for _, ing := range ings {
 					vpg := api_model.VMPortGateway{
 						GatewayID: ing.Name,
@@ -482,6 +698,7 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 			result.Ports = append(result.Ports, vmPort)
 		}
 	}
+
 	result.Total = len(result.Ports)
 	return result, nil
 }
@@ -492,10 +709,10 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 	svc, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return fmt.Errorf("虚拟机 %s 端口 %d 不存在！", vmID, req.VMPort)
+			return fmt.Errorf("虚拟机 %s 端口 %d(%s) 不存在！", vmID, req.VMPort, req.Protocol)
 		}
 		logrus.Errorf("get service failed, error: %s", err.Error())
-		return fmt.Errorf("获取虚拟机 %s 端口 %d 失败！", vmID, req.VMPort)
+		return fmt.Errorf("获取虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
 	}
 
 	protocol, ok := svc.Labels["wutong.io/vm-port-protocol"]
@@ -509,6 +726,11 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
 		"wutong.io/vm-port-protocol": protocol,
 	})
+
+	if svc.Labels["wutong.io/vm-port-enabled"] != "true" {
+		// 如果端口未开启网关，那么创建的网关应该去除 creator=Wutong 标签，让 wt-gateway 失去识别
+		wutongLabels["creator"] = ""
+	}
 
 	gatewayID := util.NewUUID() // 生成网关 Ingres 名称, 作为唯一标识
 
@@ -576,7 +798,7 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 		}
 		if req.GatewayPort > 0 {
 			if !GetGatewayHandler().IsPortAvailable(req.GatewayIP, req.GatewayPort) {
-				return fmt.Errorf("虚拟机 %s 端口 %d 被占用或超出范围！", vmID, req.VMPort)
+				return fmt.Errorf("网关端口 %d 被占用或超出范围！", req.GatewayPort)
 			}
 		} else {
 			avaliablePort, err := GetGatewayHandler().GetAvailablePort(req.GatewayIP, false)
@@ -595,7 +817,7 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 	_, err = s.kubeClient.NetworkingV1().Ingresses(ing.Namespace).Create(context.Background(), ing, metav1.CreateOptions{})
 	if err != nil {
 		if k8sErrors.IsAlreadyExists(err) {
-			return fmt.Errorf("虚拟机 %s 端口 %d 对外网关已存在！", vmID, req.VMPort)
+			return fmt.Errorf("虚拟机 %s 端口 %d(%s) 对外网关已存在！", vmID, req.VMPort, req.Protocol)
 		}
 		logrus.Errorf("create ingress failed, error: %s", err.Error())
 		return fmt.Errorf("创建虚拟机 %s 网关失败！", vmID)
@@ -711,7 +933,7 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 		}
 		if req.GatewayPort > 0 {
 			if !GetGatewayHandler().IsPortAvailable(req.GatewayIP, req.GatewayPort) {
-				return fmt.Errorf("虚拟机 %s 端口 %d 被占用或超出范围！", vmID, port)
+				return fmt.Errorf("网关端口 %d 被占用或超出范围！", req.GatewayPort)
 			}
 		}
 		ingToUpdate.Annotations = map[string]string{
@@ -840,12 +1062,12 @@ func (s *ServiceAction) DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 	}))
 	if err != nil {
 		logrus.Errorf("list ingress failed, error: %s", err.Error())
-		return fmt.Errorf("删除虚拟机 %s 端口 %d 下网关失败！", vmID, req.VMPort)
+		return fmt.Errorf("删除虚拟机 %s 端口 %d(%s) 下网关失败！", vmID, req.VMPort, req.Protocol)
 	}
 	for _, gateway := range gateways {
 		err = s.DeleteVMPortGateway(tenantEnv, vmID, gateway.Name)
 		if err != nil {
-			return fmt.Errorf("删除虚拟机 %s 端口 %d 下网关失败！", vmID, req.VMPort)
+			return fmt.Errorf("删除虚拟机 %s 端口 %d(%s) 下网关失败！", vmID, req.VMPort, req.Protocol)
 		}
 	}
 
@@ -857,7 +1079,7 @@ func (s *ServiceAction) DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 			return nil
 		}
 		logrus.Errorf("delete service failed, error: %s", err.Error())
-		return fmt.Errorf("删除虚拟机 %s 端口 %d 失败！", vmID, req.VMPort)
+		return fmt.Errorf("删除虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
 	}
 
 	return nil
@@ -892,12 +1114,15 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 }
 
 func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListVMsResponse, error) {
-
 	vms, err := kube.ListKubeVirtVMs(s.dynamicClient, tenantEnv.Namespace)
 	if err != nil {
 		logrus.Errorf("list vm failed, error: %s", err.Error())
 		return nil, errors.New("获取虚拟机列表失败！")
 	}
+
+	sort.Slice(vms, func(i, j int) bool {
+		return vms[i].CreationTimestamp.After(vms[j].CreationTimestamp.Time)
+	})
 
 	var result = new(api_model.ListVMsResponse)
 	for _, vm := range vms {
@@ -906,9 +1131,6 @@ func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListV
 	}
 	result.Total = len(result.VMs)
 
-	sort.Slice(result.VMs, func(i, j int) bool {
-		return result.VMs[i].CreatedAt.After(result.VMs[j].CreatedAt)
-	})
 	return result, nil
 }
 
@@ -958,8 +1180,8 @@ func labelsFromTenantEnv(te *dbmodel.TenantEnvs) map[string]string {
 	}
 }
 
-func serviceName(vmID string, portNumber int, protocol string) string {
-	return fmt.Sprintf("%s-%d-%s", vmID, portNumber, protocol)
+func serviceName(vmID string, port int, protocol string) string {
+	return fmt.Sprintf("%s-%d-%s", vmID, port, protocol)
 }
 
 func generateGatewayHost(namespace, vmID string, port int) string {
@@ -970,7 +1192,8 @@ func generateGatewayHost(namespace, vmID string, port int) string {
 	if strings.Contains(exDomain, ":") {
 		exDomain = strings.Split(exDomain, ":")[0]
 	}
-	return fmt.Sprintf("%d.%s.%s.%s", port, vmID, namespace, exDomain)
+	svcName := serviceName(vmID, port, string(api_model.VMPortProtocolHTTP))
+	return fmt.Sprintf("%s.%s.%s", svcName, namespace, exDomain)
 }
 
 func portProtocol(p api_model.VMPortProtocol) corev1.Protocol {
@@ -999,15 +1222,33 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		RequestMemory:    cast.ToInt64(vm.Annotations["wutong.io/vm-request-memory"]),
 		Namespace:        vm.Namespace,
 		DefaultLoginUser: vm.Annotations["wutong.io/vm-default-login-user"],
-		// Labels:        vm.Labels,
-		Status:         string(vm.Status.PrintableStatus),
-		CreatedBy:      vm.Annotations["wutong.io/creator"],
-		LastModifiedBy: vm.Annotations["wutong.io/last-modifier"],
-		CreatedAt:      vm.CreationTimestamp.Time.Local(),
-		LastModifiedAt: cast.ToTime(vm.Annotations["wutong.io/last-modification-timestamp"]).Local(),
+		Status:           string(vm.Status.PrintableStatus),
+		StatusMessage:    vmStatusMessageFromKubeVirtVM(vm),
+		CreatedBy:        vm.Annotations["wutong.io/creator"],
+		LastModifiedBy:   vm.Annotations["wutong.io/last-modifier"],
+		CreatedAt:        vm.CreationTimestamp.Time.Local().Format("2006-01-02 15:04:05"),
+		LastModifiedAt:   cast.ToTime(vm.Annotations["wutong.io/last-modification-timestamp"]).Local().Format("2006-01-02 15:04:05"),
 		OSInfo: api_model.VMOSInfo{
-			Arch: vm.Spec.Template.Spec.Architecture,
+			Name:    vm.Annotations["wutong.io/vm-os-name"],
+			Version: vm.Annotations["wutong.io/vm-os-version"],
+			Arch:    vm.Spec.Template.Spec.Architecture,
 		},
+	}
+
+	for _, cond := range vm.Status.Conditions {
+		result.Situations = append(result.Situations, api_model.VMSituation{
+			Type:           string(cond.Type),
+			Status:         cond.Status == corev1.ConditionTrue,
+			Reason:         cond.Reason,
+			Message:        cond.Message,
+			LastReportedAt: cond.LastTransitionTime.Local().Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	for k := range vm.Spec.Template.Spec.NodeSelector {
+		if label, ok := strings.CutPrefix(k, "vm-node-selector.wutong.io/"); ok {
+			result.NodeSelectorLabels = append(result.NodeSelectorLabels, label)
+		}
 	}
 
 	if vmi != nil {
@@ -1015,11 +1256,47 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 			result.IP = vmi.Status.Interfaces[0].IP
 		}
 		result.ScheduleNode = vmi.Status.NodeName
-		result.OSInfo.Name = vmi.Status.GuestOSInfo.Name
-		result.OSInfo.Version = vmi.Status.GuestOSInfo.Version
+		if vmi.Status.GuestOSInfo.Name != "" {
+			result.OSInfo.Name = vmi.Status.GuestOSInfo.Name
+		}
+		if vmi.Status.GuestOSInfo.Version != "" {
+			result.OSInfo.Version = vmi.Status.GuestOSInfo.Version
+		}
 		result.OSInfo.KernelRelease = vmi.Status.GuestOSInfo.KernelRelease
 		result.OSInfo.KernelVersion = vmi.Status.GuestOSInfo.KernelVersion
 	}
 
+	return result
+}
+
+var statusMessageMap = map[kubevirtcorev1.VirtualMachinePrintableStatus]string{
+	// kubevirtcorev1.VirtualMachineStatusStopped:                 "虚拟机已停止",
+	// kubevirtcorev1.VirtualMachineStatusProvisioning:            "虚拟机正在创建...",
+	// kubevirtcorev1.VirtualMachineStatusStarting:                "虚拟机正在启动...",
+	// kubevirtcorev1.VirtualMachineStatusRunning:                 "虚拟机运行中",
+	// kubevirtcorev1.VirtualMachineStatusPaused:                  "虚拟机已暂停",
+	// kubevirtcorev1.VirtualMachineStatusStopping:                "虚拟机正在停止",
+	// kubevirtcorev1.VirtualMachineStatusTerminating:             "虚拟机正在删除",
+	kubevirtcorev1.VirtualMachineStatusCrashLoopBackOff: "虚拟机启动失败",
+	// kubevirtcorev1.VirtualMachineStatusMigrating:               "虚拟机正在迁移",
+	kubevirtcorev1.VirtualMachineStatusUnknown:                 "虚拟机状态未知",
+	kubevirtcorev1.VirtualMachineStatusUnschedulable:           "虚拟机调度失败",
+	kubevirtcorev1.VirtualMachineStatusErrImagePull:            "虚拟机镜像拉取失败",
+	kubevirtcorev1.VirtualMachineStatusImagePullBackOff:        "虚拟机镜像拉取失败",
+	kubevirtcorev1.VirtualMachineStatusPvcNotFound:             "虚拟机持久数据卷未找到",
+	kubevirtcorev1.VirtualMachineStatusDataVolumeError:         "虚拟机数据卷错误",
+	kubevirtcorev1.VirtualMachineStatusWaitingForVolumeBinding: "虚拟机数据卷等待绑定中...",
+}
+
+func vmStatusMessageFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine) string {
+	var result = statusMessageMap[vm.Status.PrintableStatus]
+	switch vm.Status.PrintableStatus {
+	case kubevirtcorev1.VirtualMachineStatusUnschedulable:
+		for _, cond := range vm.Status.Conditions {
+			if cond.Type == kubevirtcorev1.VirtualMachineConditionType(corev1.PodScheduled) && cond.Status == corev1.ConditionFalse {
+				result += fmt.Sprintf("，原因：%s", cond.Message)
+			}
+		}
+	}
 	return result
 }

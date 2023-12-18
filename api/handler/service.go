@@ -2053,7 +2053,9 @@ func (s *ServiceAction) GetAllServicesStatus() (*ServicesStatus, *apiutil.APIHan
 		return nil, apiutil.CreateAPIHandleErrorFromDBError("get tenant env failed", err)
 	}
 	if len(tenantEnvs) == 0 {
-		return nil, apiutil.CreateAPIHandleErrorf(400, "not found any tenant envs")
+		// return nil, apiutil.CreateAPIHandleErrorf(400, "not found any tenant envs")
+		// There is no any tenants envs after cluster attached first time
+		return new(ServicesStatus), nil
 	}
 	for _, tenantEnv := range tenantEnvs {
 		tenantEnvIDs = append(tenantEnvIDs, tenantEnv.UUID)
@@ -3028,11 +3030,13 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 	// If containerName is missing, return the logs reader for the pod.
 	if podName == "" || containerName == "" {
 		// Only support return the logs reader for a container now.
-		return errors.WithStack(bcode.NewBadRequest("the field 'podName' and 'containerName' is required"))
+		logrus.Errorln("the field 'podName' and 'containerName' is required")
+		return nil
 	}
 	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(component.TenantEnvID)
 	if err != nil {
-		return fmt.Errorf("get tenant env info failure %s", err.Error())
+		logrus.Errorf("get tenant env info failure %s", err.Error())
+		return nil
 	}
 	request := s.kubeClient.CoreV1().Pods(tenantEnv.Namespace).GetLogs(podName, &corev1.PodLogOptions{
 		Container: containerName,
@@ -3043,9 +3047,11 @@ func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *d
 	out, err := request.Stream(context.TODO())
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return errors.Wrap(bcode.ErrPodNotFound, "get pod log")
+			logrus.Errorf("pod %s not found", podName)
+			return nil
 		}
-		return errors.Wrap(err, "get stream from request")
+		logrus.Errorf("get pod %s logs failure %s", podName, err.Error())
+		return nil
 	}
 	defer out.Close()
 
@@ -3109,4 +3115,3 @@ func TransStatus(eStatus string) string {
 	}
 	return ""
 }
-

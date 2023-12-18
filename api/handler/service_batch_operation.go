@@ -488,14 +488,14 @@ func NewAllocMemory(ctx context.Context, statusCli *client.AppRuntimeSyncClient,
 		}
 		allocm := tenantEnv.LimitMemory - int(tenantEnvUsedResource.MemoryLimit)
 		am.allcm = util.Int64(int64(allocm))
-		am.memoryType = "tenant_env_lack_of_memory"
+		am.memoryType = ErrTenantEnvLackOfMemory.Error()
 	} else {
 		allcm, err := ClusterAllocMemory(ctx)
 		if err != nil {
 			return nil, err
 		}
 		am.allcm = util.Int64(allcm)
-		am.memoryType = "cluster_lack_of_memory"
+		am.memoryType = ErrClusterLackOfMemory.Error()
 	}
 
 	components, err := am.listComponents(batchOpReqs.ComponentIDs())
@@ -566,7 +566,7 @@ func (a *AllocMemory) check(componentID string) error {
 	allom := util.Int64Value(a.allcm)
 	if requestMemory > int(allom) {
 		logrus.Errorf("request memory is %d, but got %d allocatable memory", requestMemory, allom)
-		return errors.New("tenant_env_lack_of_memory")
+		return ErrTenantEnvLackOfMemory
 	}
 
 	*a.allcm -= int64(requestMemory)

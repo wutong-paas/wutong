@@ -44,7 +44,7 @@ func InitHandle(conf option.Config,
 	statusCli *client.AppRuntimeSyncClient,
 	etcdcli *clientv3.Client,
 	config *rest.Config,
-	kubeClient *kubernetes.Clientset,
+	kubeClient kubernetes.Interface,
 	wutongClient versioned.Interface,
 	k8sClient k8sclient.Client,
 	dynamicClient dynamic.Interface,
@@ -84,6 +84,7 @@ func InitHandle(conf option.Config,
 	defaultAppRestoreHandler = NewAppRestoreHandler()
 	defPodHandler = NewPodHandler(statusCli)
 	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace, conf.PrometheusEndpoint)
+	defNodeHandler = NewNodeHandler(kubeClient)
 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)
 	defaultEtcdHandler = NewEtcdHandler(etcdcli)
 	defaultmonitorHandler = NewMonitorHandler(prometheusCli)
@@ -214,6 +215,13 @@ var defClusterHandler ClusterHandler
 // GetClusterHandler returns the default cluster handler.
 func GetClusterHandler() ClusterHandler {
 	return defClusterHandler
+}
+
+var defNodeHandler NodeHandler
+
+// GetVolumeTypeHandler returns the default volume type handler.
+func GetNodeHandler() NodeHandler {
+	return defNodeHandler
 }
 
 var defApplicationHandler ApplicationHandler

@@ -61,7 +61,7 @@ type TenantEnvAction struct {
 	statusCli                 *client.AppRuntimeSyncClient
 	OptCfg                    *option.Config
 	restConfig                *rest.Config
-	kubeClient                *kubernetes.Clientset
+	kubeClient                kubernetes.Interface
 	cacheClusterResourceStats *ClusterResourceStats
 	cacheTime                 time.Time
 	prometheusCli             prometheus.Interface
@@ -73,7 +73,7 @@ type TenantEnvAction struct {
 func CreateTenantEnvManager(mqc mqclient.MQClient, statusCli *client.AppRuntimeSyncClient,
 	optCfg *option.Config,
 	config *rest.Config,
-	kubeClient *kubernetes.Clientset,
+	kubeClient kubernetes.Interface,
 	prometheusCli prometheus.Interface,
 	k8sClient k8sclient.Client) *TenantEnvAction {
 

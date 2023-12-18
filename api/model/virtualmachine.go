@@ -18,27 +18,36 @@
 
 package model
 
-import "time"
-
 type VMProfile struct {
-	Name             string       `json:"name"`
-	DisplayName      string       `json:"displayName"`
-	Desc             string       `json:"desc"`
-	OSSourceFrom     OSSourceFrom `json:"osSourceFrom"`
-	OSSourceURL      string       `json:"osSourceURL"`
-	OSDiskSize       int64        `json:"osDiskSize"`
-	RequestCPU       int64        `json:"requestCPU"`
-	RequestMemory    int64        `json:"requestMemory"`
-	Namespace        string       `json:"namespace"`
-	DefaultLoginUser string       `json:"defaultLoginUser"`
-	Status           string       `json:"status"`
-	IP               string       `json:"ip"`
-	OSInfo           VMOSInfo     `json:"osInfo"`
-	ScheduleNode     string       `json:"scheduleNode"`
-	CreatedAt        time.Time    `json:"createdAt"`
-	LastModifiedAt   time.Time    `json:"lastModifiedAt"`
-	CreatedBy        string       `json:"createdBy"`
-	LastModifiedBy   string       `json:"lastModifiedBy"`
+	Name               string        `json:"name"`
+	DisplayName        string        `json:"displayName"`
+	Desc               string        `json:"desc"`
+	OSSourceFrom       OSSourceFrom  `json:"osSourceFrom"`
+	OSSourceURL        string        `json:"osSourceURL"`
+	OSDiskSize         int64         `json:"osDiskSize"`
+	RequestCPU         int64         `json:"requestCPU"`    // m
+	RequestMemory      int64         `json:"requestMemory"` // GiB
+	Namespace          string        `json:"namespace"`
+	DefaultLoginUser   string        `json:"defaultLoginUser"`
+	Status             string        `json:"status"`
+	StatusMessage      string        `json:"statusMessage"`
+	Situations         []VMSituation `json:"situations"`
+	IP                 string        `json:"ip"`
+	OSInfo             VMOSInfo      `json:"osInfo"`
+	ScheduleNode       string        `json:"scheduleNode"`
+	CreatedAt          string        `json:"createdAt"`
+	LastModifiedAt     string        `json:"lastModifiedAt"`
+	CreatedBy          string        `json:"createdBy"`
+	LastModifiedBy     string        `json:"lastModifiedBy"`
+	NodeSelectorLabels []string      `json:"nodeSelectorLabels"`
+}
+
+type VMSituation struct {
+	Type           string `json:"type"`
+	Reason         string `json:"reason"`
+	Message        string `json:"message"`
+	Status         bool
+	LastReportedAt string `json:"lastReportedAt"`
 }
 
 type VMOSInfo struct {
@@ -95,22 +104,33 @@ const (
 	OSSourceFromRegistry OSSourceFrom = "registry"
 )
 
+// VMNodeSelector
+// style: vm-node-selector.wutong.io/[key]=[value]
+type VMNodeSelector struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 // CreateVMRequest
 type CreateVMRequest struct {
 	Name          string       `json:"name" validate:"name|required"`
 	DisplayName   string       `json:"displayName" validate:"displayName|required"`
 	Desc          string       `json:"desc"`
+	OSName        string       `json:"osName"`
+	OSVersion     string       `json:"osVersion"`
 	OSSourceFrom  OSSourceFrom `json:"osSourceFrom" validate:"osSourceFrom|required"`
 	OSSourceURL   string       `json:"osSourceURL" validate:"osSourceURL|required"`
 	OSDiskSize    int64        `json:"osDiskSize" validate:"osDiskSize|required"`
-	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`
-	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"`
+	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`       // m
+	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"` // GiB
+	Running       bool         `json:"running"`
 	// Size        VMSize            `json:"size"`
-	HostNodeName string `json:"hostNodeName"`
-	User         string `json:"user"`
-	Password     string `json:"password"`
+	// HostNodeName string `json:"hostNodeName"`
+	User     string `json:"user"`
+	Password string `json:"password"`
 	// Labels   map[string]string `json:"labels"`
-	Operator string `json:"operator"`
+	Operator           string   `json:"operator"`
+	NodeSelectorLabels []string `json:"nodeSelectorLabels"`
 }
 
 // CreateVMResponse
@@ -125,12 +145,13 @@ type GetVMResponse struct {
 
 // UpdateVMRequest
 type UpdateVMRequest struct {
-	DisplayName      string `json:"displayName"`
-	Desc             string `json:"desc"`
-	RequestCPU       int64  `json:"requestCPU"`
-	RequestMemory    int64  `json:"requestMemory"`
-	DefaultLoginUser string `json:"defaultLoginUser"`
-	Operator         string `json:"operator"`
+	DisplayName        string   `json:"displayName"`
+	Desc               string   `json:"desc"`
+	RequestCPU         int64    `json:"requestCPU"`    // m
+	RequestMemory      int64    `json:"requestMemory"` // GiB
+	DefaultLoginUser   string   `json:"defaultLoginUser"`
+	Operator           string   `json:"operator"`
+	NodeSelectorLabels []string `json:"nodeSelectorLabels"`
 }
 
 type AddVMPortRequest struct {
@@ -157,6 +178,16 @@ type CreateVMPortGatewayRequest struct {
 
 type UpdateVMPortGatewayRequest struct {
 	VMPortGateway `json:",inline"`
+}
+
+type EnableVMPortRequest struct {
+	VMPort   int            `json:"vmPort" validate:"vmPort|required"`
+	Protocol VMPortProtocol `json:"protocol" validate:"protocol|required"`
+}
+
+type DisableVMPortRequest struct {
+	VMPort   int            `json:"vmPort" validate:"vmPort|required"`
+	Protocol VMPortProtocol `json:"protocol" validate:"protocol|required"`
 }
 
 // UpdateVMResponse

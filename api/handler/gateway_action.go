@@ -568,12 +568,12 @@ func (g *GatewayAction) AddRuleExtensions(ruleID string, ruleExtensions []*apimo
 
 // GetAvailablePort returns a available port
 func (g *GatewayAction) GetAvailablePort(ip string, lock bool) (int, error) {
-	roles, err := g.dbmanager.TCPRuleDao().GetUsedPortsByIP(ip)
+	rules, err := g.dbmanager.TCPRuleDao().GetUsedPortsByIP(ip)
 	if err != nil {
 		return 0, err
 	}
 	var ports []int
-	for _, p := range roles {
+	for _, p := range rules {
 		ports = append(ports, p.Port)
 	}
 	resp, err := clientv3.KV(g.etcdCli).Get(context.TODO(), "/wutong/gateway/lockports", clientv3.WithPrefix())
@@ -650,12 +650,12 @@ func selectAvailablePort(used []int) int {
 }
 
 func (g *GatewayAction) usedPorts(ip string) ([]int, error) {
-	roles, err := g.dbmanager.TCPRuleDao().GetUsedPortsByIP(ip)
+	rules, err := g.dbmanager.TCPRuleDao().GetUsedPortsByIP(ip)
 	if err != nil {
 		return nil, err
 	}
 	var ports []int
-	for _, p := range roles {
+	for _, p := range rules {
 		ports = append(ports, p.Port)
 	}
 	resp, err := clientv3.KV(g.etcdCli).Get(context.TODO(), "/wutong/gateway/lockports", clientv3.WithPrefix())

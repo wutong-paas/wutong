@@ -31,6 +31,11 @@ type ClusterInterface interface {
 	MavenSettingUpdate(w http.ResponseWriter, r *http.Request)
 	MavenSettingDelete(w http.ResponseWriter, r *http.Request)
 	MavenSettingDetail(w http.ResponseWriter, r *http.Request)
+	Features(w http.ResponseWriter, r *http.Request)
+}
+
+type NodeInterface interface {
+	ListVMNodeSelectorLabels(w http.ResponseWriter, r *http.Request)
 }
 
 // TenantEnvInterface interface
@@ -69,6 +74,8 @@ type TenantEnvInterface interface {
 	UpdateVM(w http.ResponseWriter, r *http.Request)
 	AddVMPort(w http.ResponseWriter, r *http.Request)
 	GetVMPorts(w http.ResponseWriter, r *http.Request)
+	EnableVMPort(w http.ResponseWriter, r *http.Request)
+	DisableVMPort(w http.ResponseWriter, r *http.Request)
 	CreateVMPortGateway(w http.ResponseWriter, r *http.Request)
 	UpdateVMPortGateway(w http.ResponseWriter, r *http.Request)
 	DeleteVMPortGateway(w http.ResponseWriter, r *http.Request)

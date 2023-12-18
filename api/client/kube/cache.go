@@ -30,6 +30,7 @@ type CachedResources struct {
 	HPAV1Lister        autoscalingv1.HorizontalPodAutoscalerLister
 	EventLister        v1.EventLister
 	StorageClassLister storagev1.StorageClassLister
+	NodeLister         v1.NodeLister
 }
 
 func GetCachedResources(clientset kubernetes.Interface) *CachedResources {
@@ -68,6 +69,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	hpaV1Informer := sharedInformers.Autoscaling().V1().HorizontalPodAutoscalers()
 	eventInformer := filteredSharedInformer.Core().V1().Events()
 	storageClassInformer := sharedInformers.Storage().V1().StorageClasses()
+	nodeInformer := sharedInformers.Core().V1().Nodes()
 
 	// shared informers
 	deploymentSharedInformer := deploymentInformer.Informer()
@@ -79,6 +81,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	hpaV1SharedInformer := hpaV1Informer.Informer()
 	eventSharedInformer := eventInformer.Informer()
 	storageClassSharedInformer := storageClassInformer.Informer()
+	nodeSharedInformer := nodeInformer.Informer()
 
 	informers := map[string]cache.SharedInformer{
 		"deploymentSharedInformer":   deploymentSharedInformer,
@@ -90,6 +93,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		"hpaV1SharedInformer":        hpaV1SharedInformer,
 		"eventSharedInformer":        eventSharedInformer,
 		"storageClassSharedInformer": storageClassSharedInformer,
+		"nodeSharedInformer":         nodeSharedInformer,
 	}
 	var wg sync.WaitGroup
 	wg.Add(len(informers))
@@ -116,5 +120,6 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		HPAV1Lister:        hpaV1Informer.Lister(),
 		EventLister:        eventInformer.Lister(),
 		StorageClassLister: storageClassInformer.Lister(),
+		NodeLister:         nodeInformer.Lister(),
 	}
 }
