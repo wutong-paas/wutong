@@ -60,6 +60,9 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 	if req.User == "" {
 		return nil, fmt.Errorf("虚拟机初始用户名称不能为空！")
 	}
+	if req.User == "root" {
+		return nil, fmt.Errorf("虚拟机初始用户名称不能为root！")
+	}
 
 	req.Password = strings.TrimSpace(req.Password)
 	if req.Password == "" {
