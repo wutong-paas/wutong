@@ -338,13 +338,31 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 	}
 	if req.RequestCPU > 0 {
 		vm.Annotations["wutong.io/vm-request-cpu"] = fmt.Sprintf("%d", req.RequestCPU)
+		if vm.Spec.Template.Spec.Domain.Resources.Requests == nil {
+			vm.Spec.Template.Spec.Domain.Resources.Requests = corev1.ResourceList{}
+		}
 		vm.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
+		if vm.Spec.Template.Spec.Domain.Resources.Limits == nil {
+			vm.Spec.Template.Spec.Domain.Resources.Limits = corev1.ResourceList{}
+		}
 		vm.Spec.Template.Spec.Domain.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU))
 	}
 	if req.RequestMemory > 0 {
 		vm.Annotations["wutong.io/vm-request-memory"] = fmt.Sprintf("%d", req.RequestMemory)
+		if vm.Spec.Template.Spec.Domain.Memory == nil {
+			vm.Spec.Template.Spec.Domain.Memory = &kubevirtcorev1.Memory{}
+		}
+		if vm.Spec.Template.Spec.Domain.Memory.Guest == nil {
+			vm.Spec.Template.Spec.Domain.Memory.Guest = &resource.Quantity{}
+		}
 		vm.Spec.Template.Spec.Domain.Memory.Guest = util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)))
+		if vm.Spec.Template.Spec.Domain.Resources.Requests == nil {
+			vm.Spec.Template.Spec.Domain.Resources.Requests = corev1.ResourceList{}
+		}
 		vm.Spec.Template.Spec.Domain.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
+		if vm.Spec.Template.Spec.Domain.Resources.Limits == nil {
+			vm.Spec.Template.Spec.Domain.Resources.Limits = corev1.ResourceList{}
+		}
 		vm.Spec.Template.Spec.Domain.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))
 	}
 	vm.Annotations["wutong.io/last-modifier"] = req.Operator

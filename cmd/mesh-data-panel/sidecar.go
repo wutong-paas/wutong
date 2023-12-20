@@ -224,8 +224,16 @@ func checkEnvoyListenerIfReady(client *http.Client, url string, port string) err
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode != 200 || !strings.Contains(string(reBody), fmt.Sprintf(":%s", port)) {
-		return fmt.Errorf("check Listeners HTTP status code %v, body is %s", resp.StatusCode, string(reBody))
+	if resp.StatusCode != 200 {
+		var body string
+		if len(reBody) > 0 {
+			body = ", body is " + string(reBody)
+		}
+		return fmt.Errorf("check Listeners HTTP status code %v"+body, resp.StatusCode)
+	} else {
+		if !strings.Contains(string(reBody), ":"+port) {
+			return fmt.Errorf("can not find port %s in Listeners", port)
+		}
 	}
 	return nil
 }
