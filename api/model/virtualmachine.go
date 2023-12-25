@@ -216,3 +216,21 @@ type ListVMsResponse struct {
 	VMs   []VMProfile `json:"vms"`
 	Total int         `json:"total"`
 }
+
+type ListVMVolumesResponse struct {
+	VMVolumes []VMVolume `json:"volumes"`
+	Total     int        `json:"total"`
+}
+
+type VMVolume struct {
+	VolumeName   string `json:"volumeName"`
+	StorageClass string `json:"storageClass"`
+	VolumeSize   int64  `json:"volumeSize"`
+	Status       string `json:"status"`
+}
+
+type AddVMVolumeRequest struct {
+	VolumeName   string `json:"volumeName" validate:"volumeName|required"`
+	StorageClass string `json:"storageClass" validate:"storageClass|required"`
+	VolumeSize   int64  `json:"volumeSize" validate:"size|required"`
+}

@@ -82,6 +82,9 @@ type TenantEnvInterface interface {
 	DeleteVMPort(w http.ResponseWriter, r *http.Request)
 	DeleteVM(w http.ResponseWriter, r *http.Request)
 	ListVMs(w http.ResponseWriter, r *http.Request)
+	ListVMVolumes(w http.ResponseWriter, r *http.Request)
+	AddVMVolume(w http.ResponseWriter, r *http.Request)
+	DeleteVMVolume(w http.ResponseWriter, r *http.Request)
 }
 
 // ServiceInterface ServiceInterface

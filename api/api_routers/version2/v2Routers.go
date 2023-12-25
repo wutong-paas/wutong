@@ -430,6 +430,9 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r.Delete("/gateways/{gateway_id}", controller.GetManager().DeleteVMPortGateway)
 	r.Delete("/ports", controller.GetManager().DeleteVMPort)
 	r.Get("/", controller.GetManager().GetVM)
+	r.Get("/volumes", controller.GetManager().ListVMVolumes)
+	r.Post("/volumes", controller.GetManager().AddVMVolume)
+	r.Delete("/volumes/{volume_name}", controller.GetManager().DeleteVMVolume)
 	return r
 }
 

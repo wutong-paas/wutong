@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	appsv1 "k8s.io/client-go/listers/apps/v1"
 	autoscalingv1 "k8s.io/client-go/listers/autoscaling/v1"
-	v1 "k8s.io/client-go/listers/core/v1"
+	corev1 "k8s.io/client-go/listers/core/v1"
 	networkingv1 "k8s.io/client-go/listers/networking/v1"
 	storagev1 "k8s.io/client-go/listers/storage/v1"
 	"k8s.io/client-go/tools/cache"
@@ -21,16 +21,18 @@ import (
 var cachedResources *CachedResources
 
 type CachedResources struct {
-	DeploymentLister   appsv1.DeploymentLister
-	StatefuleSetLister appsv1.StatefulSetLister
-	ConfigMapLister    v1.ConfigMapLister
-	SecretLister       v1.SecretLister
-	ServiceLister      v1.ServiceLister
-	IngressV1Lister    networkingv1.IngressLister
-	HPAV1Lister        autoscalingv1.HorizontalPodAutoscalerLister
-	EventLister        v1.EventLister
-	StorageClassLister storagev1.StorageClassLister
-	NodeLister         v1.NodeLister
+	DeploymentLister            appsv1.DeploymentLister
+	StatefuleSetLister          appsv1.StatefulSetLister
+	PodLister                   corev1.PodLister
+	ConfigMapLister             corev1.ConfigMapLister
+	SecretLister                corev1.SecretLister
+	ServiceLister               corev1.ServiceLister
+	IngressV1Lister             networkingv1.IngressLister
+	HPAV1Lister                 autoscalingv1.HorizontalPodAutoscalerLister
+	EventLister                 corev1.EventLister
+	StorageClassLister          storagev1.StorageClassLister
+	NodeLister                  corev1.NodeLister
+	PersistentVolumeClaimLister corev1.PersistentVolumeClaimLister
 }
 
 func GetCachedResources(clientset kubernetes.Interface) *CachedResources {
@@ -62,6 +64,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	// informer
 	deploymentInformer := sharedInformers.Apps().V1().Deployments()
 	statefuleSetInformer := sharedInformers.Apps().V1().StatefulSets()
+	podInformer := sharedInformers.Core().V1().Pods()
 	configMapInformer := sharedInformers.Core().V1().ConfigMaps()
 	secretInformer := sharedInformers.Core().V1().Secrets()
 	serviceInformer := sharedInformers.Core().V1().Services()
@@ -70,10 +73,12 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	eventInformer := filteredSharedInformer.Core().V1().Events()
 	storageClassInformer := sharedInformers.Storage().V1().StorageClasses()
 	nodeInformer := sharedInformers.Core().V1().Nodes()
+	persistentVolumeClaimLister := sharedInformers.Core().V1().PersistentVolumeClaims()
 
 	// shared informers
 	deploymentSharedInformer := deploymentInformer.Informer()
 	statefuleSetSharedInformer := statefuleSetInformer.Informer()
+	podSharedInformer := podInformer.Informer()
 	configMapSharedInformer := configMapInformer.Informer()
 	secretSharedInformer := secretInformer.Informer()
 	serviceSharedInformer := serviceInformer.Informer()
@@ -82,18 +87,21 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	eventSharedInformer := eventInformer.Informer()
 	storageClassSharedInformer := storageClassInformer.Informer()
 	nodeSharedInformer := nodeInformer.Informer()
+	persistentVolumeClaimSharedInformer := persistentVolumeClaimLister.Informer()
 
 	informers := map[string]cache.SharedInformer{
-		"deploymentSharedInformer":   deploymentSharedInformer,
-		"statefuleSetSharedInformer": statefuleSetSharedInformer,
-		"configMapSharedInformer":    configMapSharedInformer,
-		"secretSharedInformer":       secretSharedInformer,
-		"serviceSharedInformer":      serviceSharedInformer,
-		"ingressV1SharedInformer":    ingressV1SharedInformer,
-		"hpaV1SharedInformer":        hpaV1SharedInformer,
-		"eventSharedInformer":        eventSharedInformer,
-		"storageClassSharedInformer": storageClassSharedInformer,
-		"nodeSharedInformer":         nodeSharedInformer,
+		"deploymentSharedInformer":            deploymentSharedInformer,
+		"statefuleSetSharedInformer":          statefuleSetSharedInformer,
+		"podSharedInformer":                   podSharedInformer,
+		"configMapSharedInformer":             configMapSharedInformer,
+		"secretSharedInformer":                secretSharedInformer,
+		"serviceSharedInformer":               serviceSharedInformer,
+		"ingressV1SharedInformer":             ingressV1SharedInformer,
+		"hpaV1SharedInformer":                 hpaV1SharedInformer,
+		"eventSharedInformer":                 eventSharedInformer,
+		"storageClassSharedInformer":          storageClassSharedInformer,
+		"nodeSharedInformer":                  nodeSharedInformer,
+		"persistentVolumeClaimSharedInformer": persistentVolumeClaimSharedInformer,
 	}
 	var wg sync.WaitGroup
 	wg.Add(len(informers))
@@ -111,15 +119,17 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	sharedInformers.WaitForCacheSync(wait.NeverStop)
 	filteredSharedInformer.WaitForCacheSync(wait.NeverStop)
 	return &CachedResources{
-		DeploymentLister:   deploymentInformer.Lister(),
-		StatefuleSetLister: statefuleSetInformer.Lister(),
-		ConfigMapLister:    configMapInformer.Lister(),
-		SecretLister:       secretInformer.Lister(),
-		ServiceLister:      serviceInformer.Lister(),
-		IngressV1Lister:    ingressV1Informer.Lister(),
-		HPAV1Lister:        hpaV1Informer.Lister(),
-		EventLister:        eventInformer.Lister(),
-		StorageClassLister: storageClassInformer.Lister(),
-		NodeLister:         nodeInformer.Lister(),
+		DeploymentLister:            deploymentInformer.Lister(),
+		StatefuleSetLister:          statefuleSetInformer.Lister(),
+		PodLister:                   podInformer.Lister(),
+		ConfigMapLister:             configMapInformer.Lister(),
+		SecretLister:                secretInformer.Lister(),
+		ServiceLister:               serviceInformer.Lister(),
+		IngressV1Lister:             ingressV1Informer.Lister(),
+		HPAV1Lister:                 hpaV1Informer.Lister(),
+		EventLister:                 eventInformer.Lister(),
+		StorageClassLister:          storageClassInformer.Lister(),
+		NodeLister:                  nodeInformer.Lister(),
+		PersistentVolumeClaimLister: persistentVolumeClaimLister.Lister(),
 	}
 }

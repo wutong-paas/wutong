@@ -139,4 +139,7 @@ type ServiceHandler interface {
 	DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DeleteVMPortRequest) error
 	DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) error
 	ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListVMsResponse, error)
+	ListVMVolumes(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMVolumesResponse, error)
+	AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMVolumeRequest) error
+	DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volumeName string) error
 }

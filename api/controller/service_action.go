@@ -1273,3 +1273,48 @@ func (t *TenantEnvStruct) ListVMs(w http.ResponseWriter, r *http.Request) {
 	}
 	httputil.ReturnSuccess(r, w, resp)
 }
+
+func (t *TenantEnvStruct) ListVMVolumes(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().ListVMVolumes(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) AddVMVolume(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	var req api_model.AddVMVolumeRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().AddVMVolume(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) DeleteVMVolume(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	volumeName := chi.URLParam(r, "volume_name")
+	if volumeName == "" {
+		httputil.ReturnError(r, w, 400, "volume name is required")
+		return
+	}
+	err := handler.GetServiceManager().DeleteVMVolume(tenantEnv, vmID, volumeName)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}

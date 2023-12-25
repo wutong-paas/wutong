@@ -69,6 +69,10 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
 	}
 
+	if ok, err := validatePassword(req.Password); !ok {
+		return nil, err
+	}
+
 	if err := CheckTenantEnvResource(context.Background(), tenantEnv, int(req.RequestMemory)*1024); err == ErrTenantEnvLackOfMemory {
 		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法创建！", req.RequestMemory)
 	}
@@ -181,6 +185,11 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 				},
 				Spec: kubevirtcorev1.VirtualMachineInstanceSpec{
 					Domain: kubevirtcorev1.DomainSpec{
+						Clock: &kubevirtcorev1.Clock{
+							ClockOffset: kubevirtcorev1.ClockOffset{
+								Timezone: util.Ptr(kubevirtcorev1.ClockOffsetTimezone("Asia/Shanghai")), // default timezone
+							},
+						},
 						Devices: kubevirtcorev1.Devices{
 							Disks: []kubevirtcorev1.Disk{
 								{
@@ -1128,6 +1137,22 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		logrus.Errorf("delete vm failed, error: %s", err.Error())
 		return fmt.Errorf("删除虚拟机 %s 失败！", vmID)
 	}
+
+	// 3、删除虚拟机存储卷
+	pvcs, err := kube.GetCachedResources(s.kubeClient).PersistentVolumeClaimLister.PersistentVolumeClaims(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/vm-id": vmID,
+	}))
+	if err != nil {
+		logrus.Errorf("list pvc failed, error: %s", err.Error())
+		return fmt.Errorf("删除虚拟机 %s 下存储卷失败！", vmID)
+	}
+	for _, pvc := range pvcs {
+		err = s.DeleteVMVolume(tenantEnv, vmID, pvc.Labels["wutong.io/vm-volume"])
+		if err != nil {
+			return fmt.Errorf("删除虚拟机 %s 下存储卷 %s 失败！", vmID, pvc.Labels["wutong.io/vm-volume"])
+		}
+	}
+
 	return nil
 }
 
@@ -1150,6 +1175,174 @@ func (s *ServiceAction) ListVMs(tenantEnv *dbmodel.TenantEnvs) (*api_model.ListV
 	result.Total = len(result.VMs)
 
 	return result, nil
+}
+
+func (s *ServiceAction) ListVMVolumes(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMVolumesResponse, error) {
+	pvcs, err := kube.GetCachedResources(s.kubeClient).PersistentVolumeClaimLister.PersistentVolumeClaims(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/vm-id": vmID,
+	}))
+	if err != nil {
+		logrus.Errorf("list pvc failed, error: %s", err.Error())
+		return nil, fmt.Errorf("获取虚拟机 %s 存储卷列表失败！", vmID)
+	}
+
+	sort.Slice(pvcs, func(i, j int) bool {
+		return pvcs[i].CreationTimestamp.After(pvcs[j].CreationTimestamp.Time)
+	})
+
+	podPvcVolumes := vmPodVolumes(s.vmPod(tenantEnv, vmID))
+
+	volumes := make([]api_model.VMVolume, 0)
+	for _, pvc := range pvcs {
+		if pvc.Labels["wutong.io/vm-volume"] == "" {
+			continue
+		}
+		volumes = append(volumes, api_model.VMVolume{
+			VolumeName: pvc.Labels["wutong.io/vm-volume"],
+			VolumeSize: cast.ToInt64(pvc.Annotations["wutong.io/vm-volume-size"]),
+			StorageClass: func() string {
+				if pvc.Spec.StorageClassName != nil {
+					return *pvc.Spec.StorageClassName
+				}
+				return ""
+			}(),
+			Status: volumeStatus(podPvcVolumes, pvc),
+		})
+	}
+	return &api_model.ListVMVolumesResponse{
+		VMVolumes: volumes,
+		Total:     len(volumes),
+	}, nil
+}
+
+func (s *ServiceAction) AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMVolumeRequest) error {
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	pvcName := pvcName(vmID, req.VolumeName)
+
+	wutongLabels := labelsFromTenantEnv(tenantEnv)
+	wutongLabels = labels.Merge(wutongLabels, map[string]string{
+		"wutong.io/vm-id":     vmID,
+		"wutong.io/vm-volume": req.VolumeName,
+	})
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pvcName,
+			Namespace: tenantEnv.Namespace,
+			Labels:    wutongLabels,
+			Annotations: map[string]string{
+				"wutong.io/vm-volume-size": fmt.Sprintf("%d", req.VolumeSize),
+			},
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse(fmt.Sprintf("%dGi", req.VolumeSize)),
+				},
+			},
+			StorageClassName: util.Ptr(req.StorageClass),
+			VolumeMode:       util.Ptr(corev1.PersistentVolumeFilesystem),
+		},
+	}
+
+	_, err = s.kubeClient.CoreV1().PersistentVolumeClaims(tenantEnv.Namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
+	if err != nil {
+		if k8sErrors.IsAlreadyExists(err) {
+			return fmt.Errorf("虚拟机 %s 存储卷名称 %s 已存在！", vmID, req.VolumeName)
+		}
+		logrus.Errorf("create pvc failed, error: %s", err.Error())
+		return fmt.Errorf("创建虚拟机 %s 存储卷 %s 失败！", vmID, req.VolumeName)
+	}
+
+	for _, fs := range vm.Spec.Template.Spec.Domain.Devices.Filesystems {
+		if fs.Name == req.VolumeName {
+			return fmt.Errorf("虚拟机 %s 存储卷名称 %s 已存在！", vmID, req.VolumeName)
+		}
+	}
+
+	for _, volume := range vm.Spec.Template.Spec.Volumes {
+		if volume.Name == req.VolumeName {
+			return fmt.Errorf("虚拟机 %s 存储卷名称 %s 已存在！", vmID, req.VolumeName)
+		}
+	}
+
+	vm.Spec.Template.Spec.Domain.Devices.Filesystems = append(vm.Spec.Template.Spec.Domain.Devices.Filesystems, kubevirtcorev1.Filesystem{
+		Name:     req.VolumeName,
+		Virtiofs: &kubevirtcorev1.FilesystemVirtiofs{},
+	})
+
+	vm.Spec.Template.Spec.Volumes = append(vm.Spec.Template.Spec.Volumes, kubevirtcorev1.Volume{
+		Name: req.VolumeName,
+		VolumeSource: kubevirtcorev1.VolumeSource{
+			PersistentVolumeClaim: &kubevirtcorev1.PersistentVolumeClaimVolumeSource{
+				PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: pvcName,
+				},
+			},
+		},
+	})
+
+	_, err = kube.UpdateKubeVirtVM(s.dynamicClient, vm)
+	if err != nil {
+		logrus.Errorf("add vm volume failed, error: %s", err.Error())
+		return fmt.Errorf("虚拟机 %s 添加存储卷 %s 失败！", vmID, req.VolumeName)
+	}
+
+	return nil
+}
+
+func (s *ServiceAction) DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volumeName string) error {
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	for idx, fs := range vm.Spec.Template.Spec.Domain.Devices.Filesystems {
+		if fs.Name == volumeName {
+			vm.Spec.Template.Spec.Domain.Devices.Filesystems = append(vm.Spec.Template.Spec.Domain.Devices.Filesystems[:idx], vm.Spec.Template.Spec.Domain.Devices.Filesystems[idx+1:]...)
+			break
+		}
+	}
+
+	for idx, volume := range vm.Spec.Template.Spec.Volumes {
+		if volume.Name == volumeName {
+			vm.Spec.Template.Spec.Volumes = append(vm.Spec.Template.Spec.Volumes[:idx], vm.Spec.Template.Spec.Volumes[idx+1:]...)
+			break
+		}
+	}
+
+	_, err = kube.UpdateKubeVirtVM(s.dynamicClient, vm)
+	if err != nil {
+		logrus.Errorf("delete vm volume failed, error: %s", err.Error())
+		return fmt.Errorf("虚拟机 %s 删除存储卷 %s 失败！", vmID, volumeName)
+	}
+
+	pvcName := pvcName(vmID, volumeName)
+	err = s.kubeClient.CoreV1().PersistentVolumeClaims(tenantEnv.Namespace).Delete(context.Background(), pvcName, metav1.DeleteOptions{})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil
+		}
+		logrus.Errorf("delete pvc failed, error: %s", err.Error())
+		return fmt.Errorf("删除虚拟机 %s 存储卷 %s 失败！", vmID, volumeName)
+	}
+
+	return nil
 }
 
 func vmUserData(kubeClient kubernetes.Interface, username, password string) string {
@@ -1200,6 +1393,10 @@ func labelsFromTenantEnv(te *dbmodel.TenantEnvs) map[string]string {
 
 func serviceName(vmID string, port int, protocol string) string {
 	return fmt.Sprintf("%s-%d-%s", vmID, port, protocol)
+}
+
+func pvcName(vmID, volumeName string) string {
+	return fmt.Sprintf("%s-%s", vmID, volumeName)
 }
 
 func generateGatewayHost(namespace, vmID string, port int) string {
@@ -1317,4 +1514,66 @@ func vmStatusMessageFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine) string {
 		}
 	}
 	return result
+}
+
+const (
+	VolumeStatusUnknown          = "未知"
+	VolumeStatusPending          = "待分配"
+	VolumeStatusBoundButNotInUse = "未使用(重启虚拟机以使用该卷)"
+	VolumeStatusBoundAndInUse    = "使用中(需进入虚拟机手动挂载)"
+	VolumeStatusLost             = "已丢失"
+)
+
+func (s *ServiceAction) vmPod(tenantEnv *dbmodel.TenantEnvs, vmID string) *corev1.Pod {
+	pods, _ := kube.GetCachedResources(s.kubeClient).PodLister.Pods(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
+		"wutong.io/vm-id": vmID,
+		"kubevirt.io":     "virt-launcher",
+	}))
+	if len(pods) > 0 {
+		return pods[0]
+	}
+	return nil
+}
+
+func vmPodVolumes(vmPod *corev1.Pod) []string {
+	if vmPod == nil {
+		return nil
+	}
+	var result []string
+	for _, volume := range vmPod.Spec.Volumes {
+		if volume.PersistentVolumeClaim != nil {
+			result = append(result, volume.PersistentVolumeClaim.ClaimName)
+		}
+	}
+	return result
+}
+
+func volumeStatus(vmVolumes []string, pvc *corev1.PersistentVolumeClaim) string {
+	if pvc == nil {
+		return VolumeStatusUnknown
+	}
+	switch pvc.Status.Phase {
+	case corev1.ClaimPending:
+		return VolumeStatusPending
+	case corev1.ClaimLost:
+		return VolumeStatusLost
+	case corev1.ClaimBound:
+		if slices.Contains(vmVolumes, pvc.Name) {
+			return VolumeStatusBoundAndInUse
+		}
+		return VolumeStatusBoundButNotInUse
+	}
+	return VolumeStatusUnknown
+}
+
+func validatePassword(password string) (bool, error) {
+	if len(password) < 8 {
+		return false, fmt.Errorf("密码长度不能小于 8 位！")
+	}
+
+	if !strings.ContainsAny(password, "abcdefghijklmnopqrstuvwxyz") || !strings.ContainsAny(password, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") || !strings.ContainsAny(password, "0123456789") {
+		return false, fmt.Errorf("密码必须同时包含大小写字母和数字！")
+	}
+
+	return true, nil
 }

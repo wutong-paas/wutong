@@ -85,14 +85,6 @@ type ServiceAction struct {
 	veleroClient  veleroversioned.Interface
 }
 
-type dCfg struct {
-	Type     string   `json:"type"`
-	Servers  []string `json:"servers"`
-	Key      string   `json:"key"`
-	Username string   `json:"username"`
-	Password string   `json:"password"`
-}
-
 // CreateManager create Manger
 func CreateManager(conf option.Config,
 	mqClient gclient.MQClient,
