@@ -267,7 +267,12 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		return nil, fmt.Errorf("虚拟机初始用户密码加密失败！")
 	}
 
+	vmUserData += fmt.Sprintf(`bootcmd:
+  - sudo cp -r /home/%s/.ssh /root/
+`, req.User)
+
 	vmUserData += fmt.Sprintf(`runcmd:
+  - sudo dhclient
 %s`, filebrowserRunCmd(req.User, string(bcryptedPassword)))
 
 	// set cloudinit
@@ -1346,11 +1351,26 @@ func (s *ServiceAction) DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volu
 }
 
 func vmUserData(kubeClient kubernetes.Interface, username, password string) string {
-	vmUserData := fmt.Sprintf("#cloud-config\nchpasswd: { expire: False }\nuser: %s\npassword: %s\nssh_pwauth: True\n", username, password)
 	vmSSHPubKey, _ := kube.GetWTChannelSSHPubKey(kubeClient)
-	if len(vmSSHPubKey) > 0 {
-		vmUserData += fmt.Sprintf("ssh_authorized_keys:\n  - %s\n", string(vmSSHPubKey))
-	}
+	vmUserData := fmt.Sprintf(`#cloud-config
+chpasswd:
+  expire: False
+groups:
+  - %s-group
+users:
+  - name: %s
+    gecos: %s
+    primary-group: %s-group
+    groups: [sudo]
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    plain_text_passwd: %s
+    ssh_authorized_keys:
+      - %s
+password: %s
+ssh_pwauth: True
+ssh_authorized_keys:
+  - %s\n`, username, username, username, username, password, vmSSHPubKey, password, vmSSHPubKey)
+
 	return vmUserData
 }
 
