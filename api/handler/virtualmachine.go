@@ -1353,6 +1353,7 @@ func (s *ServiceAction) DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volu
 func vmUserData(kubeClient kubernetes.Interface, username, password string) string {
 	vmSSHPubKey, _ := kube.GetWTChannelSSHPubKey(kubeClient)
 	vmUserData := fmt.Sprintf(`#cloud-config
+disable_root: false
 chpasswd:
   expire: False
 groups:
