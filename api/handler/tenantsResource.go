@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -25,7 +26,8 @@ func CheckTenantEnvResource(ctx context.Context, tenantEnv *dbmodel.TenantEnvs, 
 		avaiMemory := tenantEnv.LimitMemory - ts.UsedMEM
 		if needMemory > avaiMemory {
 			logrus.Errorf("tenant env available memory is %d, To apply for %d, not enough", avaiMemory, needMemory)
-			return ErrTenantEnvLackOfMemory
+			// return ErrTenantEnvLackOfMemory
+			return fmt.Errorf("超出当前环境内存限额（%dM）", tenantEnv.LimitMemory)
 		}
 	}
 

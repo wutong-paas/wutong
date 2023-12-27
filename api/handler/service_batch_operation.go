@@ -566,7 +566,8 @@ func (a *AllocMemory) check(componentID string) error {
 	allom := util.Int64Value(a.allcm)
 	if requestMemory > int(allom) {
 		logrus.Errorf("request memory is %d, but got %d allocatable memory", requestMemory, allom)
-		return ErrTenantEnvLackOfMemory
+		// return ErrTenantEnvLackOfMemory
+		return fmt.Errorf("超出当前环境内存限额（%dM）", allom)
 	}
 
 	*a.allcm -= int64(requestMemory)
