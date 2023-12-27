@@ -1358,7 +1358,9 @@ chpasswd:
 groups:
   - %s-group
 users:
+  - default
   - name: %s
+    lock_passwd: false
     gecos: %s
     primary-group: %s-group
     groups: [sudo]
