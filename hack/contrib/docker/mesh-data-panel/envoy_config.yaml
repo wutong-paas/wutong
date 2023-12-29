@@ -21,7 +21,7 @@ static_resources:
   clusters:
   - name: wutong_xds_cluster
     connect_timeout: 0.25s
-    type: STATIC
+    type: STRICT_DNS
     lb_policy: ROUND_ROBIN
     http2_protocol_options: {}
     load_assignment:
