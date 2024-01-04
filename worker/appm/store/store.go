@@ -313,7 +313,7 @@ func NewStore(
 	store.informers.ConfigMap.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Endpoints.AddEventHandlerWithResyncPeriod(epEventHandler, time.Second*10)
-	// store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
+	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
 	store.informers.CRD.AddEventHandlerWithResyncPeriod(store.crdEventHandler(), time.Second*10)
 	store.informers.StorageClass.AddEventHandlerWithResyncPeriod(store, time.Second*300)
 	store.informers.Claims.AddEventHandlerWithResyncPeriod(store, time.Second*10)

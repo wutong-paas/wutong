@@ -121,6 +121,10 @@ type InitMessage struct {
 	// NodeName      string `json:"nodeName"`
 }
 
+type InitNodeMessage struct {
+	NodeName string `json:"nodeName"`
+}
+
 type InitVMMessage struct {
 	// TenantEnvID   string `json:"T_id"`
 	Md5         string `json:"Md5"`
@@ -162,6 +166,7 @@ func (app *App) Run() error {
 	endpoint := net.JoinHostPort(app.options.Address, app.options.Port)
 
 	wsHandler := http.HandlerFunc(app.handleWS)
+	nodeConsoleWSHandler := http.HandlerFunc(app.handleNodeConsoleWS)
 	virtctlConsoleChannelWSHandler := http.HandlerFunc(app.handleVirtctlConsoleChannelWS)
 	virtualMachineSSHChannelWSHandler := http.HandlerFunc(app.handleVirtualMachineSSHChannelWS)
 	health := http.HandlerFunc(app.healthCheck)
@@ -178,6 +183,7 @@ func (app *App) Run() error {
 	wsMux := http.NewServeMux()
 	wsMux.Handle("/", siteHandler)
 	wsMux.Handle("/docker_console", wsHandler)
+	wsMux.Handle("/docker_node_console", nodeConsoleWSHandler)
 	wsMux.Handle("/docker_virtctl_console", virtctlConsoleChannelWSHandler)
 	wsMux.Handle("/docker_vm_ssh", virtualMachineSSHChannelWSHandler)
 	wsMux.Handle("/health", health)
@@ -391,6 +397,84 @@ func (app *App) handleVirtctlConsoleChannelWS(w http.ResponseWriter, r *http.Req
 	}
 }
 
+func (app *App) handleNodeConsoleWS(w http.ResponseWriter, r *http.Request) {
+	logrus.Printf("New client connected: %s", r.RemoteAddr)
+
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	conn, err := app.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Print("Failed to upgrade connection: " + err.Error())
+		return
+	}
+
+	_, stream, err := conn.ReadMessage()
+	if err != nil {
+		logrus.Print("Failed to authenticate websocket connection " + err.Error())
+		conn.Close()
+		return
+	}
+
+	message := string(stream)
+	logrus.Print("message=", message)
+
+	var init InitNodeMessage
+	json.Unmarshal(stream, &init)
+	if init.NodeName == "" {
+		logrus.Print("Parameter is error, node name is empty")
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusBadRequest, "node name can not be empty"))
+		conn.Close()
+		return
+	}
+
+	containerName, podName, args, err := app.GetNodeConsoleArgs(init.NodeName)
+	if err != nil {
+		logrus.Errorf("get default container failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "Get default container name failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+
+	slave, err := app.tryExecRequest("wt-system", podName, containerName, args)
+	if err != nil {
+		logrus.Errorf("open exec context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	defer slave.Close()
+	opts := []webtty.Option{
+		webtty.WithWindowTitle([]byte(init.NodeName)),
+		webtty.WithReconnect(10),
+		webtty.WithPermitWrite(),
+	}
+	// create web tty and run
+	tty, err := webtty.New(&WsWrapper{conn}, slave, opts...)
+	if err != nil {
+		logrus.Errorf("open web tty context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusOK, "run tty success!"))
+	err = tty.Run(ctx)
+	if err != nil {
+		if strings.Contains(err.Error(), "master closed") {
+			logrus.Infof("client close connection")
+			return
+		}
+		logrus.Errorf("run web tty failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, httpResult(http.StatusInternalServerError, "run tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+}
+
 func (app *App) handleVirtualMachineSSHChannelWS(w http.ResponseWriter, r *http.Request) {
 	logrus.Printf("New client connected: %s", r.RemoteAddr)
 
@@ -574,6 +658,19 @@ func (app *App) GetContainerArgs(namespace, podname, containerName string) (stri
 		}
 	}
 	return "", "", args, fmt.Errorf("not have container in pod %s/%s", namespace, podname)
+}
+
+// GetNodeConsoleArgs return containerName, podName, args, error
+func (app *App) GetNodeConsoleArgs(nodeName string) (string, string, []string, error) {
+	var args = []string{"/bin/bash"}
+	podName := fmt.Sprintf("wt-node-shell-%s", nodeName)
+
+	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
+	if err != nil || pod.Status.Phase != api.PodRunning {
+		return podName, podName, args, fmt.Errorf("wt-node-shell is not ready")
+	}
+
+	return podName, podName, args, nil
 }
 
 // GetVirtctlConsoleChannelArgs return containerName, podName, args, error

@@ -104,13 +104,6 @@ const (
 	OSSourceFromRegistry OSSourceFrom = "registry"
 )
 
-// VMNodeSelector
-// style: vm-node-selector.wutong.io/[key]=[value]
-type VMNodeSelector struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
 // CreateVMRequest
 type CreateVMRequest struct {
 	Name          string       `json:"name" validate:"name|required"`

@@ -35,7 +35,20 @@ type ClusterInterface interface {
 }
 
 type NodeInterface interface {
-	ListVMNodeSelectorLabels(w http.ResponseWriter, r *http.Request)
+	ListNodes(w http.ResponseWriter, r *http.Request)
+	GetNode(w http.ResponseWriter, r *http.Request)
+	SetNodeLabel(w http.ResponseWriter, r *http.Request)
+	DeleteNodeLabel(w http.ResponseWriter, r *http.Request)
+	SetNodeAnnotation(w http.ResponseWriter, r *http.Request)
+	DeleteNodeAnnotation(w http.ResponseWriter, r *http.Request)
+	TaintNode(w http.ResponseWriter, r *http.Request)
+	DeleteTaintNode(w http.ResponseWriter, r *http.Request)
+	CordonNode(w http.ResponseWriter, r *http.Request)
+	UncordonNode(w http.ResponseWriter, r *http.Request)
+	ListVMSchedulingLabels(w http.ResponseWriter, r *http.Request)
+	SetVMSchedulingLabel(w http.ResponseWriter, r *http.Request)
+	DeleteVMSchedulingLabel(w http.ResponseWriter, r *http.Request)
+	SetVMSchedulableStatus(w http.ResponseWriter, r *http.Request)
 }
 
 // TenantEnvInterface interface

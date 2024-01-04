@@ -21,8 +21,10 @@ package controller
 import (
 	"net/http"
 
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/model"
 
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
@@ -31,14 +33,273 @@ import (
 type NodeController struct {
 }
 
-// GetClusterInfo -
-func (t *ClusterController) ListVMNodeSelectorLabels(w http.ResponseWriter, r *http.Request) {
-	labels, err := handler.GetNodeHandler().ListVMNodeSelectorLabels()
+func (t *NodeController) ListNodes(w http.ResponseWriter, r *http.Request) {
+	nodes, err := handler.GetNodeHandler().ListNodes()
 	if err != nil {
-		logrus.Errorf("get vm node selector labels: %v", err)
+		logrus.Errorf("list nodes: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nodes)
+}
+
+func (t *NodeController) GetNode(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	node, err := handler.GetNodeHandler().GetNode(nodeName)
+	if err != nil {
+		logrus.Errorf("get node: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, node)
+}
+
+func (t *NodeController) SetNodeLabel(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.SetNodeLabelRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().SetNodeLabel(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("set label: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *NodeController) DeleteNodeLabel(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.DeleteNodeLabelRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().DeleteNodeLabel(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("delete label: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *NodeController) SetNodeAnnotation(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.SetNodeAnnotationRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().SetNodeAnnotation(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("set annotation: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *NodeController) DeleteNodeAnnotation(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.DeleteNodeAnnotationRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().DeleteNodeAnnotation(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("delete annotation: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (*NodeController) TaintNode(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.TaintNodeRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().TaintNode(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("taint node: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (*NodeController) DeleteTaintNode(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.DeleteTaintNodeRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().DeleteTaintNode(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("untaint node: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (*NodeController) CordonNode(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.CordonNodeRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().CordonNode(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("cordon node: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (*NodeController) UncordonNode(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	err := handler.GetNodeHandler().UncordonNode(nodeName)
+	if err != nil {
+		logrus.Errorf("uncordon node: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// GetClusterInfo -
+func (t *NodeController) ListVMSchedulingLabels(w http.ResponseWriter, r *http.Request) {
+	labels, err := handler.GetNodeHandler().ListVMSchedulingLabels()
+	if err != nil {
+		logrus.Errorf("get vm node scheduling labels: %v", err)
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}
 
 	httputil.ReturnSuccess(r, w, labels)
+}
+
+func (t *NodeController) SetVMSchedulingLabel(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name is required")
+		return
+	}
+	var req model.SetVMSchedulingLabelRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().SetVMSchedulingLabel(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("add vm node scheduling label: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *NodeController) DeleteVMSchedulingLabel(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	var req model.DeleteVMSchedulingLabelRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().DeleteVMSchedulingLabel(nodeName, &req)
+	if err != nil {
+		logrus.Errorf("delete vm node scheduling label: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *NodeController) SetVMSchedulableStatus(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	var req model.SetVMSchedulableStatusRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("set vm node schedulable status validate request body failure")
+		return
+	}
+	err := handler.GetNodeHandler().SetVMSchedulableStatus(nodeName, req.Schedulable)
+	if err != nil {
+		logrus.Errorf("set vm node schedulable status: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
 }

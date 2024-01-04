@@ -102,7 +102,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 	}
 
 	for _, labelKey := range req.NodeSelectorLabels {
-		nodeSelector["vm-node-selector.wutong.io/"+labelKey] = ""
+		nodeSelector["vm-scheduling-label.wutong.io/"+labelKey] = ""
 	}
 
 	var source cdicorev1beta1.DataVolumeSource
@@ -390,7 +390,7 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 		"wutong.io/vm-schedulable": "true",
 	}
 	for _, labelKey := range req.NodeSelectorLabels {
-		nodeSelector["vm-node-selector.wutong.io/"+labelKey] = ""
+		nodeSelector["vm-scheduling-label.wutong.io/"+labelKey] = ""
 	}
 	vm.Spec.Template.Spec.NodeSelector = nodeSelector
 
@@ -1484,7 +1484,7 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 	}
 
 	for k := range vm.Spec.Template.Spec.NodeSelector {
-		if label, ok := strings.CutPrefix(k, "vm-node-selector.wutong.io/"); ok {
+		if label, ok := strings.CutPrefix(k, "vm-scheduling-label.wutong.io/"); ok {
 			result.NodeSelectorLabels = append(result.NodeSelectorLabels, label)
 		}
 	}

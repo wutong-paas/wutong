@@ -169,3 +169,108 @@ func DecimalFromFloat32(f float32) float32 {
 	}
 	return float32(res)
 }
+
+type ListNodeResponse struct {
+	Nodes []NodeBaseInfo `json:"nodes"`
+	Total int            `json:"total"`
+}
+
+type GetNodeResponse struct {
+	NodeProfile `json:",inline"`
+}
+
+type NodeBaseInfo struct {
+	Name                    string   `json:"name"`
+	ExternalIP              string   `json:"external_ip"`
+	InternalIP              string   `json:"internal_ip"`
+	Roles                   []string `json:"roles"`
+	KubeVersion             string   `json:"kube_version"`
+	ContainerRuntime        string   `json:"container_runtime"`
+	ContainerRuntimeVersion string   `json:"container_runtime_version"`
+	OS                      string   `json:"os"`
+	OSVersion               string   `json:"os_version"`
+	KernelVersion           string   `json:"kernel_version"`
+	CreatedAt               string   `json:"created_at"`
+	Arch                    string   `json:"arch"`
+	Status                  string   `json:"status"`     // 节点状态：Ready, NotReady, Unknown
+	PodCIDR                 string   `json:"pod_cidr"`   // Pod 网络 CIDR
+	CPUCap                  int64    `json:"cpu_cap"`    // CPU 容量
+	MemoryCap               int64    `json:"memory_cap"` // 内存容量
+	DiskCap                 int64    `json:"disk_cap"`   // 磁盘容量
+	PodCap                  int64    `json:"pod_cap"`    // Pod 容量
+	CPUUsed                 int64    `json:"cpu_used"`   // CPU 使用量
+	MemoryUsed              int64    `json:"memory_used"`
+	DiskUsed                int64    `json:"disk_used"`
+	PodUsed                 int64    `json:"pod_used"`
+	Schedulable             bool     `json:"schedulable"`
+}
+
+type NodeProfile struct {
+	NodeBaseInfo  `json:",inline"`
+	Labels        []Label      `json:"labels"`
+	Annotations   []Annotation `json:"annotations"`
+	Taints        []Taint      `json:"taints"`
+	VMSchedulable bool         `json:"vm_schedulable"`
+}
+
+type KeyValue struct {
+	Key   string `json:"key" validate:"required"`
+	Value string `json:"value"`
+}
+
+type Label struct {
+	KeyValue `json:",inline"`
+	Editable bool `json:"editable"`
+}
+
+type Annotation struct {
+	KeyValue `json:",inline"`
+	Editable bool `json:"editable"`
+}
+
+type Taint struct {
+	KeyValue `json:",inline"`
+	Effect   string `json:"effect"`
+}
+
+type TaintNodeRequest struct {
+	Key    string `json:"key" validate:"required"`
+	Value  string `json:"value"`
+	Effect string `json:"effect" validate:"required"`
+}
+
+type CordonNodeRequest struct {
+	EvictPods bool `json:"evict_pods"`
+}
+
+type DeleteTaintNodeRequest struct {
+	Key string `json:"key" validate:"required"`
+}
+
+type SetVMSchedulingLabelRequest struct {
+	KeyValue `json:",inline"`
+}
+
+type DeleteVMSchedulingLabelRequest struct {
+	Key string `json:"key" validate:"required"`
+}
+
+type SetNodeLabelRequest struct {
+	KeyValue `json:",inline"`
+}
+
+type DeleteNodeLabelRequest struct {
+	Key string `json:"key" validate:"required"`
+}
+
+type SetNodeAnnotationRequest struct {
+	KeyValue `json:",inline"`
+}
+
+type DeleteNodeAnnotationRequest struct {
+	Key string `json:"key" validate:"required"`
+}
+
+type SetVMSchedulableStatusRequest struct {
+	Schedulable bool `json:"schedulable"`
+}

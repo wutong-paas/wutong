@@ -109,7 +109,26 @@ func (v2 *V2) clusterRouter() chi.Router {
 
 func (v2 *V2) nodeRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Get("/vm-selector-labels", controller.GetManager().ListVMNodeSelectorLabels)
+	r.Get("/", controller.GetManager().ListNodes)
+	r.Mount("/{node_name}", v2.nodeNameRouter())
+	r.Get("/vm-selector-labels", controller.GetManager().ListVMSchedulingLabels)
+	return r
+}
+
+func (v2 *V2) nodeNameRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Get("/", controller.GetManager().GetNode)
+	r.Put("/label", controller.GetManager().SetNodeLabel)
+	r.Delete("/label", controller.GetManager().DeleteNodeLabel)
+	r.Put("/annotation", controller.GetManager().SetNodeAnnotation)
+	r.Delete("/annotation", controller.GetManager().DeleteNodeAnnotation)
+	r.Put("/taint", controller.GetManager().TaintNode)
+	r.Delete("/taint", controller.GetManager().DeleteTaintNode)
+	r.Put("/cordon", controller.GetManager().CordonNode)
+	r.Put("/uncordon", controller.GetManager().UncordonNode)
+	r.Put("/vm-scheduling-label", controller.GetManager().SetVMSchedulingLabel)
+	r.Delete("/vm-scheduling-label", controller.GetManager().DeleteVMSchedulingLabel)
+	r.Put("/vm-schedulable", controller.GetManager().SetVMSchedulableStatus)
 	return r
 }
 
