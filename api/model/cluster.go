@@ -43,8 +43,9 @@ const (
 
 // ClusterEvent
 type ClusterEvent struct {
-	Level   ClusterEventLevel `json:"level"`
-	Message string            `json:"message"`
+	Level     ClusterEventLevel `json:"level"`
+	Message   string            `json:"message"`
+	CreatedAt string            `json:"created_at"`
 }
 
 func ClusterEventFrom(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
@@ -78,8 +79,9 @@ func podEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent
 		return nil
 	}
 	return &ClusterEvent{
-		Level:   ClusterEventLevelWarning,
-		Message: message,
+		Level:     ClusterEventLevelWarning,
+		Message:   message,
+		CreatedAt: event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
 	}
 }
 
@@ -111,8 +113,9 @@ func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEven
 		return nil
 	}
 	return &ClusterEvent{
-		Level:   ClusterEventLevelWarning,
-		Message: message,
+		Level:     ClusterEventLevelWarning,
+		Message:   message,
+		CreatedAt: event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
 	}
 }
 
