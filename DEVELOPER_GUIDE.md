@@ -6,14 +6,14 @@
 
 ### 编译环境初始化
 
-由于部分组件 (eventlog) 使用到了 CGOA，所以交叉编译还需要额外设置编译环境。参考如下：
+由于部分组件 (eventlog) 使用到了 CGO，所以交叉编译还需要额外设置编译环境。参考如下：
 
 基础工具：
 
 - docker
 - golang 1.20+
 
-**linux/amd64 环境**
+**linux/amd64 环境**：
 
 在 linux 机器 x86 架构开发环境下编译多架构镜像，需要执行以下命令:
 
@@ -21,7 +21,7 @@
 docker run --rm --privileged multiarch/qemu-user-static --reset --persistent yes
 ```
 
-**macos m1 环境**
+**macos m1 环境**：
 
 在 M1 芯片 MacOS 机器上编译多架构镜像，需要执行以下命令：
 
@@ -44,12 +44,11 @@ export PATH=$PATH:/opt/homebrew/Cellar/x86_64-unknown-linux-gnu/11.2.0_1/bin::/o
 本地编译单个组件并推送：
 
 ```bash
-./release-new.sh api
+make build-api
 ```
 
 本地编译所有组件镜像并推送：
 
 ```bash
-./release-new.sh all push
+make build-all
 ```
-
