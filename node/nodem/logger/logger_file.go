@@ -563,11 +563,9 @@ type LogFile struct {
 	f               *os.File     // store for closing
 	closed          bool
 	rotateMu        sync.Mutex // blocks the next rotation until the current rotation is completed
-	capacity        int64      // maximum size of each file
 	currentSize     int64      // current size of the latest file
 	maxFiles        int        // maximum number of files
 	compress        bool       // whether old versions of log files are compressed
-	lastTimestamp   time.Time  // timestamp of the last log
 	filesRefCounter refCounter // keep reference-counted of decompressed files
 	notifyRotate    *pubsub.Publisher
 	createDecoder   makeDecoderFunc

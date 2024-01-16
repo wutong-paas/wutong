@@ -27,11 +27,6 @@ import (
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
-const (
-	bufSize  = 16 * 1024
-	readSize = 2 * 1024
-)
-
 // Copier can copy logs from specified sources to Logger and attach Timestamp.
 // Writes are concurrent, so you need implement some sync in your logger.
 type Copier struct {
