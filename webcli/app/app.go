@@ -166,6 +166,7 @@ func (app *App) Run() error {
 	endpoint := net.JoinHostPort(app.options.Address, app.options.Port)
 
 	wsHandler := http.HandlerFunc(app.handleWS)
+	wsLogHandler := http.HandlerFunc(app.handleWSLog)
 	nodeConsoleWSHandler := http.HandlerFunc(app.handleNodeConsoleWS)
 	virtctlConsoleChannelWSHandler := http.HandlerFunc(app.handleVirtctlConsoleChannelWS)
 	virtualMachineSSHChannelWSHandler := http.HandlerFunc(app.handleVirtualMachineSSHChannelWS)
@@ -183,6 +184,7 @@ func (app *App) Run() error {
 	wsMux := http.NewServeMux()
 	wsMux.Handle("/", siteHandler)
 	wsMux.Handle("/docker_console", wsHandler)
+	wsMux.Handle("/docker_container_log", wsLogHandler)
 	wsMux.Handle("/docker_node_console", nodeConsoleWSHandler)
 	wsMux.Handle("/docker_virtctl_console", virtctlConsoleChannelWSHandler)
 	wsMux.Handle("/docker_vm_ssh", virtualMachineSSHChannelWSHandler)
@@ -279,6 +281,99 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 	// slave, err = NewExecContext(request, app.config)
 	if err != nil {
 		logrus.Errorf("open exec context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	defer slave.Close()
+	opts := []webtty.Option{
+		webtty.WithWindowTitle([]byte(ip)),
+		webtty.WithReconnect(10),
+		webtty.WithPermitWrite(),
+	}
+	// create web tty and run
+	tty, err := webtty.New(&WsWrapper{conn}, slave, opts...)
+	if err != nil {
+		logrus.Errorf("open web tty context failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+	err = tty.Run(ctx)
+	if err != nil {
+		if strings.Contains(err.Error(), "master closed") {
+			logrus.Infof("client close connection")
+			return
+		}
+		logrus.Errorf("run web tty failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("run tty failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+}
+
+func (app *App) handleWSLog(w http.ResponseWriter, r *http.Request) {
+	logrus.Printf("New client connected: %s", r.RemoteAddr)
+
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	conn, err := app.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Print("Failed to upgrade connection: " + err.Error())
+		return
+	}
+
+	_, stream, err := conn.ReadMessage()
+	if err != nil {
+		logrus.Print("Failed to authenticate websocket connection " + err.Error())
+		conn.Close()
+		return
+	}
+
+	message := string(stream)
+	logrus.Print("message=", message)
+
+	var init InitMessage
+
+	json.Unmarshal(stream, &init)
+
+	//todo auth
+	if init.PodName == "" {
+		logrus.Print("Parameter is error, pod name is empty")
+		conn.WriteMessage(websocket.TextMessage, []byte("pod name can not be empty"))
+		conn.Close()
+		return
+	}
+	// key := init.TenantEnvID + "_" + init.ServiceID + "_" + init.PodName
+	// md5 := md5Func(key)
+	// if md5 != init.Md5 {
+	// 	logrus.Print("Auth is not allowed!")
+	// 	conn.WriteMessage(websocket.TextMessage, []byte("Auth is not allowed!"))
+	// 	conn.Close()
+	// 	return
+	// }
+	// base kubernetes api create exec slave
+	// if init.Namespace == "" {
+	// 	init.Namespace = init.TenantEnvID
+	// }
+	containerName, ip, args, err := app.GetContainerArgs(init.Namespace, init.PodName, init.ContainerName)
+	if err != nil {
+		logrus.Errorf("get default container failure %s", err.Error())
+		conn.WriteMessage(websocket.TextMessage, []byte("Get default container name failure!"))
+		ExecuteCommandFailed++
+		return
+	}
+	slave, err := app.tryLogRequest(init.Namespace, init.PodName, containerName, args)
+	// request := app.NewRequest(init.PodName, init.Namespace, containerName, args)
+	// var slave server.Slave
+	// slave, err = NewExecContext(request, app.config)
+	if err != nil {
+		logrus.Errorf("open log context failure %s", err.Error())
 		conn.WriteMessage(websocket.TextMessage, []byte("open tty failure!"))
 		ExecuteCommandFailed++
 		return
@@ -578,8 +673,18 @@ func httpResult(code int, msg string) []byte {
 	return []byte(fmt.Sprintf("6%s", string(b)))
 }
 
+func (app *App) tryLogRequest(ns, pod, c string, args []string) (server.Slave, error) {
+	request := app.NewLogRequest(pod, ns, c, args)
+	var slave server.Slave
+	slave, err := NewLogContext(request, app.config)
+	if err != nil {
+		return nil, err
+	}
+	return slave, nil
+}
+
 func (app *App) tryExecRequest(ns, pod, c string, args []string) (server.Slave, error) {
-	request := app.NewRequest(pod, ns, c, args)
+	request := app.NewExecRequest(pod, ns, c, args)
 	var slave server.Slave
 	slave, err := NewExecContext(request, app.config)
 	if err != nil {
@@ -748,8 +853,8 @@ func (app *App) GetVirtualMachineSSHChannelArgs(vmNamespace, vmID, vmPort, vmUse
 	return "wt-channel", podName, args, nil
 }
 
-// NewRequest new exec request
-func (app *App) NewRequest(podName, namespace, containerName string, command []string) *rest.Request {
+// NewExecRequest new exec request
+func (app *App) NewExecRequest(podName, namespace, containerName string, command []string) *rest.Request {
 	// TODO: consider abstracting into a client invocation or client helper
 	req := app.restClient.Post().
 		Resource("pods").
@@ -761,6 +866,26 @@ func (app *App) NewRequest(podName, namespace, containerName string, command []s
 		Param("stdout", "true").
 		Param("stderr", "false").
 		Param("tty", "true")
+	for _, c := range command {
+		req.Param("command", c)
+	}
+	return req
+}
+
+// NewLogRequest new log request
+func (app *App) NewLogRequest(podName, namespace, containerName string, command []string) *rest.Request {
+	// TODO: consider abstracting into a client invocation or client helper
+	req := app.restClient.Get().
+		Resource("pods").
+		Name(podName).
+		Namespace(namespace).
+		SubResource("log").
+		Param("container", containerName).
+		Param("stdin", "true").
+		Param("stdout", "true").
+		Param("stderr", "false").
+		Param("tty", "true").
+		Param("follow", "true")
 	for _, c := range command {
 		req.Param("command", c)
 	}
