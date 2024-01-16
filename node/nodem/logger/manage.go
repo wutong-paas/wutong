@@ -24,12 +24,10 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/docker/cli/templates"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -231,16 +229,6 @@ type Out struct {
 	Event     string
 }
 
-func parseTemplate(format string) (*template.Template, error) {
-	aliases := map[string]string{
-		"json": "{{json .}}",
-	}
-	if alias, ok := aliases[format]; ok {
-		format = alias
-	}
-	return templates.Parse(format)
-}
-
 func (c *ContainerLogManage) watchContainer() error {
 	return c.conf.ContainerImageCli.WatchContainers(c.ctx, c.cchan)
 }
@@ -328,7 +316,7 @@ func getLoggerConfig(envs []string) []*ContainerLoggerConfig {
 }
 
 // ErrNeglectedContainer not define logger name
-var ErrNeglectedContainer = fmt.Errorf("Neglected container")
+var ErrNeglectedContainer = fmt.Errorf("neglected container")
 
 // containerInfo is extra info returned by containerd grpc api
 // it's NOT part of cri-api, so we keep this struct being internal visibility.
@@ -486,7 +474,7 @@ func (container *ContainerLog) Restart() {
 	if container == nil {
 		return
 	}
-	if *container.stoped {
+	if container.stoped != nil && *container.stoped {
 		runtimeClient, _ := container.conf.ContainerImageCli.GetRuntimeClient()
 		copier := NewCopier(container.reader, container.LogDriver, container.since, container.GetId(), runtimeClient)
 		container.LogCopier = copier
