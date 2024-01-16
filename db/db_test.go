@@ -154,7 +154,7 @@ func TestSetServiceLabel(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	label := model.TenantEnvServiceLable{
+	label := model.TenantEnvServiceLabel{
 		LabelKey:   "labelkey",
 		LabelValue: "labelvalue",
 		ServiceID:  "889bb1f028f655bebd545f24aa184a0b",

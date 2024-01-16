@@ -142,4 +142,14 @@ type ServiceHandler interface {
 	ListVMVolumes(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMVolumesResponse, error)
 	AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMVolumeRequest) error
 	DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volumeName string) error
+
+	// Scheduling
+	GetServiceSchedulingDetails(serviceID string) (*api_model.GetServiceSchedulingDetailsResponse, error)
+	AddServiceSchedulingLabel(serviceID string, req *api_model.AddServiceSchedulingLabelRequest) error
+	UpdateServiceSchedulingLabel(serviceID string, req *api_model.UpdateServiceSchedulingLabelRequest) error
+	DeleteServiceSchedulingLabel(serviceID string, req *api_model.DeleteServiceSchedulingLabelRequest) error
+	SetServiceSchedulingNode(serviceID string, req *api_model.SetServiceSchedulingNodeRequest) error
+	AddServiceSchedulingToleration(serviceID string, req *api_model.AddServiceSchedulingTolerationRequest) error
+	UpdateServiceSchedulingToleration(serviceID string, req *api_model.UpdateServiceSchedulingTolerationRequest) error
+	DeleteServiceSchedulingToleration(serviceID string, req *api_model.DeleteServiceSchedulingTolerationRequest) error
 }

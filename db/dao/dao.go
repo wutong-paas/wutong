@@ -367,23 +367,43 @@ type TenantEnvServiceLBMappingPortDao interface {
 	PortExists(port int) bool
 }
 
+type TenantEnvServiceSchedulingLabelDao interface {
+	Dao
+	DelDao
+	GetServiceSchedulingLabelByKey(serviceID, key string) (*model.TenantEnvServiceSchedulingLabel, error)
+	ListServiceSchedulingLabels(serviceID string) ([]*model.TenantEnvServiceSchedulingLabel, error)
+}
+
+type TenantEnvServiceSchedulingNodeDao interface {
+	Dao
+	DelDao
+	GetServiceSchedulingNode(serviceID string) (*model.TenantEnvServiceSchedulingNode, error)
+}
+
+type TenantEnvServiceSchedulingTolerationDao interface {
+	Dao
+	DelDao
+	GetServiceSchedulingTolerationByKey(serviceID, key string) (*model.TenantEnvServiceSchedulingToleration, error)
+	ListServiceSchedulingTolerations(serviceID string) ([]*model.TenantEnvServiceSchedulingToleration, error)
+}
+
 // TenantEnvServiceLabelDao TenantEnvServiceLabelDao
 type TenantEnvServiceLabelDao interface {
 	Dao
 	DelDao
-	GetTenantEnvServiceLabel(serviceID string) ([]*model.TenantEnvServiceLable, error)
+	GetTenantEnvServiceLabel(serviceID string) ([]*model.TenantEnvServiceLabel, error)
 	DeleteLabelByServiceID(serviceID string) error
-	GetTenantEnvServiceNodeSelectorLabel(serviceID string) ([]*model.TenantEnvServiceLable, error)
-	GetTenantEnvNodeAffinityLabel(serviceID string) (*model.TenantEnvServiceLable, error)
-	GetTenantEnvServiceAffinityLabel(serviceID string) ([]*model.TenantEnvServiceLable, error)
-	GetTenantEnvServiceTypeLabel(serviceID string) (*model.TenantEnvServiceLable, error)
+	GetTenantEnvServiceNodeSelectorLabel(serviceID string) ([]*model.TenantEnvServiceLabel, error)
+	GetTenantEnvNodeAffinityLabel(serviceID string) (*model.TenantEnvServiceLabel, error)
+	GetTenantEnvServiceAffinityLabel(serviceID string) ([]*model.TenantEnvServiceLabel, error)
+	GetTenantEnvServiceTypeLabel(serviceID string) (*model.TenantEnvServiceLabel, error)
 	DelTenantEnvServiceLabelsByLabelValuesAndServiceID(serviceID string) error
 	DelTenantEnvServiceLabelsByServiceIDKey(serviceID string, labelKey string) error
 	DelTenantEnvServiceLabelsByServiceIDKeyValue(serviceID string, labelKey string, labelValue string) error
-	GetLabelByNodeSelectorKey(serviceID string, labelValue string) (*model.TenantEnvServiceLable, error)
-	GetPrivilegedLabel(serviceID string) (*model.TenantEnvServiceLable, error)
+	GetLabelByNodeSelectorKey(serviceID string, labelValue string) (*model.TenantEnvServiceLabel, error)
+	GetPrivilegedLabel(serviceID string) (*model.TenantEnvServiceLabel, error)
 	DeleteByComponentIDs(componentIDs []string) error
-	CreateOrUpdateLabelsInBatch(labels []*model.TenantEnvServiceLable) error
+	CreateOrUpdateLabelsInBatch(labels []*model.TenantEnvServiceLabel) error
 }
 
 // LocalSchedulerDao 本地调度信息

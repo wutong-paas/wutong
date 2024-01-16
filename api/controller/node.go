@@ -229,18 +229,6 @@ func (*NodeController) UncordonNode(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-// GetClusterInfo -
-func (t *NodeController) ListVMSchedulingLabels(w http.ResponseWriter, r *http.Request) {
-	labels, err := handler.GetNodeHandler().ListVMSchedulingLabels()
-	if err != nil {
-		logrus.Errorf("get vm node scheduling labels: %v", err)
-		httputil.ReturnError(r, w, 500, err.Error())
-		return
-	}
-
-	httputil.ReturnSuccess(r, w, labels)
-}
-
 func (t *NodeController) SetVMSchedulingLabel(w http.ResponseWriter, r *http.Request) {
 	nodeName := chi.URLParam(r, "node_name")
 	if nodeName == "" {
@@ -277,27 +265,6 @@ func (t *NodeController) DeleteVMSchedulingLabel(w http.ResponseWriter, r *http.
 	err := handler.GetNodeHandler().DeleteVMSchedulingLabel(nodeName, &req)
 	if err != nil {
 		logrus.Errorf("delete vm node scheduling label: %v", err)
-		httputil.ReturnError(r, w, 500, err.Error())
-		return
-	}
-	httputil.ReturnSuccess(r, w, nil)
-}
-
-func (t *NodeController) SetVMSchedulableStatus(w http.ResponseWriter, r *http.Request) {
-	nodeName := chi.URLParam(r, "node_name")
-	if nodeName == "" {
-		httputil.ReturnError(r, w, 400, "node name are required")
-		return
-	}
-	var req model.SetVMSchedulableStatusRequest
-	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
-	if !ok {
-		logrus.Errorf("set vm node schedulable status validate request body failure")
-		return
-	}
-	err := handler.GetNodeHandler().SetVMSchedulableStatus(nodeName, req.Schedulable)
-	if err != nil {
-		logrus.Errorf("set vm node schedulable status: %v", err)
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}

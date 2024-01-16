@@ -69,6 +69,12 @@ type Manager interface {
 	ServiceProbeDaoTransactions(*gorm.DB) dao.ServiceProbeDao
 	TenantEnvServiceLBMappingPortDao() dao.TenantEnvServiceLBMappingPortDao
 	TenantEnvServiceLBMappingPortDaoTransactions(*gorm.DB) dao.TenantEnvServiceLBMappingPortDao
+	TenantEnvServiceSchedulingLabelDao() dao.TenantEnvServiceSchedulingLabelDao
+	TenantEnvServiceSchedulingLabelDaoTransactions(db *gorm.DB) dao.TenantEnvServiceSchedulingLabelDao
+	TenantEnvServiceSchedulingNodeDao() dao.TenantEnvServiceSchedulingNodeDao
+	TenantEnvServiceSchedulingNodeDaoTransactions(db *gorm.DB) dao.TenantEnvServiceSchedulingNodeDao
+	TenantEnvServiceSchedulingTolerationDao() dao.TenantEnvServiceSchedulingTolerationDao
+	TenantEnvServiceSchedulingTolerationDaoTransactions(db *gorm.DB) dao.TenantEnvServiceSchedulingTolerationDao
 	TenantEnvServiceLabelDao() dao.TenantEnvServiceLabelDao
 	TenantEnvServiceLabelDaoTransactions(db *gorm.DB) dao.TenantEnvServiceLabelDao
 	LocalSchedulerDao() dao.LocalSchedulerDao

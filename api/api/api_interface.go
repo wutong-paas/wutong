@@ -45,10 +45,15 @@ type NodeInterface interface {
 	DeleteTaintNode(w http.ResponseWriter, r *http.Request)
 	CordonNode(w http.ResponseWriter, r *http.Request)
 	UncordonNode(w http.ResponseWriter, r *http.Request)
-	ListVMSchedulingLabels(w http.ResponseWriter, r *http.Request)
 	SetVMSchedulingLabel(w http.ResponseWriter, r *http.Request)
 	DeleteVMSchedulingLabel(w http.ResponseWriter, r *http.Request)
-	SetVMSchedulableStatus(w http.ResponseWriter, r *http.Request)
+}
+
+type SchedulingInterface interface {
+	ListSchedulingNodes(w http.ResponseWriter, r *http.Request)
+	ListSchedulingTaints(w http.ResponseWriter, r *http.Request)
+	ListVMSchedulingLabels(w http.ResponseWriter, r *http.Request)
+	ListSchedulingLabels(w http.ResponseWriter, r *http.Request)
 }
 
 // TenantEnvInterface interface
@@ -144,6 +149,16 @@ type ServiceInterface interface {
 	BackupRecords(w http.ResponseWriter, r *http.Request)
 	RestoreRecords(w http.ResponseWriter, r *http.Request)
 	GetBackupSchedule(w http.ResponseWriter, r *http.Request)
+
+	// Scheduling
+	GetServiceSchedulingDetails(w http.ResponseWriter, r *http.Request)
+	AddServiceSchedulingLabel(w http.ResponseWriter, r *http.Request)
+	UpdateServiceSchedulingLabel(w http.ResponseWriter, r *http.Request)
+	DeleteServiceSchedulingLabel(w http.ResponseWriter, r *http.Request)
+	SetServiceSchedulingNode(w http.ResponseWriter, r *http.Request)
+	AddServiceSchedulingToleration(w http.ResponseWriter, r *http.Request)
+	UpdateServiceSchedulingToleration(w http.ResponseWriter, r *http.Request)
+	DeleteServiceSchedulingToleration(w http.ResponseWriter, r *http.Request)
 }
 
 // TenantEnvInterfaceWithV1 funcs for both v2 and v1

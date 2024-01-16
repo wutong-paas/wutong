@@ -61,6 +61,7 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 	if err != nil {
 		return fmt.Errorf("create volume in pod template error :%s", err.Error())
 	}
+
 	container, err := getMainContainer(as, version, dv, envs, envVarSecrets, dbmanager)
 	if err != nil {
 		return fmt.Errorf("conv service main container failure %s", err.Error())
@@ -69,8 +70,14 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 	if as.NeedProxy {
 		dv.SetVolume(dbmodel.ShareFileVolumeType, "kube-config", "/etc/kubernetes", "/wtdata/kubernetes", corev1.HostPathDirectoryOrCreate, true)
 	}
-	nodeSelector := createNodeSelector(as, dbmanager)
-	tolerations := createToleration(nodeSelector)
+	nodeName := createNodeName(as, dbmanager)
+	var nodeSelector map[string]string
+	var tolerations []corev1.Toleration
+	// 如果已经指定了节点，那么就不需要标签选择器和容忍度了
+	if nodeName == "" {
+		nodeSelector = createNodeSelector(as, dbmanager)
+		tolerations = createNodeTolerations(as, dbmanager)
+	}
 	injectLabels := getInjectLabels(as)
 	podtmpSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -95,12 +102,7 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 				}
 				return ""
 			}(),
-			NodeName: func() string {
-				if nodeID, ok := as.ExtensionSet["selectnode"]; ok {
-					return nodeID
-				}
-				return ""
-			}(),
+			NodeName: nodeName,
 			HostNetwork: func() bool {
 				if _, ok := as.ExtensionSet["hostnetwork"]; ok {
 					return true
@@ -508,34 +510,18 @@ func createVolumes(as *v1.AppService, version *dbmodel.VersionInfo, envs []corev
 	return define, nil
 }
 
+// TODO: resource limit and request
 func createResources(as *v1.AppService) corev1.ResourceRequirements {
-	var cpuRequest, cpuLimit int64
-	if limit, ok := as.ExtensionSet["cpulimit"]; ok {
-		limitint, _ := strconv.Atoi(limit)
-		if limitint > 0 {
-			cpuLimit = int64(limitint)
-		}
+	if as.ContainerMemory == 0 {
+		as.ContainerMemory = 512
 	}
-	if request, ok := as.ExtensionSet["cpurequest"]; ok {
-		requestint, _ := strconv.Atoi(request)
-		if requestint > 0 {
-			cpuRequest = int64(requestint)
-		}
+	if as.ContainerCPU == 0 {
+		as.ContainerCPU = 500
 	}
-	if as.ContainerCPU > 0 && cpuRequest == 0 && cpuLimit == 0 {
-		cpuLimit = int64(as.ContainerCPU)
-		cpuRequest = int64(as.ContainerCPU)
-	}
-	rr := createResourcesBySetting(as.ContainerMemory, cpuRequest, cpuLimit, as.ContainerGPUType, int64(as.ContainerGPU))
+
+	rr := createResourcesBySetting(int64(as.ContainerRequestMemory), int64(as.ContainerMemory), int64(as.ContainerRequestCPU), int64(as.ContainerCPU), as.ContainerGPUType, int64(as.ContainerGPU))
 	return rr
 }
-
-// func getGPULableKey() corev1.ResourceName {
-// 	if os.Getenv("GPU_LABLE_KEY") != "" {
-// 		return corev1.ResourceName(os.Getenv("GPU_LABLE_KEY"))
-// 	}
-// 	return "wutong-paas.com/gpu-mem"
-// }
 
 func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, error) {
 	inBoundOK, err := dbmanager.TenantEnvServicePluginRelationDao().CheckSomeModelPluginByServiceID(
@@ -551,6 +537,7 @@ func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, 
 		serviceID,
 		dbmodel.InBoundAndOutBoundNetPlugin)
 }
+
 func createUpstreamPluginMappingPort(
 	ports []*dbmodel.TenantEnvServicesPort,
 	pluginPorts []*dbmodel.TenantEnvServicesStreamPluginPort,
@@ -569,6 +556,7 @@ func createUpstreamPluginMappingPort(
 	}
 	return ports, nil
 }
+
 func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.ContainerPort) {
 	ps, err := dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(as.ServiceID)
 	if err == nil && ps != nil && len(ps) > 0 {
@@ -625,8 +613,9 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 		}
 		if mode == "startup" {
 			probe.SuccessThreshold = 1
-			if probe.FailureThreshold < 1 {
-				probe.FailureThreshold = 3
+			probe.FailureThreshold = probe.FailureThreshold * 10
+			if probe.FailureThreshold == 0 {
+				probe.FailureThreshold = 30
 			}
 		}
 		p := &corev1.Probe{
@@ -677,28 +666,27 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 	return nil
 }
 
+func createNodeName(as *v1.AppService, dbmanager db.Manager) string {
+	node, _ := dbmanager.TenantEnvServiceSchedulingNodeDao().GetServiceSchedulingNode(as.ServiceID)
+	if node != nil {
+		return node.NodeName
+	}
+	return ""
+}
+
 func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]string {
 	selector := make(map[string]string)
-	labels, err := dbmanager.TenantEnvServiceLabelDao().GetTenantEnvServiceNodeSelectorLabel(as.ServiceID)
-	if err == nil && labels != nil && len(labels) > 0 {
+	labels, err := dbmanager.TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(as.ServiceID)
+	if err == nil && len(labels) > 0 {
 		for _, l := range labels {
-			if l.LabelValue == "windows" || l.LabelValue == "linux" {
-				selector[client.LabelOS] = l.LabelValue
-				continue
-			}
-			if l.LabelValue == dbmodel.LabelKeyServicePrivileged {
-				continue
-			}
-			if strings.Contains(l.LabelValue, "=") {
-				kv := strings.SplitN(l.LabelValue, "=", 2)
-				selector[kv[0]] = kv[1]
-			} else {
-				selector["wutong_node_lable_"+l.LabelValue] = "true"
+			if l != nil {
+				selector[l.Key] = l.Value
 			}
 		}
 	}
 	return selector
 }
+
 func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	var affinity corev1.Affinity
 	nsr := make([]corev1.NodeSelectorRequirement, 0)
@@ -831,13 +819,18 @@ func setImagePullSecrets() []corev1.LocalObjectReference {
 	}
 }
 
-func createToleration(nodeSelector map[string]string) []corev1.Toleration {
+func createNodeTolerations(as *v1.AppService, dbmanager db.Manager) []corev1.Toleration {
+	labels, _ := dbmanager.TenantEnvServiceSchedulingTolerationDao().ListServiceSchedulingTolerations(as.ServiceID)
 	var tolerations []corev1.Toleration
-	if value, exist := nodeSelector["type"]; exist && value == "virtual-kubelet" {
-		tolerations = append(tolerations, corev1.Toleration{
-			Key:      "virtual-kubelet.io/provider",
-			Operator: corev1.TolerationOpExists,
-		})
+	if len(labels) > 0 {
+		for _, l := range labels {
+			tolerations = append(tolerations, corev1.Toleration{
+				Key:      l.Key,
+				Operator: corev1.TolerationOperator(l.Operator),
+				Value:    l.Value,
+				Effect:   corev1.TaintEffect(l.Effect),
+			})
+		}
 	}
 	return tolerations
 }

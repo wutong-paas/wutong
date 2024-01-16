@@ -283,7 +283,7 @@ func (s *ServiceAction) AddLabel(l *api_model.LabelsStruct, serviceID string) er
 	}()
 	//V5.2: do not support service type label
 	for _, label := range l.Labels {
-		labelModel := dbmodel.TenantEnvServiceLable{
+		labelModel := dbmodel.TenantEnvServiceLabel{
 			ServiceID:  serviceID,
 			LabelKey:   label.LabelKey,
 			LabelValue: label.LabelValue,
@@ -320,7 +320,7 @@ func (s *ServiceAction) UpdateLabel(l *api_model.LabelsStruct, serviceID string)
 		}
 		// V5.2 do not support service type label
 		// add new labels
-		labelModel := dbmodel.TenantEnvServiceLable{
+		labelModel := dbmodel.TenantEnvServiceLabel{
 			ServiceID:  serviceID,
 			LabelKey:   label.LabelKey,
 			LabelValue: label.LabelValue,
@@ -398,22 +398,38 @@ func (s *ServiceAction) ServiceVertical(ctx context.Context, vs *model.VerticalS
 		db.GetManager().ServiceEventDao().SetEventStatus(ctx, dbmodel.EventStatusFailure)
 		return err
 	}
+	oldRequestMemory := service.ContainerRequestMemory
 	oldMemory := service.ContainerMemory
+	oldRequestCPU := service.ContainerRequestCPU
 	oldCPU := service.ContainerCPU
 	oldGPUType := service.ContainerGPUType
 	oldGPU := service.ContainerGPU
 	var rollback = func() {
+		service.ContainerRequestMemory = oldRequestMemory
 		service.ContainerMemory = oldMemory
+		service.ContainerRequestCPU = oldRequestCPU
 		service.ContainerCPU = oldCPU
 		service.ContainerGPUType = oldGPUType
 		service.ContainerGPU = oldGPU
 		_ = db.GetManager().TenantEnvServiceDao().UpdateModel(service)
 	}
+	if vs.ContainerRequestCPU != nil {
+		service.ContainerRequestCPU = *vs.ContainerRequestCPU
+	}
 	if vs.ContainerCPU != nil {
 		service.ContainerCPU = *vs.ContainerCPU
 	}
+	if service.ContainerRequestCPU > service.ContainerCPU {
+		return fmt.Errorf("request cpu must less than limit cpu")
+	}
+	if vs.ContainerRequestMemory != nil {
+		service.ContainerRequestMemory = *vs.ContainerRequestMemory
+	}
 	if vs.ContainerMemory != nil {
 		service.ContainerMemory = *vs.ContainerMemory
+	}
+	if service.ContainerRequestMemory > service.ContainerMemory {
+		return fmt.Errorf("request memory must less than limit memory")
 	}
 	if vs.ContainerGPUType != nil {
 		service.ContainerGPUType = *vs.ContainerGPUType
@@ -425,7 +441,7 @@ func (s *ServiceAction) ServiceVertical(ctx context.Context, vs *model.VerticalS
 	// if licenseInfo == nil || !licenseInfo.HaveFeature("GPU") {
 	// 	service.ContainerGPU = 0
 	// }
-	if service.ContainerMemory == oldMemory && service.ContainerCPU == oldCPU && service.ContainerGPUType == oldGPUType && service.ContainerGPU == oldGPU {
+	if service.ContainerRequestMemory == oldRequestMemory && service.ContainerRequestCPU == oldRequestCPU && service.ContainerMemory == oldMemory && service.ContainerCPU == oldCPU && service.ContainerGPUType == oldGPUType && service.ContainerGPU == oldGPU {
 		db.GetManager().ServiceEventDao().SetEventStatus(ctx, dbmodel.EventStatusSuccess)
 		return nil
 	}
@@ -555,11 +571,17 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	if ts.ServiceName == "" {
 		ts.ServiceName = ts.ServiceAlias
 	}
-	if ts.ContainerCPU < 0 {
-		ts.ContainerCPU = 0
+	if ts.ContainerCPU <= 0 {
+		ts.ContainerCPU = 500
 	}
-	if ts.ContainerMemory < 0 {
-		ts.ContainerMemory = 0
+	if ts.ContainerRequestCPU > ts.ContainerCPU {
+		return fmt.Errorf("request cpu must less than limit cpu")
+	}
+	if ts.ContainerMemory <= 0 {
+		ts.ContainerMemory = 512
+	}
+	if ts.ContainerRequestMemory > ts.ContainerMemory {
+		return fmt.Errorf("request memory must less than limit memory")
 	}
 	if ts.ContainerGPU < 0 {
 		ts.ContainerGPU = 0
@@ -737,7 +759,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	}
 	//set app label
 	if sc.OSType == "windows" {
-		if err := db.GetManager().TenantEnvServiceLabelDaoTransactions(tx).AddModel(&dbmodel.TenantEnvServiceLable{
+		if err := db.GetManager().TenantEnvServiceLabelDaoTransactions(tx).AddModel(&dbmodel.TenantEnvServiceLabel{
 			ServiceID:  ts.ServiceID,
 			LabelKey:   dbmodel.LabelKeyNodeSelector,
 			LabelValue: sc.OSType,
@@ -853,7 +875,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 			}
 		}
 	}
-	labelModel := dbmodel.TenantEnvServiceLable{
+	labelModel := dbmodel.TenantEnvServiceLabel{
 		ServiceID:  ts.ServiceID,
 		LabelKey:   dbmodel.LabelKeyServiceType,
 		LabelValue: util.StatelessServiceType,
@@ -902,11 +924,30 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
+	if requestMemory, ok := sc["container_request_memory"].(int); ok && requestMemory >= 0 {
+		ts.ContainerRequestMemory = requestMemory
+	}
 	if memory, ok := sc["container_memory"].(int); ok && memory >= 0 {
 		ts.ContainerMemory = memory
 	}
+	if ts.ContainerMemory == 0 {
+		ts.ContainerMemory = 512
+	}
+
+	if requestCPU, ok := sc["container_request_cpu"].(int); ok && requestCPU >= 0 {
+		ts.ContainerRequestCPU = requestCPU
+	}
 	if cpu, ok := sc["container_cpu"].(int); ok && cpu >= 0 {
 		ts.ContainerCPU = cpu
+	}
+	if ts.ContainerCPU == 0 {
+		ts.ContainerCPU = 500
+	}
+	if ts.ContainerMemory < ts.ContainerRequestMemory {
+		return fmt.Errorf("request memory must less than limit memory")
+	}
+	if ts.ContainerCPU < ts.ContainerRequestCPU {
+		return fmt.Errorf("request cpu must less than limit cpu")
 	}
 	if gpuType, ok := sc["container_gpu_type"].(string); ok {
 		ts.ContainerGPUType = gpuType
@@ -2846,7 +2887,7 @@ func (s *ServiceAction) SyncComponentProbes(tx *gorm.DB, components []*api_model
 func (s *ServiceAction) SyncComponentLabels(tx *gorm.DB, components []*api_model.Component) error {
 	var (
 		componentIDs []string
-		labels       []*dbmodel.TenantEnvServiceLable
+		labels       []*dbmodel.TenantEnvServiceLabel
 	)
 	for _, component := range components {
 		if component.Labels == nil {

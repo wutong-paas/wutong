@@ -165,11 +165,17 @@ type TenantEnvServices struct {
 	ServiceType string `gorm:"column:service_type;size:32" json:"service_type"`
 	// 服务描述
 	Comment string `gorm:"column:comment" json:"comment"`
+	// 容器请求CPU
+	// default is 10
+	ContainerRequestCPU int `gorm:"column:container_request_cpu;default:0" json:"container_request_cpu"`
 	// 容器CPU权重
-	// default is 0, This means that CPU resources are not limited
+	// default is 500
 	ContainerCPU int `gorm:"column:container_cpu;default:0" json:"container_cpu"`
+	// 容器请求内存
+	// default is 512
+	ContainerRequestMemory int `gorm:"column:container_request_memory;default:0" json:"container_request_memory"`
 	// 容器最大内存
-	// default is 0, This means that Memory resources are not limited
+	// default is 512
 	ContainerMemory int `gorm:"column:container_memory;default:0" json:"container_memory"`
 	// Container GPU Type
 	// default is "", That means no GPU settings
@@ -271,8 +277,12 @@ type TenantEnvServicesDelete struct {
 	ServiceType string `gorm:"column:service_type;size:20" json:"service_type"`
 	// 服务描述
 	Comment string `gorm:"column:comment" json:"comment"`
+	// 容器请求CPU
+	ContainerRequestCPU int `gorm:"column:container_request_cpu" json:"container_request_cpu"`
 	// 容器CPU权重
 	ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu"`
+	// 容器请求内存
+	ContainerRequestMemory int `gorm:"column:container_request_memory" json:"container_request_memory"`
 	// 容器最大内存
 	ContainerMemory int `gorm:"column:container_memory;default:128" json:"container_memory"`
 	// Container GPU Type
@@ -503,8 +513,42 @@ func (t *TenantEnvServiceConfigFile) TableName() string {
 	return "tenant_env_service_config_file"
 }
 
-// TenantEnvServiceLable 应用高级标签
-type TenantEnvServiceLable struct {
+type TenantEnvServiceSchedulingLabel struct {
+	Model
+	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
+	Key       string `gorm:"column:key;size:50" json:"key"`
+	Value     string `gorm:"column:value;size:250" json:"value"`
+}
+
+func (t *TenantEnvServiceSchedulingLabel) TableName() string {
+	return "tenant_env_service_scheduling_labels"
+}
+
+type TenantEnvServiceSchedulingNode struct {
+	Model
+	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
+	NodeName  string `gorm:"column:node_name;size:50" json:"node_name"`
+}
+
+func (t *TenantEnvServiceSchedulingNode) TableName() string {
+	return "tenant_env_service_scheduling_node"
+}
+
+type TenantEnvServiceSchedulingToleration struct {
+	Model
+	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
+	Key       string `gorm:"column:key;size:50" json:"key"`
+	Operator  string `gorm:"column:operator;size:10" json:"operator"`
+	Value     string `gorm:"column:value;size:250" json:"value"`
+	Effect    string `gorm:"column:effect;size:20" json:"effect"`
+}
+
+func (t *TenantEnvServiceSchedulingToleration) TableName() string {
+	return "tenant_env_service_scheduling_tolerations"
+}
+
+// TenantEnvServiceLabel 应用高级标签
+type TenantEnvServiceLabel struct {
 	Model
 	ServiceID  string `gorm:"column:service_id;size:32"`
 	LabelKey   string `gorm:"column:label_key;size:50"`
@@ -512,7 +556,7 @@ type TenantEnvServiceLable struct {
 }
 
 // TableName 表名
-func (t *TenantEnvServiceLable) TableName() string {
+func (t *TenantEnvServiceLabel) TableName() string {
 	return "tenant_env_services_label"
 }
 

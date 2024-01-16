@@ -201,19 +201,21 @@ type AppSnapshot struct {
 
 // RegionServiceSnapshot RegionServiceSnapshot
 type RegionServiceSnapshot struct {
-	ServiceID          string
-	Service            *dbmodel.TenantEnvServices
-	ServiceProbe       []*dbmodel.TenantEnvServiceProbe
-	LBMappingPort      []*dbmodel.TenantEnvServiceLBMappingPort
-	ServiceEnv         []*dbmodel.TenantEnvServiceEnvVar
-	ServiceLabel       []*dbmodel.TenantEnvServiceLable
-	ServiceMntRelation []*dbmodel.TenantEnvServiceMountRelation
-	ServiceRelation    []*dbmodel.TenantEnvServiceRelation
-	ServiceStatus      string
-	ServiceVolume      []*dbmodel.TenantEnvServiceVolume
-	ServiceConfigFile  []*dbmodel.TenantEnvServiceConfigFile
-	ServicePort        []*dbmodel.TenantEnvServicesPort
-	Versions           []*dbmodel.VersionInfo
+	ServiceID                    string
+	Service                      *dbmodel.TenantEnvServices
+	ServiceProbe                 []*dbmodel.TenantEnvServiceProbe
+	LBMappingPort                []*dbmodel.TenantEnvServiceLBMappingPort
+	ServiceEnv                   []*dbmodel.TenantEnvServiceEnvVar
+	ServiceSchedulingLabels      []*dbmodel.TenantEnvServiceSchedulingLabel
+	ServiceSchedulingTolerations []*dbmodel.TenantEnvServiceSchedulingToleration
+	ServiceLabel                 []*dbmodel.TenantEnvServiceLabel
+	ServiceMntRelation           []*dbmodel.TenantEnvServiceMountRelation
+	ServiceRelation              []*dbmodel.TenantEnvServiceRelation
+	ServiceStatus                string
+	ServiceVolume                []*dbmodel.TenantEnvServiceVolume
+	ServiceConfigFile            []*dbmodel.TenantEnvServiceConfigFile
+	ServicePort                  []*dbmodel.TenantEnvServicesPort
+	Versions                     []*dbmodel.VersionInfo
 
 	PluginRelation    []*dbmodel.TenantEnvServicePluginRelation
 	PluginConfigs     []*dbmodel.TenantEnvPluginVersionDiscoverConfig
@@ -228,7 +230,7 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 	for _, id := range ids {
 		service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(id)
 		if err != nil {
-			return fmt.Errorf("Get service(%s) error %s", id, err.Error())
+			return fmt.Errorf("get service(%s) error %s", id, err.Error())
 		}
 		if dbmodel.ServiceKind(service.Kind) == dbmodel.ServiceKindThirdParty {
 			//TODO: support thirdpart service backup and restore
@@ -246,37 +248,47 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 		data.Service = service
 		serviceProbes, err := db.GetManager().ServiceProbeDao().GetServiceProbes(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) probe error %s", id, err)
+			return fmt.Errorf("get service(%s) probe error %s", id, err)
 		}
 		data.ServiceProbe = serviceProbes
 		lbmappingPorts, err := db.GetManager().TenantEnvServiceLBMappingPortDao().GetTenantEnvServiceLBMappingPortByService(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) lb mapping port error %s", id, err)
+			return fmt.Errorf("get service(%s) lb mapping port error %s", id, err)
 		}
 		data.LBMappingPort = lbmappingPorts
 		serviceEnv, err := db.GetManager().TenantEnvServiceEnvVarDao().GetServiceEnvs(id, nil)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) envs error %s", id, err)
+			return fmt.Errorf("get service(%s) envs error %s", id, err)
 		}
 		data.ServiceEnv = serviceEnv
+		schedulingLabels, err := db.GetManager().TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(id)
+		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
+			return fmt.Errorf("get service(%s) scheduling labels error %s", id, err)
+		}
+		data.ServiceSchedulingLabels = schedulingLabels
+		schedulingTolerations, err := db.GetManager().TenantEnvServiceSchedulingTolerationDao().ListServiceSchedulingTolerations(id)
+		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
+			return fmt.Errorf("get service(%s) scheduling tolerations error %s", id, err)
+		}
+		data.ServiceSchedulingTolerations = schedulingTolerations
 		serviceLabels, err := db.GetManager().TenantEnvServiceLabelDao().GetTenantEnvServiceLabel(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) labels error %s", id, err)
+			return fmt.Errorf("get service(%s) labels error %s", id, err)
 		}
 		data.ServiceLabel = serviceLabels
 		serviceMntRelations, err := db.GetManager().TenantEnvServiceMountRelationDao().GetTenantEnvServiceMountRelationsByService(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) mnt relations error %s", id, err)
+			return fmt.Errorf("get service(%s) mnt relations error %s", id, err)
 		}
 		data.ServiceMntRelation = serviceMntRelations
 		serviceRelations, err := db.GetManager().TenantEnvServiceRelationDao().GetTenantEnvServiceRelations(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) relations error %s", id, err)
+			return fmt.Errorf("get service(%s) relations error %s", id, err)
 		}
 		data.ServiceRelation = serviceRelations
 		serviceVolume, err := db.GetManager().TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) volume error %s", id, err)
+			return fmt.Errorf("get service(%s) volume error %s", id, err)
 		}
 		data.ServiceVolume = serviceVolume
 		serviceConfigFile, err := db.GetManager().TenantEnvServiceConfigFileDao().GetConfigFileByServiceID(id)
@@ -286,12 +298,12 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 		data.ServiceConfigFile = serviceConfigFile
 		servicePorts, err := db.GetManager().TenantEnvServicesPortDao().GetPortsByServiceID(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) ports error %s", id, err)
+			return fmt.Errorf("get service(%s) ports error %s", id, err)
 		}
 		data.ServicePort = servicePorts
 		version, err := db.GetManager().VersionInfoDao().GetLatestScsVersion(id)
 		if err != nil && err != gorm.ErrRecordNotFound {
-			return fmt.Errorf("Get service(%s) build versions error %s", id, err)
+			return fmt.Errorf("get service(%s) build versions error %s", id, err)
 		}
 		if version != nil {
 			logrus.Debugf("service: %s do have build version", service.ServiceAlias)
@@ -300,7 +312,7 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 
 		pluginReations, err := db.GetManager().TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) plugins error %s", id, err)
+			return fmt.Errorf("get service(%s) plugins error %s", id, err)
 		}
 		data.PluginRelation = pluginReations
 		for _, pr := range pluginReations {
@@ -308,7 +320,7 @@ func (h *BackupHandle) snapshot(ids []string, sourceDir string, force bool) erro
 		}
 		pluginConfigs, err := db.GetManager().TenantEnvPluginVersionConfigDao().GetPluginConfigs(id)
 		if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
-			return fmt.Errorf("Get service(%s) plugin configs error %s", id, err)
+			return fmt.Errorf("get service(%s) plugin configs error %s", id, err)
 		}
 		data.PluginConfigs = pluginConfigs
 		pluginEnvs, err := db.GetManager().TenantEnvPluginVersionENVDao().ListByServiceID(id)

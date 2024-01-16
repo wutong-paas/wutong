@@ -37,6 +37,7 @@ import (
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/util"
 	validator "github.com/wutong-paas/wutong/util/govalidator"
 	httputil "github.com/wutong-paas/wutong/util/http"
 	"github.com/wutong-paas/wutong/worker/discover/model"
@@ -219,39 +220,55 @@ func (t *TenantEnvStruct) VerticalService(w http.ResponseWriter, r *http.Request
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
-	var cpuSet, gpuSet, memorySet *int
+	var requestCPU, limitCPU, gpuLimit, requestMemory, limitMemory *int
 	var gpuTypeSet *string
+	if reqCPU, ok := data["container_request_cpu"].(float64); ok {
+		reqCPUInt := int(reqCPU)
+		requestCPU = &reqCPUInt
+	}
 	if cpu, ok := data["container_cpu"].(float64); ok {
 		cpuInt := int(cpu)
-		cpuSet = &cpuInt
+		limitCPU = &cpuInt
+	}
+	if limitCPU == nil || limitCPU == util.Ptr(0) {
+		limitCPU = util.Ptr(500)
+	}
+	if reqMemory, ok := data["container_request_memory"].(float64); ok {
+		reqMemoryInt := int(reqMemory)
+		requestMemory = &reqMemoryInt
 	}
 	if memory, ok := data["container_memory"].(float64); ok {
 		memoryInt := int(memory)
-		memorySet = &memoryInt
+		limitMemory = &memoryInt
+	}
+	if limitMemory == nil || *limitMemory == 0 {
+		limitMemory = util.Ptr(512)
 	}
 	if gpuType, ok := data["container_gpu_type"].(string); ok {
 		gpuTypeSet = &gpuType
 	}
 	if gpu, ok := data["container_gpu"].(float64); ok {
 		gpuInt := int(gpu)
-		gpuSet = &gpuInt
+		gpuLimit = &gpuInt
 	}
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
-	if memorySet != nil {
-		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*(*memorySet)); err != nil {
+	if limitMemory != nil {
+		if err := handler.CheckTenantEnvResource(r.Context(), tenantEnv, service.Replicas*(*limitMemory)); err != nil {
 			httputil.ReturnResNotEnough(r, w, sEvent.EventID, err.Error())
 			return
 		}
 	}
 	verticalTask := &model.VerticalScalingTaskBody{
-		TenantEnvID:      tenantEnvID,
-		ServiceID:        serviceID,
-		EventID:          sEvent.EventID,
-		ContainerCPU:     cpuSet,
-		ContainerMemory:  memorySet,
-		ContainerGPUType: gpuTypeSet,
-		ContainerGPU:     gpuSet,
+		TenantEnvID:            tenantEnvID,
+		ServiceID:              serviceID,
+		EventID:                sEvent.EventID,
+		ContainerRequestCPU:    requestCPU,
+		ContainerCPU:           limitCPU,
+		ContainerRequestMemory: requestMemory,
+		ContainerMemory:        limitMemory,
+		ContainerGPUType:       gpuTypeSet,
+		ContainerGPU:           gpuLimit,
 	}
 	if err := handler.GetServiceManager().ServiceVertical(r.Context(), verticalTask); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("service vertical error. %v", err))

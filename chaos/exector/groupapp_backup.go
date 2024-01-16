@@ -104,19 +104,21 @@ type AppSnapshot struct {
 
 // RegionServiceSnapshot RegionServiceSnapshot
 type RegionServiceSnapshot struct {
-	ServiceID          string
-	Service            *dbmodel.TenantEnvServices
-	ServiceProbe       []*dbmodel.TenantEnvServiceProbe
-	LBMappingPort      []*dbmodel.TenantEnvServiceLBMappingPort
-	ServiceEnv         []*dbmodel.TenantEnvServiceEnvVar
-	ServiceLabel       []*dbmodel.TenantEnvServiceLable
-	ServiceMntRelation []*dbmodel.TenantEnvServiceMountRelation
-	ServiceRelation    []*dbmodel.TenantEnvServiceRelation
-	ServiceStatus      string
-	ServiceVolume      []*dbmodel.TenantEnvServiceVolume
-	ServiceConfigFile  []*dbmodel.TenantEnvServiceConfigFile
-	ServicePort        []*dbmodel.TenantEnvServicesPort
-	Versions           []*dbmodel.VersionInfo
+	ServiceID                    string
+	Service                      *dbmodel.TenantEnvServices
+	ServiceProbe                 []*dbmodel.TenantEnvServiceProbe
+	LBMappingPort                []*dbmodel.TenantEnvServiceLBMappingPort
+	ServiceEnv                   []*dbmodel.TenantEnvServiceEnvVar
+	ServiceLabel                 []*dbmodel.TenantEnvServiceLabel
+	ServiceSchedulingLabels      []*dbmodel.TenantEnvServiceSchedulingLabel
+	ServiceSchedulingTolerations []*dbmodel.TenantEnvServiceSchedulingToleration
+	ServiceMntRelation           []*dbmodel.TenantEnvServiceMountRelation
+	ServiceRelation              []*dbmodel.TenantEnvServiceRelation
+	ServiceStatus                string
+	ServiceVolume                []*dbmodel.TenantEnvServiceVolume
+	ServiceConfigFile            []*dbmodel.TenantEnvServiceConfigFile
+	ServicePort                  []*dbmodel.TenantEnvServicesPort
+	Versions                     []*dbmodel.VersionInfo
 
 	PluginRelation    []*dbmodel.TenantEnvServicePluginRelation
 	PluginConfigs     []*dbmodel.TenantEnvPluginVersionDiscoverConfig

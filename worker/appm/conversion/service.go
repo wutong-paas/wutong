@@ -127,9 +127,11 @@ func TenantEnvServiceBase(as *v1.AppService, dbmanager db.Manager) error {
 	}
 
 	// component resource config
+	as.ContainerRequestCPU = tenantEnvService.ContainerRequestCPU
 	as.ContainerCPU = tenantEnvService.ContainerCPU
 	as.ContainerGPUType = tenantEnvService.ContainerGPUType
 	as.ContainerGPU = tenantEnvService.ContainerGPU
+	as.ContainerRequestMemory = tenantEnvService.ContainerRequestMemory
 	as.ContainerMemory = tenantEnvService.ContainerMemory
 	as.Replicas = tenantEnvService.Replicas
 	if !tenantEnvService.IsState() {

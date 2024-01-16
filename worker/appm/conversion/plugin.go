@@ -435,30 +435,31 @@ func createPluginEnvs(pluginID, tenantEnvID, serviceAlias string, mainEnvs []v1.
 }
 
 func createPluginResources(memory int, cpu int) v1.ResourceRequirements {
-	return createResourcesBySetting(memory, int64(cpu), int64(cpu), "", 0)
+	if memory == 0 {
+		memory = 256
+	}
+	if cpu == 0 {
+		cpu = 200
+	}
+	return createResourcesBySetting(0, int64(memory), 0, int64(cpu), "", 0)
 }
 
 func createTCPUDPMeshRecources(as *typesv1.AppService) v1.ResourceRequirements {
-	var memory = 128
-	var cpu int64
+	var limitMemory = 128
+	var limitCPU int64 = 120
 	if limit, ok := as.ExtensionSet["tcpudp_mesh_cpu"]; ok {
 		limitint, _ := strconv.Atoi(limit)
 		if limitint > 0 {
-			cpu = int64(limitint)
+			limitCPU = int64(limitint)
 		}
 	}
 	if request, ok := as.ExtensionSet["tcpudp_mesh_memory"]; ok {
 		requestint, _ := strconv.Atoi(request)
 		if requestint > 0 {
-			memory = requestint
+			limitMemory = requestint
 		}
 	}
-	return createResourcesBySetting(memory, cpu, func() int64 {
-		if cpu < 120 {
-			return 120
-		}
-		return cpu
-	}(), "", 0)
+	return createResourcesBySetting(0, int64(limitMemory), 0, limitCPU, "", 0)
 }
 
 func xdsHostIPEnv(xdsHost string) corev1.EnvVar {

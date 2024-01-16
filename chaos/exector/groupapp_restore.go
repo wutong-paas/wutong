@@ -471,6 +471,12 @@ func (b *BackupAPPRestore) modify(appSnapshot *AppSnapshot, withImageData bool) 
 		for _, a := range app.ServiceEnv {
 			a.ServiceID = newServiceID
 		}
+		for _, a := range app.ServiceSchedulingLabels {
+			a.ServiceID = newServiceID
+		}
+		for _, a := range app.ServiceSchedulingTolerations {
+			a.ServiceID = newServiceID
+		}
 		for _, a := range app.ServiceLabel {
 			a.ServiceID = newServiceID
 		}
@@ -567,6 +573,20 @@ func (b *BackupAPPRestore) restoreMetadata(appSnapshot *AppSnapshot, withImageDa
 			if err := db.GetManager().TenantEnvServiceEnvVarDaoTransactions(tx).AddModel(a); err != nil {
 				tx.Rollback()
 				return fmt.Errorf("create app envs when restore backup error. %s", err.Error())
+			}
+		}
+		for _, a := range app.ServiceSchedulingLabels {
+			a.ID = 0
+			if err := db.GetManager().TenantEnvServiceSchedulingLabelDaoTransactions(tx).AddModel(a); err != nil {
+				tx.Rollback()
+				return fmt.Errorf("create app scheduling labels when restore backup error. %s", err.Error())
+			}
+		}
+		for _, a := range app.ServiceSchedulingTolerations {
+			a.ID = 0
+			if err := db.GetManager().TenantEnvServiceSchedulingTolerationDaoTransactions(tx).AddModel(a); err != nil {
+				tx.Rollback()
+				return fmt.Errorf("create app scheduling tolerations when restore backup error. %s", err.Error())
 			}
 		}
 		for _, a := range app.ServiceLabel {

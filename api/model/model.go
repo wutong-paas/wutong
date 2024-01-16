@@ -132,10 +132,18 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		ImageName string `gorm:"column:image_name;size:100" json:"image_name" validate:"image_name"`
+		// 容器CPU申请
+		// in: body
+		// required: false
+		ContainerRequestCPU int `gorm:"column:container_request_cpu" json:"container_request_cpu" validate:"container_request_cpu"`
 		// 容器CPU权重
 		// in: body
 		// required: false
 		ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu" validate:"container_cpu"`
+		// 容器内存申请
+		// in: body
+		// required: false
+		ContainerRequestMemory int `gorm:"column:container_request_memory" json:"container_request_memory" validate:"container_request_memory"`
 		// 容器最大内存
 		// in: body
 		// required: false
@@ -282,10 +290,18 @@ type ServiceStruct struct {
 	// in: body
 	// required: false
 	ImageName string `json:"image_name" validate:"image_name"`
+	// 容器CPU申请
+	// in: body
+	// required: false
+	ContainerRequestCPU int `json:"container_request_cpu" validate:"container_request_cpu"`
 	// 容器CPU权重
 	// in: body
 	// required: false
 	ContainerCPU int `json:"container_cpu" validate:"container_cpu"`
+	// 容器内存申请
+	// in: body
+	// required: false
+	ContainerRequestMemory int `json:"container_request_memory" validate:"container_request_memory"`
 	// 容器最大内存
 	// in: body
 	// required: false
@@ -703,10 +719,18 @@ type VerticalServiceStruct struct {
 		// in: body
 		// required: false
 		EventID string `json:"event_id"`
+		// cpu申请
+		// in: body
+		// required: false
+		ContainerRequestCPU int `json:"container_request_cpu"`
 		// cpu数量
 		// in: body
 		// required: false
 		ContainerCPU int `json:"container_cpu"`
+		// 内存申请
+		// in: body
+		// required: false
+		ContainerRequestMemory int `json:"container_request_memory"`
 		// 内存大小
 		// in: body
 		// required: false

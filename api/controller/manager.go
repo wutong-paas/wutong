@@ -38,6 +38,7 @@ type V2Manager interface {
 	Version(w http.ResponseWriter, r *http.Request)
 	api.ClusterInterface
 	api.NodeInterface
+	api.SchedulingInterface
 	api.TenantEnvInterface
 	api.ServiceInterface
 	api.LogInterface

@@ -174,8 +174,72 @@ func DecimalFromFloat32(f float32) float32 {
 }
 
 type ListNodeResponse struct {
+	Nodes []NodeInfo `json:"nodes"`
+	Total int        `json:"total"`
+}
+
+type ListSchedulingNodesResponse struct {
 	Nodes []NodeBaseInfo `json:"nodes"`
 	Total int            `json:"total"`
+}
+
+type ListSchedulingTaintsResponse struct {
+	Taints TaintForSelectList `json:"taints"`
+}
+
+type TaintForSelectList []*TaintForSelect
+
+func (l TaintForSelectList) TryAppend(t corev1.Taint) TaintForSelectList {
+	for _, taint := range l {
+		if taint.Key == t.Key {
+			for _, value := range taint.Values {
+				if value == t.Value {
+					// 说明已经存在 key-value，返回
+					return l
+				}
+			}
+			// 存在 key，但是不存在 value，添加并返回
+			taint.Values = append(taint.Values, t.Value)
+			return l
+		}
+	}
+	// 不存在 key，添加
+	return append(l, &TaintForSelect{
+		Key:    t.Key,
+		Values: []string{t.Value},
+	})
+}
+
+func (l TaintForSelectList) ContainsKey(key string) bool {
+	for _, taint := range l {
+		if taint.Key == key {
+			return true
+		}
+	}
+	return false
+}
+
+func (l TaintForSelectList) Contains(t corev1.Taint) bool {
+	for _, taint := range l {
+		if taint.Key == t.Key {
+			for _, value := range taint.Values {
+				if value == t.Value {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+type TaintForSelect struct {
+	Key    string   `json:"key"`
+	Values []string `json:"values"`
+}
+
+type TaintForSelectValue struct {
+	Value  string `json:"value"`
+	Effect string `json:"effect"`
 }
 
 type GetNodeResponse struct {
@@ -183,37 +247,45 @@ type GetNodeResponse struct {
 }
 
 type NodeBaseInfo struct {
-	Name                    string   `json:"name"`
-	ExternalIP              string   `json:"external_ip"`
-	InternalIP              string   `json:"internal_ip"`
-	Roles                   []string `json:"roles"`
-	KubeVersion             string   `json:"kube_version"`
-	ContainerRuntime        string   `json:"container_runtime"`
-	ContainerRuntimeVersion string   `json:"container_runtime_version"`
-	OS                      string   `json:"os"`
-	OSVersion               string   `json:"os_version"`
-	KernelVersion           string   `json:"kernel_version"`
-	CreatedAt               string   `json:"created_at"`
-	Arch                    string   `json:"arch"`
-	Status                  string   `json:"status"`     // 节点状态：Ready, NotReady, Unknown
-	PodCIDR                 string   `json:"pod_cidr"`   // Pod 网络 CIDR
-	CPUCap                  int64    `json:"cpu_cap"`    // CPU 容量
-	MemoryCap               int64    `json:"memory_cap"` // 内存容量
-	DiskCap                 int64    `json:"disk_cap"`   // 磁盘容量
-	PodCap                  int64    `json:"pod_cap"`    // Pod 容量
-	CPUUsed                 int64    `json:"cpu_used"`   // CPU 使用量
-	MemoryUsed              int64    `json:"memory_used"`
-	DiskUsed                int64    `json:"disk_used"`
-	PodUsed                 int64    `json:"pod_used"`
-	Schedulable             bool     `json:"schedulable"`
+	Name       string   `json:"name"`
+	ExternalIP string   `json:"external_ip"`
+	Roles      []string `json:"roles"`
+	OS         string   `json:"os"`
+	Arch       string   `json:"arch"`
+}
+
+type NodeInfo struct {
+	NodeBaseInfo `json:",inline"`
+	// Name                    string   `json:"name"`
+	// ExternalIP              string   `json:"external_ip"`
+	InternalIP string `json:"internal_ip"`
+	// Roles                   []string `json:"roles"`
+	KubeVersion             string `json:"kube_version"`
+	ContainerRuntime        string `json:"container_runtime"`
+	ContainerRuntimeVersion string `json:"container_runtime_version"`
+	// OS                      string   `json:"os"`
+	OSVersion     string `json:"os_version"`
+	KernelVersion string `json:"kernel_version"`
+	CreatedAt     string `json:"created_at"`
+	// Arch                    string   `json:"arch"`
+	Status      string `json:"status"`     // 节点状态：Ready, NotReady, Unknown
+	PodCIDR     string `json:"pod_cidr"`   // Pod 网络 CIDR
+	CPUCap      int64  `json:"cpu_cap"`    // CPU 容量
+	MemoryCap   int64  `json:"memory_cap"` // 内存容量
+	DiskCap     int64  `json:"disk_cap"`   // 磁盘容量
+	PodCap      int64  `json:"pod_cap"`    // Pod 容量
+	CPUUsed     int64  `json:"cpu_used"`   // CPU 使用量
+	MemoryUsed  int64  `json:"memory_used"`
+	DiskUsed    int64  `json:"disk_used"`
+	PodUsed     int64  `json:"pod_used"`
+	Schedulable bool   `json:"schedulable"`
 }
 
 type NodeProfile struct {
-	NodeBaseInfo  `json:",inline"`
-	Labels        []Label      `json:"labels"`
-	Annotations   []Annotation `json:"annotations"`
-	Taints        []Taint      `json:"taints"`
-	VMSchedulable bool         `json:"vm_schedulable"`
+	NodeInfo    `json:",inline"`
+	Labels      []Label      `json:"labels"`
+	Annotations []Annotation `json:"annotations"`
+	Taints      []Taint      `json:"taints"`
 }
 
 type KeyValue struct {
@@ -272,8 +344,4 @@ type SetNodeAnnotationRequest struct {
 
 type DeleteNodeAnnotationRequest struct {
 	Key string `json:"key" validate:"required"`
-}
-
-type SetVMSchedulableStatusRequest struct {
-	Schedulable bool `json:"schedulable"`
 }

@@ -26,30 +26,30 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func createResourcesBySetting(memory int, setCPURequest, setCPULimit int64, setGPUType string, setGPULimit int64) corev1.ResourceRequirements {
+func createResourcesBySetting(requestMemory, limitMemory, requestCPU, limitCPU int64, gpuType string, limitGPU int64) corev1.ResourceRequirements {
 	limits := corev1.ResourceList{}
 	request := corev1.ResourceList{}
 
-	if memory > 0 {
-		limits[corev1.ResourceMemory] = *resource.NewQuantity(int64(memory*1024*1024), resource.BinarySI)
+	request[corev1.ResourceMemory] = *resource.NewQuantity(requestMemory*1024*1024, resource.BinarySI)
+	if limitMemory > 0 {
+		limits[corev1.ResourceMemory] = *resource.NewQuantity(limitMemory*1024*1024, resource.BinarySI)
 	}
-	if setCPULimit > 0 {
-		limits[corev1.ResourceCPU] = *resource.NewMilliQuantity(setCPULimit, resource.DecimalSI)
+
+	request[corev1.ResourceCPU] = *resource.NewMilliQuantity(requestCPU, resource.DecimalSI)
+	if limitCPU > 0 {
+		limits[corev1.ResourceCPU] = *resource.NewMilliQuantity(limitCPU, resource.DecimalSI)
 	}
-	if setGPUType != "" && setGPULimit > 0 {
-		gpuLimit, err := resource.ParseQuantity(fmt.Sprintf("%d", setGPULimit))
+
+	if gpuType != "" && limitGPU > 0 {
+		gpuLimit, err := resource.ParseQuantity(fmt.Sprintf("%d", limitGPU))
 		if err != nil {
 			logrus.Errorf("gpu request is invalid")
 		} else {
-			limits[corev1.ResourceName(setGPUType)] = gpuLimit
-			// limits[getGPULableKey()] = gpuLimit
-			limits[corev1.ResourceName(setGPUType)] = gpuLimit
+			limits[corev1.ResourceName(gpuType)] = gpuLimit
+			limits[corev1.ResourceName(gpuType)] = gpuLimit
 		}
 	}
 
-	if setCPURequest > 0 {
-		request[corev1.ResourceCPU] = *resource.NewMilliQuantity(setCPURequest, resource.DecimalSI)
-	}
 	return corev1.ResourceRequirements{
 		Limits:   limits,
 		Requests: request,

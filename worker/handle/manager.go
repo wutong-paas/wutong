@@ -310,7 +310,9 @@ func (m *Manager) verticalScalingExec(task *model.Task) error {
 		event.GetManager().ReleaseLogger(logger)
 		return nil
 	}
+	appService.ContainerRequestCPU = service.ContainerRequestCPU
 	appService.ContainerCPU = service.ContainerCPU
+	appService.ContainerRequestMemory = service.ContainerRequestMemory
 	appService.ContainerMemory = service.ContainerMemory
 	appService.ContainerGPUType = service.ContainerGPUType
 	appService.ContainerGPU = service.ContainerGPU

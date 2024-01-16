@@ -28,10 +28,18 @@ type ComponentBase struct {
 	// in: body
 	// required: false
 	ImageName string `json:"image_name" validate:"image_name"`
+	// 容器最小CPU
+	// in: body
+	// required: false
+	ContainerRequestCPU int `json:"container_request_cpu" validate:"container_request_cpu"`
 	// 容器CPU权重
 	// in: body
 	// required: false
 	ContainerCPU int `json:"container_cpu" validate:"container_cpu"`
+	// 容器最小内存
+	// in: body
+	// required: false
+	ContainerRequestMemory int `json:"container_request_memory" validate:"container_request_memory"`
 	// 容器最大内存
 	// in: body
 	// required: false
@@ -79,27 +87,29 @@ type ComponentBase struct {
 // DbModel return database model
 func (c *ComponentBase) DbModel(tenantEnvID, appID, deployVersion string) *dbmodel.TenantEnvServices {
 	return &dbmodel.TenantEnvServices{
-		TenantEnvID:      tenantEnvID,
-		ServiceID:        c.ComponentID,
-		ServiceAlias:     c.ComponentAlias,
-		ServiceName:      c.ComponentName,
-		ServiceType:      c.ExtendMethod,
-		Comment:          c.Comment,
-		ContainerCPU:     c.ContainerCPU,
-		ContainerMemory:  c.ContainerMemory,
-		ContainerGPUType: c.ContainerGPUType,
-		ContainerGPU:     c.ContainerGPU,
-		ExtendMethod:     c.ExtendMethod,
-		Replicas:         c.Replicas,
-		DeployVersion:    deployVersion,
-		Category:         c.Category,
-		EventID:          c.EventID,
-		Namespace:        tenantEnvID,
-		ServiceOrigin:    c.ServiceOrigin,
-		Kind:             c.Kind,
-		AppID:            appID,
-		UpdateTime:       time.Now(),
-		K8sComponentName: c.K8sComponentName,
+		TenantEnvID:            tenantEnvID,
+		ServiceID:              c.ComponentID,
+		ServiceAlias:           c.ComponentAlias,
+		ServiceName:            c.ComponentName,
+		ServiceType:            c.ExtendMethod,
+		Comment:                c.Comment,
+		ContainerRequestCPU:    c.ContainerRequestCPU,
+		ContainerCPU:           c.ContainerCPU,
+		ContainerRequestMemory: c.ContainerRequestMemory,
+		ContainerMemory:        c.ContainerMemory,
+		ContainerGPUType:       c.ContainerGPUType,
+		ContainerGPU:           c.ContainerGPU,
+		ExtendMethod:           c.ExtendMethod,
+		Replicas:               c.Replicas,
+		DeployVersion:          deployVersion,
+		Category:               c.Category,
+		EventID:                c.EventID,
+		Namespace:              tenantEnvID,
+		ServiceOrigin:          c.ServiceOrigin,
+		Kind:                   c.Kind,
+		AppID:                  appID,
+		UpdateTime:             time.Now(),
+		K8sComponentName:       c.K8sComponentName,
 	}
 }
 
@@ -212,8 +222,8 @@ type ComponentLabel struct {
 }
 
 // DbModel return database model
-func (l *ComponentLabel) DbModel(componentID string) *dbmodel.TenantEnvServiceLable {
-	return &dbmodel.TenantEnvServiceLable{
+func (l *ComponentLabel) DbModel(componentID string) *dbmodel.TenantEnvServiceLabel {
+	return &dbmodel.TenantEnvServiceLabel{
 		ServiceID:  componentID,
 		LabelKey:   l.LabelKey,
 		LabelValue: l.LabelValue,

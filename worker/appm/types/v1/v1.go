@@ -82,24 +82,26 @@ var OnDelete TypeUpgradeMethod = "OnDelete"
 
 // AppServiceBase app service base info
 type AppServiceBase struct {
-	TenantEnvID      string
-	TenantEnvName    string
-	AppID            string
-	ServiceID        string
-	ServiceAlias     string
-	ServiceType      AppServiceType
-	ServiceKind      dbmodel.ServiceKind
-	discoveryCfg     *dbmodel.ThirdPartySvcDiscoveryCfg
-	DeployVersion    string
-	ContainerCPU     int
-	ContainerMemory  int
-	ContainerGPUType string
-	ContainerGPU     int
-	UpgradeMethod    TypeUpgradeMethod
-	Replicas         int
-	NeedProxy        bool
-	IsWindowsService bool
-	CreaterID        string
+	TenantEnvID            string
+	TenantEnvName          string
+	AppID                  string
+	ServiceID              string
+	ServiceAlias           string
+	ServiceType            AppServiceType
+	ServiceKind            dbmodel.ServiceKind
+	discoveryCfg           *dbmodel.ThirdPartySvcDiscoveryCfg
+	DeployVersion          string
+	ContainerRequestCPU    int
+	ContainerCPU           int
+	ContainerRequestMemory int
+	ContainerMemory        int
+	ContainerGPUType       string
+	ContainerGPU           int
+	UpgradeMethod          TypeUpgradeMethod
+	Replicas               int
+	NeedProxy              bool
+	IsWindowsService       bool
+	CreaterID              string
 	//depend all service id
 	Dependces        []string
 	ExtensionSet     map[string]string

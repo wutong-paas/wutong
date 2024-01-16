@@ -32,13 +32,11 @@ type NodeHandler interface {
 	DeleteTaintNode(nodeName string, req *model.DeleteTaintNodeRequest) error
 	CordonNode(nodeName string, req *model.CordonNodeRequest) error
 	UncordonNode(nodeName string) error
-	ListVMSchedulingLabels() ([]string, error)
 	SetVMSchedulingLabel(nodeName string, req *model.SetVMSchedulingLabelRequest) error
 	DeleteVMSchedulingLabel(nodeName string, req *model.DeleteVMSchedulingLabelRequest) error
-	SetVMSchedulableStatus(nodeName string, schedulable bool) error
 }
 
-// NewClusterHandler -
+// NewNodeHandler -
 func NewNodeHandler(clientset kubernetes.Interface) NodeHandler {
 	return &nodeAction{
 		clientset: clientset,
@@ -54,23 +52,25 @@ func (a *nodeAction) ListNodes() (*model.ListNodeResponse, error) {
 	nodes, err := kube.GetCachedResources(a.clientset).NodeLister.List(labels.Everything())
 
 	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].CreationTimestamp.After(nodes[j].CreationTimestamp.Time)
+		return !nodes[i].CreationTimestamp.After(nodes[j].CreationTimestamp.Time)
 	})
 
 	for _, node := range nodes {
 		containerRuntime, containerRuntimeVersion := a.nodeContainerRuntimeAndVersion(node)
-		item := model.NodeBaseInfo{
-			Name:                    node.Name,
+		item := model.NodeInfo{
+			NodeBaseInfo: model.NodeBaseInfo{
+				Name:       node.Name,
+				ExternalIP: nodeExternalIP(node),
+				Roles:      kube.NodeRoles(a.clientset, node),
+				OS:         node.Status.NodeInfo.OperatingSystem,
+				Arch:       node.Status.NodeInfo.Architecture,
+			},
 			InternalIP:              nodeInternalIP(node),
-			ExternalIP:              nodeExternalIP(node),
-			Roles:                   a.nodeRoles(node),
 			KubeVersion:             node.Status.NodeInfo.KubeletVersion,
 			ContainerRuntime:        containerRuntime,
 			ContainerRuntimeVersion: containerRuntimeVersion,
-			OS:                      node.Status.NodeInfo.OperatingSystem,
 			OSVersion:               node.Status.NodeInfo.OSImage,
 			KernelVersion:           node.Status.NodeInfo.KernelVersion,
-			Arch:                    node.Status.NodeInfo.Architecture,
 			Status:                  nodeStatus(node),
 			CreatedAt:               node.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
 			PodCIDR:                 node.Spec.PodCIDR,
@@ -98,18 +98,20 @@ func (a *nodeAction) GetNode(nodeName string) (*model.GetNodeResponse, error) {
 	containerRuntime, containerRuntimeVersion := a.nodeContainerRuntimeAndVersion(node)
 	result := model.GetNodeResponse{
 		NodeProfile: model.NodeProfile{
-			NodeBaseInfo: model.NodeBaseInfo{
-				Name:                    node.Name,
+			NodeInfo: model.NodeInfo{
+				NodeBaseInfo: model.NodeBaseInfo{
+					Name:       node.Name,
+					ExternalIP: nodeExternalIP(node),
+					Roles:      kube.NodeRoles(a.clientset, node),
+					OS:         node.Status.NodeInfo.OperatingSystem,
+					Arch:       node.Status.NodeInfo.Architecture,
+				},
 				InternalIP:              nodeInternalIP(node),
-				ExternalIP:              nodeExternalIP(node),
-				Roles:                   a.nodeRoles(node),
 				KubeVersion:             node.Status.NodeInfo.KubeletVersion,
 				ContainerRuntime:        containerRuntime,
 				ContainerRuntimeVersion: containerRuntimeVersion,
-				OS:                      node.Status.NodeInfo.OperatingSystem,
 				OSVersion:               node.Status.NodeInfo.OSImage,
 				KernelVersion:           node.Status.NodeInfo.KernelVersion,
-				Arch:                    node.Status.NodeInfo.Architecture,
 				Status:                  nodeStatus(node),
 				CreatedAt:               node.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
 				PodCIDR:                 node.Spec.PodCIDR,
@@ -118,10 +120,9 @@ func (a *nodeAction) GetNode(nodeName string) (*model.GetNodeResponse, error) {
 				DiskCap:                 node.Status.Capacity.StorageEphemeral().Value() / 1024 / 1024,
 				PodCap:                  node.Status.Capacity.Pods().Value(),
 			},
-			Labels:        nodeLabels(node),
-			Annotations:   nodeAnnotations(node),
-			Taints:        nodeTaints(node),
-			VMSchedulable: node.Labels["wutong.io/vm-schedulable"] == "true",
+			Labels:      nodeLabels(node),
+			Annotations: nodeAnnotations(node),
+			Taints:      nodeTaints(node),
 		},
 	}
 	return &result, nil
@@ -425,28 +426,6 @@ func (a *nodeAction) UncordonNode(nodeName string) error {
 	return nil
 }
 
-func (a *nodeAction) ListVMSchedulingLabels() ([]string, error) {
-	var result []string
-	nodes, err := kube.GetCachedResources(a.clientset).NodeLister.List(labels.SelectorFromSet(labels.Set{
-		"wutong.io/vm-schedulable": "true",
-	}))
-
-	for _, node := range nodes {
-		for k, v := range node.Labels {
-			if label, ok := strings.CutPrefix(k, "vm-scheduling-label.wutong.io/"); ok {
-				if v != "" {
-					label = fmt.Sprintf("%s=%s", label, v)
-				}
-				if !slices.Contains(result, label) {
-					result = append(result, label)
-				}
-			}
-		}
-	}
-
-	return result, err
-}
-
 func (a *nodeAction) SetVMSchedulingLabel(nodeName string, req *model.SetVMSchedulingLabelRequest) error {
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
@@ -458,7 +437,6 @@ func (a *nodeAction) SetVMSchedulingLabel(nodeName string, req *model.SetVMSched
 	}
 
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		node.Labels["wutong.io/vm-schedulable"] = "true"
 		node.Labels[fmt.Sprintf("vm-scheduling-label.wutong.io/%s", req.Key)] = req.Value
 		_, err = a.clientset.CoreV1().Nodes().Update(context.Background(), node, metav1.UpdateOptions{})
 		if err != nil {
@@ -498,35 +476,6 @@ func (a *nodeAction) DeleteVMSchedulingLabel(nodeName string, req *model.DeleteV
 	return nil
 }
 
-func (a *nodeAction) SetVMSchedulableStatus(nodeName string, schedulable bool) error {
-	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
-	if err != nil {
-		if k8sErrors.IsNotFound(err) {
-			return fmt.Errorf("节点 %s 不存在", nodeName)
-		}
-		logrus.Errorf("failed to get node %s: %v", nodeName, err)
-		return fmt.Errorf("获取节点 %s 信息失败！", nodeName)
-	}
-
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		if schedulable {
-			node.Labels["wutong.io/vm-schedulable"] = "true"
-		} else {
-			delete(node.Labels, "wutong.io/vm-schedulable")
-		}
-		_, err = a.clientset.CoreV1().Nodes().Update(context.Background(), node, metav1.UpdateOptions{})
-		if err != nil {
-			node, err = a.clientset.CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-
-	return nil
-}
-
 func nodeInternalIP(node *corev1.Node) string {
 	for _, addr := range node.Status.Addresses {
 		if addr.Type == corev1.NodeInternalIP {
@@ -543,21 +492,6 @@ func nodeExternalIP(node *corev1.Node) string {
 		}
 	}
 	return ""
-}
-
-func (a *nodeAction) nodeRoles(node *corev1.Node) []string {
-	var result []string
-	if _, ok := node.Labels["node-role.kubernetes.io/control-plane"]; ok {
-		result = append(result, "master")
-	} else {
-		result = append(result, "worker")
-	}
-
-	etcdPod, err := kube.GetCachedResources(a.clientset).PodLister.Pods("kube-system").Get("etcd-" + node.Name)
-	if err == nil && etcdPod != nil && etcdPod.Labels["component"] == "etcd" {
-		result = append(result, "etcd")
-	}
-	return result
 }
 
 func (a *nodeAction) nodeContainerRuntimeAndVersion(node *corev1.Node) (string, string) {

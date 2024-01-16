@@ -85,6 +85,7 @@ func InitHandle(conf option.Config,
 	defPodHandler = NewPodHandler(statusCli)
 	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace, conf.PrometheusEndpoint)
 	defNodeHandler = NewNodeHandler(kubeClient)
+	defSchedulingHandler = NewSchedulingHandler(kubeClient)
 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)
 	defaultEtcdHandler = NewEtcdHandler(etcdcli)
 	defaultmonitorHandler = NewMonitorHandler(prometheusCli)
@@ -222,6 +223,12 @@ var defNodeHandler NodeHandler
 // GetVolumeTypeHandler returns the default volume type handler.
 func GetNodeHandler() NodeHandler {
 	return defNodeHandler
+}
+
+var defSchedulingHandler SchedulingHandler
+
+func GetSchedulingHandler() SchedulingHandler {
+	return defSchedulingHandler
 }
 
 var defApplicationHandler ApplicationHandler

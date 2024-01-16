@@ -250,13 +250,15 @@ type HorizontalScalingTaskBody struct {
 
 // VerticalScalingTaskBody 垂直伸缩操作任务主体
 type VerticalScalingTaskBody struct {
-	TenantEnvID      string  `json:"tenant_env_id"`
-	ServiceID        string  `json:"service_id"`
-	ContainerCPU     *int    `json:"container_cpu"`
-	ContainerMemory  *int    `json:"container_memory"`
-	ContainerGPUType *string `json:"container_gpu_type"`
-	ContainerGPU     *int    `json:"container_gpu"`
-	EventID          string  `json:"event_id"`
+	TenantEnvID            string  `json:"tenant_env_id"`
+	ServiceID              string  `json:"service_id"`
+	ContainerRequestCPU    *int    `json:"container_request_cpu"`
+	ContainerCPU           *int    `json:"container_cpu"`
+	ContainerRequestMemory *int    `json:"container_request_memory"`
+	ContainerMemory        *int    `json:"container_memory"`
+	ContainerGPUType       *string `json:"container_gpu_type"`
+	ContainerGPU           *int    `json:"container_gpu"`
+	EventID                string  `json:"event_id"`
 }
 
 // RestartTaskBody 重启操作任务主体

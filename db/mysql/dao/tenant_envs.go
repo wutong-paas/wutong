@@ -1604,6 +1604,169 @@ func (t *TenantEnvServiceLBMappingPortDaoImpl) PortExists(port int) bool {
 	return !t.DB.Where("port=?", port).Find(&mapPorts).RecordNotFound()
 }
 
+type ServiceSchedulingLabelDaoImpl struct {
+	DB *gorm.DB
+}
+
+func (t *ServiceSchedulingLabelDaoImpl) AddModel(mo model.Interface) error {
+	label := mo.(*model.TenantEnvServiceSchedulingLabel)
+	var oldLabel model.TenantEnvServiceSchedulingLabel
+	if ok := t.DB.Where("service_id=? and `key`=?", label.ServiceID, label.Key).Find(&oldLabel).RecordNotFound(); ok {
+		if err := t.DB.Create(label).Error; err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("label key %s value %s of service %s is exist", label.Key, label.Value, label.ServiceID)
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingLabelDaoImpl) UpdateModel(mo model.Interface) error {
+	label := mo.(*model.TenantEnvServiceSchedulingLabel)
+	if label.ID == 0 {
+		return fmt.Errorf("label id can not be empty when update ")
+	}
+	if err := t.DB.Save(label).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingLabelDaoImpl) DeleteModel(serviceID string, args ...interface{}) error {
+	var label model.TenantEnvServiceSchedulingLabel
+	if err := t.DB.Where("service_id=? and `key`=?", serviceID, args[0].(string)).Delete(&label).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingLabelDaoImpl) GetServiceSchedulingLabelByKey(serviceID, key string) (*model.TenantEnvServiceSchedulingLabel, error) {
+	var label model.TenantEnvServiceSchedulingLabel
+	if err := t.DB.Where("service_id=? and `key`=?", serviceID, key).Find(&label).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &label, nil
+		}
+		return nil, err
+	}
+	return &label, nil
+}
+
+func (t *ServiceSchedulingLabelDaoImpl) ListServiceSchedulingLabels(serviceID string) ([]*model.TenantEnvServiceSchedulingLabel, error) {
+	var labels []*model.TenantEnvServiceSchedulingLabel
+	if err := t.DB.Where("service_id=?", serviceID).Find(&labels).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return labels, nil
+		}
+		return nil, err
+	}
+	return labels, nil
+}
+
+type ServiceSchedulingNodeDaoImpl struct {
+	DB *gorm.DB
+}
+
+func (t *ServiceSchedulingNodeDaoImpl) AddModel(mo model.Interface) error {
+	node := mo.(*model.TenantEnvServiceSchedulingNode)
+	var oldNode model.TenantEnvServiceSchedulingNode
+	if ok := t.DB.Where("service_id=?", node.ServiceID).Find(&oldNode).RecordNotFound(); ok {
+		if err := t.DB.Create(node).Error; err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("node %s of service %s is exist", node.NodeName, node.ServiceID)
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingNodeDaoImpl) UpdateModel(mo model.Interface) error {
+	node := mo.(*model.TenantEnvServiceSchedulingNode)
+	if node.ID == 0 {
+		return fmt.Errorf("node id can not be empty when update")
+	}
+	if err := t.DB.Save(node).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingNodeDaoImpl) DeleteModel(serviceID string, args ...interface{}) error {
+	var node model.TenantEnvServiceSchedulingNode
+	if err := t.DB.Where("service_id=?", serviceID).Delete(&node).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingNodeDaoImpl) GetServiceSchedulingNode(serviceID string) (*model.TenantEnvServiceSchedulingNode, error) {
+	var node model.TenantEnvServiceSchedulingNode
+	if err := t.DB.Where("service_id=?", serviceID).Find(&node).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &node, nil
+		}
+		return nil, err
+	}
+	return &node, nil
+}
+
+type ServiceSchedulingTolerationDaoImpl struct {
+	DB *gorm.DB
+}
+
+func (t *ServiceSchedulingTolerationDaoImpl) AddModel(mo model.Interface) error {
+	toleration := mo.(*model.TenantEnvServiceSchedulingToleration)
+	var oldToleration model.TenantEnvServiceSchedulingToleration
+	if ok := t.DB.Where("service_id=? and `key`=?", toleration.ServiceID, toleration.Key).Find(&oldToleration).RecordNotFound(); ok {
+		if err := t.DB.Create(toleration).Error; err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("toleration key %s of service %s is exist", toleration.Key, toleration.ServiceID)
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingTolerationDaoImpl) UpdateModel(mo model.Interface) error {
+	toleration := mo.(*model.TenantEnvServiceSchedulingToleration)
+	if toleration.ID == 0 {
+		return fmt.Errorf("toleration id can not be empty when update ")
+	}
+	if err := t.DB.Save(toleration).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingTolerationDaoImpl) DeleteModel(serviceID string, args ...interface{}) error {
+	var toleration model.TenantEnvServiceSchedulingToleration
+	if err := t.DB.Where("service_id=? and `key`=?", serviceID, args[0].(string)).Delete(&toleration).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *ServiceSchedulingTolerationDaoImpl) GetServiceSchedulingTolerationByKey(serviceID, key string) (*model.TenantEnvServiceSchedulingToleration, error) {
+	var toleration model.TenantEnvServiceSchedulingToleration
+	if err := t.DB.Where("service_id=? and `key`=?", serviceID, key).Find(&toleration).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &toleration, nil
+		}
+		return nil, err
+	}
+	return &toleration, nil
+}
+
+func (t *ServiceSchedulingTolerationDaoImpl) ListServiceSchedulingTolerations(serviceID string) ([]*model.TenantEnvServiceSchedulingToleration, error) {
+	var tolerations []*model.TenantEnvServiceSchedulingToleration
+	if err := t.DB.Where("service_id=?", serviceID).Find(&tolerations).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return tolerations, nil
+		}
+		return nil, err
+	}
+	return tolerations, nil
+}
+
 // ServiceLabelDaoImpl ServiceLabelDaoImpl
 type ServiceLabelDaoImpl struct {
 	DB *gorm.DB
@@ -1611,8 +1774,8 @@ type ServiceLabelDaoImpl struct {
 
 // AddModel 添加应用Label
 func (t *ServiceLabelDaoImpl) AddModel(mo model.Interface) error {
-	label := mo.(*model.TenantEnvServiceLable)
-	var oldLabel model.TenantEnvServiceLable
+	label := mo.(*model.TenantEnvServiceLabel)
+	var oldLabel model.TenantEnvServiceLabel
 	if ok := t.DB.Where("service_id = ? and label_key=? and label_value=?", label.ServiceID, label.LabelKey, label.LabelValue).Find(&oldLabel).RecordNotFound(); ok {
 		if err := t.DB.Create(label).Error; err != nil {
 			return err
@@ -1625,7 +1788,7 @@ func (t *ServiceLabelDaoImpl) AddModel(mo model.Interface) error {
 
 // UpdateModel 更新应用Label
 func (t *ServiceLabelDaoImpl) UpdateModel(mo model.Interface) error {
-	label := mo.(*model.TenantEnvServiceLable)
+	label := mo.(*model.TenantEnvServiceLabel)
 	if label.ID == 0 {
 		return fmt.Errorf("label id can not be empty when update ")
 	}
@@ -1637,7 +1800,7 @@ func (t *ServiceLabelDaoImpl) UpdateModel(mo model.Interface) error {
 
 // DeleteModel 删除应用label
 func (t *ServiceLabelDaoImpl) DeleteModel(serviceID string, args ...interface{}) error {
-	label := &model.TenantEnvServiceLable{
+	label := &model.TenantEnvServiceLabel{
 		ServiceID:  serviceID,
 		LabelKey:   args[0].(string),
 		LabelValue: args[1].(string),
@@ -1651,7 +1814,7 @@ func (t *ServiceLabelDaoImpl) DeleteModel(serviceID string, args ...interface{})
 
 // DeleteLabelByServiceID 删除应用全部label
 func (t *ServiceLabelDaoImpl) DeleteLabelByServiceID(serviceID string) error {
-	label := &model.TenantEnvServiceLable{
+	label := &model.TenantEnvServiceLabel{
 		ServiceID: serviceID,
 	}
 	if err := t.DB.Where("service_id=?", serviceID).Delete(label).Error; err != nil {
@@ -1661,8 +1824,8 @@ func (t *ServiceLabelDaoImpl) DeleteLabelByServiceID(serviceID string) error {
 }
 
 // GetTenantEnvServiceLabel GetTenantEnvServiceLabel
-func (t *ServiceLabelDaoImpl) GetTenantEnvServiceLabel(serviceID string) ([]*model.TenantEnvServiceLable, error) {
-	var labels []*model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetTenantEnvServiceLabel(serviceID string) ([]*model.TenantEnvServiceLabel, error) {
+	var labels []*model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=?", serviceID).Find(&labels).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return labels, nil
@@ -1673,8 +1836,8 @@ func (t *ServiceLabelDaoImpl) GetTenantEnvServiceLabel(serviceID string) ([]*mod
 }
 
 // GetTenantEnvServiceNodeSelectorLabel GetTenantEnvServiceNodeSelectorLabel
-func (t *ServiceLabelDaoImpl) GetTenantEnvServiceNodeSelectorLabel(serviceID string) ([]*model.TenantEnvServiceLable, error) {
-	var labels []*model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetTenantEnvServiceNodeSelectorLabel(serviceID string) ([]*model.TenantEnvServiceLabel, error) {
+	var labels []*model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_key=?", serviceID, model.LabelKeyNodeSelector).Find(&labels).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return labels, nil
@@ -1685,8 +1848,8 @@ func (t *ServiceLabelDaoImpl) GetTenantEnvServiceNodeSelectorLabel(serviceID str
 }
 
 // GetLabelByNodeSelectorKey returns a label by node-selector and label_value
-func (t *ServiceLabelDaoImpl) GetLabelByNodeSelectorKey(serviceID string, labelValue string) (*model.TenantEnvServiceLable, error) {
-	var label model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetLabelByNodeSelectorKey(serviceID string, labelValue string) (*model.TenantEnvServiceLabel, error) {
+	var label model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_key = ? and label_value=?", serviceID, model.LabelKeyNodeSelector,
 		labelValue).Find(&label).Error; err != nil {
 		return nil, err
@@ -1695,8 +1858,8 @@ func (t *ServiceLabelDaoImpl) GetLabelByNodeSelectorKey(serviceID string, labelV
 }
 
 // GetTenantEnvNodeAffinityLabel returns TenantEnvServiceLable matching serviceID and LabelKeyNodeAffinity
-func (t *ServiceLabelDaoImpl) GetTenantEnvNodeAffinityLabel(serviceID string) (*model.TenantEnvServiceLable, error) {
-	var label model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetTenantEnvNodeAffinityLabel(serviceID string) (*model.TenantEnvServiceLabel, error) {
+	var label model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_key = ?", serviceID, model.LabelKeyNodeAffinity).
 		Find(&label).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -1708,8 +1871,8 @@ func (t *ServiceLabelDaoImpl) GetTenantEnvNodeAffinityLabel(serviceID string) (*
 }
 
 // GetTenantEnvServiceAffinityLabel GetTenantEnvServiceAffinityLabel
-func (t *ServiceLabelDaoImpl) GetTenantEnvServiceAffinityLabel(serviceID string) ([]*model.TenantEnvServiceLable, error) {
-	var labels []*model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetTenantEnvServiceAffinityLabel(serviceID string) ([]*model.TenantEnvServiceLabel, error) {
+	var labels []*model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_key in (?)", serviceID, []string{model.LabelKeyNodeSelector, model.LabelKeyNodeAffinity,
 		model.LabelKeyServiceAffinity, model.LabelKeyServiceAntyAffinity}).Find(&labels).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -1722,14 +1885,14 @@ func (t *ServiceLabelDaoImpl) GetTenantEnvServiceAffinityLabel(serviceID string)
 
 // GetTenantEnvServiceTypeLabel GetTenantEnvServiceTypeLabel
 // no usages func. get tenant env service type use TenantEnvServiceDao.GetServiceTypeByID(serviceID string)
-func (t *ServiceLabelDaoImpl) GetTenantEnvServiceTypeLabel(serviceID string) (*model.TenantEnvServiceLable, error) {
-	var label model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetTenantEnvServiceTypeLabel(serviceID string) (*model.TenantEnvServiceLabel, error) {
+	var label model.TenantEnvServiceLabel
 	return &label, nil
 }
 
 // GetPrivilegedLabel -
-func (t *ServiceLabelDaoImpl) GetPrivilegedLabel(serviceID string) (*model.TenantEnvServiceLable, error) {
-	var label model.TenantEnvServiceLable
+func (t *ServiceLabelDaoImpl) GetPrivilegedLabel(serviceID string) (*model.TenantEnvServiceLabel, error) {
+	var label model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_value=?", serviceID, model.LabelKeyServicePrivileged).Find(&label).Error; err != nil {
 		return nil, err
 	}
@@ -1738,7 +1901,7 @@ func (t *ServiceLabelDaoImpl) GetPrivilegedLabel(serviceID string) (*model.Tenan
 
 // DelTenantEnvServiceLabelsByLabelValuesAndServiceID DELTenantEnvServiceLabelsByLabelvaluesAndServiceID
 func (t *ServiceLabelDaoImpl) DelTenantEnvServiceLabelsByLabelValuesAndServiceID(serviceID string) error {
-	var label model.TenantEnvServiceLable
+	var label model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_value=?", serviceID, model.LabelKeyNodeSelector).Delete(&label).Error; err != nil {
 		return err
 	}
@@ -1748,7 +1911,7 @@ func (t *ServiceLabelDaoImpl) DelTenantEnvServiceLabelsByLabelValuesAndServiceID
 // DelTenantEnvServiceLabelsByServiceIDKeyValue deletes labels
 func (t *ServiceLabelDaoImpl) DelTenantEnvServiceLabelsByServiceIDKeyValue(serviceID string, labelKey string,
 	labelValue string) error {
-	var label model.TenantEnvServiceLable
+	var label model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_key=? and label_value=?", serviceID, labelKey,
 		labelValue).Delete(&label).Error; err != nil {
 		return err
@@ -1758,7 +1921,7 @@ func (t *ServiceLabelDaoImpl) DelTenantEnvServiceLabelsByServiceIDKeyValue(servi
 
 // DelTenantEnvServiceLabelsByServiceIDKey deletes labels by serviceID and labelKey
 func (t *ServiceLabelDaoImpl) DelTenantEnvServiceLabelsByServiceIDKey(serviceID string, labelKey string) error {
-	var label model.TenantEnvServiceLable
+	var label model.TenantEnvServiceLabel
 	if err := t.DB.Where("service_id=? and label_key=?", serviceID, labelKey).Delete(&label).Error; err != nil {
 		return err
 	}
@@ -1767,11 +1930,11 @@ func (t *ServiceLabelDaoImpl) DelTenantEnvServiceLabelsByServiceIDKey(serviceID 
 
 // DeleteByComponentIDs deletes labels based on componentIDs
 func (t *ServiceLabelDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
-	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantEnvServiceLable{}).Error
+	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantEnvServiceLabel{}).Error
 }
 
 // CreateOrUpdateLabelsInBatch -
-func (t *ServiceLabelDaoImpl) CreateOrUpdateLabelsInBatch(labels []*model.TenantEnvServiceLable) error {
+func (t *ServiceLabelDaoImpl) CreateOrUpdateLabelsInBatch(labels []*model.TenantEnvServiceLabel) error {
 	var objects []interface{}
 	for _, label := range labels {
 		objects = append(objects, *label)

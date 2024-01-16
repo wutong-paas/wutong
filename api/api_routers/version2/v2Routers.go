@@ -95,6 +95,7 @@ func (v2 *V2) clusterRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", controller.GetManager().GetClusterInfo)
 	r.Mount("/nodes", v2.nodeRouter())
+	r.Mount("/scheduling", v2.schedulingRouter())
 	r.Get("/events", controller.GetManager().GetClusterEvents)
 	r.Get("/builder/mavensetting", controller.GetManager().MavenSettingList)
 	r.Post("/builder/mavensetting", controller.GetManager().MavenSettingAdd)
@@ -111,7 +112,17 @@ func (v2 *V2) nodeRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", controller.GetManager().ListNodes)
 	r.Mount("/{node_name}", v2.nodeNameRouter())
+	// Deprecated, use /v2/cluster/scheduling/vm/labels
 	r.Get("/vm-selector-labels", controller.GetManager().ListVMSchedulingLabels)
+	return r
+}
+
+func (v2 *V2) schedulingRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Get("/nodes", controller.GetManager().ListSchedulingNodes)
+	r.Get("/labels", controller.GetManager().ListSchedulingLabels)
+	r.Get("/vm/labels", controller.GetManager().ListVMSchedulingLabels)
+	r.Get("/taints", controller.GetManager().ListSchedulingTaints)
 	return r
 }
 
@@ -126,9 +137,8 @@ func (v2 *V2) nodeNameRouter() chi.Router {
 	r.Delete("/taint", controller.GetManager().DeleteTaintNode)
 	r.Put("/cordon", controller.GetManager().CordonNode)
 	r.Put("/uncordon", controller.GetManager().UncordonNode)
-	r.Put("/vm-scheduling-label", controller.GetManager().SetVMSchedulingLabel)
-	r.Delete("/vm-scheduling-label", controller.GetManager().DeleteVMSchedulingLabel)
-	r.Put("/vm-schedulable", controller.GetManager().SetVMSchedulableStatus)
+	r.Put("/scheduling/vm/label", controller.GetManager().SetVMSchedulingLabel)
+	r.Delete("/scheduling/vm/label", controller.GetManager().DeleteVMSchedulingLabel)
 	return r
 }
 
@@ -310,6 +320,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Put("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "update-service-probe", dbmodel.SYNEVENTTYPE))
 	r.Delete("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "delete-service-probe", dbmodel.SYNEVENTTYPE))
 
+	r.Mount("/scheduling", v2.serviceSchedulingRouter())
 	r.Post("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "add-service-label", dbmodel.SYNEVENTTYPE))
 	r.Put("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "update-service-label", dbmodel.SYNEVENTTYPE))
 	r.Delete("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "delete-service-label", dbmodel.SYNEVENTTYPE))
@@ -359,6 +370,24 @@ func (v2 *V2) serviceRouter() chi.Router {
 	// velero backup and restore
 	r.Mount("/backup", v2.backupRouter())
 	r.Mount("/restore", v2.restoreRouter())
+
+	return r
+}
+
+func (v2 *V2) serviceSchedulingRouter() chi.Router {
+	r := chi.NewRouter()
+
+	r.Get("/details", controller.GetManager().GetServiceSchedulingDetails)
+
+	r.Post("/labels", middleware.WrapEL(controller.GetManager().AddServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SYNEVENTTYPE))
+	r.Put("/labels", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SYNEVENTTYPE))
+	r.Delete("/labels", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingLabel, dbmodel.TargetTypeService, "删除调度标签", dbmodel.SYNEVENTTYPE))
+
+	r.Post("/node", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SYNEVENTTYPE))
+
+	r.Post("/tolerations", middleware.WrapEL(controller.GetManager().AddServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
+	r.Put("/tolerations", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
+	r.Delete("/tolerations", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingToleration, dbmodel.TargetTypeService, "删除污点容忍", dbmodel.SYNEVENTTYPE))
 
 	return r
 }

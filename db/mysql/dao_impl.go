@@ -165,6 +165,48 @@ func (m *Manager) TenantEnvServiceConfigFileDaoTransactions(db *gorm.DB) dao.Ten
 	}
 }
 
+// TenantEnvServiceSchedulingLabelDao -
+func (m *Manager) TenantEnvServiceSchedulingLabelDao() dao.TenantEnvServiceSchedulingLabelDao {
+	return &mysqldao.ServiceSchedulingLabelDaoImpl{
+		DB: m.db,
+	}
+}
+
+// TenantEnvServiceSchedulingNodeDao -
+func (m *Manager) TenantEnvServiceSchedulingNodeDao() dao.TenantEnvServiceSchedulingNodeDao {
+	return &mysqldao.ServiceSchedulingNodeDaoImpl{
+		DB: m.db,
+	}
+}
+
+// TenantEnvServiceSchedulingTolerationDao -
+func (m *Manager) TenantEnvServiceSchedulingTolerationDao() dao.TenantEnvServiceSchedulingTolerationDao {
+	return &mysqldao.ServiceSchedulingTolerationDaoImpl{
+		DB: m.db,
+	}
+}
+
+// TenantEnvServiceSchedulingLabelDaoTransactions -
+func (m *Manager) TenantEnvServiceSchedulingLabelDaoTransactions(db *gorm.DB) dao.TenantEnvServiceSchedulingLabelDao {
+	return &mysqldao.ServiceSchedulingLabelDaoImpl{
+		DB: db,
+	}
+}
+
+// TenantEnvServiceSchedulingNodeDaoTransactions -
+func (m *Manager) TenantEnvServiceSchedulingNodeDaoTransactions(db *gorm.DB) dao.TenantEnvServiceSchedulingNodeDao {
+	return &mysqldao.ServiceSchedulingNodeDaoImpl{
+		DB: db,
+	}
+}
+
+// TenantEnvServiceSchedulingTolerationDaoTransactions -
+func (m *Manager) TenantEnvServiceSchedulingTolerationDaoTransactions(db *gorm.DB) dao.TenantEnvServiceSchedulingTolerationDao {
+	return &mysqldao.ServiceSchedulingTolerationDaoImpl{
+		DB: db,
+	}
+}
+
 // TenantEnvServiceLabelDao TenantEnvServiceLabelDao
 func (m *Manager) TenantEnvServiceLabelDao() dao.TenantEnvServiceLabelDao {
 	return &mysqldao.ServiceLabelDaoImpl{
