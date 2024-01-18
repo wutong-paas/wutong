@@ -47,7 +47,7 @@ type prometheus struct {
 func NewPrometheus(options *Options) (Interface, error) {
 	if options.Endpoint == "" {
 		options.Endpoint = "http://wt-monitor:9999"
-	} else if !strings.HasPrefix(options.Endpoint, "http") {
+	} else if !strings.HasPrefix(options.Endpoint, "http://") || !strings.HasPrefix(options.Endpoint, "https://") {
 		options.Endpoint = fmt.Sprintf("http://%s", options.Endpoint)
 	}
 	cfg := api.Config{

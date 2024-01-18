@@ -1317,6 +1317,10 @@ func (s *ServiceAction) DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volu
 		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
 	}
 
+	if vm.Spec.Running != nil && *vm.Spec.Running {
+		return fmt.Errorf("虚拟机 %s 正在运行，无法删除存储卷！", vmID)
+	}
+
 	for idx, fs := range vm.Spec.Template.Spec.Domain.Devices.Filesystems {
 		if fs.Name == volumeName {
 			vm.Spec.Template.Spec.Domain.Devices.Filesystems = append(vm.Spec.Template.Spec.Domain.Devices.Filesystems[:idx], vm.Spec.Template.Spec.Domain.Devices.Filesystems[idx+1:]...)
