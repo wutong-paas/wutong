@@ -34,7 +34,8 @@ type NodeController struct {
 }
 
 func (t *NodeController) ListNodes(w http.ResponseWriter, r *http.Request) {
-	nodes, err := handler.GetNodeHandler().ListNodes()
+	query := r.URL.Query().Get("query")
+	nodes, err := handler.GetNodeHandler().ListNodes(query)
 	if err != nil {
 		logrus.Errorf("list nodes: %v", err)
 		httputil.ReturnError(r, w, 500, err.Error())

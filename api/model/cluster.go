@@ -173,6 +173,10 @@ func DecimalFromFloat32(f float32) float32 {
 	return float32(res)
 }
 
+type ListNodeRequest struct {
+	Query string `json:"query"`
+}
+
 type ListNodeResponse struct {
 	Nodes []NodeInfo `json:"nodes"`
 	Total int        `json:"total"`

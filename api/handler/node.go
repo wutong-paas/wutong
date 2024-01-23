@@ -22,7 +22,7 @@ import (
 
 // NodeHandler -
 type NodeHandler interface {
-	ListNodes() (*model.ListNodeResponse, error)
+	ListNodes(query string) (*model.ListNodeResponse, error)
 	GetNode(nodeName string) (*model.GetNodeResponse, error)
 	GetNodeLabels(nodeName string) ([]model.Label, error)
 	GetCommonLabels(nodeName string) ([]model.Label, error)
@@ -52,7 +52,7 @@ type nodeAction struct {
 	clientset kubernetes.Interface
 }
 
-func (a *nodeAction) ListNodes() (*model.ListNodeResponse, error) {
+func (a *nodeAction) ListNodes(query string) (*model.ListNodeResponse, error) {
 	var result model.ListNodeResponse
 	nodes, err := kube.GetCachedResources(a.clientset).NodeLister.List(labels.Everything())
 
@@ -60,42 +60,19 @@ func (a *nodeAction) ListNodes() (*model.ListNodeResponse, error) {
 		return !nodes[i].CreationTimestamp.After(nodes[j].CreationTimestamp.Time)
 	})
 
+	if query != "" {
+		query = strings.ToLower(query)
+		var filteredNodes []*corev1.Node
+		for _, node := range nodes {
+			if strings.Contains(strings.ToLower(node.Name), query) {
+				filteredNodes = append(filteredNodes, node)
+			}
+		}
+		nodes = filteredNodes
+	}
+
 	for _, node := range nodes {
 		nodeInfo := a.nodeInfo(node)
-		// containerRuntime, containerRuntimeVersion := a.nodeContainerRuntimeAndVersion(node)
-		// var cpuUsed = kube.GetNodeCPURequest(node.Name)
-		// var memoryUsed = kube.GetNodeMemoryRequest(node.Name)
-		// var podUsed = kube.GetNodePodCount(node.Name)
-		// item := model.NodeInfo{
-		// 	NodeBaseInfo: model.NodeBaseInfo{
-		// 		Name:       node.Name,
-		// 		ExternalIP: nodeExternalIP(node),
-		// 		Roles:      kube.NodeRoles(a.clientset, node),
-		// 		OS:         node.Status.NodeInfo.OperatingSystem,
-		// 		Arch:       node.Status.NodeInfo.Architecture,
-		// 	},
-		// 	InternalIP:              nodeInternalIP(node),
-		// 	KubeVersion:             node.Status.NodeInfo.KubeletVersion,
-		// 	ContainerRuntime:        containerRuntime,
-		// 	ContainerRuntimeVersion: containerRuntimeVersion,
-		// 	OSVersion:               node.Status.NodeInfo.OSImage,
-		// 	KernelVersion:           node.Status.NodeInfo.KernelVersion,
-		// 	Status:                  nodeStatus(node),
-		// 	CreatedAt:               node.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
-		// 	PodCIDR:                 node.Spec.PodCIDR,
-		// 	CPUCap:                  util.DecimailFromFloat64(float64(node.Status.Capacity.Cpu().MilliValue()) / 1000),
-		// 	CPUUsed:                 util.DecimailFromFloat64(float64(cpuUsed) / 1000),
-		// 	MemoryCap:               util.DecimailFromFloat64(float64(node.Status.Capacity.Memory().Value()) / 1024 / 1024 / 1024),
-		// 	MemoryUsed:              util.DecimailFromFloat64(float64(memoryUsed) / 1024 / 1024 / 1024),
-		// 	PodCap:                  node.Status.Capacity.Pods().Value(),
-		// 	PodUsed:                 podUsed,
-		// 	DiskCap:                 util.DecimailFromFloat64(float64(node.Status.Capacity.StorageEphemeral().Value()) / 1024 / 1024 / 1024),
-		// 	// DiskUsed:                0,
-		// 	Schedulable: !node.Spec.Unschedulable,
-		// }
-		// item.CPUtilizationRate = util.DecimailFromFloat64(item.CPUUsed / item.CPUCap * 100)
-		// item.MemoryUtilizationRate = util.DecimailFromFloat64(item.MemoryUsed / item.MemoryCap * 100)
-		// item.PodUtilizationRate = util.DecimailFromFloat64(float64(item.PodUsed) / float64(item.PodCap) * 100)
 		result.Nodes = append(result.Nodes, nodeInfo)
 	}
 
