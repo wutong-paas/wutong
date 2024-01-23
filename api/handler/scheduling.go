@@ -92,19 +92,19 @@ func (a *schedulingAction) ListVMSchedulingLabels() ([]string, error) {
 }
 
 func (a *schedulingAction) ListSchedulingLabels() (*model.ListSchedulingLabelsResponse, error) {
-	var labelList []model.KeyValue
+	var labelList []model.Label
 	nodes, err := kube.GetCachedResources(a.clientset).NodeLister.List(labels.Everything())
 
 	for _, node := range nodes {
 		for k, v := range node.Labels {
-			labelList = append(labelList, model.KeyValue{
+			labelList = append(labelList, model.Label{
 				Key:   k,
 				Value: v,
 			})
 		}
 	}
 
-	slices.SortFunc(labelList, func(a, b model.KeyValue) int {
+	slices.SortFunc(labelList, func(a, b model.Label) int {
 		if a.Key < b.Key {
 			return -1
 		} else {

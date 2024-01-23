@@ -331,6 +331,36 @@ func (s *ServiceAction) GetVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_
 	}, nil
 }
 
+func (s *ServiceAction) GetVMConditions(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMConditionsResponse, error) {
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil, fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return nil, errors.New("获取虚拟机失败！")
+	}
+	if vm == nil {
+		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
+	}
+
+	var conditions []api_model.VMCondition
+	for _, cond := range vm.Status.Conditions {
+		conditions = append(conditions, api_model.VMCondition{
+			Type:           string(cond.Type),
+			Status:         cond.Status == corev1.ConditionTrue,
+			Reason:         cond.Reason,
+			Message:        cond.Message,
+			LastReportedAt: cond.LastTransitionTime.Local().Format("2006-01-02 15:04:05"),
+		})
+	}
+
+	return &api_model.GetVMConditionsResponse{
+		Conditions: conditions,
+	}, nil
+
+}
+
 func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.UpdateVMRequest) (*api_model.UpdateVMResponse, error) {
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
 	if err != nil {
@@ -1478,7 +1508,7 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 	}
 
 	for _, cond := range vm.Status.Conditions {
-		result.Situations = append(result.Situations, api_model.VMSituation{
+		result.Conditions = append(result.Conditions, api_model.VMCondition{
 			Type:           string(cond.Type),
 			Status:         cond.Status == corev1.ConditionTrue,
 			Reason:         cond.Reason,

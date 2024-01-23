@@ -1,7 +1,7 @@
 package model
 
 type ListSchedulingLabelsResponse struct {
-	Labels []KeyValue `json:"labels"`
+	Labels []Label `json:"labels"`
 }
 
 type GetServiceSchedulingDetailsResponse struct {
@@ -11,7 +11,8 @@ type GetServiceSchedulingDetailsResponse struct {
 }
 
 type SchedulingLabel struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key"`
+	Value string `json:"label_value"`
 }
 
 type SchdulingNode struct {
@@ -19,21 +20,24 @@ type SchdulingNode struct {
 }
 
 type SchedulingToleration struct {
-	KeyValue `json:",inline"`
+	Key      string `json:"taint_key"`
+	Value    string `json:"taint_value"`
 	Operator string `json:"op"`
 	Effect   string `json:"effect"`
 }
 
 type AddServiceSchedulingLabelRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key"`
+	Value string `json:"label_value"`
 }
 
 type UpdateServiceSchedulingLabelRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key"`
+	Value string `json:"label_value"`
 }
 
 type DeleteServiceSchedulingLabelRequest struct {
-	Key string `json:"key"`
+	Key string `json:"label_key"`
 }
 
 type SetServiceSchedulingNodeRequest struct {
@@ -41,17 +45,19 @@ type SetServiceSchedulingNodeRequest struct {
 }
 
 type AddServiceSchedulingTolerationRequest struct {
-	KeyValue `json:",inline"`
+	Key      string `json:"taint_key"`
+	Value    string `json:"taint_value"`
 	Operator string `json:"op"`
 	Effect   string `json:"effect"`
 }
 
 type UpdateServiceSchedulingTolerationRequest struct {
-	KeyValue `json:",inline"`
+	Key      string `json:"taint_key"`
+	Value    string `json:"taint_value"`
 	Operator string `json:"op"`
 	Effect   string `json:"effect"`
 }
 
 type DeleteServiceSchedulingTolerationRequest struct {
-	Key string `json:"key"`
+	Key string `json:"taint_key"`
 }

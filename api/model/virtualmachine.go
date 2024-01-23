@@ -31,7 +31,7 @@ type VMProfile struct {
 	DefaultLoginUser   string        `json:"defaultLoginUser"`
 	Status             string        `json:"status"`
 	StatusMessage      string        `json:"statusMessage"`
-	Situations         []VMSituation `json:"situations"`
+	Conditions         []VMCondition `json:"conditions"`
 	IP                 string        `json:"ip"`
 	OSInfo             VMOSInfo      `json:"osInfo"`
 	ScheduleNode       string        `json:"scheduleNode"`
@@ -42,11 +42,11 @@ type VMProfile struct {
 	NodeSelectorLabels []string      `json:"nodeSelectorLabels"`
 }
 
-type VMSituation struct {
+type VMCondition struct {
 	Type           string `json:"type"`
 	Reason         string `json:"reason"`
 	Message        string `json:"message"`
-	Status         bool
+	Status         bool   `json:"status"`
 	LastReportedAt string `json:"lastReportedAt"`
 }
 
@@ -134,6 +134,10 @@ type CreateVMResponse struct {
 // GetVMResponse
 type GetVMResponse struct {
 	VMProfile
+}
+
+type GetVMConditionsResponse struct {
+	Conditions []VMCondition `json:"conditions"`
 }
 
 // UpdateVMRequest

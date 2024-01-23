@@ -59,6 +59,51 @@ func (t *NodeController) GetNode(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, node)
 }
 
+func (t *NodeController) GetNodeLabels(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	labels, err := handler.GetNodeHandler().GetNodeLabels(nodeName)
+	if err != nil {
+		logrus.Errorf("get node labels: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, labels)
+}
+
+func (t *NodeController) GetCommonLabels(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	labels, err := handler.GetNodeHandler().GetCommonLabels(nodeName)
+	if err != nil {
+		logrus.Errorf("get node common labels: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, labels)
+}
+
+func (t *NodeController) GetVMSchedulingLabels(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	labels, err := handler.GetNodeHandler().GetVMSchedulingLabels(nodeName)
+	if err != nil {
+		logrus.Errorf("get node scheduling labels: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, labels)
+}
+
 func (t *NodeController) SetNodeLabel(w http.ResponseWriter, r *http.Request) {
 	nodeName := chi.URLParam(r, "node_name")
 	if nodeName == "" {
@@ -103,6 +148,21 @@ func (t *NodeController) DeleteNodeLabel(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, nil)
 }
 
+func (t *NodeController) GetNodeAnnotations(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	annotations, err := handler.GetNodeHandler().GetNodeAnnotations(nodeName)
+	if err != nil {
+		logrus.Errorf("get node annotations: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, annotations)
+}
+
 func (t *NodeController) SetNodeAnnotation(w http.ResponseWriter, r *http.Request) {
 	nodeName := chi.URLParam(r, "node_name")
 	if nodeName == "" {
@@ -145,6 +205,21 @@ func (t *NodeController) DeleteNodeAnnotation(w http.ResponseWriter, r *http.Req
 	}
 
 	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *NodeController) GetNodeTaints(w http.ResponseWriter, r *http.Request) {
+	nodeName := chi.URLParam(r, "node_name")
+	if nodeName == "" {
+		httputil.ReturnError(r, w, 400, "node name are required")
+		return
+	}
+	taints, err := handler.GetNodeHandler().GetNodeTaints(nodeName)
+	if err != nil {
+		logrus.Errorf("get node taints: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, taints)
 }
 
 func (*NodeController) TaintNode(w http.ResponseWriter, r *http.Request) {

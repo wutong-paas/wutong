@@ -16,10 +16,8 @@ func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.Ge
 	labels, _ := db.GetManager().TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(serviceID)
 	for _, label := range labels {
 		result.Labels = append(result.Labels, model.SchedulingLabel{
-			KeyValue: model.KeyValue{
-				Key:   label.Key,
-				Value: label.Value,
-			},
+			Key:   label.Key,
+			Value: label.Value,
 		})
 	}
 
@@ -33,10 +31,8 @@ func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.Ge
 	tolerations, _ := db.GetManager().TenantEnvServiceSchedulingTolerationDao().ListServiceSchedulingTolerations(serviceID)
 	for _, toleration := range tolerations {
 		result.Tolerations = append(result.Tolerations, model.SchedulingToleration{
-			KeyValue: model.KeyValue{
-				Key:   toleration.Key,
-				Value: toleration.Value,
-			},
+			Key:      toleration.Key,
+			Value:    toleration.Value,
 			Operator: toleration.Operator,
 			Effect:   toleration.Effect,
 		})

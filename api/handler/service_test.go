@@ -98,7 +98,7 @@ func TestABCService(t *testing.T) {
 }
 
 func TestUUID(t *testing.T) {
-	id := fmt.Sprintf("%s", uuid.New())
+	id := uuid.New().String()
 	uid := strings.Replace(id, "-", "", -1)
 	logrus.Debugf("uuid is %v", uid)
 	name := strings.Split(id, "-")[0]

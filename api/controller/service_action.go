@@ -1076,6 +1076,18 @@ func (t *TenantEnvStruct) GetVM(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, resp)
 }
 
+func (t *TenantEnvStruct) GetVMConditions(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().GetVMConditions(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
 func (t *TenantEnvStruct) StartVM(w http.ResponseWriter, r *http.Request) {
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)

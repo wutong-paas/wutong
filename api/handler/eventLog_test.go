@@ -41,7 +41,7 @@ func TestEmessage(t *testing.T) {
 	if err := api_db.CreateDBManager(conf); err != nil {
 		fmt.Printf("create db manager error, %v", err)
 	}
-	getLevelLog("dd09a25eb9744afa9b3ad5f5541013e7", "info")
+	_, _ = getLevelLog("dd09a25eb9744afa9b3ad5f5541013e7", "info")
 	fmt.Printf("end.\n")
 }
 
@@ -67,14 +67,6 @@ func getLevelLog(eventID string, level string) (*api_model.DataLog, error) {
 	//	break
 	//}
 	return nil, nil
-}
-
-type msgStruct struct {
-	EventID string `json:"event_id"`
-	Step    string `json:"step"`
-	Message string `json:"message"`
-	Level   string `json:"level"`
-	Time    string `json:"time"`
 }
 
 func TestLines(t *testing.T) {

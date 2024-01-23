@@ -233,12 +233,12 @@ func (l TaintForSelectList) Contains(t corev1.Taint) bool {
 }
 
 type TaintForSelect struct {
-	Key    string   `json:"key"`
+	Key    string   `json:"taint_key"`
 	Values []string `json:"values"`
 }
 
 type TaintForSelectValue struct {
-	Value  string `json:"value"`
+	Value  string `json:"taint_value"`
 	Effect string `json:"effect"`
 }
 
@@ -268,17 +268,20 @@ type NodeInfo struct {
 	KernelVersion string `json:"kernel_version"`
 	CreatedAt     string `json:"created_at"`
 	// Arch                    string   `json:"arch"`
-	Status      string `json:"status"`     // 节点状态：Ready, NotReady, Unknown
-	PodCIDR     string `json:"pod_cidr"`   // Pod 网络 CIDR
-	CPUCap      int64  `json:"cpu_cap"`    // CPU 容量
-	MemoryCap   int64  `json:"memory_cap"` // 内存容量
-	DiskCap     int64  `json:"disk_cap"`   // 磁盘容量
-	PodCap      int64  `json:"pod_cap"`    // Pod 容量
-	CPUUsed     int64  `json:"cpu_used"`   // CPU 使用量
-	MemoryUsed  int64  `json:"memory_used"`
-	DiskUsed    int64  `json:"disk_used"`
-	PodUsed     int64  `json:"pod_used"`
-	Schedulable bool   `json:"schedulable"`
+	Status                string  `json:"status"`                  // 节点状态：Ready, NotReady, Unknown
+	PodCIDR               string  `json:"pod_cidr"`                // Pod 网络 CIDR
+	CPUCap                float64 `json:"cpu_cap"`                 // CPU 容量
+	CPUUsed               float64 `json:"cpu_used"`                // CPU 使用量
+	CPUtilizationRate     float64 `json:"cpu_utilization_rate"`    // CPU 使用率
+	MemoryCap             float64 `json:"memory_cap"`              // 内存容量
+	MemoryUsed            float64 `json:"memory_used"`             // 内存使用量
+	MemoryUtilizationRate float64 `json:"memory_utilization_rate"` // 内存使用率
+	DiskCap               float64 `json:"disk_cap"`                // 磁盘容量
+	DiskUsed              float64 `json:"disk_used"`
+	PodCap                int64   `json:"pod_cap"` // Pod 容量
+	PodUsed               int64   `json:"pod_used"`
+	PodUtilizationRate    float64 `json:"pod_utilization_rate"` // Pod 使用率
+	Schedulable           bool    `json:"schedulable"`
 }
 
 type NodeProfile struct {
@@ -288,29 +291,31 @@ type NodeProfile struct {
 	Taints      []Taint      `json:"taints"`
 }
 
-type KeyValue struct {
-	Key   string `json:"key" validate:"required"`
-	Value string `json:"value"`
-}
+// type KeyValue struct {
+// 	Key   string `json:"key" validate:"required"`
+// 	Value string `json:"value"`
+// }
 
 type Label struct {
-	KeyValue `json:",inline"`
-	Editable bool `json:"editable"`
+	Key                 string `json:"label_key"`
+	Value               string `json:"label_value"`
+	IsVMSchedulingLabel bool   `json:"is_vm_scheduling_label"`
 }
 
 type Annotation struct {
-	KeyValue `json:",inline"`
-	Editable bool `json:"editable"`
+	Key   string `json:"annotation_key" validate:"required"`
+	Value string `json:"annotation_value"`
 }
 
 type Taint struct {
-	KeyValue `json:",inline"`
-	Effect   string `json:"effect"`
+	Key    string `json:"taint_key"`
+	Value  string `json:"taint_value"`
+	Effect string `json:"effect"`
 }
 
 type TaintNodeRequest struct {
-	Key    string `json:"key" validate:"required"`
-	Value  string `json:"value"`
+	Key    string `json:"taint_key" validate:"required"`
+	Value  string `json:"taint_value"`
 	Effect string `json:"effect" validate:"required"`
 }
 
@@ -319,29 +324,32 @@ type CordonNodeRequest struct {
 }
 
 type DeleteTaintNodeRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"taint_key" validate:"required"`
 }
 
 type SetVMSchedulingLabelRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key" validate:"required"`
+	Value string `json:"label_value"`
 }
 
 type DeleteVMSchedulingLabelRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"label_key" validate:"required"`
 }
 
 type SetNodeLabelRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key" validate:"required"`
+	Value string `json:"label_value"`
 }
 
 type DeleteNodeLabelRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"label_key" validate:"required"`
 }
 
 type SetNodeAnnotationRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"annotation_key" validate:"required"`
+	Value string `json:"annotation_value"`
 }
 
 type DeleteNodeAnnotationRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"annotation_key" validate:"required"`
 }
