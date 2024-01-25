@@ -118,3 +118,7 @@ func (t *ClusterController) MavenSettingDetail(w http.ResponseWriter, r *http.Re
 func (t *ClusterController) Features(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, handler.GetClusterHandler().Features(r.Context()))
 }
+
+func (t *ClusterController) ListStorageClasses(w http.ResponseWriter, r *http.Request) {
+	httputil.ReturnSuccess(r, w, handler.GetClusterHandler().ListStorageClasses(r.Context()))
+}

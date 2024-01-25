@@ -94,6 +94,7 @@ func (v2 *V2) eventsRouter() chi.Router {
 func (v2 *V2) clusterRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", controller.GetManager().GetClusterInfo)
+	r.Get("/storageclasses", controller.GetManager().ListStorageClasses)
 	r.Mount("/nodes", v2.nodeRouter())
 	r.Mount("/scheduling", v2.schedulingRouter())
 	r.Get("/events", controller.GetManager().GetClusterEvents)
@@ -483,7 +484,7 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r.Delete("/gateways/{gateway_id}", controller.GetManager().DeleteVMPortGateway)
 	r.Delete("/ports", controller.GetManager().DeleteVMPort)
 	r.Get("/", controller.GetManager().GetVM)
-	r.Get("/conditions",controller.GetManager().GetVMConditions)
+	r.Get("/conditions", controller.GetManager().GetVMConditions)
 	r.Get("/volumes", controller.GetManager().ListVMVolumes)
 	r.Post("/volumes", controller.GetManager().AddVMVolume)
 	r.Delete("/volumes/{volume_name}", controller.GetManager().DeleteVMVolume)

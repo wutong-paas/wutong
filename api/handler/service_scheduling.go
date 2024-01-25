@@ -12,10 +12,9 @@ import (
 
 func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.GetServiceSchedulingDetailsResponse, error) {
 	var result model.GetServiceSchedulingDetailsResponse
-
 	labels, _ := db.GetManager().TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(serviceID)
 	for _, label := range labels {
-		result.Labels = append(result.Labels, model.SchedulingLabel{
+		result.Current.Labels = append(result.Current.Labels, model.SchedulingLabel{
 			Key:   label.Key,
 			Value: label.Value,
 		})
@@ -23,19 +22,37 @@ func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.Ge
 
 	node, _ := db.GetManager().TenantEnvServiceSchedulingNodeDao().GetServiceSchedulingNode(serviceID)
 	if node != nil {
-		result.Node = model.SchdulingNode{
-			NodeName: node.NodeName,
-		}
+		result.Current.Node = node.NodeName
 	}
 
 	tolerations, _ := db.GetManager().TenantEnvServiceSchedulingTolerationDao().ListServiceSchedulingTolerations(serviceID)
 	for _, toleration := range tolerations {
-		result.Tolerations = append(result.Tolerations, model.SchedulingToleration{
+		result.Current.Tolerations = append(result.Current.Tolerations, model.SchedulingToleration{
 			Key:      toleration.Key,
 			Value:    toleration.Value,
 			Operator: toleration.Operator,
 			Effect:   toleration.Effect,
 		})
+	}
+
+	lslr, _ := GetSchedulingHandler().ListSchedulingLabels()
+	if lslr != nil {
+		for _, label := range lslr.Labels {
+			result.Selections.Labels = append(result.Selections.Labels, model.SchedulingLabel{
+				Key:   label.Key,
+				Value: label.Value,
+			})
+		}
+	}
+
+	lsnr, _ := GetSchedulingHandler().ListSchedulingNodes()
+	if lsnr != nil {
+		result.Selections.Nodes = lsnr.Nodes
+	}
+
+	lstr, _ := GetSchedulingHandler().ListSchedulingTaints()
+	if lstr != nil {
+		result.Selections.Taints = lstr.Taints
 	}
 
 	return &result, nil

@@ -11,7 +11,7 @@ import (
 func TestListNodes(t *testing.T) {
 	clientset := kube.RegionClientset()
 	nodeAction := NewNodeHandler(clientset)
-	nodes, err := nodeAction.ListNodes()
+	nodes, err := nodeAction.ListNodes("")
 	if err != nil {
 		t.Fatal(err)
 	}

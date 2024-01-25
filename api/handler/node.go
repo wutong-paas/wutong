@@ -566,11 +566,11 @@ func (a *nodeAction) nodeInfo(node *corev1.Node) model.NodeInfo {
 		NodeBaseInfo: model.NodeBaseInfo{
 			Name:       node.Name,
 			ExternalIP: nodeExternalIP(node),
+			InternalIP: nodeInternalIP(node),
 			Roles:      kube.NodeRoles(a.clientset, node),
 			OS:         node.Status.NodeInfo.OperatingSystem,
 			Arch:       node.Status.NodeInfo.Architecture,
 		},
-		InternalIP:              nodeInternalIP(node),
 		KubeVersion:             node.Status.NodeInfo.KubeletVersion,
 		ContainerRuntime:        containerRuntime,
 		ContainerRuntimeVersion: containerRuntimeVersion,

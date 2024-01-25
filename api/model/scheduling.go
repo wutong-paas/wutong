@@ -5,9 +5,20 @@ type ListSchedulingLabelsResponse struct {
 }
 
 type GetServiceSchedulingDetailsResponse struct {
+	Current    SchedulingConfig     `json:"current"`
+	Selections SchedulingSelections `json:"selections"`
+}
+
+type SchedulingConfig struct {
 	Labels      []SchedulingLabel      `json:"labels"`
-	Node        SchdulingNode          `json:"node"`
+	Node        string                 `json:"node"`
 	Tolerations []SchedulingToleration `json:"tolerations"`
+}
+
+type SchedulingSelections struct {
+	Labels []SchedulingLabel  `json:"labels"`
+	Nodes  []NodeBaseInfo     `json:"nodes"`
+	Taints TaintForSelectList `json:"taints"`
 }
 
 type SchedulingLabel struct {

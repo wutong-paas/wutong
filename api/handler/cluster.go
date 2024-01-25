@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -35,6 +36,7 @@ type ClusterHandler interface {
 	MavenSettingDelete(ctx context.Context, name string) *apiutil.APIHandleError
 	MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *apiutil.APIHandleError)
 	Features(ctx context.Context) map[string]bool
+	ListStorageClasses(ctx context.Context) []model.StorageClass
 }
 
 // NewClusterHandler -
@@ -189,10 +191,10 @@ func (c *clusterAction) listNodes(ctx context.Context) ([]*corev1.Node, error) {
 	for idx := range nodeList.Items {
 		node := &nodeList.Items[idx]
 		// check if node contains taints
-		if containsTaints(node) {
-			logrus.Debugf("[GetClusterInfo] node(%s) contains NoSchedule taints", node.GetName())
-			continue
-		}
+		// if containsTaints(node) {
+		// 	logrus.Debugf("[GetClusterInfo] node(%s) contains NoSchedule taints", node.GetName())
+		// 	continue
+		// }
 
 		nodes = append(nodes, node)
 	}
@@ -457,4 +459,26 @@ func (c *clusterAction) GetClusterEvents(ctx context.Context) ([]model.ClusterEv
 		}
 	}
 	return cachedClusterEvents.cacheData, nil
+}
+
+func (c *clusterAction) ListStorageClasses(ctx context.Context) []model.StorageClass {
+	var result []model.StorageClass
+	ret, err := kube.GetCachedResources(c.clientset).StorageClassLister.List(labels.Everything())
+	if err != nil {
+		return result
+	}
+
+	for i := range ret {
+		result = append(result, model.StorageClass{
+			Name:      ret[i].Name,
+			IsDefault: ret[i].Annotations["storageclass.kubernetes.io/is-default-class"] == "true",
+		})
+	}
+
+	// 将默认的 storage class 排在前面
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].IsDefault
+	})
+
+	return result
 }

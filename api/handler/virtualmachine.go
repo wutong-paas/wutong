@@ -344,19 +344,8 @@ func (s *ServiceAction) GetVMConditions(tenantEnv *dbmodel.TenantEnvs, vmID stri
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
 	}
 
-	var conditions []api_model.VMCondition
-	for _, cond := range vm.Status.Conditions {
-		conditions = append(conditions, api_model.VMCondition{
-			Type:           string(cond.Type),
-			Status:         cond.Status == corev1.ConditionTrue,
-			Reason:         cond.Reason,
-			Message:        cond.Message,
-			LastReportedAt: cond.LastTransitionTime.Local().Format("2006-01-02 15:04:05"),
-		})
-	}
-
 	return &api_model.GetVMConditionsResponse{
-		Conditions: conditions,
+		Conditions: vmConditions(vm),
 	}, nil
 
 }
@@ -1498,8 +1487,8 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		StatusMessage:    vmStatusMessageFromKubeVirtVM(vm),
 		CreatedBy:        vm.Annotations["wutong.io/creator"],
 		LastModifiedBy:   vm.Annotations["wutong.io/last-modifier"],
-		CreatedAt:        vm.CreationTimestamp.Time.Local().Format("2006-01-02 15:04:05"),
-		LastModifiedAt:   cast.ToTime(vm.Annotations["wutong.io/last-modification-timestamp"]).Local().Format("2006-01-02 15:04:05"),
+		CreatedAt:        timeString(vm.CreationTimestamp.Time),
+		LastModifiedAt:   timeString(cast.ToTime(vm.Annotations["wutong.io/last-modification-timestamp"])),
 		OSInfo: api_model.VMOSInfo{
 			Name:    vm.Annotations["wutong.io/vm-os-name"],
 			Version: vm.Annotations["wutong.io/vm-os-version"],
@@ -1507,15 +1496,7 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 		},
 	}
 
-	for _, cond := range vm.Status.Conditions {
-		result.Conditions = append(result.Conditions, api_model.VMCondition{
-			Type:           string(cond.Type),
-			Status:         cond.Status == corev1.ConditionTrue,
-			Reason:         cond.Reason,
-			Message:        cond.Message,
-			LastReportedAt: cond.LastTransitionTime.Local().Format("2006-01-02 15:04:05"),
-		})
-	}
+	result.Conditions = vmConditions(vm)
 
 	for k := range vm.Spec.Template.Spec.NodeSelector {
 		if label, ok := strings.CutPrefix(k, "vm-scheduling-label.wutong.io/"); ok {
@@ -1633,4 +1614,30 @@ func validatePassword(password string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func vmConditions(vm *kubevirtcorev1.VirtualMachine) []api_model.VMCondition {
+	var result []api_model.VMCondition
+
+	if vm == nil {
+		return result
+	}
+
+	for _, cond := range vm.Status.Conditions {
+		result = append(result, api_model.VMCondition{
+			Type:           string(cond.Type),
+			Status:         cond.Status == corev1.ConditionTrue,
+			Reason:         cond.Reason,
+			Message:        cond.Message,
+			LastReportedAt: timeString(cond.LastTransitionTime.Time),
+		})
+	}
+	return result
+}
+
+func timeString(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Local().Format("2006-01-02 15:04:05")
 }

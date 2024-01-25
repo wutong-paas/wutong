@@ -253,39 +253,34 @@ type GetNodeResponse struct {
 type NodeBaseInfo struct {
 	Name       string   `json:"name"`
 	ExternalIP string   `json:"external_ip"`
+	InternalIP string   `json:"internal_ip"`
 	Roles      []string `json:"roles"`
 	OS         string   `json:"os"`
 	Arch       string   `json:"arch"`
 }
 
 type NodeInfo struct {
-	NodeBaseInfo `json:",inline"`
-	// Name                    string   `json:"name"`
-	// ExternalIP              string   `json:"external_ip"`
-	InternalIP string `json:"internal_ip"`
-	// Roles                   []string `json:"roles"`
-	KubeVersion             string `json:"kube_version"`
-	ContainerRuntime        string `json:"container_runtime"`
-	ContainerRuntimeVersion string `json:"container_runtime_version"`
-	// OS                      string   `json:"os"`
-	OSVersion     string `json:"os_version"`
-	KernelVersion string `json:"kernel_version"`
-	CreatedAt     string `json:"created_at"`
-	// Arch                    string   `json:"arch"`
-	Status                string  `json:"status"`                  // 节点状态：Ready, NotReady, Unknown
-	PodCIDR               string  `json:"pod_cidr"`                // Pod 网络 CIDR
-	CPUCap                float64 `json:"cpu_cap"`                 // CPU 容量
-	CPUUsed               float64 `json:"cpu_used"`                // CPU 使用量
-	CPUtilizationRate     float64 `json:"cpu_utilization_rate"`    // CPU 使用率
-	MemoryCap             float64 `json:"memory_cap"`              // 内存容量
-	MemoryUsed            float64 `json:"memory_used"`             // 内存使用量
-	MemoryUtilizationRate float64 `json:"memory_utilization_rate"` // 内存使用率
-	DiskCap               float64 `json:"disk_cap"`                // 磁盘容量
-	DiskUsed              float64 `json:"disk_used"`
-	PodCap                int64   `json:"pod_cap"` // Pod 容量
-	PodUsed               int64   `json:"pod_used"`
-	PodUtilizationRate    float64 `json:"pod_utilization_rate"` // Pod 使用率
-	Schedulable           bool    `json:"schedulable"`
+	NodeBaseInfo            `json:",inline"`
+	KubeVersion             string  `json:"kube_version"`
+	ContainerRuntime        string  `json:"container_runtime"`
+	ContainerRuntimeVersion string  `json:"container_runtime_version"`
+	OSVersion               string  `json:"os_version"`
+	KernelVersion           string  `json:"kernel_version"`
+	CreatedAt               string  `json:"created_at"`
+	Status                  string  `json:"status"`                  // 节点状态：Ready, NotReady, Unknown
+	PodCIDR                 string  `json:"pod_cidr"`                // Pod 网络 CIDR
+	CPUCap                  float64 `json:"cpu_cap"`                 // CPU 容量
+	CPUUsed                 float64 `json:"cpu_used"`                // CPU 使用量
+	CPUtilizationRate       float64 `json:"cpu_utilization_rate"`    // CPU 使用率
+	MemoryCap               float64 `json:"memory_cap"`              // 内存容量
+	MemoryUsed              float64 `json:"memory_used"`             // 内存使用量
+	MemoryUtilizationRate   float64 `json:"memory_utilization_rate"` // 内存使用率
+	DiskCap                 float64 `json:"disk_cap"`                // 磁盘容量
+	DiskUsed                float64 `json:"disk_used"`
+	PodCap                  int64   `json:"pod_cap"` // Pod 容量
+	PodUsed                 int64   `json:"pod_used"`
+	PodUtilizationRate      float64 `json:"pod_utilization_rate"` // Pod 使用率
+	Schedulable             bool    `json:"schedulable"`
 }
 
 type NodeProfile struct {
@@ -356,4 +351,9 @@ type SetNodeAnnotationRequest struct {
 
 type DeleteNodeAnnotationRequest struct {
 	Key string `json:"annotation_key" validate:"required"`
+}
+
+type StorageClass struct {
+	Name      string `json:"name"`
+	IsDefault bool   `json:"is_default"`
 }

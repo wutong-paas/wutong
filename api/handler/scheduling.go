@@ -44,6 +44,7 @@ func (a *schedulingAction) ListSchedulingNodes() (*model.ListSchedulingNodesResp
 		item := model.NodeBaseInfo{
 			Name:       node.Name,
 			ExternalIP: nodeExternalIP(node),
+			InternalIP: nodeInternalIP(node),
 			Roles:      kube.NodeRoles(a.clientset, node),
 			OS:         node.Status.NodeInfo.OperatingSystem,
 			Arch:       node.Status.NodeInfo.Architecture,
@@ -60,10 +61,8 @@ func (a *schedulingAction) ListSchedulingTaints() (*model.ListSchedulingTaintsRe
 	nodes, err := kube.GetCachedResources(a.clientset).NodeLister.List(labels.Everything())
 
 	for _, node := range nodes {
-		if len(node.Spec.Taints) > 0 {
-			for _, taint := range node.Spec.Taints {
-				result.Taints = result.Taints.TryAppend(taint)
-			}
+		for _, taint := range node.Spec.Taints {
+			result.Taints = result.Taints.TryAppend(taint)
 		}
 	}
 	return &result, err
@@ -97,10 +96,13 @@ func (a *schedulingAction) ListSchedulingLabels() (*model.ListSchedulingLabelsRe
 
 	for _, node := range nodes {
 		for k, v := range node.Labels {
-			labelList = append(labelList, model.Label{
+			label := model.Label{
 				Key:   k,
 				Value: v,
-			})
+			}
+			if !slices.Contains(labelList, label) {
+				labelList = append(labelList, label)
+			}
 		}
 	}
 
