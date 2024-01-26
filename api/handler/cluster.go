@@ -469,6 +469,9 @@ func (c *clusterAction) ListStorageClasses(ctx context.Context) []model.StorageC
 	}
 
 	for i := range ret {
+		if strings.HasPrefix(ret[i].Name, "wutong") {
+			continue
+		}
 		result = append(result, model.StorageClass{
 			Name:      ret[i].Name,
 			IsDefault: ret[i].Annotations["storageclass.kubernetes.io/is-default-class"] == "true",
