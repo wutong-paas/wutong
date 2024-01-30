@@ -63,6 +63,7 @@ type Config struct {
 	WtNamespace        string
 	ShowSQL            bool
 	ObsAPI             []string
+	ObsMimirAPI        []string
 }
 
 // APIServer  apiserver server
@@ -115,6 +116,7 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.WtNamespace, "wt-namespace", "wt-system", "wt component namespace")
 	fs.BoolVar(&a.ShowSQL, "show-sql", false, "The trigger for showing sql.")
 	fs.StringSliceVar(&a.ObsAPI, "obs-api", []string{"wutong-obs-application.wutong-obs:8089"}, "the obs api")
+	fs.StringSliceVar(&a.ObsMimirAPI, "obsmimir-api", []string{"obs-mimir-gateway.wutong-obs:8080"}, "the obsmimir api")
 }
 
 // SetLog 设置log
