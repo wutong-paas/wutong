@@ -9,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/client/kube"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/util"
 	corev1 "k8s.io/api/core/v1"
@@ -42,14 +43,16 @@ type NodeHandler interface {
 }
 
 // NewNodeHandler -
-func NewNodeHandler(clientset kubernetes.Interface) NodeHandler {
+func NewNodeHandler(clientset kubernetes.Interface, promcli prometheus.Interface) NodeHandler {
 	return &nodeAction{
 		clientset: clientset,
+		promcli:   promcli,
 	}
 }
 
 type nodeAction struct {
 	clientset kubernetes.Interface
+	promcli   prometheus.Interface
 }
 
 func (a *nodeAction) ListNodes(query string) (*model.ListNodeResponse, error) {
@@ -562,11 +565,12 @@ func (a *nodeAction) nodeInfo(node *corev1.Node) model.NodeInfo {
 	var cpuUsed = kube.GetNodeCPURequest(node.Name)
 	var memoryUsed = kube.GetNodeMemoryRequest(node.Name)
 	var podUsed = kube.GetNodePodCount(node.Name)
+	nodeInternalIP := nodeInternalIP(node)
 	result = model.NodeInfo{
 		NodeBaseInfo: model.NodeBaseInfo{
 			Name:       node.Name,
 			ExternalIP: nodeExternalIP(node),
-			InternalIP: nodeInternalIP(node),
+			InternalIP: nodeInternalIP,
 			Roles:      kube.NodeRoles(a.clientset, node),
 			OS:         node.Status.NodeInfo.OperatingSystem,
 			Arch:       node.Status.NodeInfo.Architecture,
@@ -586,12 +590,18 @@ func (a *nodeAction) nodeInfo(node *corev1.Node) model.NodeInfo {
 		PodCap:                  node.Status.Capacity.Pods().Value(),
 		PodUsed:                 podUsed,
 		DiskCap:                 util.DecimailFromFloat64(float64(node.Status.Capacity.StorageEphemeral().Value()) / 1024 / 1024 / 1024),
-		// DiskUsed:                0,
-		Schedulable: !node.Spec.Unschedulable,
+		Schedulable:             !node.Spec.Unschedulable,
 	}
 	result.CPUtilizationRate = util.DecimailFromFloat64(result.CPUUsed / result.CPUCap * 100)
 	result.MemoryUtilizationRate = util.DecimailFromFloat64(result.MemoryUsed / result.MemoryCap * 100)
 	result.PodUtilizationRate = util.DecimailFromFloat64(float64(result.PodUsed) / float64(result.PodCap) * 100)
+	diskAvailable := util.DecimailFromFloat64(GetNodeDiskAvailable(node.Name, nodeInternalIP, a.promcli) / 1024 / 1024 / 1024)
+	result.DiskUsed = util.DecimailFromFloat64(result.DiskCap - diskAvailable)
+	if result.DiskUsed <= 0 {
+		result.DiskUsed = 0
+	}
+	result.DiskUtilizationRate = util.DecimailFromFloat64(result.DiskUsed / result.DiskCap * 100)
+
 	return result
 }
 

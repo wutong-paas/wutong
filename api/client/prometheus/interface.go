@@ -29,4 +29,5 @@ type Interface interface {
 	GetAppMetadata(tenantEnvID, appID string) []Metadata
 	GetComponentMetadata(tenantEnvID, componentID string) []Metadata
 	GetMetricLabelSet(expr string, start, end time.Time) []map[string]string
+	GetEndpoint() string
 }

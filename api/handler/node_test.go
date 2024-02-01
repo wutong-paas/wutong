@@ -10,7 +10,7 @@ import (
 
 func TestListNodes(t *testing.T) {
 	clientset := kube.RegionClientset()
-	nodeAction := NewNodeHandler(clientset)
+	nodeAction := NewNodeHandler(clientset, nil)
 	nodes, err := nodeAction.ListNodes("")
 	if err != nil {
 		t.Fatal(err)
@@ -25,7 +25,7 @@ func TestListNodes(t *testing.T) {
 
 func TestCordonNode(t *testing.T) {
 	clientset := kube.RegionClientset()
-	nodeAction := NewNodeHandler(clientset)
+	nodeAction := NewNodeHandler(clientset, nil)
 	err := nodeAction.CordonNode("kind-01-control-plane", &model.CordonNodeRequest{
 		EvictPods: false,
 	})
@@ -37,7 +37,7 @@ func TestCordonNode(t *testing.T) {
 
 func TestUncordonNode(t *testing.T) {
 	clientset := kube.RegionClientset()
-	nodeAction := NewNodeHandler(clientset)
+	nodeAction := NewNodeHandler(clientset, nil)
 	err := nodeAction.UncordonNode("kind-01-control-plane")
 	if err != nil {
 		t.Fatal(err)

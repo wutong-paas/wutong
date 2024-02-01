@@ -276,11 +276,12 @@ type NodeInfo struct {
 	MemoryUsed              float64 `json:"memory_used"`             // 内存使用量
 	MemoryUtilizationRate   float64 `json:"memory_utilization_rate"` // 内存使用率
 	DiskCap                 float64 `json:"disk_cap"`                // 磁盘容量
-	DiskUsed                float64 `json:"disk_used"`
-	PodCap                  int64   `json:"pod_cap"` // Pod 容量
-	PodUsed                 int64   `json:"pod_used"`
-	PodUtilizationRate      float64 `json:"pod_utilization_rate"` // Pod 使用率
-	Schedulable             bool    `json:"schedulable"`
+	DiskUsed                float64 `json:"disk_used"`               // 磁盘使用量
+	DiskUtilizationRate     float64 `json:"disk_utilization_rate"`   // 磁盘使用率
+	PodCap                  int64   `json:"pod_cap"`                 // Pod 容量
+	PodUsed                 int64   `json:"pod_used"`                // Pod 使用量
+	PodUtilizationRate      float64 `json:"pod_utilization_rate"`    // Pod 使用率
+	Schedulable             bool    `json:"schedulable"`             // 是否可调度
 }
 
 type NodeProfile struct {
