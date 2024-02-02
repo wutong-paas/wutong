@@ -169,7 +169,7 @@ type TenantEnvServices struct {
 	// default is 10
 	ContainerRequestCPU int `gorm:"column:container_request_cpu;default:0" json:"container_request_cpu"`
 	// 容器CPU权重
-	// default is 500
+	// default is 2000
 	ContainerCPU int `gorm:"column:container_cpu;default:0" json:"container_cpu"`
 	// 容器请求内存
 	// default is 512
@@ -280,7 +280,7 @@ type TenantEnvServicesDelete struct {
 	// 容器请求CPU
 	ContainerRequestCPU int `gorm:"column:container_request_cpu" json:"container_request_cpu"`
 	// 容器CPU权重
-	ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu"`
+	ContainerCPU int `gorm:"column:container_cpu;default:2000" json:"container_cpu"`
 	// 容器请求内存
 	ContainerRequestMemory int `gorm:"column:container_request_memory" json:"container_request_memory"`
 	// 容器最大内存

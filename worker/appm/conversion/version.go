@@ -516,7 +516,7 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 		as.ContainerMemory = 512
 	}
 	if as.ContainerCPU == 0 {
-		as.ContainerCPU = 500
+		as.ContainerCPU = 2000
 	}
 
 	rr := createResourcesBySetting(int64(as.ContainerRequestMemory), int64(as.ContainerMemory), int64(as.ContainerRequestCPU), int64(as.ContainerCPU), as.ContainerGPUType, int64(as.ContainerGPU))

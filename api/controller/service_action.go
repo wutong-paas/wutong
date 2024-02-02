@@ -231,7 +231,7 @@ func (t *TenantEnvStruct) VerticalService(w http.ResponseWriter, r *http.Request
 		limitCPU = &cpuInt
 	}
 	if limitCPU == nil || limitCPU == util.Ptr(0) {
-		limitCPU = util.Ptr(500)
+		limitCPU = util.Ptr(2000)
 	}
 	if reqMemory, ok := data["container_request_memory"].(float64); ok {
 		reqMemoryInt := int(reqMemory)

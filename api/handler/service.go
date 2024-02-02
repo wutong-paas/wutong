@@ -573,7 +573,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 		ts.ServiceName = ts.ServiceAlias
 	}
 	if ts.ContainerCPU <= 0 {
-		ts.ContainerCPU = 500
+		ts.ContainerCPU = 2000
 	}
 	if ts.ContainerRequestCPU > ts.ContainerCPU {
 		return fmt.Errorf("request cpu must less than limit cpu")
@@ -942,7 +942,7 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 		ts.ContainerCPU = cpu
 	}
 	if ts.ContainerCPU == 0 {
-		ts.ContainerCPU = 500
+		ts.ContainerCPU = 2000
 	}
 	if ts.ContainerMemory < ts.ContainerRequestMemory {
 		return fmt.Errorf("request memory must less than limit memory")
