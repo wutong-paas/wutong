@@ -76,11 +76,10 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	nodeCapaticyMetrics, nodeFreeStorageMetrics := c.GetNodeStorageMetrics(NodeCapacityStorageMetric), c.GetNodeStorageMetrics(NodFreeStorageMetric)
 
-	usedNodeList := make([]*corev1.Node, len(nodes))
-	for i := range nodes {
-		node := nodes[i]
+	usedNodeList := make([]*corev1.Node, 0)
+	for _, node := range nodes {
 		if !node.Spec.Unschedulable {
-			usedNodeList[i] = node
+			usedNodeList = append(usedNodeList, node)
 		}
 	}
 
@@ -92,8 +91,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	var totalReqCPU, totalReqMem float32
 	tenantEnvPods := make(map[string]int)
 
-	for i := range usedNodeList {
-		node := usedNodeList[i]
+	for _, node := range usedNodeList {
 		pods, err := c.listPods(ctx, node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("list pods: %v", err)
@@ -115,8 +113,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		}
 		totalCapacityPods += nodeResource.CapacityPods
 		for _, pod := range pods {
+			nodeResource.UsedPods++
 			if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
-				nodeResource.UsedPods++
 				for _, c := range pod.Spec.Containers {
 					nodeResource.RawUsedCPU += float32(c.Resources.Requests.Cpu().MilliValue())
 					nodeResource.RawUsedMem += float32(c.Resources.Requests.Memory().Value())
@@ -225,6 +223,9 @@ func (c *clusterAction) listPods(ctx context.Context, nodeName string) (pods []c
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String()})
 	if err != nil {
 		return pods, err
+	}
+	if podList == nil {
+		return pods, nil
 	}
 
 	return podList.Items, nil
