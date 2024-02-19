@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -43,9 +44,10 @@ const (
 
 // ClusterEvent
 type ClusterEvent struct {
-	Level     ClusterEventLevel `json:"level"`
-	Message   string            `json:"message"`
-	CreatedAt string            `json:"created_at"`
+	Level             ClusterEventLevel `json:"level"`
+	Message           string            `json:"message"`
+	CreatedAt         string            `json:"created_at"`
+	CreationTimestamp time.Time         `json:"created_at_time_stamps"`
 }
 
 func ClusterEventFrom(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
@@ -79,9 +81,10 @@ func podEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent
 		return nil
 	}
 	return &ClusterEvent{
-		Level:     ClusterEventLevelWarning,
-		Message:   message,
-		CreatedAt: event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		Level:             ClusterEventLevelWarning,
+		Message:           message,
+		CreatedAt:         event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		CreationTimestamp: event.CreationTimestamp.Time,
 	}
 }
 
@@ -97,8 +100,9 @@ func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEven
 		}
 		message = fmt.Sprintf("节点[%s]端口[:%s]已被占用", event.InvolvedObject.Name, reasonParts[1])
 		return &ClusterEvent{
-			Level:   ClusterEventLevelWarning,
-			Message: message,
+			Level:             ClusterEventLevelWarning,
+			Message:           message,
+			CreationTimestamp: event.CreationTimestamp.Time,
 		}
 	}
 
@@ -113,9 +117,10 @@ func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEven
 		return nil
 	}
 	return &ClusterEvent{
-		Level:     ClusterEventLevelWarning,
-		Message:   message,
-		CreatedAt: event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		Level:             ClusterEventLevelWarning,
+		Message:           message,
+		CreatedAt:         event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		CreationTimestamp: event.CreationTimestamp.Time,
 	}
 }
 

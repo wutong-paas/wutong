@@ -691,6 +691,9 @@ func nodeAnnotations(node *corev1.Node) []model.Annotation {
 func nodeTaints(node *corev1.Node) []model.Taint {
 	var result = make([]model.Taint, 0)
 	for _, taint := range node.Spec.Taints {
+		if taint.Key == "node.kubernetes.io/unschedulable" {
+			continue
+		}
 		result = append(result, model.Taint{
 			Key:    string(taint.Key),
 			Value:  string(taint.Value),

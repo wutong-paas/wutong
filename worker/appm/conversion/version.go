@@ -94,7 +94,7 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 			Containers:       []corev1.Container{*container},
 			NodeSelector:     nodeSelector,
 			Tolerations:      tolerations,
-			Affinity:         createAffinity(as, dbmanager),
+			Affinity:         createAffinity(as, dbmanager, nodeName),
 			HostAliases:      createHostAliases(as),
 			Hostname: func() string {
 				if nodeID, ok := as.ExtensionSet["hostname"]; ok {
@@ -102,7 +102,7 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 				}
 				return ""
 			}(),
-			NodeName: nodeName,
+			// NodeName: nodeName, // 不适合使用 nodeName 指定节点，因为如果一旦该节点被禁止调度，Pod 会不断创建
 			HostNetwork: func() bool {
 				if _, ok := as.ExtensionSet["hostnetwork"]; ok {
 					return true
@@ -687,7 +687,7 @@ func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]stri
 	return selector
 }
 
-func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
+func createAffinity(as *v1.AppService, dbmanager db.Manager, nodeName string) *corev1.Affinity {
 	var affinity corev1.Affinity
 	nsr := make([]corev1.NodeSelectorRequirement, 0)
 	podAffinity := make([]corev1.PodAffinityTerm, 0)
@@ -791,6 +791,29 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	if len(podAntAffinity) > 0 {
 		affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: podAntAffinity,
+		}
+	}
+	if nodeName != "" {
+		af := corev1.PreferredSchedulingTerm{
+			Weight: 100,
+			Preference: corev1.NodeSelectorTerm{
+				MatchExpressions: []corev1.NodeSelectorRequirement{
+					{
+						Key:      "kubernetes.io/hostname",
+						Operator: corev1.NodeSelectorOpIn,
+						Values:   []string{nodeName},
+					},
+				},
+			},
+		}
+		if affinity.NodeAffinity == nil {
+			affinity.NodeAffinity = &corev1.NodeAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+					af,
+				},
+			}
+		} else {
+			affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution = append(affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution, af)
 		}
 	}
 	return &affinity

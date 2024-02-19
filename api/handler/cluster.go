@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -76,13 +77,6 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	nodeCapaticyMetrics, nodeFreeStorageMetrics := c.GetNodeStorageMetrics(NodeCapacityStorageMetric), c.GetNodeStorageMetrics(NodFreeStorageMetric)
 
-	usedNodeList := make([]*corev1.Node, 0)
-	for _, node := range nodes {
-		if !node.Spec.Unschedulable {
-			usedNodeList = append(usedNodeList, node)
-		}
-	}
-
 	var wtMemR, wtCPUR int64
 	var nodeResources []*model.NodeResource
 	var totalCapacityPods, totalUsedPods int64
@@ -91,7 +85,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	var totalReqCPU, totalReqMem float32
 	tenantEnvPods := make(map[string]int)
 
-	for _, node := range usedNodeList {
+	for _, node := range nodes {
 		pods, err := c.listPods(ctx, node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("list pods: %v", err)
@@ -454,6 +448,14 @@ func (c *clusterAction) GetClusterEvents(ctx context.Context) ([]model.ClusterEv
 			}
 			clusterEvents = append(clusterEvents, *clusterEvent)
 		}
+
+		slices.SortFunc(clusterEvents, func(i, j model.ClusterEvent) int {
+			if i.CreationTimestamp.Unix() >= j.CreationTimestamp.Unix() {
+				return -1
+			} else {
+				return 1
+			}
+		})
 		cachedClusterEvents = &clusterEventsCache{
 			cacheTime: time.Now(),
 			cacheData: clusterEvents,

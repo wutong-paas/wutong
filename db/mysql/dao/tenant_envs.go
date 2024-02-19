@@ -607,6 +607,15 @@ func (t *TenantEnvServicesDeleteImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
+// GetServiceByID 获取服务通过服务id
+func (t *TenantEnvServicesDeleteImpl) GetServiceByID(serviceID string) (*model.TenantEnvServicesDelete, error) {
+	var service model.TenantEnvServicesDelete
+	if err := t.DB.Where("service_id=?", serviceID).Find(&service).Error; err != nil {
+		return nil, err
+	}
+	return &service, nil
+}
+
 // GetTenantEnvServicesDeleteByCreateTime -
 func (t *TenantEnvServicesDeleteImpl) GetTenantEnvServicesDeleteByCreateTime(createTime time.Time) ([]*model.TenantEnvServicesDelete, error) {
 	var ServiceDel []*model.TenantEnvServicesDelete
