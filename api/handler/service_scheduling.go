@@ -20,9 +20,11 @@ func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.Ge
 		})
 	}
 
-	node, _ := db.GetManager().TenantEnvServiceSchedulingNodeDao().GetServiceSchedulingNode(serviceID)
-	if node != nil {
-		result.Current.Node = node.NodeName
+	nodes, _ := db.GetManager().TenantEnvServiceSchedulingNodeDao().ListServiceSchedulingNodes(serviceID)
+	if len(nodes) > 0 {
+		for _, node := range nodes {
+			result.Current.Nodes = append(result.Current.Nodes, node.NodeName)
+		}
 	}
 
 	tolerations, _ := db.GetManager().TenantEnvServiceSchedulingTolerationDao().ListServiceSchedulingTolerations(serviceID)
@@ -115,23 +117,26 @@ func (s *ServiceAction) SetServiceSchedulingNode(serviceID string, req *model.Se
 		return nil
 	}
 
-	err := db.GetManager().TenantEnvServiceSchedulingNodeDao().DeleteModel(serviceID, req.NodeName)
+	err := db.GetManager().TenantEnvServiceSchedulingNodeDao().DeleteModel(serviceID)
 	if err != nil {
 		logrus.Errorf("delete service scheduling node failure, error: %v", err)
 	}
 
-	if req.NodeName == "" {
+	if len(req.Nodes) == 0 {
 		return nil
 	}
 
-	node := dbmodel.TenantEnvServiceSchedulingNode{
-		ServiceID: serviceID,
-		NodeName:  req.NodeName,
+	for _, nodeName := range req.Nodes {
+		node := dbmodel.TenantEnvServiceSchedulingNode{
+			ServiceID: serviceID,
+			NodeName:  nodeName,
+		}
+		err = db.GetManager().TenantEnvServiceSchedulingNodeDao().AddModel(&node)
+		if err != nil {
+			return errors.New("设置调度节点失败！")
+		}
 	}
-	err = db.GetManager().TenantEnvServiceSchedulingNodeDao().AddModel(&node)
-	if err != nil {
-		return errors.New("设置调度节点失败！")
-	}
+
 	return nil
 }
 

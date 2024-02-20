@@ -70,14 +70,12 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 	if as.NeedProxy {
 		dv.SetVolume(dbmodel.ShareFileVolumeType, "kube-config", "/etc/kubernetes", "/wtdata/kubernetes", corev1.HostPathDirectoryOrCreate, true)
 	}
-	nodeName := createNodeName(as, dbmanager)
+
 	var nodeSelector map[string]string
 	var tolerations []corev1.Toleration
-	// 如果已经指定了节点，那么就不需要标签选择器和容忍度了
-	if nodeName == "" {
-		nodeSelector = createNodeSelector(as, dbmanager)
-		tolerations = createNodeTolerations(as, dbmanager)
-	}
+	nodeSelector = createNodeSelector(as, dbmanager)
+	tolerations = createNodeTolerations(as, dbmanager)
+
 	injectLabels := getInjectLabels(as)
 	podtmpSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -94,7 +92,7 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 			Containers:       []corev1.Container{*container},
 			NodeSelector:     nodeSelector,
 			Tolerations:      tolerations,
-			Affinity:         createAffinity(as, dbmanager, nodeName),
+			Affinity:         createAffinity(as, dbmanager),
 			HostAliases:      createHostAliases(as),
 			Hostname: func() string {
 				if nodeID, ok := as.ExtensionSet["hostname"]; ok {
@@ -666,14 +664,6 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 	return nil
 }
 
-func createNodeName(as *v1.AppService, dbmanager db.Manager) string {
-	node, _ := dbmanager.TenantEnvServiceSchedulingNodeDao().GetServiceSchedulingNode(as.ServiceID)
-	if node != nil {
-		return node.NodeName
-	}
-	return ""
-}
-
 func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]string {
 	selector := make(map[string]string)
 	labels, err := dbmanager.TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(as.ServiceID)
@@ -687,7 +677,7 @@ func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]stri
 	return selector
 }
 
-func createAffinity(as *v1.AppService, dbmanager db.Manager, nodeName string) *corev1.Affinity {
+func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	var affinity corev1.Affinity
 	nsr := make([]corev1.NodeSelectorRequirement, 0)
 	podAffinity := make([]corev1.PodAffinityTerm, 0)
@@ -793,7 +783,12 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager, nodeName string) *c
 			RequiredDuringSchedulingIgnoredDuringExecution: podAntAffinity,
 		}
 	}
-	if nodeName != "" {
+	nodes, _ := dbmanager.TenantEnvServiceSchedulingNodeDao().ListServiceSchedulingNodes(as.ServiceID)
+	if len(nodes) > 0 {
+		nodeNames := make([]string, len(nodes))
+		for i, n := range nodes {
+			nodeNames[i] = n.NodeName
+		}
 		af := corev1.PreferredSchedulingTerm{
 			Weight: 100,
 			Preference: corev1.NodeSelectorTerm{
@@ -801,7 +796,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager, nodeName string) *c
 					{
 						Key:      "kubernetes.io/hostname",
 						Operator: corev1.NodeSelectorOpIn,
-						Values:   []string{nodeName},
+						Values:   nodeNames,
 					},
 				},
 			},

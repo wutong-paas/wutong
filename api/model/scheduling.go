@@ -11,7 +11,7 @@ type GetServiceSchedulingDetailsResponse struct {
 
 type SchedulingConfig struct {
 	Labels      []SchedulingLabel      `json:"labels"`
-	Node        string                 `json:"node"`
+	Nodes       []string               `json:"nodes"`
 	Tolerations []SchedulingToleration `json:"tolerations"`
 }
 
@@ -52,7 +52,8 @@ type DeleteServiceSchedulingLabelRequest struct {
 }
 
 type SetServiceSchedulingNodeRequest struct {
-	NodeName string `json:"node_name"`
+	Nodes []string `json:"nodes"`
+	// NodeName string   `json:"node_name"`
 }
 
 type AddServiceSchedulingTolerationRequest struct {

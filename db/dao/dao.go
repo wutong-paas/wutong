@@ -378,7 +378,7 @@ type TenantEnvServiceSchedulingLabelDao interface {
 type TenantEnvServiceSchedulingNodeDao interface {
 	Dao
 	DelDao
-	GetServiceSchedulingNode(serviceID string) (*model.TenantEnvServiceSchedulingNode, error)
+	ListServiceSchedulingNodes(serviceID string) ([]*model.TenantEnvServiceSchedulingNode, error)
 }
 
 type TenantEnvServiceSchedulingTolerationDao interface {

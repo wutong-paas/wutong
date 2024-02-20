@@ -389,7 +389,7 @@ func (v2 *V2) serviceSchedulingRouter() chi.Router {
 	r.Put("/labels", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SYNEVENTTYPE))
 	r.Delete("/labels", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingLabel, dbmodel.TargetTypeService, "删除调度标签", dbmodel.SYNEVENTTYPE))
 
-	r.Post("/node", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SYNEVENTTYPE))
+	r.Post("/nodes", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SYNEVENTTYPE))
 
 	r.Post("/tolerations", middleware.WrapEL(controller.GetManager().AddServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
 	r.Put("/tolerations", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))

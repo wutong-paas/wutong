@@ -62,6 +62,9 @@ func (a *schedulingAction) ListSchedulingTaints() (*model.ListSchedulingTaintsRe
 
 	for _, node := range nodes {
 		for _, taint := range node.Spec.Taints {
+			if taint.Key == "node.kubernetes.io/unschedulable" {
+				continue
+			}
 			result.Taints = result.Taints.TryAppend(taint)
 		}
 	}

@@ -1707,15 +1707,15 @@ func (t *ServiceSchedulingNodeDaoImpl) DeleteModel(serviceID string, args ...int
 	return nil
 }
 
-func (t *ServiceSchedulingNodeDaoImpl) GetServiceSchedulingNode(serviceID string) (*model.TenantEnvServiceSchedulingNode, error) {
-	var node model.TenantEnvServiceSchedulingNode
-	if err := t.DB.Where("service_id=?", serviceID).Find(&node).Error; err != nil {
+func (t *ServiceSchedulingNodeDaoImpl) ListServiceSchedulingNodes(serviceID string) ([]*model.TenantEnvServiceSchedulingNode, error) {
+	var nodes []*model.TenantEnvServiceSchedulingNode
+	if err := t.DB.Where("service_id=?", serviceID).Find(&nodes).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return &node, nil
+			return nodes, nil
 		}
 		return nil, err
 	}
-	return &node, nil
+	return nodes, nil
 }
 
 type ServiceSchedulingTolerationDaoImpl struct {
