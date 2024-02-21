@@ -702,15 +702,6 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 		return nil, fmt.Errorf("获取虚拟机 %s 端口列表失败！", vmID)
 	}
 
-	slices.SortFunc(svcList, func(i, j *corev1.Service) int {
-		if i.CreationTimestamp.Before(&j.CreationTimestamp) {
-			return 1
-		} else if i.CreationTimestamp.After(j.CreationTimestamp.Time) {
-			return -1
-		}
-		return 0
-	})
-
 	for _, svc := range svcList {
 		protocol := svc.Labels["wutong.io/vm-port-protocol"]
 		portNumber := cast.ToInt(svc.Labels["wutong.io/vm-port"])
@@ -749,6 +740,15 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 			result.Ports = append(result.Ports, vmPort)
 		}
 	}
+
+	slices.SortFunc(result.Ports, func(i, j api_model.VMPort) int {
+		if i.VMPort > j.VMPort {
+			return 1
+		} else if i.VMPort < j.VMPort {
+			return -1
+		}
+		return 0
+	})
 
 	result.Total = len(result.Ports)
 	return result, nil
