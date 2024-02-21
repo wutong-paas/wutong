@@ -46,6 +46,11 @@ func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.Ge
 			})
 		}
 	}
+	for _, label := range result.Current.Labels {
+		if !labelContains(result.Selections.Labels, label) {
+			result.Selections.Labels = append(result.Selections.Labels, label)
+		}
+	}
 
 	lsnr, _ := GetSchedulingHandler().ListSchedulingNodes()
 	if lsnr != nil {
@@ -58,6 +63,15 @@ func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.Ge
 	}
 
 	return &result, nil
+}
+
+func labelContains(labels []model.SchedulingLabel, label model.SchedulingLabel) bool {
+	for _, l := range labels {
+		if l.Key == label.Key && l.Value == label.Value {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *ServiceAction) AddServiceSchedulingLabel(serviceID string, req *model.AddServiceSchedulingLabelRequest) error {

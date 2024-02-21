@@ -785,9 +785,9 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	}
 	nodes, _ := dbmanager.TenantEnvServiceSchedulingNodeDao().ListServiceSchedulingNodes(as.ServiceID)
 	if len(nodes) > 0 {
-		nodeNames := make([]string, len(nodes))
-		for i, n := range nodes {
-			nodeNames[i] = n.NodeName
+		var nodeNames []string
+		for _, n := range nodes {
+			nodeNames = append(nodeNames, n.NodeName)
 		}
 		af := corev1.PreferredSchedulingTerm{
 			Weight: 100,

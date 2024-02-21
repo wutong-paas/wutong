@@ -531,7 +531,7 @@ type TenantEnvServiceSchedulingNode struct {
 }
 
 func (t *TenantEnvServiceSchedulingNode) TableName() string {
-	return "tenant_env_service_scheduling_node"
+	return "tenant_env_service_scheduling_nodes"
 }
 
 type TenantEnvServiceSchedulingToleration struct {

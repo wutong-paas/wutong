@@ -1678,7 +1678,7 @@ type ServiceSchedulingNodeDaoImpl struct {
 func (t *ServiceSchedulingNodeDaoImpl) AddModel(mo model.Interface) error {
 	node := mo.(*model.TenantEnvServiceSchedulingNode)
 	var oldNode model.TenantEnvServiceSchedulingNode
-	if ok := t.DB.Where("service_id=?", node.ServiceID).Find(&oldNode).RecordNotFound(); ok {
+	if ok := t.DB.Where("service_id=? and node_name=?", node.ServiceID, node.NodeName).Find(&oldNode).RecordNotFound(); ok {
 		if err := t.DB.Create(node).Error; err != nil {
 			return err
 		}
