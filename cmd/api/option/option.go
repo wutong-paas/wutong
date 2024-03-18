@@ -64,6 +64,8 @@ type Config struct {
 	ShowSQL            bool
 	ObsAPI             []string
 	ObsMimirAPI        []string
+	ObsTempoAPI        []string
+	ObsLokiAPI         []string
 }
 
 // APIServer  apiserver server
@@ -117,6 +119,8 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&a.ShowSQL, "show-sql", false, "The trigger for showing sql.")
 	fs.StringSliceVar(&a.ObsAPI, "obs-api", []string{"wutong-obs-application.wutong-obs:8089"}, "the obs api")
 	fs.StringSliceVar(&a.ObsMimirAPI, "obsmimir-api", []string{"obs-mimir-gateway.wutong-obs:8080"}, "the obsmimir api")
+	fs.StringSliceVar(&a.ObsTempoAPI, "obstempo-api", []string{"obs-tempo.wutong-obs:3200"}, "the obstempo api")
+	fs.StringSliceVar(&a.ObsLokiAPI, "obsloki-api", []string{"obs-loki-gateway.wutong-obs"}, "the obsloki api")
 }
 
 // SetLog 设置log

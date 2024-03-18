@@ -263,6 +263,16 @@ func Proxy(next http.Handler) http.Handler {
 			handler.GetObsMimirProxy().Proxy(w, r)
 			return
 		}
+		if strings.HasPrefix(r.RequestURI, "/obstempo") {
+			r.URL.Path = strings.Replace(r.URL.Path, "/obstempo", "", 1)
+			handler.GetObsTempoProxy().Proxy(w, r)
+			return
+		}
+		if strings.HasPrefix(r.RequestURI, "/obsloki") {
+			r.URL.Path = strings.Replace(r.URL.Path, "/obsloki", "", 1)
+			handler.GetObsLokiProxy().Proxy(w, r)
+			return
+		}
 		if strings.HasPrefix(r.RequestURI, "/obs") {
 			r.URL.Path = strings.Replace(r.URL.Path, "/obs", "", 1)
 			handler.GetObsProxy().Proxy(w, r)
