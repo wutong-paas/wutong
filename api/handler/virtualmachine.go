@@ -215,6 +215,7 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 									InterfaceBindingMethod: kubevirtcorev1.InterfaceBindingMethod{
 										Masquerade: &kubevirtcorev1.InterfaceMasquerade{},
 									},
+									MacAddress: util.GenerateMACAddress(),
 								},
 							},
 						},
