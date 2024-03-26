@@ -107,8 +107,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		}
 		totalCapacityPods += nodeResource.CapacityPods
 		for _, pod := range pods {
-			nodeResource.UsedPods++
 			if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
+				nodeResource.UsedPods++
 				for _, c := range pod.Spec.Containers {
 					nodeResource.RawUsedCPU += float32(c.Resources.Requests.Cpu().MilliValue())
 					nodeResource.RawUsedMem += float32(c.Resources.Requests.Memory().Value())
