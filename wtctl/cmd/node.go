@@ -104,7 +104,7 @@ func getStatusShow(v *client.HostNode) (status string) {
 		status: v.Status,
 		color:  color.FgGreen,
 	}
-	if v.Role.HasRule("compute") && !v.NodeStatus.CurrentScheduleStatus {
+	if v.Role.HasRole("compute") && !v.NodeStatus.CurrentScheduleStatus {
 		nss.message = append(nss.message, "unschedulable")
 		nss.color = color.FgYellow
 	}
@@ -252,7 +252,7 @@ func NewCmdNode() cli.Command {
 					serviceTable.AddHeaders("Uid", "IP", "HostName", "NodeRole", "Status")
 					var rest []*client.HostNode
 					for _, v := range list {
-						if v.Role.HasRule("manage") {
+						if v.Role.HasRole("manage") {
 							handleStatus(serviceTable, v)
 						} else {
 							rest = append(rest, v)
@@ -278,7 +278,7 @@ func NewCmdNode() cli.Command {
 					serviceTable := termtables.CreateTable()
 					serviceTable.AddHeaders("Uid", "HostName", "CapCpu(核)", "CapMemory(M)", "UsedCpu(核)", "UsedMemory(M)", "CpuLimits(核)", "MemoryLimits(M)", "CpuUsageRate(%)", "MemoryUsedRate(%)")
 					for _, v := range list {
-						if v.Role.HasRule("compute") && v.Status != "offline" {
+						if v.Role.HasRole("compute") && v.Status != "offline" {
 							nodeResource, err := clients.RegionClient.Nodes().GetNodeResource(v.ID)
 							handleErr(err)
 							CPURequests := strconv.FormatFloat(float64(nodeResource.CPURequests)/float64(1000), 'f', 2, 64)
@@ -338,7 +338,7 @@ func NewCmdNode() cli.Command {
 					}
 					node, err := clients.RegionClient.Nodes().Get(id)
 					handleErr(err)
-					if !node.Role.HasRule("compute") {
+					if !node.Role.HasRole("compute") {
 						logrus.Errorf("管理节点不支持此功能")
 						return nil
 					}
@@ -360,7 +360,7 @@ func NewCmdNode() cli.Command {
 					}
 					node, err := clients.RegionClient.Nodes().Get(id)
 					handleErr(err)
-					if !node.Role.HasRule("compute") {
+					if !node.Role.HasRole("compute") {
 						logrus.Errorf("管理节点不支持此功能")
 						return nil
 					}
@@ -646,7 +646,7 @@ func installNode(node *client.HostNode) {
 	}
 	fmt.Println("------------------------------------")
 	fmt.Printf("Install node %s successful \n", node.ID)
-	if node.Role.HasRule("compute") {
+	if node.Role.HasRole("compute") {
 		fmt.Printf("You can do 'wtctl node up %s' to get this compute node to join the cluster workload \n", node.ID)
 	}
 }

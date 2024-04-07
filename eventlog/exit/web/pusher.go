@@ -34,14 +34,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-//WebsocketMessage websocket message
+// WebsocketMessage websocket message
 type WebsocketMessage struct {
 	Event   string      `json:"event"`
 	Data    interface{} `json:"data"`
 	Channel string      `json:"channel,omitempty"`
 }
 
-//Encode return json encode data
+// Encode return json encode data
 func (w *WebsocketMessage) Encode() []byte {
 	reb, _ := ffjson.Marshal(w)
 	return reb
@@ -52,7 +52,7 @@ type sendMessage struct {
 	data        []byte
 }
 
-//PubContext websocket context
+// PubContext websocket context
 type PubContext struct {
 	ID          string
 	upgrader    websocket.Upgrader
@@ -67,7 +67,7 @@ type PubContext struct {
 	once        sync.Once
 }
 
-//Chan handle
+// Chan handle
 type Chan struct {
 	ch      chan *db.EventLogMessage
 	id      string
@@ -78,7 +78,7 @@ type Chan struct {
 	closed  *bool
 }
 
-//NewPubContext create context
+// NewPubContext create context
 func NewPubContext(upgrader websocket.Upgrader,
 	httpWriter http.ResponseWriter,
 	httpRequest *http.Request,
@@ -95,6 +95,7 @@ func NewPubContext(upgrader websocket.Upgrader,
 		close:       make(chan struct{}),
 	}
 }
+
 func (p *PubContext) handleMessage(me []byte) {
 	var wm WebsocketMessage
 	if err := ffjson.Unmarshal(me, &wm); err != nil {
@@ -108,6 +109,7 @@ func (p *PubContext) handleMessage(me []byte) {
 		p.handleCancelSubscribe(wm)
 	}
 }
+
 func (p *PubContext) createChan(channel, chantype, id string) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
@@ -150,6 +152,7 @@ func (p *PubContext) createChan(channel, chantype, id string) {
 		p.server.log.Infof("pubsub context %s channel %s create success", p.ID, c.channel)
 	}
 }
+
 func (p *PubContext) removeChan(key string) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
@@ -210,7 +213,7 @@ func (c *Chan) close() {
 		return
 	}
 	c.p.removeChan(c.channel)
-	c.p.server.storemanager.RealseWebSocketMessageChan(c.chtype, c.id, c.p.ID)
+	c.p.server.storemanager.ReleaseWebSocketMessageChan(c.chtype, c.id, c.p.ID)
 	c.p.server.log.Infof("pubsub message chan %s closed", c.channel)
 	var close = true
 	c.closed = &close
@@ -301,13 +304,13 @@ func (p *PubContext) send(sendClose chan struct{}) {
 	}
 }
 
-//SendMessage send websocket message
+// SendMessage send websocket message
 func (p *PubContext) SendMessage(message WebsocketMessage) error {
 	p.sendQueue <- sendMessage{messageType: websocket.TextMessage, data: message.Encode()}
 	return nil
 }
 
-//SendWebsocketMessage send websocket message
+// SendWebsocketMessage send websocket message
 func (p *PubContext) SendWebsocketMessage(message int) error {
 	p.sendQueue <- sendMessage{messageType: message, data: []byte{}}
 	return nil
@@ -324,7 +327,7 @@ func (p *PubContext) sendPing(closed chan struct{}) {
 	}
 }
 
-//Start start context
+// Start start context
 func (p *PubContext) Start() {
 	var err error
 	p.conn, err = p.upgrader.Upgrade(p.httpWriter, p.httpRequest, nil)
@@ -333,9 +336,9 @@ func (p *PubContext) Start() {
 		return
 	}
 	sendclosed := make(chan struct{})
-	go p.send(sendclosed)
 	pingclosed := make(chan struct{})
 	readclosed := make(chan struct{})
+	go p.send(sendclosed)
 	go p.sendPing(pingclosed)
 	go p.readMessage(readclosed)
 	select {
@@ -346,17 +349,17 @@ func (p *PubContext) Start() {
 	}
 }
 
-//Stop close context
+// Stop close context
 func (p *PubContext) Stop() {
 	if p.conn != nil {
 		p.conn.Close()
 	}
 	for _, v := range p.chans {
-		p.server.storemanager.RealseWebSocketMessageChan(v.chtype, v.id, p.ID)
+		p.server.storemanager.ReleaseWebSocketMessageChan(v.chtype, v.id, p.ID)
 	}
 }
 
-//Close close the context
+// Close close the context
 func (p *PubContext) Close() {
 	p.once.Do(func() {
 		close(p.close)
@@ -375,12 +378,12 @@ func (s *SocketServer) pubsub(w http.ResponseWriter, r *http.Request) {
 			return true
 		},
 	}
-	context := NewPubContext(upgrader, w, r, s)
-	defer context.Stop()
-	s.log.Infof("websocket pubsub context running %s", context.ID)
-	s.pubsubCtx[context.ID] = context
+	pubctx := NewPubContext(upgrader, w, r, s)
+	defer pubctx.Stop()
+	s.log.Infof("websocket pubsub context running %s", pubctx.ID)
+	s.pubsubCtx[pubctx.ID] = pubctx
 	s.log.Infof("websocket pubsub context count %d", len(s.pubsubCtx))
-	context.Start()
-	s.log.Infof("websocket pubsub context closed %s", context.ID)
-	delete(s.pubsubCtx, context.ID)
+	pubctx.Start()
+	s.log.Infof("websocket pubsub context closed %s", pubctx.ID)
+	delete(s.pubsubCtx, pubctx.ID)
 }

@@ -1,5 +1,5 @@
 FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-eventlog-base:stable
-ARG RELEASE_DESC
+
 ARG TARGETARCH
 
 WORKDIR /run
@@ -9,7 +9,7 @@ COPY entrypoint.sh /run/entrypoint.sh
 COPY build/libzmq/lib/libzmq.so.3 /tmp
 
 RUN if [ ${TARGETARCH} = "amd64" ]; then \
-        cp /tmp/libzmq.so.3 /usr/lib/libzmq.so.3 && rm /tmp/libzmq.so.3; \
+    cp /tmp/libzmq.so.3 /usr/lib/libzmq.so.3 && rm /tmp/libzmq.so.3; \
     fi
 
 EXPOSE 6366
@@ -18,5 +18,5 @@ EXPOSE 6364
 EXPOSE 6363
 EXPOSE 6362
 EXPOSE 6607
-ENV RELEASE_DESC=${RELEASE_DESC}
+
 ENTRYPOINT  ["/run/entrypoint.sh"]

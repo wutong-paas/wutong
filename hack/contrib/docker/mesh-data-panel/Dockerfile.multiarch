@@ -1,5 +1,5 @@
 FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-mesh-data-panel-base:stable
-ARG RELEASE_DESC
+
 ARG TARGETARCH
 
 WORKDIR /run
@@ -10,5 +10,4 @@ COPY envoy_config.yaml /run/envoy_config.yaml
 
 RUN chmod 755 /run/entrypoint.sh
 
-ENV RELEASE_DESC=${RELEASE_DESC}
 ENTRYPOINT ["/run/entrypoint.sh"]

@@ -32,7 +32,7 @@ var urlData = `
 
 func BenchmarkHandleMonitorMessage(b *testing.B) {
 	manager, err := NewManager(conf.EventStoreConf{
-		HandleDockerLogCoreNumber: 10,
+		HandleDockerLogGoroutinues: 10,
 		DB: conf.DBConf{
 			Type: "mysql",
 			URL:  "root:admin@tcp(127.0.0.1:3306)/event",
@@ -55,7 +55,7 @@ func BenchmarkHandleMonitorMessage(b *testing.B) {
 
 func TestHandleMonitorMessage(t *testing.T) {
 	manager, err := NewManager(conf.EventStoreConf{
-		HandleDockerLogCoreNumber: 10,
+		HandleDockerLogGoroutinues: 10,
 		DB: conf.DBConf{
 			Type: "mysql",
 			URL:  "root:admin@tcp(127.0.0.1:3306)/event",

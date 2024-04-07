@@ -136,7 +136,7 @@ func (n *NodeManager) Start(errchan chan error) error {
 	if err := n.controller.Online(); err != nil {
 		return err
 	}
-	if n.currentNode.Role.HasRule(client.ComputeNode) && n.cfg.EnableCollectLog {
+	if n.currentNode.Role.HasRole(client.ComputeNode) && n.cfg.EnableCollectLog {
 		logrus.Infof("this node is %s node and enable collect conatiner log", n.currentNode.Role)
 		if err := n.clm.Start(); err != nil {
 			return err
@@ -148,7 +148,7 @@ func (n *NodeManager) Start(errchan chan error) error {
 	//TODO: imageGCManager with containerd
 	if n.cfg.EnableImageGC && n.cfg.ContainerRuntime == "docker" {
 		logrus.Info("Start the image garbage collection mechanism")
-		if n.currentNode.Role.HasRule(client.ManageNode) && !n.currentNode.Role.HasRule(client.ComputeNode) {
+		if n.currentNode.Role.HasRole(client.ManageNode) && !n.currentNode.Role.HasRole(client.ComputeNode) {
 			n.imageGCManager.SetServiceImages(n.controller.ListServiceImages())
 			go n.imageGCManager.Start()
 		}
@@ -171,7 +171,7 @@ func (n *NodeManager) Stop() {
 	if n.healthy != nil {
 		n.healthy.Stop()
 	}
-	if n.clm != nil && n.currentNode.Role.HasRule(client.ComputeNode) && n.cfg.EnableCollectLog {
+	if n.clm != nil && n.currentNode.Role.HasRole(client.ComputeNode) && n.cfg.EnableCollectLog {
 		n.clm.Stop()
 	}
 }
@@ -288,9 +288,9 @@ func (n *NodeManager) init() error {
 	//update node mode
 	node.Mode = n.cfg.RunMode
 	//update node rule
-	node.Role = strings.Split(n.cfg.NodeRule, ",")
+	node.Role = strings.Split(n.cfg.NodeRole, ",")
 	//update system info
-	if !node.Role.HasRule("compute") {
+	if !node.Role.HasRole("compute") {
 		node.NodeStatus.NodeInfo = info.GetSystemInfo()
 	}
 	//set node labels

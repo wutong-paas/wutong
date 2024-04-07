@@ -41,82 +41,82 @@ type readMessageStore struct {
 	pool    *sync.Pool
 }
 
-func (h *readMessageStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
+func (r *readMessageStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
 	return nil
 }
-func (h *readMessageStore) InsertMessage(message *db.EventLogMessage) {
+func (r *readMessageStore) InsertMessage(message *db.EventLogMessage) {
 	if message == nil || message.EventID == "" {
 		return
 	}
-	h.lock.Lock()
-	defer h.lock.Unlock()
-	if ba, ok := h.barrels[message.EventID]; ok {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if ba, ok := r.barrels[message.EventID]; ok {
 		ba.insertMessage(message)
 	} else {
-		ba := h.pool.Get().(*readEventBarrel)
+		ba := r.pool.Get().(*readEventBarrel)
 		ba.insertMessage(message)
-		h.barrels[message.EventID] = ba
+		r.barrels[message.EventID] = ba
 	}
 }
-func (h *readMessageStore) GetMonitorData() *db.MonitorData {
+
+func (r *readMessageStore) GetMonitorData() *db.MonitorData {
 	return nil
 }
 
-func (h *readMessageStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
-	h.lock.Lock()
-	defer h.lock.Unlock()
-	if ba, ok := h.barrels[eventID]; ok {
+func (r *readMessageStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if ba, ok := r.barrels[eventID]; ok {
 		return ba.addSubChan(subID)
 	}
-	ba := h.pool.Get().(*readEventBarrel)
+	ba := r.pool.Get().(*readEventBarrel)
 	ba.updateTime = time.Now()
-	h.barrels[eventID] = ba
+	r.barrels[eventID] = ba
 	return ba.addSubChan(subID)
 }
-func (h *readMessageStore) RealseSubChan(eventID, subID string) {
-	h.lock.Lock()
-	defer h.lock.Unlock()
-	if ba, ok := h.barrels[eventID]; ok {
+
+func (r *readMessageStore) ReleaseSubChan(eventID, subID string) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if ba, ok := r.barrels[eventID]; ok {
 		ba.delSubChan(subID)
 	}
 }
-func (h *readMessageStore) Run() {
-	go h.Gc()
+
+func (r *readMessageStore) Run() {
+	go r.Gc()
 }
-func (h *readMessageStore) Gc() {
-	tiker := time.NewTicker(time.Second * 30)
+
+func (r *readMessageStore) Gc() {
+	tiker := time.NewTicker(time.Second * 30) // 30s 读取一次
 	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
-		case <-h.ctx.Done():
-			h.log.Debug("read message store gc stop.")
+		case <-r.ctx.Done():
+			r.log.Debug("read message store gc stop.")
 			return
 		}
-		if len(h.barrels) == 0 {
+		if len(r.barrels) == 0 {
 			continue
 		}
-		var gcEvent []string
-		for k, v := range h.barrels {
+		for eventID, v := range r.barrels {
 			if v.updateTime.Add(time.Minute * 2).Before(time.Now()) { // barrel 超时未收到消息
-				gcEvent = append(gcEvent, k)
-			}
-		}
-		if len(gcEvent) > 0 {
-			for _, id := range gcEvent {
-				barrel := h.barrels[id]
-				barrel.empty()
-				h.pool.Put(barrel) //放回对象池
-				delete(h.barrels, id)
+				barrel := r.barrels[eventID]
+				barrel.empty()     // 清空
+				r.pool.Put(barrel) //放回对象池
+				delete(r.barrels, eventID)
 			}
 		}
 	}
 }
-func (h *readMessageStore) stop() {
-	h.cancel()
-}
-func (h *readMessageStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
 
-func (h *readMessageStore) GetHistoryMessage(eventID string, length int) (re []string) {
+func (r *readMessageStore) stop() {
+	r.cancel()
+}
+
+func (r *readMessageStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
+
+func (r *readMessageStore) GetHistoryMessage(eventID string, length int) []string {
 	return nil
 }

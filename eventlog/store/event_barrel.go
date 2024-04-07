@@ -32,9 +32,9 @@ import (
 // 不能在此结构上起协程
 type EventBarrel struct {
 	eventID           string
-	barrel            []*db.EventLogMessage
-	persistenceBarrel []*db.EventLogMessage
-	needPersistence   bool
+	barrel            []*db.EventLogMessage // 缓存队列
+	needPersistence   bool                  // 是否需要持久化
+	persistenceBarrel []*db.EventLogMessage // 持久化等候队列
 	persistencelock   sync.Mutex
 	barrelEvent       chan []string
 	maxNumber         int64
@@ -105,7 +105,7 @@ func (e *EventBarrel) gcPersistence() {
 }
 
 type readEventBarrel struct {
-	barrel        []*db.EventLogMessage
+	barrels       []*db.EventLogMessage
 	subSocketChan map[string]chan *db.EventLogMessage
 	subLock       sync.Mutex
 	updateTime    time.Time
@@ -114,8 +114,8 @@ type readEventBarrel struct {
 func (r *readEventBarrel) empty() {
 	r.subLock.Lock()
 	defer r.subLock.Unlock()
-	if r.barrel != nil {
-		r.barrel = r.barrel[:0]
+	if r.barrels != nil {
+		r.barrels = r.barrels[:0] // 清空事件日志列表数据
 	}
 	//关闭订阅chan
 	for _, ch := range r.subSocketChan {
@@ -125,7 +125,7 @@ func (r *readEventBarrel) empty() {
 }
 
 func (r *readEventBarrel) insertMessage(message *db.EventLogMessage) {
-	r.barrel = append(r.barrel, message)
+	r.barrels = append(r.barrels, message)
 	r.updateTime = time.Now()
 	r.subLock.Lock()
 	defer r.subLock.Unlock()
@@ -137,11 +137,11 @@ func (r *readEventBarrel) insertMessage(message *db.EventLogMessage) {
 	}
 }
 
-func (r *readEventBarrel) pushCashMessage(ch chan *db.EventLogMessage, subID string) {
+func (r *readEventBarrel) pushCacheMessage(ch chan *db.EventLogMessage, subID string) {
 	r.subLock.Lock()
 	defer r.subLock.Unlock()
 	//send cache message
-	for _, m := range r.barrel {
+	for _, m := range r.barrels {
 		ch <- m
 	}
 	r.subSocketChan[subID] = ch
@@ -155,7 +155,7 @@ func (r *readEventBarrel) addSubChan(subID string) chan *db.EventLogMessage {
 		return sub
 	}
 	ch := make(chan *db.EventLogMessage, 10)
-	go r.pushCashMessage(ch, subID)
+	go r.pushCacheMessage(ch, subID)
 	return ch
 }
 
@@ -274,62 +274,3 @@ func (r *dockerLogEventBarrel) GetSubChanLength() int {
 	defer r.subLock.Unlock()
 	return len(r.subSocketChan)
 }
-
-// type monitorMessageBarrel struct {
-// 	barrel        []*db.EventLogMessage
-// 	subSocketChan map[string]chan *db.EventLogMessage
-// 	subLock       sync.Mutex
-// 	updateTime    time.Time
-// }
-
-// func (r *monitorMessageBarrel) empty() {
-// 	r.subLock.Lock()
-// 	defer r.subLock.Unlock()
-// 	if r.barrel != nil {
-// 		r.barrel = r.barrel[:0]
-// 	}
-// 	for _, ch := range r.subSocketChan {
-// 		close(ch)
-// 	}
-// 	r.subSocketChan = make(map[string]chan *db.EventLogMessage)
-// }
-
-// func (r *monitorMessageBarrel) insertMessage(message *db.EventLogMessage) {
-// 	r.updateTime = time.Now()
-// 	r.subLock.Lock()
-// 	defer r.subLock.Unlock()
-// 	for _, v := range r.subSocketChan { //向订阅的通道发送消息
-// 		select {
-// 		case v <- message:
-// 		default:
-// 		}
-// 	}
-// }
-
-// func (r *monitorMessageBarrel) pushCashMessage(ch chan *db.EventLogMessage, subID string) {
-// 	r.subLock.Lock()
-// 	defer r.subLock.Unlock()
-// 	r.subSocketChan[subID] = ch
-// }
-
-// //增加socket订阅
-// func (r *monitorMessageBarrel) addSubChan(subID string) chan *db.EventLogMessage {
-// 	r.subLock.Lock()
-// 	defer r.subLock.Unlock()
-// 	if sub, ok := r.subSocketChan[subID]; ok {
-// 		return sub
-// 	}
-// 	ch := make(chan *db.EventLogMessage, 10)
-// 	go r.pushCashMessage(ch, subID)
-// 	return ch
-// }
-
-// //删除socket订阅
-// func (r *monitorMessageBarrel) delSubChan(subID string) {
-// 	r.subLock.Lock()
-// 	defer r.subLock.Unlock()
-// 	if ch, ok := r.subSocketChan[subID]; ok {
-// 		close(ch)
-// 		delete(r.subSocketChan, subID)
-// 	}
-// }

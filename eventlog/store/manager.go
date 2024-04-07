@@ -54,7 +54,7 @@ type Manager interface {
 	MonitorMessageChan() chan [][]byte
 	WebSocketMessageChan(mode, eventID, subID string) chan *db.EventLogMessage
 	NewMonitorMessageChan() chan []byte
-	RealseWebSocketMessageChan(mode, EventID, subID string)
+	ReleaseWebSocketMessageChan(mode, EventID, subID string)
 	Run() error
 	Stop()
 	Monitor() []db.MonitorData
@@ -65,13 +65,11 @@ type Manager interface {
 
 // NewManager 存储管理器
 func NewManager(conf conf.EventStoreConf, log *logrus.Entry) (Manager, error) {
-	conf.DB.Type = "eventfile"
-	dbPlugin, err := db.NewManager(conf.DB, log)
+	eventfilePlugin, err := db.NewManager("eventfile", conf.DB.HomePath)
 	if err != nil {
 		return nil, err
 	}
-	conf.DB.Type = "file"
-	filePlugin, err := db.NewManager(conf.DB, log)
+	filePlugin, err := db.NewManager("file", conf.DB.HomePath)
 	if err != nil {
 		return nil, err
 	}
@@ -81,25 +79,21 @@ func NewManager(conf conf.EventStoreConf, log *logrus.Entry) (Manager, error) {
 		context:               ctx,
 		conf:                  conf,
 		log:                   log,
-		receiveChan:           make(chan []byte, 300),
-		subChan:               make(chan [][]byte, 300),
-		pubChan:               make(chan [][]byte, 300),
-		dockerLogChan:         make(chan []byte, 2048),
-		monitorMessageChan:    make(chan [][]byte, 100),
+		receiveChan:           make(chan []byte, 300),   // 接收消息
+		subChan:               make(chan [][]byte, 300), // 订阅消息
+		pubChan:               make(chan [][]byte, 300), // 发布消息
+		dockerLogChan:         make(chan []byte, 2048),  // docker日志
+		monitorMessageChan:    make(chan [][]byte, 100), // 监控消息
 		newmonitorMessageChan: make(chan []byte, 2048),
 		chanCacheSize:         100,
-		dbPlugin:              dbPlugin,
+		eventfilePlugin:       eventfilePlugin,
 		filePlugin:            filePlugin,
 		errChan:               make(chan error),
 	}
-	handle := NewStore("handle", storeManager)
-	read := NewStore("read", storeManager)
-	docker := NewStore("docker_log", storeManager)
-	newmonitor := NewStore("newmonitor", storeManager)
-	storeManager.handleMessageStore = handle
-	storeManager.readMessageStore = read
-	storeManager.dockerLogStore = docker
-	storeManager.newmonitorMessageStore = newmonitor
+	storeManager.handleMessageStore = NewStore("handle", storeManager)
+	storeManager.readMessageStore = NewStore("read", storeManager)
+	storeManager.dockerLogStore = NewStore("docker_log", storeManager)
+	storeManager.newmonitorMessageStore = NewStore("newmonitor", storeManager)
 	return storeManager, nil
 }
 
@@ -118,7 +112,7 @@ type storeManager struct {
 	chanCacheSize          int
 	conf                   conf.EventStoreConf
 	log                    *logrus.Entry
-	dbPlugin               db.Manager
+	eventfilePlugin        db.Manager
 	filePlugin             db.Manager
 	errChan                chan error
 }
@@ -143,7 +137,6 @@ func (s *storeManager) HealthCheck() map[string]string {
 var healthStatus float64
 
 func (s *storeManager) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
-
 	s.dockerLogStore.Scrape(ch, namespace, exporter, from)
 	s.handleMessageStore.Scrape(ch, namespace, exporter, from)
 	s.newmonitorMessageStore.Scrape(ch, namespace, exporter, from)
@@ -250,13 +243,13 @@ func (s *storeManager) Run() error {
 	s.readMessageStore.Run()
 	s.dockerLogStore.Run()
 	s.newmonitorMessageStore.Run()
-	for i := 0; i < s.conf.HandleMessageCoreNumber; i++ {
+	for i := 0; i < s.conf.HandleMessageGoroutinues; i++ {
 		go s.handleReceiveMessage()
 	}
-	for i := 0; i < s.conf.HandleSubMessageCoreNumber; i++ {
+	for i := 0; i < s.conf.HandleSubMessageGoroutinues; i++ {
 		go s.handleSubMessage()
 	}
-	for i := 0; i < s.conf.HandleDockerLogCoreNumber; i++ {
+	for i := 0; i < s.conf.HandleDockerLogGoroutinues; i++ {
 		go s.handleDockerLog()
 	}
 	go s.handleNewMonitorMessage()
@@ -302,7 +295,8 @@ func (s *storeManager) deleteFile(filename string) error {
 	loc, _ := time.LoadLocation("Local")
 	theTime, err := time.ParseInLocation("2006-1-2", date, loc)
 	if err != nil {
-		return err
+		// if parse time error, just ignore it
+		return nil
 	}
 	saveDay, _ := strconv.Atoi(os.Getenv("DOCKER_LOG_SAVE_DAY"))
 	if saveDay == 0 {
@@ -439,13 +433,6 @@ func (s *storeManager) handleSubMessage() {
 	}
 }
 
-// type containerLog struct {
-// 	ContainerID string          `json:"container_id"`
-// 	ServiceID   string          `json:"service_id"`
-// 	Msg         string          `json:"msg"`
-// 	Time        json.RawMessage `json:"time"`
-// }
-
 func (s *storeManager) handleDockerLog() {
 	s.log.Debug("event message store manager start handle docker container log message")
 loop:
@@ -471,6 +458,9 @@ loop:
 			buffer := bytes.NewBuffer(containerID)
 			buffer.WriteString(":")
 			buffer.Write(log)
+			if strings.Contains(string(log), "GET [200]") {
+				logrus.Error("OK MSG:", string(log))
+			}
 			message := db.EventLogMessage{
 				Message: buffer.String(),
 				Content: buffer.Bytes(),
@@ -483,21 +473,15 @@ loop:
 	s.errChan <- fmt.Errorf("handle docker log core exist")
 }
 
-type event struct {
-	Name   string        `json:"name"`
-	Data   []interface{} `json:"data"`
-	Update string        `json:"update_time"`
-}
-
-func (s *storeManager) RealseWebSocketMessageChan(mode string, eventID, subID string) {
+func (s *storeManager) ReleaseWebSocketMessageChan(mode string, eventID, subID string) {
 	if mode == "event" {
-		s.readMessageStore.RealseSubChan(eventID, subID)
+		s.readMessageStore.ReleaseSubChan(eventID, subID)
 	}
 	if mode == "docker" {
-		s.dockerLogStore.RealseSubChan(eventID, subID)
+		s.dockerLogStore.ReleaseSubChan(eventID, subID)
 	}
 	if mode == "newmonitor" {
-		s.newmonitorMessageStore.RealseSubChan(eventID, subID)
+		s.newmonitorMessageStore.ReleaseSubChan(eventID, subID)
 	}
 }
 
@@ -510,8 +494,8 @@ func (s *storeManager) Stop() {
 	if s.filePlugin != nil {
 		s.filePlugin.Close()
 	}
-	if s.dbPlugin != nil {
-		s.dbPlugin.Close()
+	if s.eventfilePlugin != nil {
+		s.eventfilePlugin.Close()
 	}
 	s.log.Info("Stop the store manager.")
 }

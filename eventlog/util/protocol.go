@@ -71,7 +71,7 @@ func (m *MessageProtocol) SetConn(conn *net.TCPConn) {
 	m.cache = bytes.NewBuffer(nil)
 }
 
-//ReadPacket 获取消息流
+// ReadPacket 获取消息流
 func (m *MessageProtocol) ReadPacket() (Packet, error) {
 	if m.reader != nil {
 		message, err := m.Decode()
@@ -85,13 +85,14 @@ func (m *MessageProtocol) ReadPacket() (Packet, error) {
 	}
 	return nil, errClosed
 }
+
 func (m *MessageProtocol) isPing(s string) bool {
 	return s == "0x00ping"
 }
 
 const maxConsecutiveEmptyReads = 100
 
-//Decode 解码数据流
+// Decode 解码数据流
 func (m *MessageProtocol) Decode() (string, error) {
 	// 读取消息的长度
 	lengthByte, err := m.reader.Peek(4)

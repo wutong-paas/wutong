@@ -103,7 +103,25 @@ func (m *Manager) SetMiddleware() {
 	//Gracefully absorb panics and prints the stack trace
 	r.Use(middleware.Recoverer)
 	//request time out
-	r.Use(middleware.Timeout(time.Second * 5))
+	r.Use(func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			timeout := time.Second * 5
+			if strings.Contains(r.URL.Path, "/obs") {
+				timeout = time.Minute
+			}
+			ctx, cancel := context.WithTimeout(r.Context(), timeout)
+			defer func() {
+				cancel()
+				if ctx.Err() == context.DeadlineExceeded {
+					w.WriteHeader(http.StatusGatewayTimeout)
+				}
+			}()
+
+			r = r.WithContext(ctx)
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	})
 	//simple api version
 	r.Use(apimiddleware.APIVersion)
 	r.Use(apimiddleware.Proxy)

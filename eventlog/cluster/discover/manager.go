@@ -117,7 +117,10 @@ func (d *EtcdDiscoverManager) RegisteredInstance(host string, port int, stopRegi
 		instance.PubPort = port
 		instance.DockerLogPort = d.conf.DockerLogPort
 		instance.WebPort = d.conf.WebPort
-		instance.HostID = d.conf.NodeID
+		instance.HostID = d.conf.NodeID // eventlog args 传入了 NODE_ID
+		if instance.HostID == "" {
+			instance.HostID, _ = os.Hostname()
+		}
 		instance.HostName, _ = os.Hostname()
 		instance.Status = "create"
 		data, err := json.Marshal(instance)
@@ -178,12 +181,12 @@ func (d *EtcdDiscoverManager) Run() error {
 
 // Discover 发现
 func (d *EtcdDiscoverManager) discover() {
-	tike := time.NewTicker(time.Second * 5)
-	defer tike.Stop()
+	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
+	ctx, cancel := context.WithCancel(d.context)
+	defer cancel()
 	for {
-		ctx, cancel := context.WithCancel(d.context)
 		res, err := d.etcdclientv3.Get(ctx, d.conf.HomePath+"/instance/", clientv3.WithPrefix())
-		cancel()
 		if err != nil {
 			d.log.Error("Get instance info from etcd error.", err.Error())
 		} else {
@@ -197,13 +200,11 @@ func (d *EtcdDiscoverManager) discover() {
 			break
 		}
 		select {
-		case <-tike.C:
+		case <-ticker.C:
 		case <-d.context.Done():
 			return
 		}
 	}
-	ctx, cancel := context.WithCancel(d.context)
-	defer cancel()
 	watcher := d.etcdclientv3.Watch(ctx, d.conf.HomePath+"/instance/", clientv3.WithPrefix())
 
 	for !d.stopDiscover {
@@ -256,7 +257,6 @@ type Node struct {
 }
 
 func (d *EtcdDiscoverManager) add(node *Node) {
-
 	//忽略自己
 	if strings.HasSuffix(node.Key, fmt.Sprintf("/%s:%d", d.selfInstance.HostIP, d.selfInstance.PubPort)) {
 		return
@@ -283,25 +283,6 @@ func (d *EtcdDiscoverManager) add(node *Node) {
 			d.log.Infof("Find an instance.IP:%s, Port:%d, NodeID:%s HostID: %s", instance.HostIP.String(), instance.PubPort, instance.HostName, instance.HostID)
 			d.MonitorAddInstances() <- &instance
 			d.othersInstance = append(d.othersInstance, &instance)
-		}
-	}
-
-}
-
-func (d *EtcdDiscoverManager) update(node *Node) {
-
-	var instance Instance
-	if err := json.Unmarshal([]byte(node.Value), &instance); err != nil {
-		d.log.Error("Unmarshal instance data that from etcd error.", err.Error())
-	} else {
-		if strings.HasSuffix(node.Key, fmt.Sprintf("/%s:%d", d.selfInstance.HostIP, d.selfInstance.PubPort)) {
-			d.selfInstance = &instance
-		}
-		for _, i := range d.othersInstance {
-			if i.HostID == instance.HostID {
-				*i = instance
-				d.log.Debug("update the instance " + i.HostID)
-			}
 		}
 	}
 
@@ -372,7 +353,7 @@ func (d *EtcdDiscoverManager) InstanceCheckHealth(instanceID string) string {
 			i.Status = "abnormal"
 			i.TagNumber++
 			if i.TagNumber > ((len(d.othersInstance) + 1) / 2) { //大于一半的节点标记
-				d.log.Warnf("Instance (%s) is abnormal. tag number more than half of all instance number. will cancellation.", instanceID)
+				d.log.Errorf("Instance (%s) is abnormal. tag number more than half of all instance number. will cancellation.", instanceID)
 				d.CancellationInstance(i)
 				return "delete"
 			}
@@ -384,12 +365,12 @@ func (d *EtcdDiscoverManager) InstanceCheckHealth(instanceID string) string {
 }
 
 // GetInstance 获取实例
-func (d *EtcdDiscoverManager) GetInstance(id string) *Instance {
-	if id == d.selfInstance.HostID {
+func (d *EtcdDiscoverManager) GetInstance(instanceID string) *Instance {
+	if instanceID == d.selfInstance.HostID {
 		return d.selfInstance
 	}
 	for _, i := range d.othersInstance {
-		if i.HostID == id {
+		if i.HostID == instanceID {
 			return i
 		}
 	}

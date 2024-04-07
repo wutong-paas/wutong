@@ -23,19 +23,20 @@ import (
 	"os"
 )
 
+// version 会在编译期间被注入， 通过 go build -ldflags "-w -s -X github.com/wutong-paas/wutong/cmd.version=${VERSION}" 来指定。VERSION 包含 git 的 commit id
 var version string
 
-//ShowVersion 显示版本
+// ShowVersion 显示版本
 func ShowVersion(module string) {
 	if version != "" {
 		fmt.Printf("wutong-%s %s\n", module, version)
 	} else {
-		fmt.Printf("wutong-%s %s\n", module, os.Getenv("RELEASE_DESC"))
+		fmt.Printf("wutong-%s\n", module)
 	}
 	os.Exit(0)
 }
 
-//GetVersion GetVersion
+// GetVersion GetVersion
 func GetVersion() string {
 	return version
 }

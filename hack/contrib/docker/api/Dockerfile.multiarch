@@ -1,5 +1,5 @@
 FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-api-base:stable
-ARG RELEASE_DESC
+
 ARG TARGETARCH
 
 WORKDIR /run
@@ -7,5 +7,4 @@ WORKDIR /run
 COPY ${TARGETARCH}/ /run/
 COPY entrypoint.sh /run/entrypoint.sh
 
-ENV RELEASE_DESC=${RELEASE_DESC}
 ENTRYPOINT ["/run/entrypoint.sh"]

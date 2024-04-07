@@ -100,12 +100,11 @@ func (v2 *V2Routes) AlertManagerWebHook(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	httputil.ReturnSuccess(r, w, "")
-
 }
 
 // Version -
 func (v2 *V2Routes) Version(w http.ResponseWriter, r *http.Request) {
-	httputil.ReturnSuccess(r, w, map[string]string{"version": os.Getenv("RELEASE_DESC")})
+	httputil.ReturnSuccess(r, w, map[string]string{"version": cmd.GetVersion()})
 }
 
 // TenantEnvStruct tenant env struct

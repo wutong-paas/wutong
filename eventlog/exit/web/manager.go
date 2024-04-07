@@ -88,6 +88,7 @@ func NewSocket(conf conf.WebSocketConf, discoverConf conf.DiscoverConf, etcdClie
 	}
 }
 
+// pushEventMessage 推送事件消息
 func (s *SocketServer) pushEventMessage(w http.ResponseWriter, r *http.Request) {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:    s.conf.ReadBufferSize,
@@ -124,16 +125,14 @@ func (s *SocketServer) pushEventMessage(w http.ResponseWriter, r *http.Request) 
 	}
 	s.log.Infof("Begin push event message of event (%s)", EventID)
 	SubID := uuid.New().String()
-	ch := s.storemanager.WebSocketMessageChan("event", EventID, SubID)
+	ch := s.storemanager.WebSocketMessageChan("event", EventID, SubID) // read message store, 返回一个读取事件消息的信道
 	if ch == nil {
-		// w.Write([]byte("Real-time message does not exist."))
-		// w.Header().Set("Status Code", "200")
 		s.log.Error("get web socket message chan from storemanager error.")
 		return
 	}
 	defer func() {
 		s.log.Debug("Push event message request closed")
-		s.storemanager.RealseWebSocketMessageChan("event", EventID, SubID)
+		s.storemanager.ReleaseWebSocketMessageChan("event", EventID, SubID)
 	}()
 	stop := make(chan struct{})
 	go s.reader(conn, stop)
@@ -146,7 +145,6 @@ func (s *SocketServer) pushEventMessage(w http.ResponseWriter, r *http.Request) 
 				return
 			}
 			if message != nil {
-				//s.log.Debugf("websocket push a message,%s", message.Message)
 				conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 				err = conn.WriteMessage(websocket.TextMessage, message.Content)
 				if err != nil {
@@ -169,10 +167,6 @@ func (s *SocketServer) pushEventMessage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *SocketServer) pushDockerLog(w http.ResponseWriter, r *http.Request) {
-	// if r.FormValue("host") == "" || r.FormValue("host") != s.cluster.GetInstanceID() {
-	// 	w.WriteHeader(404)
-	// 	return
-	// }
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:    s.conf.ReadBufferSize,
 		WriteBufferSize:   s.conf.WriteBufferSize,
@@ -209,14 +203,12 @@ func (s *SocketServer) pushDockerLog(w http.ResponseWriter, r *http.Request) {
 	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("docker", ServiceID, SubID)
 	if ch == nil {
-		// w.Write([]byte("Real-time message does not exist."))
-		// w.Header().Set("Status Code", "200")
 		s.log.Error("get web socket message chan from storemanager error.")
 		return
 	}
 	defer func() {
 		s.log.Debug("Push docker log message request closed")
-		s.storemanager.RealseWebSocketMessageChan("docker", ServiceID, SubID)
+		s.storemanager.ReleaseWebSocketMessageChan("docker", ServiceID, SubID)
 	}()
 	conn.WriteMessage(websocket.TextMessage, []byte("ok"))
 	stop := make(chan struct{})
@@ -254,11 +246,8 @@ func (s *SocketServer) pushDockerLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
 func (s *SocketServer) pushMonitorMessage(w http.ResponseWriter, r *http.Request) {
-	// if r.FormValue("host") == "" || r.FormValue("host") != s.cluster.GetInstanceID() {
-	// 	w.WriteHeader(404)
-	// 	return
-	// }
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:    s.conf.ReadBufferSize,
 		WriteBufferSize:   s.conf.WriteBufferSize,
@@ -295,14 +284,12 @@ func (s *SocketServer) pushMonitorMessage(w http.ResponseWriter, r *http.Request
 	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("monitor", ServiceID, SubID)
 	if ch == nil {
-		// w.Write([]byte("Real-time message does not exist."))
-		// w.Header().Set("Status Code", "200")
 		s.log.Error("get web socket message chan from storemanager error.")
 		return
 	}
 	defer func() {
 		s.log.Debug("Push docker log message request closed")
-		s.storemanager.RealseWebSocketMessageChan("monitor", ServiceID, SubID)
+		s.storemanager.ReleaseWebSocketMessageChan("monitor", ServiceID, SubID)
 	}()
 	conn.WriteMessage(websocket.TextMessage, []byte("ok"))
 	stop := make(chan struct{})
@@ -337,11 +324,8 @@ func (s *SocketServer) pushMonitorMessage(w http.ResponseWriter, r *http.Request
 	}
 
 }
+
 func (s *SocketServer) pushNewMonitorMessage(w http.ResponseWriter, r *http.Request) {
-	// if r.FormValue("host") == "" || r.FormValue("host") != s.cluster.GetInstanceID() {
-	// 	w.WriteHeader(404)
-	// 	return
-	// }
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:    s.conf.ReadBufferSize,
 		WriteBufferSize:   s.conf.WriteBufferSize,
@@ -378,14 +362,12 @@ func (s *SocketServer) pushNewMonitorMessage(w http.ResponseWriter, r *http.Requ
 	SubID := uuid.New().String()
 	ch := s.storemanager.WebSocketMessageChan("newmonitor", ServiceID, SubID)
 	if ch == nil {
-		// w.Write([]byte("Real-time message does not exist."))
-		// w.Header().Set("Status Code", "200")
 		s.log.Error("get web socket message chan from storemanager error.")
 		return
 	}
 	defer func() {
 		s.log.Debug("Push new monitor message request closed")
-		s.storemanager.RealseWebSocketMessageChan("newmonitor", ServiceID, SubID)
+		s.storemanager.ReleaseWebSocketMessageChan("newmonitor", ServiceID, SubID)
 	}()
 	conn.WriteMessage(websocket.TextMessage, []byte("ok"))
 	stop := make(chan struct{})
@@ -418,7 +400,6 @@ func (s *SocketServer) pushNewMonitorMessage(w http.ResponseWriter, r *http.Requ
 			}
 		}
 	}
-
 }
 func (s *SocketServer) reader(ws *websocket.Conn, ch chan struct{}) {
 	defer ws.Close()
@@ -442,6 +423,7 @@ func (s *SocketServer) Run() error {
 	go s.checkHealth()
 	return nil
 }
+
 func (s *SocketServer) listen() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -511,13 +493,16 @@ func (s *SocketServer) listen() {
 		s.listenErr <- err
 	}
 }
+
 func (s *SocketServer) checkHealth() {
-	tike := time.Tick(time.Minute * 10)
+	ticker := time.NewTicker(time.Minute * 10)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-s.context.Done():
 			return
-		case <-tike:
+		case <-ticker.C:
 			s.reStart = 0
 		case err := <-s.listenErr:
 			if s.reStart > s.conf.MaxRestartCount {

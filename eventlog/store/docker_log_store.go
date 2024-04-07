@@ -47,203 +47,211 @@ type dockerLogStore struct {
 	allLogCount  float64 //ues to pometheus monitor
 }
 
-func (h *dockerLogStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
+func (d *dockerLogStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
 	chanDesc := prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, exporter, "container_log_store_cache_barrel_count"),
 		"the cache container log barrel size.",
 		[]string{"from"}, nil,
 	)
-	ch <- prometheus.MustNewConstMetric(chanDesc, prometheus.GaugeValue, float64(len(h.barrels)), from)
+	ch <- prometheus.MustNewConstMetric(chanDesc, prometheus.GaugeValue, float64(len(d.barrels)), from)
 	logDesc := prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, exporter, "container_log_store_log_count"),
 		"the handle container log count size.",
 		[]string{"from"}, nil,
 	)
-	ch <- prometheus.MustNewConstMetric(logDesc, prometheus.GaugeValue, h.allLogCount, from)
+	ch <- prometheus.MustNewConstMetric(logDesc, prometheus.GaugeValue, d.allLogCount, from)
 
 	return nil
 }
-func (h *dockerLogStore) insertMessage(message *db.EventLogMessage) bool {
-	h.rwLock.RLock() //读锁
-	defer h.rwLock.RUnlock()
-	if ba, ok := h.barrels[message.EventID]; ok {
+func (d *dockerLogStore) insertMessage(message *db.EventLogMessage) bool {
+	d.rwLock.RLock() //读锁
+	defer d.rwLock.RUnlock()
+	if ba, ok := d.barrels[message.EventID]; ok {
 		ba.insertMessage(message)
 		return true
 	}
 	return false
 }
-func (h *dockerLogStore) InsertMessage(message *db.EventLogMessage) {
+func (d *dockerLogStore) InsertMessage(message *db.EventLogMessage) {
 	if message == nil || message.EventID == "" {
 		return
 	}
-	h.LogSize++
-	h.allLogCount++
-	if ok := h.insertMessage(message); ok {
+	d.LogSize++
+	d.allLogCount++
+	if ok := d.insertMessage(message); ok {
 		return
 	}
-	h.rwLock.Lock()
-	defer h.rwLock.Unlock()
-	ba := h.pool.Get().(*dockerLogEventBarrel)
+	d.rwLock.Lock()
+	defer d.rwLock.Unlock()
+	ba := d.pool.Get().(*dockerLogEventBarrel)
 	ba.name = message.EventID
 	ba.persistenceTime = time.Now()
 	ba.insertMessage(message)
-	h.barrels[message.EventID] = ba
-	h.barrelSize++
+	d.barrels[message.EventID] = ba
+	d.barrelSize++
 }
-func (h *dockerLogStore) subChan(eventID, subID string) chan *db.EventLogMessage {
-	h.rwLock.RLock() //读锁
-	defer h.rwLock.RUnlock()
-	if ba, ok := h.barrels[eventID]; ok {
+func (d *dockerLogStore) subChan(eventID, subID string) chan *db.EventLogMessage {
+	d.rwLock.RLock() //读锁
+	defer d.rwLock.RUnlock()
+	if ba, ok := d.barrels[eventID]; ok {
 		ch := ba.addSubChan(subID)
 		return ch
 	}
 	return nil
 }
-func (h *dockerLogStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
-	if ch := h.subChan(eventID, subID); ch != nil {
+
+func (d *dockerLogStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
+	if ch := d.subChan(eventID, subID); ch != nil {
 		return ch
 	}
-	h.rwLock.Lock()
-	defer h.rwLock.Unlock()
-	ba := h.pool.Get().(*dockerLogEventBarrel)
+	d.rwLock.Lock()
+	defer d.rwLock.Unlock()
+	ba := d.pool.Get().(*dockerLogEventBarrel)
 	ba.updateTime = time.Now()
 	ba.name = eventID
-	h.barrels[eventID] = ba
+	d.barrels[eventID] = ba
 	return ba.addSubChan(subID)
 }
-func (h *dockerLogStore) RealseSubChan(eventID, subID string) {
-	h.rwLock.RLock()
-	defer h.rwLock.RUnlock()
-	if ba, ok := h.barrels[eventID]; ok {
+
+func (d *dockerLogStore) ReleaseSubChan(eventID, subID string) {
+	d.rwLock.RLock()
+	defer d.rwLock.RUnlock()
+	if ba, ok := d.barrels[eventID]; ok {
 		ba.delSubChan(subID)
 	}
 }
-func (h *dockerLogStore) Run() {
-	go h.Gc()
-	go h.handleBarrelEvent()
+
+func (d *dockerLogStore) Run() {
+	go d.Gc()
+	go d.handleBarrelEvent()
 }
 
-func (h *dockerLogStore) GetMonitorData() *db.MonitorData {
+func (d *dockerLogStore) GetMonitorData() *db.MonitorData {
 	data := &db.MonitorData{
-		ServiceSize:  len(h.barrels),
-		LogSizePeerM: h.LogSizePeerM,
+		ServiceSize:  len(d.barrels),
+		LogSizePeerM: d.LogSizePeerM,
 	}
-	if h.LogSizePeerM == 0 {
-		data.LogSizePeerM = h.LogSize
+	if d.LogSizePeerM == 0 {
+		data.LogSizePeerM = d.LogSize
 	}
 	return data
 }
-func (h *dockerLogStore) Gc() {
+
+func (d *dockerLogStore) Gc() {
 	tiker := time.NewTicker(time.Second * 30)
 	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
-			h.gcRun()
-		case <-h.ctx.Done():
-			h.log.Debug("docker log store gc stop.")
+			d.gcRun()
+		case <-d.ctx.Done():
+			d.log.Debug("docker log store gc stop.")
 			return
 		}
 	}
 }
-func (h *dockerLogStore) handle() []string {
-	h.rwLock.RLock()
-	defer h.rwLock.RUnlock()
-	if len(h.barrels) == 0 {
+
+func (d *dockerLogStore) handle() []string {
+	d.rwLock.RLock()
+	defer d.rwLock.RUnlock()
+	if len(d.barrels) == 0 {
 		return nil
 	}
 	var gcEvent []string
-	for k := range h.barrels {
-		if h.barrels[k].updateTime.Add(time.Minute*1).Before(time.Now()) && h.barrels[k].GetSubChanLength() == 0 {
-			h.saveBeforeGc(k, h.barrels[k])
+	for k := range d.barrels {
+		if d.barrels[k].updateTime.Add(time.Minute*1).Before(time.Now()) && d.barrels[k].GetSubChanLength() == 0 {
+			d.saveBeforeGc(k, d.barrels[k])
 			gcEvent = append(gcEvent, k)
-			h.log.Debugf("barrel %s need be gc", k)
-		} else if h.barrels[k].persistenceTime.Add(time.Minute * 1).Before(time.Now()) {
+			d.log.Debugf("barrel %s need be gc", k)
+		} else if d.barrels[k].persistenceTime.Add(time.Minute * 1).Before(time.Now()) {
 			//The interval not persisted for more than 1 minute should be more than 30 seconds
-			if len(h.barrels[k].barrel) > 0 {
-				h.log.Debugf("barrel %s need persistence", k)
-				h.barrels[k].persistence()
+			if len(d.barrels[k].barrel) > 0 {
+				d.log.Debugf("barrel %s need persistence", k)
+				d.barrels[k].persistence()
 			}
 		}
 	}
 	return gcEvent
 }
-func (h *dockerLogStore) gcRun() {
+
+func (d *dockerLogStore) gcRun() {
 	t := time.Now()
-	//每分钟进行数据重置，获得每分钟日志量数据
-	h.LogSizePeerM = h.LogSize
-	h.LogSize = 0
-	gcEvent := h.handle()
+	// 每分钟进行数据重置，获得每分钟日志量数据
+	d.LogSizePeerM = d.LogSize
+	d.LogSize = 0
+	gcEvent := d.handle()
 	if len(gcEvent) > 0 {
-		h.rwLock.Lock()
-		defer h.rwLock.Unlock()
+		d.rwLock.Lock()
+		defer d.rwLock.Unlock()
 		for _, id := range gcEvent {
-			barrel := h.barrels[id]
+			barrel := d.barrels[id]
 			barrel.empty()
-			h.pool.Put(barrel)
-			delete(h.barrels, id)
-			h.barrelSize--
-			h.log.Debugf("docker log barrel(%s) gc complete", id)
+			d.pool.Put(barrel)
+			delete(d.barrels, id)
+			d.barrelSize--
+			d.log.Debugf("docker log barrel(%s) gc complete", id)
 		}
 	}
 	useTime := time.Since(t).Nanoseconds()
-	h.log.Debugf("Docker log message store complete gc in %d ns", useTime)
+	d.log.Debugf("Docker log message store complete gc in %d ns", useTime)
 }
-func (h *dockerLogStore) stop() {
-	h.cancel()
-	h.rwLock.RLock()
-	defer h.rwLock.RUnlock()
-	for k, v := range h.barrels {
-		h.saveBeforeGc(k, v)
+
+func (d *dockerLogStore) stop() {
+	d.cancel()
+	d.rwLock.RLock()
+	defer d.rwLock.RUnlock()
+	for k, v := range d.barrels {
+		d.saveBeforeGc(k, v)
 	}
 }
 
 // gc删除前持久化数据
-func (h *dockerLogStore) saveBeforeGc(eventID string, v *dockerLogEventBarrel) {
+func (d *dockerLogStore) saveBeforeGc(eventID string, v *dockerLogEventBarrel) {
 	v.persistencelock.Lock()
 	v.gcPersistence()
 	if len(v.persistenceBarrel) > 0 {
-		if err := h.filePlugin.SaveMessage(v.persistenceBarrel); err != nil {
-			h.log.Error("persistence barrel message error.", err.Error())
-			h.InsertGarbageMessage(v.persistenceBarrel...)
+		if err := d.filePlugin.SaveMessage(v.persistenceBarrel); err != nil {
+			d.log.Error("persistence barrel message error.", err.Error())
+			d.InsertGarbageMessage(v.persistenceBarrel...)
 		}
-		h.log.Debugf("dockerLogStore.saveBeforeGc: persistence barrel(%s) %d log message to file.", eventID, len(v.persistenceBarrel))
+		d.log.Debugf("dockerLogStore.saveBeforeGc: persistence barrel(%s) %d log message to file.", eventID, len(v.persistenceBarrel))
 	}
 	v.persistenceBarrel = nil
 	v.persistencelock.Unlock()
 }
-func (h *dockerLogStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
 
-// TODD
-func (h *dockerLogStore) handleBarrelEvent() {
+func (d *dockerLogStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
+
+// TODO
+func (d *dockerLogStore) handleBarrelEvent() {
 	for {
 		select {
-		case event := <-h.barrelEvent:
+		case event := <-d.barrelEvent:
 			if len(event) < 1 {
 				return
 			}
-			h.log.Debug("Handle message store do event.", event)
+			d.log.Debug("Handle message store do event.", event)
 			if event[0] == "persistence" { //持久化命令
-				h.persistence(event)
+				d.persistence(event)
 			}
-		case <-h.ctx.Done():
+		case <-d.ctx.Done():
 			return
 		}
 	}
 }
 
-func (h *dockerLogStore) persistence(event []string) {
+func (d *dockerLogStore) persistence(event []string) {
 	if len(event) == 2 {
 		eventID := event[1]
-		h.rwLock.RLock()
-		defer h.rwLock.RUnlock()
-		if ba, ok := h.barrels[eventID]; ok {
-			if ba.needPersistence { //取消异步持久化
-				if err := h.filePlugin.SaveMessage(ba.persistenceBarrel); err != nil {
-					h.log.Error("persistence barrel message error.", err.Error())
-					h.InsertGarbageMessage(ba.persistenceBarrel...)
+		d.rwLock.RLock()
+		defer d.rwLock.RUnlock()
+		if ba, ok := d.barrels[eventID]; ok {
+			if ba.needPersistence { // 取消异步持久化
+				if err := d.filePlugin.SaveMessage(ba.persistenceBarrel); err != nil {
+					d.log.Error("persistence barrel message error.", err.Error())
+					d.InsertGarbageMessage(ba.persistenceBarrel...)
 				}
-				h.log.Debugf("dockerLogStore.persistence: persistence barrel(%s) %d log message to file.", eventID, len(ba.persistenceBarrel))
+				d.log.Debugf("dockerLogStore.persistence: persistence barrel(%s) %d log message to file.", eventID, len(ba.persistenceBarrel))
 				ba.persistenceBarrel = ba.persistenceBarrel[:0]
 				ba.needPersistence = false
 			}
@@ -251,10 +259,10 @@ func (h *dockerLogStore) persistence(event []string) {
 	}
 }
 
-func (h *dockerLogStore) GetHistoryMessage(eventID string, length int) (re []string) {
-	h.rwLock.RLock()
-	defer h.rwLock.RUnlock()
-	if ba, ok := h.barrels[eventID]; ok {
+func (d *dockerLogStore) GetHistoryMessage(eventID string, length int) (re []string) {
+	d.rwLock.RLock()
+	defer d.rwLock.RUnlock()
+	if ba, ok := d.barrels[eventID]; ok {
 		for _, m := range ba.barrel {
 			if len(m.Content) > 0 {
 				re = append(re, string(m.Content))
@@ -271,7 +279,7 @@ func (h *dockerLogStore) GetHistoryMessage(eventID string, length int) (re []str
 		}
 		return 0
 	}()
-	result, err := h.filePlugin.GetMessages(eventID, "", filelength)
+	result, err := d.filePlugin.GetMessages(eventID, "", filelength)
 	if result == nil || err != nil {
 		return re
 	}

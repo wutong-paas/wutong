@@ -44,7 +44,7 @@ const (
 )
 
 type filePlugin struct {
-	homePath string
+	homePath string // /wtdata/logs
 }
 
 func (m *filePlugin) getStdFilePath(serviceID string) (string, error) {
@@ -144,6 +144,7 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 	_, err = logfile.Write(body)
 	return err
 }
+
 func (m *filePlugin) GetMessages(serviceID, level string, length int) (interface{}, error) {
 	if length <= 0 {
 		return nil, nil
@@ -182,10 +183,9 @@ func (m *filePlugin) Close() error {
 	return nil
 }
 
-//GetServiceAliasID python:
-//new_word = str(ord(string[10])) + string + str(ord(string[3])) + 'log' + str(ord(string[2]) / 7)
-//new_id = hashlib.sha224(new_word).hexdigest()[0:16]
-//
+// GetServiceAliasID python:
+// new_word = str(ord(string[10])) + string + str(ord(string[3])) + 'log' + str(ord(string[2]) / 7)
+// new_id = hashlib.sha224(new_word).hexdigest()[0:16]
 func GetServiceAliasID(ServiceID string) string {
 	if len(ServiceID) > 11 {
 		newWord := strconv.Itoa(int(ServiceID[10])) + ServiceID + strconv.Itoa(int(ServiceID[3])) + "log" + strconv.Itoa(int(ServiceID[2])/7)
@@ -196,7 +196,7 @@ func GetServiceAliasID(ServiceID string) string {
 	return ServiceID
 }
 
-//MvLogFile 更改文件名称，压缩
+// MvLogFile 更改文件名称，压缩
 func MvLogFile(newName string, filePaths []string) error {
 	// 将压缩文档内容写入文件
 	f, err := os.OpenFile(newName, os.O_CREATE|os.O_WRONLY, 0666)

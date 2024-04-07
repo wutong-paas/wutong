@@ -252,8 +252,8 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *ReadConfig, r
 			continue
 		}
 		msgTemporary := *msg
-		watch.Msg <- &msgTemporary
-		watch.Msg <- msg
+		watch.Msg <- &msgTemporary // 因为 msg 是一个指针，所以这里需要拷贝一份，要不然可能会指向同一个地址
+		// watch.Msg <- msg
 		if limitedMode {
 			limitedNum--
 		}

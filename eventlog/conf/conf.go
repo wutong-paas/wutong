@@ -27,7 +27,7 @@ type Conf struct {
 	Log              LogConf
 	WebSocket        WebSocketConf
 	WebHook          WebHookConf
-	ClusterMode      bool
+	ClusterMode      bool // 默认 true
 	Cluster          ClusterConf
 	Kubernetes       KubernetsConf
 	EnableDebugPprof bool
@@ -91,7 +91,7 @@ type DockerLogServerConf struct {
 	BindIP           string
 	BindPort         int
 	CacheMessageSize int
-	Mode             string
+	// Mode             string
 }
 
 // DiscoverConf discover conf
@@ -124,14 +124,14 @@ type EventStoreConf struct {
 	EventLogPersistenceLength   int64
 	MessageType                 string
 	GarbageMessageSaveType      string
-	GarbageMessageFile          string
-	PeerEventMaxLogNumber       int64 //每个event最多日志条数。
-	PeerEventMaxCacheLogNumber  int
-	PeerDockerMaxCacheLogNumber int64
+	GarbageMessageFile          string // 默认 /var/log/envent_garbage_message.log
+	PeerEventMaxLogNumber       int64  //每个event最多日志条数。
+	PeerEventMaxCacheLogNumber  int    // 默认 256
+	PeerDockerMaxCacheLogNumber int64  // 默认 128
 	ClusterMode                 bool
-	HandleMessageCoreNumber     int
-	HandleSubMessageCoreNumber  int
-	HandleDockerLogCoreNumber   int
+	HandleMessageGoroutinues    int // 默认 2
+	HandleSubMessageGoroutinues int // 默认 3
+	HandleDockerLogGoroutinues  int // 默认 2
 	DB                          DBConf
 }
 

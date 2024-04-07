@@ -21,7 +21,6 @@ package main
 import (
 	"os"
 
-	"net/http"
 	_ "net/http/pprof"
 
 	"github.com/spf13/pflag"
@@ -31,18 +30,13 @@ import (
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "version" {
-		cmd.ShowVersion("eventlog")
+		cmd.ShowVersion("eventlog") // 打印版本信息
 	}
 	s := server.NewLogServer()
 	s.AddFlags(pflag.CommandLine)
 	pflag.Parse()
 	s.InitConf()
 	s.InitLog()
-	if s.Conf.EnableDebugPprof {
-		go func() {
-			http.ListenAndServe(":6607", nil)
-		}()
-	}
 
 	if err := s.Run(); err != nil {
 		s.Logger.Error("server run error.", err.Error())

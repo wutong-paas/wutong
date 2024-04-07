@@ -148,7 +148,7 @@ func getClusterInfo(c *cli.Context) error {
 	handleErr(err)
 	var rest []*client.HostNode
 	for _, v := range list {
-		if v.Role.HasRule("manage") || !v.Role.HasRule("compute") {
+		if v.Role.HasRole("manage") || !v.Role.HasRole("compute") {
 			handleStatus(serviceTable, v)
 		} else {
 			rest = append(rest, v)

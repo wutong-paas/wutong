@@ -144,7 +144,7 @@ func GetRuleNodes(w http.ResponseWriter, r *http.Request) {
 	}
 	var masternodes []*client.HostNode
 	for _, node := range nodes {
-		if node.Role.HasRule(rule) {
+		if node.Role.HasRole(rule) {
 			masternodes = append(masternodes, node)
 		}
 	}
@@ -342,12 +342,12 @@ func DownNode(w http.ResponseWriter, r *http.Request) {
 		err.Handle(r, w)
 		return
 	}
-	if n.Role.HasRule("manage") {
+	if n.Role.HasRole("manage") {
 		nodes, _ := nodeService.GetAllNode()
 		if len(nodes) > 0 {
 			count := 0
 			for _, node := range nodes {
-				if node.Role.HasRule("manage") {
+				if node.Role.HasRole("manage") {
 					count++
 				}
 			}

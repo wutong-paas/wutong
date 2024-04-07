@@ -143,7 +143,7 @@ func (n *Cluster) handleNodeStatus(v *client.HostNode) {
 	} else {
 		v.GetAndUpdateCondition(client.NodeUp, client.ConditionTrue, "", "")
 		v.NodeStatus.CurrentScheduleStatus = !v.Unschedulable
-		if v.Role.HasRule("compute") {
+		if v.Role.HasRole("compute") {
 			k8sNode, err := n.kubecli.GetNode(v.ID)
 			if err != nil && !errors.IsNotFound(err) {
 				logrus.Errorf("get kube node %s failure %s", v.ID, err.Error())
@@ -160,13 +160,13 @@ func (n *Cluster) handleNodeStatus(v *client.HostNode) {
 				v.NodeStatus.NodeInfo.ContainerRuntimeVersion = k8sNode.Status.NodeInfo.ContainerRuntimeVersion
 			}
 		}
-		if (v.Role.HasRule("manage") || v.Role.HasRule("gateway")) && !v.Role.HasRule("compute") { //manage install_success == runnint
+		if (v.Role.HasRole("manage") || v.Role.HasRole("gateway")) && !v.Role.HasRole("compute") { //manage install_success == runnint
 			v.AvailableCPU = v.NodeStatus.NodeInfo.NumCPU
 			v.AvailableMemory = int64(v.NodeStatus.NodeInfo.MemorySize)
 		}
 		//handle status
 		v.Status = v.NodeStatus.Status
-		if v.Role.HasRule("compute") && v.NodeStatus.KubeNode == nil {
+		if v.Role.HasRole("compute") && v.NodeStatus.KubeNode == nil {
 			v.Status = "offline"
 		}
 	}
