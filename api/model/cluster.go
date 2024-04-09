@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -43,9 +44,10 @@ const (
 
 // ClusterEvent
 type ClusterEvent struct {
-	Level     ClusterEventLevel `json:"level"`
-	Message   string            `json:"message"`
-	CreatedAt string            `json:"created_at"`
+	Level             ClusterEventLevel `json:"level"`
+	Message           string            `json:"message"`
+	CreatedAt         string            `json:"created_at"`
+	CreationTimestamp time.Time         `json:"created_at_time_stamps"`
 }
 
 func ClusterEventFrom(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
@@ -79,9 +81,10 @@ func podEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent
 		return nil
 	}
 	return &ClusterEvent{
-		Level:     ClusterEventLevelWarning,
-		Message:   message,
-		CreatedAt: event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		Level:             ClusterEventLevelWarning,
+		Message:           message,
+		CreatedAt:         event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		CreationTimestamp: event.CreationTimestamp.Time,
 	}
 }
 
@@ -97,8 +100,9 @@ func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEven
 		}
 		message = fmt.Sprintf("节点[%s]端口[:%s]已被占用", event.InvolvedObject.Name, reasonParts[1])
 		return &ClusterEvent{
-			Level:   ClusterEventLevelWarning,
-			Message: message,
+			Level:             ClusterEventLevelWarning,
+			Message:           message,
+			CreationTimestamp: event.CreationTimestamp.Time,
 		}
 	}
 
@@ -113,9 +117,10 @@ func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEven
 		return nil
 	}
 	return &ClusterEvent{
-		Level:     ClusterEventLevelWarning,
-		Message:   message,
-		CreatedAt: event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		Level:             ClusterEventLevelWarning,
+		Message:           message,
+		CreatedAt:         event.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		CreationTimestamp: event.CreationTimestamp.Time,
 	}
 }
 
@@ -171,6 +176,10 @@ func DecimalFromFloat32(f float32) float32 {
 		return 0
 	}
 	return float32(res)
+}
+
+type ListNodeRequest struct {
+	Query string `json:"query"`
 }
 
 type ListNodeResponse struct {
@@ -233,12 +242,12 @@ func (l TaintForSelectList) Contains(t corev1.Taint) bool {
 }
 
 type TaintForSelect struct {
-	Key    string   `json:"key"`
+	Key    string   `json:"taint_key"`
 	Values []string `json:"values"`
 }
 
 type TaintForSelectValue struct {
-	Value  string `json:"value"`
+	Value  string `json:"taint_value"`
 	Effect string `json:"effect"`
 }
 
@@ -249,36 +258,35 @@ type GetNodeResponse struct {
 type NodeBaseInfo struct {
 	Name       string   `json:"name"`
 	ExternalIP string   `json:"external_ip"`
+	InternalIP string   `json:"internal_ip"`
 	Roles      []string `json:"roles"`
 	OS         string   `json:"os"`
 	Arch       string   `json:"arch"`
 }
 
 type NodeInfo struct {
-	NodeBaseInfo `json:",inline"`
-	// Name                    string   `json:"name"`
-	// ExternalIP              string   `json:"external_ip"`
-	InternalIP string `json:"internal_ip"`
-	// Roles                   []string `json:"roles"`
-	KubeVersion             string `json:"kube_version"`
-	ContainerRuntime        string `json:"container_runtime"`
-	ContainerRuntimeVersion string `json:"container_runtime_version"`
-	// OS                      string   `json:"os"`
-	OSVersion     string `json:"os_version"`
-	KernelVersion string `json:"kernel_version"`
-	CreatedAt     string `json:"created_at"`
-	// Arch                    string   `json:"arch"`
-	Status      string `json:"status"`     // 节点状态：Ready, NotReady, Unknown
-	PodCIDR     string `json:"pod_cidr"`   // Pod 网络 CIDR
-	CPUCap      int64  `json:"cpu_cap"`    // CPU 容量
-	MemoryCap   int64  `json:"memory_cap"` // 内存容量
-	DiskCap     int64  `json:"disk_cap"`   // 磁盘容量
-	PodCap      int64  `json:"pod_cap"`    // Pod 容量
-	CPUUsed     int64  `json:"cpu_used"`   // CPU 使用量
-	MemoryUsed  int64  `json:"memory_used"`
-	DiskUsed    int64  `json:"disk_used"`
-	PodUsed     int64  `json:"pod_used"`
-	Schedulable bool   `json:"schedulable"`
+	NodeBaseInfo            `json:",inline"`
+	KubeVersion             string  `json:"kube_version"`
+	ContainerRuntime        string  `json:"container_runtime"`
+	ContainerRuntimeVersion string  `json:"container_runtime_version"`
+	OSVersion               string  `json:"os_version"`
+	KernelVersion           string  `json:"kernel_version"`
+	CreatedAt               string  `json:"created_at"`
+	Status                  string  `json:"status"`                  // 节点状态：Ready, NotReady, Unknown
+	PodCIDR                 string  `json:"pod_cidr"`                // Pod 网络 CIDR
+	CPUCap                  float64 `json:"cpu_cap"`                 // CPU 容量
+	CPUUsed                 float64 `json:"cpu_used"`                // CPU 使用量
+	CPUtilizationRate       float64 `json:"cpu_utilization_rate"`    // CPU 使用率
+	MemoryCap               float64 `json:"memory_cap"`              // 内存容量
+	MemoryUsed              float64 `json:"memory_used"`             // 内存使用量
+	MemoryUtilizationRate   float64 `json:"memory_utilization_rate"` // 内存使用率
+	DiskCap                 float64 `json:"disk_cap"`                // 磁盘容量
+	DiskUsed                float64 `json:"disk_used"`               // 磁盘使用量
+	DiskUtilizationRate     float64 `json:"disk_utilization_rate"`   // 磁盘使用率
+	PodCap                  int64   `json:"pod_cap"`                 // Pod 容量
+	PodUsed                 int64   `json:"pod_used"`                // Pod 使用量
+	PodUtilizationRate      float64 `json:"pod_utilization_rate"`    // Pod 使用率
+	Schedulable             bool    `json:"schedulable"`             // 是否可调度
 }
 
 type NodeProfile struct {
@@ -288,29 +296,31 @@ type NodeProfile struct {
 	Taints      []Taint      `json:"taints"`
 }
 
-type KeyValue struct {
-	Key   string `json:"key" validate:"required"`
-	Value string `json:"value"`
-}
+// type KeyValue struct {
+// 	Key   string `json:"key" validate:"required"`
+// 	Value string `json:"value"`
+// }
 
 type Label struct {
-	KeyValue `json:",inline"`
-	Editable bool `json:"editable"`
+	Key                 string `json:"label_key"`
+	Value               string `json:"label_value"`
+	IsVMSchedulingLabel bool   `json:"is_vm_scheduling_label"`
 }
 
 type Annotation struct {
-	KeyValue `json:",inline"`
-	Editable bool `json:"editable"`
+	Key   string `json:"annotation_key" validate:"required"`
+	Value string `json:"annotation_value"`
 }
 
 type Taint struct {
-	KeyValue `json:",inline"`
-	Effect   string `json:"effect"`
+	Key    string `json:"taint_key"`
+	Value  string `json:"taint_value"`
+	Effect string `json:"effect"`
 }
 
 type TaintNodeRequest struct {
-	Key    string `json:"key" validate:"required"`
-	Value  string `json:"value"`
+	Key    string `json:"taint_key" validate:"required"`
+	Value  string `json:"taint_value"`
 	Effect string `json:"effect" validate:"required"`
 }
 
@@ -319,29 +329,37 @@ type CordonNodeRequest struct {
 }
 
 type DeleteTaintNodeRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"taint_key" validate:"required"`
 }
 
 type SetVMSchedulingLabelRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key" validate:"required"`
+	Value string `json:"label_value"`
 }
 
 type DeleteVMSchedulingLabelRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"label_key" validate:"required"`
 }
 
 type SetNodeLabelRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"label_key" validate:"required"`
+	Value string `json:"label_value"`
 }
 
 type DeleteNodeLabelRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"label_key" validate:"required"`
 }
 
 type SetNodeAnnotationRequest struct {
-	KeyValue `json:",inline"`
+	Key   string `json:"annotation_key" validate:"required"`
+	Value string `json:"annotation_value"`
 }
 
 type DeleteNodeAnnotationRequest struct {
-	Key string `json:"key" validate:"required"`
+	Key string `json:"annotation_key" validate:"required"`
+}
+
+type StorageClass struct {
+	Name      string `json:"name"`
+	IsDefault bool   `json:"is_default"`
 }

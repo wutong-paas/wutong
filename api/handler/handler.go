@@ -84,7 +84,7 @@ func InitHandle(conf option.Config,
 	defaultAppRestoreHandler = NewAppRestoreHandler()
 	defPodHandler = NewPodHandler(statusCli)
 	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace, conf.PrometheusEndpoint)
-	defNodeHandler = NewNodeHandler(kubeClient)
+	defNodeHandler = NewNodeHandler(kubeClient, prometheusCli)
 	defSchedulingHandler = NewSchedulingHandler(kubeClient)
 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)
 	defaultEtcdHandler = NewEtcdHandler(etcdcli)

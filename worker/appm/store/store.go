@@ -407,6 +407,15 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := deployment.Labels["version"]
 		createrID := deployment.Labels["creater_id"]
 		if serviceID != "" && version != "" && createrID != "" {
+			_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
+			if err == gorm.ErrRecordNotFound {
+				got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
+				if err == nil && got.ID > 0 {
+					// 已经被删除的组件
+					a.conf.KubeClient.AppsV1().Deployments(deployment.Namespace).Delete(context.Background(), deployment.Name, metav1.DeleteOptions{})
+					return
+				}
+			}
 			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetDeployment(deployment)
@@ -419,6 +428,15 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 		version := statefulset.Labels["version"]
 		createrID := statefulset.Labels["creater_id"]
 		if serviceID != "" && version != "" && createrID != "" {
+			_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
+			if err == gorm.ErrRecordNotFound {
+				got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
+				if err == nil && got.ID > 0 {
+					// 已经被删除的组件
+					a.conf.KubeClient.AppsV1().StatefulSets(statefulset.Namespace).Delete(context.Background(), statefulset.Name, metav1.DeleteOptions{})
+					return
+				}
+			}
 			appservice, _ := a.getAppService(serviceID, version, createrID, true)
 			if appservice != nil {
 				appservice.SetStatefulSet(statefulset)
@@ -1234,10 +1252,7 @@ func (a *appRuntimeStore) podEventHandler() cache.ResourceEventHandlerFuncs {
 			a.resourceCache.SetPodResource(pod)
 			_, serviceID, version, createrID := k8sutil.ExtractLabels(pod.GetLabels())
 			if serviceID != "" && version != "" && createrID != "" {
-				appservice, err := a.getAppService(serviceID, version, createrID, true)
-				if err == conversion.ErrServiceNotFound {
-					a.conf.KubeClient.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
-				}
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
 				if appservice != nil {
 					appservice.SetPods(pod)
 				}
@@ -1262,10 +1277,7 @@ func (a *appRuntimeStore) podEventHandler() cache.ResourceEventHandlerFuncs {
 			a.resourceCache.SetPodResource(pod)
 			_, serviceID, version, createrID := k8sutil.ExtractLabels(pod.GetLabels())
 			if serviceID != "" && version != "" && createrID != "" {
-				appservice, err := a.getAppService(serviceID, version, createrID, true)
-				if err == conversion.ErrServiceNotFound {
-					a.conf.KubeClient.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
-				}
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
 				if appservice != nil {
 					appservice.SetPods(pod)
 				}
@@ -1623,6 +1635,11 @@ func (a *appRuntimeStore) keepNodeShellPod(node string) error {
 			HostNetwork:   true,
 			HostPID:       true,
 			HostIPC:       true,
+			Tolerations: []corev1.Toleration{
+				{
+					Operator: corev1.TolerationOpExists,
+				},
+			},
 		},
 	}
 	_, err = a.clientset.CoreV1().Pods(a.conf.WTNamespace).Create(context.Background(), pod, metav1.CreateOptions{})
@@ -1766,6 +1783,11 @@ func (a *appRuntimeStore) keepWTChannel() error {
 										MountPath: "/root/.ssh",
 									},
 								},
+							},
+						},
+						Tolerations: []corev1.Toleration{
+							{
+								Operator: corev1.TolerationOpExists,
 							},
 						},
 					},

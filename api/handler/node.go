@@ -9,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/client/kube"
+	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/util"
 	corev1 "k8s.io/api/core/v1"
@@ -22,12 +23,17 @@ import (
 
 // NodeHandler -
 type NodeHandler interface {
-	ListNodes() (*model.ListNodeResponse, error)
+	ListNodes(query string) (*model.ListNodeResponse, error)
 	GetNode(nodeName string) (*model.GetNodeResponse, error)
+	GetNodeLabels(nodeName string) ([]model.Label, error)
+	GetCommonLabels(nodeName string) ([]model.Label, error)
+	GetVMSchedulingLabels(nodeName string) ([]model.Label, error)
 	SetNodeLabel(nodeName string, req *model.SetNodeLabelRequest) error
 	DeleteNodeLabel(nodeName string, req *model.DeleteNodeLabelRequest) error
+	GetNodeAnnotations(nodeName string) ([]model.Annotation, error)
 	SetNodeAnnotation(nodeName string, req *model.SetNodeAnnotationRequest) error
 	DeleteNodeAnnotation(nodeName string, req *model.DeleteNodeAnnotationRequest) error
+	GetNodeTaints(nodeName string) ([]model.Taint, error)
 	TaintNode(nodeName string, req *model.TaintNodeRequest) error
 	DeleteTaintNode(nodeName string, req *model.DeleteTaintNodeRequest) error
 	CordonNode(nodeName string, req *model.CordonNodeRequest) error
@@ -37,17 +43,19 @@ type NodeHandler interface {
 }
 
 // NewNodeHandler -
-func NewNodeHandler(clientset kubernetes.Interface) NodeHandler {
+func NewNodeHandler(clientset kubernetes.Interface, promcli prometheus.Interface) NodeHandler {
 	return &nodeAction{
 		clientset: clientset,
+		promcli:   promcli,
 	}
 }
 
 type nodeAction struct {
 	clientset kubernetes.Interface
+	promcli   prometheus.Interface
 }
 
-func (a *nodeAction) ListNodes() (*model.ListNodeResponse, error) {
+func (a *nodeAction) ListNodes(query string) (*model.ListNodeResponse, error) {
 	var result model.ListNodeResponse
 	nodes, err := kube.GetCachedResources(a.clientset).NodeLister.List(labels.Everything())
 
@@ -55,32 +63,20 @@ func (a *nodeAction) ListNodes() (*model.ListNodeResponse, error) {
 		return !nodes[i].CreationTimestamp.After(nodes[j].CreationTimestamp.Time)
 	})
 
-	for _, node := range nodes {
-		containerRuntime, containerRuntimeVersion := a.nodeContainerRuntimeAndVersion(node)
-		item := model.NodeInfo{
-			NodeBaseInfo: model.NodeBaseInfo{
-				Name:       node.Name,
-				ExternalIP: nodeExternalIP(node),
-				Roles:      kube.NodeRoles(a.clientset, node),
-				OS:         node.Status.NodeInfo.OperatingSystem,
-				Arch:       node.Status.NodeInfo.Architecture,
-			},
-			InternalIP:              nodeInternalIP(node),
-			KubeVersion:             node.Status.NodeInfo.KubeletVersion,
-			ContainerRuntime:        containerRuntime,
-			ContainerRuntimeVersion: containerRuntimeVersion,
-			OSVersion:               node.Status.NodeInfo.OSImage,
-			KernelVersion:           node.Status.NodeInfo.KernelVersion,
-			Status:                  nodeStatus(node),
-			CreatedAt:               node.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
-			PodCIDR:                 node.Spec.PodCIDR,
-			CPUCap:                  node.Status.Capacity.Cpu().MilliValue() / 1000,
-			MemoryCap:               node.Status.Capacity.Memory().Value() / 1024 / 1024,
-			DiskCap:                 node.Status.Capacity.StorageEphemeral().Value() / 1024 / 1024,
-			PodCap:                  node.Status.Capacity.Pods().Value(),
-			Schedulable:             !node.Spec.Unschedulable,
+	if query != "" {
+		query = strings.ToLower(query)
+		var filteredNodes []*corev1.Node
+		for _, node := range nodes {
+			if strings.Contains(strings.ToLower(node.Name), query) {
+				filteredNodes = append(filteredNodes, node)
+			}
 		}
-		result.Nodes = append(result.Nodes, item)
+		nodes = filteredNodes
+	}
+
+	for _, node := range nodes {
+		nodeInfo := a.nodeInfo(node)
+		result.Nodes = append(result.Nodes, nodeInfo)
 	}
 
 	result.Total = len(result.Nodes)
@@ -95,40 +91,87 @@ func (a *nodeAction) GetNode(nodeName string) (*model.GetNodeResponse, error) {
 
 		}
 	}
-	containerRuntime, containerRuntimeVersion := a.nodeContainerRuntimeAndVersion(node)
+
+	nodeInfo := a.nodeInfo(node)
+
+	nodeProfile := model.NodeProfile{
+		NodeInfo:    nodeInfo,
+		Labels:      nodeLabels(node),
+		Annotations: nodeAnnotations(node),
+		Taints:      nodeTaints(node),
+	}
 	result := model.GetNodeResponse{
-		NodeProfile: model.NodeProfile{
-			NodeInfo: model.NodeInfo{
-				NodeBaseInfo: model.NodeBaseInfo{
-					Name:       node.Name,
-					ExternalIP: nodeExternalIP(node),
-					Roles:      kube.NodeRoles(a.clientset, node),
-					OS:         node.Status.NodeInfo.OperatingSystem,
-					Arch:       node.Status.NodeInfo.Architecture,
-				},
-				InternalIP:              nodeInternalIP(node),
-				KubeVersion:             node.Status.NodeInfo.KubeletVersion,
-				ContainerRuntime:        containerRuntime,
-				ContainerRuntimeVersion: containerRuntimeVersion,
-				OSVersion:               node.Status.NodeInfo.OSImage,
-				KernelVersion:           node.Status.NodeInfo.KernelVersion,
-				Status:                  nodeStatus(node),
-				CreatedAt:               node.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
-				PodCIDR:                 node.Spec.PodCIDR,
-				CPUCap:                  node.Status.Capacity.Cpu().MilliValue() / 1000,
-				MemoryCap:               node.Status.Capacity.Memory().Value() / 1024 / 1024,
-				DiskCap:                 node.Status.Capacity.StorageEphemeral().Value() / 1024 / 1024,
-				PodCap:                  node.Status.Capacity.Pods().Value(),
-			},
-			Labels:      nodeLabels(node),
-			Annotations: nodeAnnotations(node),
-			Taints:      nodeTaints(node),
-		},
+		NodeProfile: nodeProfile,
 	}
 	return &result, nil
 }
 
+func (a *nodeAction) GetNodeLabels(nodeName string) ([]model.Label, error) {
+	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil, fmt.Errorf("节点 %s 不存在", nodeName)
+
+		}
+	}
+
+	return nodeLabels(node), nil
+}
+
+func (a *nodeAction) GetCommonLabels(nodeName string) ([]model.Label, error) {
+	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil, fmt.Errorf("节点 %s 不存在", nodeName)
+
+		}
+	}
+
+	var result []model.Label
+
+	labels := nodeLabels(node)
+	for _, label := range labels {
+		if label.IsVMSchedulingLabel {
+			continue
+		}
+		result = append(result, model.Label{
+			Key:   label.Key,
+			Value: label.Value,
+		})
+	}
+
+	return result, nil
+}
+
+func (a *nodeAction) GetVMSchedulingLabels(nodeName string) ([]model.Label, error) {
+	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil, fmt.Errorf("节点 %s 不存在", nodeName)
+
+		}
+	}
+
+	var result []model.Label
+
+	labels := nodeLabels(node)
+	for _, label := range labels {
+		if label.IsVMSchedulingLabel {
+			result = append(result, model.Label{
+				Key:   label.Key,
+				Value: label.Value,
+			})
+		}
+	}
+
+	return result, nil
+}
+
 func (a *nodeAction) SetNodeLabel(nodeName string, req *model.SetNodeLabelRequest) error {
+	req.Key = strings.TrimSpace(req.Key)
+	if req.Key == "" {
+		return fmt.Errorf("标签键不能为空！")
+	}
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -157,6 +200,10 @@ func (a *nodeAction) SetNodeLabel(nodeName string, req *model.SetNodeLabelReques
 }
 
 func (a *nodeAction) DeleteNodeLabel(nodeName string, req *model.DeleteNodeLabelRequest) error {
+	req.Key = strings.TrimSpace(req.Key)
+	if req.Key == "" {
+		return fmt.Errorf("标签键不能为空！")
+	}
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -184,7 +231,19 @@ func (a *nodeAction) DeleteNodeLabel(nodeName string, req *model.DeleteNodeLabel
 	return nil
 }
 
+func (a *nodeAction) GetNodeAnnotations(nodeName string) ([]model.Annotation, error) {
+	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
+	if err != nil {
+		return nil, err
+	}
+	return nodeAnnotations(node), nil
+}
+
 func (a *nodeAction) SetNodeAnnotation(nodeName string, req *model.SetNodeAnnotationRequest) error {
+	req.Key = strings.TrimSpace(req.Key)
+	if req.Key == "" {
+		return fmt.Errorf("注解键不能为空！")
+	}
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -213,6 +272,10 @@ func (a *nodeAction) SetNodeAnnotation(nodeName string, req *model.SetNodeAnnota
 }
 
 func (a *nodeAction) DeleteNodeAnnotation(nodeName string, req *model.DeleteNodeAnnotationRequest) error {
+	req.Key = strings.TrimSpace(req.Key)
+	if req.Key == "" {
+		return fmt.Errorf("注解键不能为空！")
+	}
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -240,10 +303,18 @@ func (a *nodeAction) DeleteNodeAnnotation(nodeName string, req *model.DeleteNode
 	return nil
 }
 
+func (a *nodeAction) GetNodeTaints(nodeName string) ([]model.Taint, error) {
+	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
+	if err != nil {
+		return nil, err
+	}
+	return nodeTaints(node), nil
+}
+
 func (a *nodeAction) TaintNode(nodeName string, req *model.TaintNodeRequest) error {
 	req.Key = strings.TrimSpace(req.Key)
 	if req.Key == "" {
-		return fmt.Errorf("污点名称不能为空！")
+		return fmt.Errorf("污点键不能为空！")
 	}
 	if req.Key == "node.kubernetes.io/unschedulable" {
 		return fmt.Errorf("不允许设置 %s 污点！", req.Key)
@@ -293,7 +364,7 @@ func (a *nodeAction) TaintNode(nodeName string, req *model.TaintNodeRequest) err
 func (a *nodeAction) DeleteTaintNode(nodeName string, req *model.DeleteTaintNodeRequest) error {
 	req.Key = strings.TrimSpace(req.Key)
 	if req.Key == "" {
-		return fmt.Errorf("污点名称不能为空！")
+		return fmt.Errorf("污点键不能为空！")
 	}
 	if req.Key == "node.kubernetes.io/unschedulable" {
 		return fmt.Errorf("不允许直接清除 %s 污点，可以通过标记节点为可调度来清除！", req.Key)
@@ -427,6 +498,10 @@ func (a *nodeAction) UncordonNode(nodeName string) error {
 }
 
 func (a *nodeAction) SetVMSchedulingLabel(nodeName string, req *model.SetVMSchedulingLabelRequest) error {
+	req.Key = strings.TrimSpace(req.Key)
+	if req.Key == "" {
+		return fmt.Errorf("虚拟机调度标签键不能为空！")
+	}
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -452,6 +527,10 @@ func (a *nodeAction) SetVMSchedulingLabel(nodeName string, req *model.SetVMSched
 }
 
 func (a *nodeAction) DeleteVMSchedulingLabel(nodeName string, req *model.DeleteVMSchedulingLabelRequest) error {
+	req.Key = strings.TrimSpace(req.Key)
+	if req.Key == "" {
+		return fmt.Errorf("虚拟机调度标签键不能为空！")
+	}
 	node, err := kube.GetCachedResources(a.clientset).NodeLister.Get(nodeName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -474,6 +553,56 @@ func (a *nodeAction) DeleteVMSchedulingLabel(nodeName string, req *model.DeleteV
 	})
 
 	return nil
+}
+
+func (a *nodeAction) nodeInfo(node *corev1.Node) model.NodeInfo {
+	var result model.NodeInfo
+	if node == nil {
+		return result
+	}
+
+	containerRuntime, containerRuntimeVersion := a.nodeContainerRuntimeAndVersion(node)
+	var cpuUsed = kube.GetNodeCPURequest(node.Name)
+	var memoryUsed = kube.GetNodeMemoryRequest(node.Name)
+	var podUsed = kube.GetNodePodCount(node.Name)
+	nodeInternalIP := nodeInternalIP(node)
+	result = model.NodeInfo{
+		NodeBaseInfo: model.NodeBaseInfo{
+			Name:       node.Name,
+			ExternalIP: nodeExternalIP(node),
+			InternalIP: nodeInternalIP,
+			Roles:      kube.NodeRoles(a.clientset, node),
+			OS:         node.Status.NodeInfo.OperatingSystem,
+			Arch:       node.Status.NodeInfo.Architecture,
+		},
+		KubeVersion:             node.Status.NodeInfo.KubeletVersion,
+		ContainerRuntime:        containerRuntime,
+		ContainerRuntimeVersion: containerRuntimeVersion,
+		OSVersion:               node.Status.NodeInfo.OSImage,
+		KernelVersion:           node.Status.NodeInfo.KernelVersion,
+		Status:                  nodeStatus(node),
+		CreatedAt:               node.CreationTimestamp.Local().Format("2006-01-02 15:04:05"),
+		PodCIDR:                 node.Spec.PodCIDR,
+		CPUCap:                  util.DecimailFromFloat64(float64(node.Status.Capacity.Cpu().MilliValue()) / 1000),
+		CPUUsed:                 util.DecimailFromFloat64(float64(cpuUsed) / 1000),
+		MemoryCap:               util.DecimailFromFloat64(float64(node.Status.Capacity.Memory().Value()) / 1024 / 1024 / 1024),
+		MemoryUsed:              util.DecimailFromFloat64(float64(memoryUsed) / 1024 / 1024 / 1024),
+		PodCap:                  node.Status.Capacity.Pods().Value(),
+		PodUsed:                 podUsed,
+		DiskCap:                 util.DecimailFromFloat64(float64(node.Status.Capacity.StorageEphemeral().Value()) / 1024 / 1024 / 1024),
+		Schedulable:             !node.Spec.Unschedulable,
+	}
+	result.CPUtilizationRate = util.DecimailFromFloat64(result.CPUUsed / result.CPUCap * 100)
+	result.MemoryUtilizationRate = util.DecimailFromFloat64(result.MemoryUsed / result.MemoryCap * 100)
+	result.PodUtilizationRate = util.DecimailFromFloat64(float64(result.PodUsed) / float64(result.PodCap) * 100)
+	diskAvailable := util.DecimailFromFloat64(GetNodeDiskAvailable(node.Name, nodeInternalIP, a.promcli) / 1024 / 1024 / 1024)
+	result.DiskUsed = util.DecimailFromFloat64(result.DiskCap - diskAvailable)
+	if result.DiskUsed <= 0 {
+		result.DiskUsed = 0
+	}
+	result.DiskUtilizationRate = util.DecimailFromFloat64(result.DiskUsed / result.DiskCap * 100)
+
+	return result
 }
 
 func nodeInternalIP(node *corev1.Node) string {
@@ -527,45 +656,50 @@ func nodeStatus(node *corev1.Node) string {
 func nodeLabels(node *corev1.Node) []model.Label {
 	var result []model.Label
 	for k, v := range node.Labels {
-		// ignore vm node selector labels
-		if strings.HasPrefix(k, "vm-scheduling-label.wutong.io/") {
-			continue
-		}
+		var found bool
+		k, found = strings.CutPrefix(k, "vm-scheduling-label.wutong.io/")
 		result = append(result, model.Label{
-			KeyValue: model.KeyValue{
-				Key:   k,
-				Value: v,
-			},
-			Editable: true,
+			Key:                 k,
+			Value:               v,
+			IsVMSchedulingLabel: found,
 		})
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Key < result[j].Key
+	})
+
 	return result
 }
 
 func nodeAnnotations(node *corev1.Node) []model.Annotation {
-	var result []model.Annotation
+	var result = make([]model.Annotation, 0)
 	for k, v := range node.Annotations {
 		result = append(result, model.Annotation{
-			KeyValue: model.KeyValue{
-				Key:   k,
-				Value: v,
-			},
-			Editable: true,
+			Key:   k,
+			Value: v,
 		})
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Key < result[j].Key
+	})
+
 	return result
 }
 
 func nodeTaints(node *corev1.Node) []model.Taint {
-	var result []model.Taint
+	var result = make([]model.Taint, 0)
 	for _, taint := range node.Spec.Taints {
+		if taint.Key == "node.kubernetes.io/unschedulable" {
+			continue
+		}
 		result = append(result, model.Taint{
-			KeyValue: model.KeyValue{
-				Key:   string(taint.Key),
-				Value: string(taint.Value),
-			},
+			Key:    string(taint.Key),
+			Value:  string(taint.Value),
 			Effect: string(taint.Effect),
 		})
 	}
+
 	return result
 }

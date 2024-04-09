@@ -4,10 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -24,8 +22,6 @@ import (
 )
 
 const (
-	// timeFormatOut is the format for writing timestamps to output.
-	timeFormatOut = types.RFC3339NanoFixed
 	// timeFormatIn is the format for parsing timestamps from other logs.
 	timeFormatIn = types.RFC3339NanoLenient
 
@@ -41,20 +37,6 @@ var (
 	// tagDelimiter is the delimiter for log tags.
 	tagDelimiter = []byte(runtimeapi.LogTagDelimiter)
 )
-
-// logMessage is the CRI internal log type.
-type logMessage struct {
-	timestamp time.Time
-	stream    runtimeapi.LogStreamType
-	log       []byte
-}
-
-// reset resets the log to nil.
-func (l *logMessage) reset() {
-	l.timestamp = time.Time{}
-	l.stream = ""
-	l.log = nil
-}
 
 // LogOptions is the CRI internal type of all log options.
 type LogOptions struct {
@@ -147,59 +129,6 @@ func getParseFunc(log []byte) (parseFunc, error) {
 		}
 	}
 	return nil, fmt.Errorf("unsupported log format: %q", log)
-}
-
-// logWriter controls the writing into the stream based on the log options.
-type logWriter struct {
-	stdout io.Writer
-	stderr io.Writer
-	opts   *ReadConfig
-	remain int64
-}
-
-// errMaximumWrite is returned when all bytes have been written.
-var errMaximumWrite = errors.New("maximum write")
-
-// errShortWrite is returned when the message is not fully written.
-var errShortWrite = errors.New("short write")
-
-func newLogWriter(stdout io.Writer, stderr io.Writer, opts *ReadConfig) *logWriter {
-	w := &logWriter{
-		stdout: stdout,
-		stderr: stderr,
-		opts:   opts,
-		remain: math.MaxInt64, // initialize it as infinity
-	}
-	return w
-}
-
-// writeLogs writes logs into stdout, stderr.
-func (w *logWriter) write(msg *Message) error {
-	if msg.Timestamp.Before(w.opts.Since) {
-		// Skip the line because it's older than since
-		return nil
-	}
-	line := msg.Line
-	// If the line is longer than the remaining bytes, cut it.
-	if int64(len(line)) > w.remain {
-		line = line[:w.remain]
-	}
-	// Get the proper stream to write to.
-	var stream = w.stdout
-	n, err := stream.Write(line)
-	w.remain -= int64(n)
-	if err != nil {
-		return err
-	}
-	// If the line has not been fully written, return errShortWrite
-	if n < len(line) {
-		return errShortWrite
-	}
-	// If there are no more bytes left, return errMaximumWrite
-	if w.remain <= 0 {
-		return errMaximumWrite
-	}
-	return nil
 }
 
 // ReadLogs read the container log and redirect into stdout and stderr.

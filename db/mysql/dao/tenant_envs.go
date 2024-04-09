@@ -607,6 +607,15 @@ func (t *TenantEnvServicesDeleteImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
+// GetServiceByID 获取服务通过服务id
+func (t *TenantEnvServicesDeleteImpl) GetServiceByID(serviceID string) (*model.TenantEnvServicesDelete, error) {
+	var service model.TenantEnvServicesDelete
+	if err := t.DB.Where("service_id=?", serviceID).Find(&service).Error; err != nil {
+		return nil, err
+	}
+	return &service, nil
+}
+
 // GetTenantEnvServicesDeleteByCreateTime -
 func (t *TenantEnvServicesDeleteImpl) GetTenantEnvServicesDeleteByCreateTime(createTime time.Time) ([]*model.TenantEnvServicesDelete, error) {
 	var ServiceDel []*model.TenantEnvServicesDelete
@@ -1669,7 +1678,7 @@ type ServiceSchedulingNodeDaoImpl struct {
 func (t *ServiceSchedulingNodeDaoImpl) AddModel(mo model.Interface) error {
 	node := mo.(*model.TenantEnvServiceSchedulingNode)
 	var oldNode model.TenantEnvServiceSchedulingNode
-	if ok := t.DB.Where("service_id=?", node.ServiceID).Find(&oldNode).RecordNotFound(); ok {
+	if ok := t.DB.Where("service_id=? and node_name=?", node.ServiceID, node.NodeName).Find(&oldNode).RecordNotFound(); ok {
 		if err := t.DB.Create(node).Error; err != nil {
 			return err
 		}
@@ -1698,15 +1707,15 @@ func (t *ServiceSchedulingNodeDaoImpl) DeleteModel(serviceID string, args ...int
 	return nil
 }
 
-func (t *ServiceSchedulingNodeDaoImpl) GetServiceSchedulingNode(serviceID string) (*model.TenantEnvServiceSchedulingNode, error) {
-	var node model.TenantEnvServiceSchedulingNode
-	if err := t.DB.Where("service_id=?", serviceID).Find(&node).Error; err != nil {
+func (t *ServiceSchedulingNodeDaoImpl) ListServiceSchedulingNodes(serviceID string) ([]*model.TenantEnvServiceSchedulingNode, error) {
+	var nodes []*model.TenantEnvServiceSchedulingNode
+	if err := t.DB.Where("service_id=?", serviceID).Find(&nodes).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return &node, nil
+			return nodes, nil
 		}
 		return nil, err
 	}
-	return &node, nil
+	return nodes, nil
 }
 
 type ServiceSchedulingTolerationDaoImpl struct {

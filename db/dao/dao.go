@@ -158,6 +158,7 @@ type TenantEnvServiceDao interface {
 // TenantEnvServiceDeleteDao TenantEnvServiceDeleteDao
 type TenantEnvServiceDeleteDao interface {
 	Dao
+	GetServiceByID(serviceID string) (*model.TenantEnvServicesDelete, error)
 	GetTenantEnvServicesDeleteByCreateTime(createTime time.Time) ([]*model.TenantEnvServicesDelete, error)
 	DeleteTenantEnvServicesDelete(record *model.TenantEnvServicesDelete) error
 	List() ([]*model.TenantEnvServicesDelete, error)
@@ -377,7 +378,7 @@ type TenantEnvServiceSchedulingLabelDao interface {
 type TenantEnvServiceSchedulingNodeDao interface {
 	Dao
 	DelDao
-	GetServiceSchedulingNode(serviceID string) (*model.TenantEnvServiceSchedulingNode, error)
+	ListServiceSchedulingNodes(serviceID string) ([]*model.TenantEnvServiceSchedulingNode, error)
 }
 
 type TenantEnvServiceSchedulingTolerationDao interface {

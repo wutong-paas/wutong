@@ -79,6 +79,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	deploymentSharedInformer := deploymentInformer.Informer()
 	statefuleSetSharedInformer := statefuleSetInformer.Informer()
 	podSharedInformer := podInformer.Informer()
+	podSharedInformer.AddEventHandler(podEventHandlerForMetrics())
 	configMapSharedInformer := configMapInformer.Informer()
 	secretSharedInformer := secretInformer.Informer()
 	serviceSharedInformer := serviceInformer.Informer()

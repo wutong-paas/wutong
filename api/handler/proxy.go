@@ -32,6 +32,7 @@ var builderProxy proxy.Proxy
 var prometheusProxy proxy.Proxy
 var monitorProxy proxy.Proxy
 var obsProxy proxy.Proxy
+var obsmimirProxy proxy.Proxy
 
 var filebrowserProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
 var dbgateProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
@@ -54,6 +55,9 @@ func InitProxy(conf option.Config) {
 	}
 	if obsProxy == nil {
 		obsProxy = proxy.CreateProxy("obs", "http", conf.ObsAPI)
+	}
+	if obsmimirProxy == nil {
+		obsmimirProxy = proxy.CreateProxy("obsmimir", "http", conf.ObsMimirAPI)
 	}
 }
 
@@ -120,4 +124,8 @@ func GetDbgateProxy(serviceID string) proxy.Proxy {
 // GetObsProxy GetObsProxy
 func GetObsProxy() proxy.Proxy {
 	return obsProxy
+}
+
+func GetObsMimirProxy() proxy.Proxy {
+	return obsmimirProxy
 }

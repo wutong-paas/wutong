@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -572,7 +573,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 		ts.ServiceName = ts.ServiceAlias
 	}
 	if ts.ContainerCPU <= 0 {
-		ts.ContainerCPU = 500
+		ts.ContainerCPU = 2000
 	}
 	if ts.ContainerRequestCPU > ts.ContainerCPU {
 		return fmt.Errorf("request cpu must less than limit cpu")
@@ -941,7 +942,7 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 		ts.ContainerCPU = cpu
 	}
 	if ts.ContainerCPU == 0 {
-		ts.ContainerCPU = 500
+		ts.ContainerCPU = 2000
 	}
 	if ts.ContainerMemory < ts.ContainerRequestMemory {
 		return fmt.Errorf("request memory must less than limit memory")
@@ -1199,6 +1200,32 @@ func GetServicesDiskDeprecated(ids []string, prometheusCli prometheus.Interface)
 		}
 	}
 	return result
+}
+
+// GetNodeDiskAvailable get node disk available
+func GetNodeDiskAvailable(nodeName, nodeIP string, prometheusCli prometheus.Interface) float64 {
+	var result float64
+	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+		defer util.Elapsed("[GetNodeDiskAvailable] get node disk available")()
+	}
+
+	var query string
+	v, err := url.Parse(prometheusCli.GetEndpoint())
+	if err != nil {
+		return result
+	}
+	if v.Hostname() == "wt-monitor" {
+		// wt-monitor 兼容，由 wt-node 上报指标数据
+		query = fmt.Sprintf(`node_filesystem_avail_bytes{fstype=~"ext4|xfs",instance=~"%s.*",mountpoint="/"}`, nodeIP)
+	} else {
+		// prometheus
+		query = fmt.Sprintf(`node_filesystem_avail_bytes{fstype=~"ext4|xfs",kubernetes_node="%s",mountpoint="/"}`, nodeName)
+	}
+	metric := prometheusCli.GetMetric(query, time.Now())
+	if len(metric.MetricData.MetricValues) > 0 && metric.MetricData.MetricValues[0].Sample != nil {
+		return metric.MetricData.MetricValues[0].Sample.Value()
+	}
+	return 0
 }
 
 // CodeCheck code check

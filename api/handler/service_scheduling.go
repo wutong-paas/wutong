@@ -12,37 +12,66 @@ import (
 
 func (s *ServiceAction) GetServiceSchedulingDetails(serviceID string) (*model.GetServiceSchedulingDetailsResponse, error) {
 	var result model.GetServiceSchedulingDetailsResponse
-
 	labels, _ := db.GetManager().TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(serviceID)
 	for _, label := range labels {
-		result.Labels = append(result.Labels, model.SchedulingLabel{
-			KeyValue: model.KeyValue{
-				Key:   label.Key,
-				Value: label.Value,
-			},
+		result.Current.Labels = append(result.Current.Labels, model.SchedulingLabel{
+			Key:   label.Key,
+			Value: label.Value,
 		})
 	}
 
-	node, _ := db.GetManager().TenantEnvServiceSchedulingNodeDao().GetServiceSchedulingNode(serviceID)
-	if node != nil {
-		result.Node = model.SchdulingNode{
-			NodeName: node.NodeName,
+	nodes, _ := db.GetManager().TenantEnvServiceSchedulingNodeDao().ListServiceSchedulingNodes(serviceID)
+	if len(nodes) > 0 {
+		for _, node := range nodes {
+			result.Current.Nodes = append(result.Current.Nodes, node.NodeName)
 		}
 	}
 
 	tolerations, _ := db.GetManager().TenantEnvServiceSchedulingTolerationDao().ListServiceSchedulingTolerations(serviceID)
 	for _, toleration := range tolerations {
-		result.Tolerations = append(result.Tolerations, model.SchedulingToleration{
-			KeyValue: model.KeyValue{
-				Key:   toleration.Key,
-				Value: toleration.Value,
-			},
+		result.Current.Tolerations = append(result.Current.Tolerations, model.SchedulingToleration{
+			Key:      toleration.Key,
+			Value:    toleration.Value,
 			Operator: toleration.Operator,
 			Effect:   toleration.Effect,
 		})
 	}
 
+	lslr, _ := GetSchedulingHandler().ListSchedulingLabels()
+	if lslr != nil {
+		for _, label := range lslr.Labels {
+			result.Selections.Labels = append(result.Selections.Labels, model.SchedulingLabel{
+				Key:   label.Key,
+				Value: label.Value,
+			})
+		}
+	}
+	for _, label := range result.Current.Labels {
+		if !labelContains(result.Selections.Labels, label) {
+			result.Selections.Labels = append(result.Selections.Labels, label)
+		}
+	}
+
+	lsnr, _ := GetSchedulingHandler().ListSchedulingNodes()
+	if lsnr != nil {
+		result.Selections.Nodes = lsnr.Nodes
+	}
+
+	lstr, _ := GetSchedulingHandler().ListSchedulingTaints()
+	if lstr != nil {
+		result.Selections.Taints = lstr.Taints
+	}
+
 	return &result, nil
+}
+
+func labelContains(labels []model.SchedulingLabel, label model.SchedulingLabel) bool {
+	for _, l := range labels {
+		if l.Key == label.Key && l.Value == label.Value {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *ServiceAction) AddServiceSchedulingLabel(serviceID string, req *model.AddServiceSchedulingLabelRequest) error {
@@ -102,23 +131,26 @@ func (s *ServiceAction) SetServiceSchedulingNode(serviceID string, req *model.Se
 		return nil
 	}
 
-	err := db.GetManager().TenantEnvServiceSchedulingNodeDao().DeleteModel(serviceID, req.NodeName)
+	err := db.GetManager().TenantEnvServiceSchedulingNodeDao().DeleteModel(serviceID)
 	if err != nil {
 		logrus.Errorf("delete service scheduling node failure, error: %v", err)
 	}
 
-	if req.NodeName == "" {
+	if len(req.Nodes) == 0 {
 		return nil
 	}
 
-	node := dbmodel.TenantEnvServiceSchedulingNode{
-		ServiceID: serviceID,
-		NodeName:  req.NodeName,
+	for _, nodeName := range req.Nodes {
+		node := dbmodel.TenantEnvServiceSchedulingNode{
+			ServiceID: serviceID,
+			NodeName:  nodeName,
+		}
+		err = db.GetManager().TenantEnvServiceSchedulingNodeDao().AddModel(&node)
+		if err != nil {
+			return errors.New("设置调度节点失败！")
+		}
 	}
-	err = db.GetManager().TenantEnvServiceSchedulingNodeDao().AddModel(&node)
-	if err != nil {
-		return errors.New("设置调度节点失败！")
-	}
+
 	return nil
 }
 

@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -14,7 +16,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/api/util"
+	apiutil "github.com/wutong-paas/wutong/api/util"
+	"github.com/wutong-paas/wutong/util"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,12 +31,13 @@ import (
 type ClusterHandler interface {
 	GetClusterInfo(ctx context.Context) (*model.ClusterResource, error)
 	GetClusterEvents(ctx context.Context) ([]model.ClusterEvent, error)
-	MavenSettingAdd(ctx context.Context, ms *MavenSetting) *util.APIHandleError
+	MavenSettingAdd(ctx context.Context, ms *MavenSetting) *apiutil.APIHandleError
 	MavenSettingList(ctx context.Context) (re []MavenSetting)
-	MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *util.APIHandleError
-	MavenSettingDelete(ctx context.Context, name string) *util.APIHandleError
-	MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *util.APIHandleError)
+	MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *apiutil.APIHandleError
+	MavenSettingDelete(ctx context.Context, name string) *apiutil.APIHandleError
+	MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *apiutil.APIHandleError)
 	Features(ctx context.Context) map[string]bool
+	ListStorageClasses(ctx context.Context) []model.StorageClass
 }
 
 // NewClusterHandler -
@@ -72,14 +77,6 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 
 	nodeCapaticyMetrics, nodeFreeStorageMetrics := c.GetNodeStorageMetrics(NodeCapacityStorageMetric), c.GetNodeStorageMetrics(NodFreeStorageMetric)
 
-	usedNodeList := make([]*corev1.Node, len(nodes))
-	for i := range nodes {
-		node := nodes[i]
-		if !node.Spec.Unschedulable {
-			usedNodeList[i] = node
-		}
-	}
-
 	var wtMemR, wtCPUR int64
 	var nodeResources []*model.NodeResource
 	var totalCapacityPods, totalUsedPods int64
@@ -88,8 +85,7 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	var totalReqCPU, totalReqMem float32
 	tenantEnvPods := make(map[string]int)
 
-	for i := range usedNodeList {
-		node := usedNodeList[i]
+	for _, node := range nodes {
 		pods, err := c.listPods(ctx, node.Name)
 		if err != nil {
 			return nil, fmt.Errorf("list pods: %v", err)
@@ -111,8 +107,8 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 		}
 		totalCapacityPods += nodeResource.CapacityPods
 		for _, pod := range pods {
+			nodeResource.UsedPods++
 			if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
-				nodeResource.UsedPods++
 				for _, c := range pod.Spec.Containers {
 					nodeResource.RawUsedCPU += float32(c.Resources.Requests.Cpu().MilliValue())
 					nodeResource.RawUsedMem += float32(c.Resources.Requests.Memory().Value())
@@ -187,10 +183,10 @@ func (c *clusterAction) listNodes(ctx context.Context) ([]*corev1.Node, error) {
 	for idx := range nodeList.Items {
 		node := &nodeList.Items[idx]
 		// check if node contains taints
-		if containsTaints(node) {
-			logrus.Debugf("[GetClusterInfo] node(%s) contains NoSchedule taints", node.GetName())
-			continue
-		}
+		// if containsTaints(node) {
+		// 	logrus.Debugf("[GetClusterInfo] node(%s) contains NoSchedule taints", node.GetName())
+		// 	continue
+		// }
 
 		nodes = append(nodes, node)
 	}
@@ -221,6 +217,9 @@ func (c *clusterAction) listPods(ctx context.Context, nodeName string) (pods []c
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String()})
 	if err != nil {
 		return pods, err
+	}
+	if podList == nil {
+		return pods, nil
 	}
 
 	return podList.Items, nil
@@ -260,7 +259,7 @@ func (c *clusterAction) MavenSettingList(ctx context.Context) (re []MavenSetting
 }
 
 // MavenSettingAdd maven setting add
-func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *util.APIHandleError {
+func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *apiutil.APIHandleError {
 	config := &corev1.ConfigMap{}
 	config.Name = ms.Name
 	config.Namespace = c.namespace
@@ -277,10 +276,10 @@ func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *
 	_, err := c.clientset.CoreV1().ConfigMaps(c.namespace).Create(ctx, config, metav1.CreateOptions{})
 	if err != nil {
 		if apierrors.IsAlreadyExists(err) {
-			return &util.APIHandleError{Code: 400, Err: fmt.Errorf("setting name is exist")}
+			return &apiutil.APIHandleError{Code: 400, Err: fmt.Errorf("setting name is exist")}
 		}
 		logrus.Errorf("create maven setting configmap failure %s", err.Error())
-		return &util.APIHandleError{Code: 500, Err: fmt.Errorf("create setting config failure")}
+		return &apiutil.APIHandleError{Code: 500, Err: fmt.Errorf("create setting config failure")}
 	}
 	ms.CreateTime = time.Now().Format(time.RFC3339)
 	ms.UpdateTime = time.Now().Format(time.RFC3339)
@@ -288,14 +287,14 @@ func (c *clusterAction) MavenSettingAdd(ctx context.Context, ms *MavenSetting) *
 }
 
 // MavenSettingUpdate maven setting file update
-func (c *clusterAction) MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *util.APIHandleError {
+func (c *clusterAction) MavenSettingUpdate(ctx context.Context, ms *MavenSetting) *apiutil.APIHandleError {
 	sm, err := c.clientset.CoreV1().ConfigMaps(c.namespace).Get(ctx, ms.Name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return &util.APIHandleError{Code: 404, Err: fmt.Errorf("setting name is not exist")}
+			return &apiutil.APIHandleError{Code: 404, Err: fmt.Errorf("setting name is not exist")}
 		}
 		logrus.Errorf("get maven setting config list failure %s", err.Error())
-		return &util.APIHandleError{Code: 400, Err: fmt.Errorf("get setting failure")}
+		return &apiutil.APIHandleError{Code: 400, Err: fmt.Errorf("get setting failure")}
 	}
 	if sm.Data == nil {
 		sm.Data = make(map[string]string)
@@ -307,7 +306,7 @@ func (c *clusterAction) MavenSettingUpdate(ctx context.Context, ms *MavenSetting
 	sm.Annotations["updateTime"] = time.Now().Format(time.RFC3339)
 	if _, err := c.clientset.CoreV1().ConfigMaps(c.namespace).Update(ctx, sm, metav1.UpdateOptions{}); err != nil {
 		logrus.Errorf("update maven setting configmap failure %s", err.Error())
-		return &util.APIHandleError{Code: 500, Err: fmt.Errorf("update setting config failure")}
+		return &apiutil.APIHandleError{Code: 500, Err: fmt.Errorf("update setting config failure")}
 	}
 	ms.UpdateTime = sm.Annotations["updateTime"]
 	ms.CreateTime = sm.CreationTimestamp.Format(time.RFC3339)
@@ -315,24 +314,24 @@ func (c *clusterAction) MavenSettingUpdate(ctx context.Context, ms *MavenSetting
 }
 
 // MavenSettingDelete maven setting file delete
-func (c *clusterAction) MavenSettingDelete(ctx context.Context, name string) *util.APIHandleError {
+func (c *clusterAction) MavenSettingDelete(ctx context.Context, name string) *apiutil.APIHandleError {
 	err := c.clientset.CoreV1().ConfigMaps(c.namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return &util.APIHandleError{Code: 404, Err: fmt.Errorf("setting not found")}
+			return &apiutil.APIHandleError{Code: 404, Err: fmt.Errorf("setting not found")}
 		}
 		logrus.Errorf("delete maven setting config list failure %s", err.Error())
-		return &util.APIHandleError{Code: 500, Err: fmt.Errorf("setting delete failure")}
+		return &apiutil.APIHandleError{Code: 500, Err: fmt.Errorf("setting delete failure")}
 	}
 	return nil
 }
 
 // MavenSettingDetail maven setting file delete
-func (c *clusterAction) MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *util.APIHandleError) {
+func (c *clusterAction) MavenSettingDetail(ctx context.Context, name string) (*MavenSetting, *apiutil.APIHandleError) {
 	sm, err := c.clientset.CoreV1().ConfigMaps(c.namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("get maven setting config failure %s", err.Error())
-		return nil, &util.APIHandleError{Code: 404, Err: fmt.Errorf("setting not found")}
+		return nil, &apiutil.APIHandleError{Code: 404, Err: fmt.Errorf("setting not found")}
 	}
 	return &MavenSetting{
 		Name:       sm.Name,
@@ -449,10 +448,43 @@ func (c *clusterAction) GetClusterEvents(ctx context.Context) ([]model.ClusterEv
 			}
 			clusterEvents = append(clusterEvents, *clusterEvent)
 		}
+
+		slices.SortFunc(clusterEvents, func(i, j model.ClusterEvent) int {
+			if i.CreationTimestamp.Unix() >= j.CreationTimestamp.Unix() {
+				return -1
+			} else {
+				return 1
+			}
+		})
 		cachedClusterEvents = &clusterEventsCache{
 			cacheTime: time.Now(),
 			cacheData: clusterEvents,
 		}
 	}
 	return cachedClusterEvents.cacheData, nil
+}
+
+func (c *clusterAction) ListStorageClasses(ctx context.Context) []model.StorageClass {
+	var result []model.StorageClass
+	ret, err := kube.GetCachedResources(c.clientset).StorageClassLister.List(labels.Everything())
+	if err != nil {
+		return result
+	}
+
+	for i := range ret {
+		if strings.HasPrefix(ret[i].Name, "wutong") {
+			continue
+		}
+		result = append(result, model.StorageClass{
+			Name:      ret[i].Name,
+			IsDefault: ret[i].Annotations["storageclass.kubernetes.io/is-default-class"] == "true",
+		})
+	}
+
+	// 将默认的 storage class 排在前面
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].IsDefault
+	})
+
+	return result
 }

@@ -139,7 +139,7 @@ type CreateServiceStruct struct {
 		// 容器CPU权重
 		// in: body
 		// required: false
-		ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu" validate:"container_cpu"`
+		ContainerCPU int `gorm:"column:container_cpu;default:2000" json:"container_cpu" validate:"container_cpu"`
 		// 容器内存申请
 		// in: body
 		// required: false

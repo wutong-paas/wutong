@@ -19,7 +19,9 @@
 package app
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"syscall"
 	"time"
@@ -60,6 +62,26 @@ func NewExecContext(kubeRequest *restclient.Request, config *restclient.Config) 
 	return ec, nil
 }
 
+// NewLogContext new log Context
+func NewLogContext(kubeRequest *restclient.Request, config *restclient.Config) (server.Slave, error) {
+	pty, tty, err := pty.Open()
+	if err != nil {
+		logrus.Errorf("open pty failure %s", err.Error())
+		return nil, err
+	}
+	ec := &execContext{
+		tty:         tty,
+		pty:         pty,
+		kubeRequest: kubeRequest,
+		config:      config,
+		sizeUpdate:  make(chan remotecommand.TerminalSize, 2),
+	}
+	if err := ec.RunLog(); err != nil {
+		return nil, err
+	}
+	return ec, nil
+}
+
 func (e *execContext) WaitingStop() bool {
 	return !e.closed
 }
@@ -85,6 +107,39 @@ func (e *execContext) Run() error {
 				TerminalSizeQueue: e,
 			}); err != nil {
 				logrus.Errorf("executor stream failure %s", err.Error())
+				return err
+			}
+			return nil
+		})
+	}()
+
+	// 如果在 200 毫秒内 errCh 有返回，则说明出错了，返回错误
+	// 否则认为是正常的，返回 nil
+	timeout := time.After(200 * time.Millisecond)
+	select {
+	case err := <-errCh:
+		return err
+	case <-timeout:
+		return nil
+	}
+}
+
+func (e *execContext) RunLog() error {
+	errCh := make(chan error)
+
+	go func() {
+		out := CreateOut(e.tty)
+		t := out.SetTTY()
+		errCh <- t.Safe(func() error {
+			defer e.Close()
+			rc, err := e.kubeRequest.Stream(context.Background())
+			if err != nil {
+				logrus.Errorf("stream failure %s", err.Error())
+				return err
+			}
+			defer rc.Close()
+			if _, err := io.Copy(out.Stdout, rc); err != nil {
+				logrus.Errorf("copy failure %s", err.Error())
 				return err
 			}
 			return nil

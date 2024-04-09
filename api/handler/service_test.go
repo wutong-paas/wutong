@@ -98,7 +98,7 @@ func TestABCService(t *testing.T) {
 }
 
 func TestUUID(t *testing.T) {
-	id := fmt.Sprintf("%s", uuid.New())
+	id := uuid.New().String()
 	uid := strings.Replace(id, "-", "", -1)
 	logrus.Debugf("uuid is %v", uid)
 	name := strings.Split(id, "-")[0]
@@ -135,4 +135,16 @@ func TestMetav1Time(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(ttl)
+}
+
+func TestGetNodeDiskAvailable(t *testing.T) {
+	prometheusCli, err := prometheus.NewPrometheus(&prometheus.Options{
+		Endpoint: "localhost:53162", // test prometheus server
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	f := GetNodeDiskAvailable("paas-m01", "10.168.1.100", prometheusCli)
+	t.Log(f)
 }

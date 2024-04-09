@@ -20,15 +20,14 @@ package handler
 
 import (
 	"github.com/wutong-paas/wutong/api/model"
-	api_model "github.com/wutong-paas/wutong/api/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 )
 
-//EventHandler event handler interface
+// EventHandler event handler interface
 type EventHandler interface {
 	GetLogList(serviceAlias string) ([]*model.HistoryLogFile, error)
 	GetLogInstance(serviceID string) (string, error)
-	GetLevelLog(eventID string, level string) (*api_model.DataLog, error)
+	GetLevelLog(eventID string, level string) (*model.DataLog, error)
 	GetLogFile(serviceAlias, fileName string) (string, string, error)
 	GetEvents(target, targetID string, page, size int) ([]*dbmodel.ServiceEvent, int, error)
 }

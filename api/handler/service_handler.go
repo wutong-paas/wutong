@@ -125,6 +125,7 @@ type ServiceHandler interface {
 	// Kubevirt integration
 	CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error)
 	GetVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMResponse, error)
+	GetVMConditions(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMConditionsResponse, error)
 	UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.UpdateVMRequest) (*api_model.UpdateVMResponse, error)
 	StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StartVMResponse, error)
 	StopVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.StopVMResponse, error)

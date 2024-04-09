@@ -40,14 +40,15 @@ type Options struct {
 
 // prometheus implements monitoring interface backed by Prometheus
 type prometheus struct {
-	client apiv1.API
+	endpoint string
+	client   apiv1.API
 }
 
 // NewPrometheus new prometheus monitor
 func NewPrometheus(options *Options) (Interface, error) {
 	if options.Endpoint == "" {
 		options.Endpoint = "http://wt-monitor:9999"
-	} else if !strings.HasPrefix(options.Endpoint, "http") {
+	} else if !strings.HasPrefix(options.Endpoint, "http://") || !strings.HasPrefix(options.Endpoint, "https://") {
 		options.Endpoint = fmt.Sprintf("http://%s", options.Endpoint)
 	}
 	cfg := api.Config{
@@ -62,7 +63,7 @@ func NewPrometheus(options *Options) (Interface, error) {
 		},
 	}
 	client, err := api.NewClient(cfg)
-	return prometheus{client: apiv1.NewAPI(client)}, err
+	return prometheus{client: apiv1.NewAPI(client), endpoint: options.Endpoint}, err
 }
 
 func (p prometheus) GetMetric(expr string, ts time.Time) Metric {
@@ -224,6 +225,10 @@ func (p prometheus) GetMetricLabelSet(expr string, start, end time.Time) []map[s
 	}
 
 	return res
+}
+
+func (p prometheus) GetEndpoint() string {
+	return p.endpoint
 }
 
 func parseQueryRangeResp(value model.Value) MetricData {

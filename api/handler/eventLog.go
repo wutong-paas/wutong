@@ -30,7 +30,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/model"
-	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	eventdb "github.com/wutong-paas/wutong/eventlog/db"
@@ -109,7 +108,7 @@ func (l *LogAction) GetLogInstance(serviceID string) (string, error) {
 }
 
 // GetLevelLog get event log
-func (l *LogAction) GetLevelLog(eventID string, level string) (*api_model.DataLog, error) {
+func (l *LogAction) GetLevelLog(eventID string, level string) (*model.DataLog, error) {
 	re, err := l.eventdb.GetMessages(eventID, level, 0)
 	if err != nil {
 		logrus.Errorf("get event log error: %s", err.Error())
@@ -118,13 +117,13 @@ func (l *LogAction) GetLevelLog(eventID string, level string) (*api_model.DataLo
 	if re != nil {
 		messageList, ok := re.(eventdb.MessageDataList)
 		if ok {
-			return &api_model.DataLog{
+			return &model.DataLog{
 				Status: "success",
 				Data:   messageList,
 			}, nil
 		}
 	}
-	return &api_model.DataLog{
+	return &model.DataLog{
 		Status: "success",
 		Data:   nil,
 	}, nil
@@ -180,7 +179,7 @@ func uncompress(source []byte) (re []byte, err error) {
 	return buffer.Bytes(), nil
 }
 
-func bubSort(d []api_model.MessageData) []api_model.MessageData {
+func bubSort(d []model.MessageData) []model.MessageData {
 	for i := 0; i < len(d); i++ {
 		for j := i + 1; j < len(d); j++ {
 			if d[i].Unixtime > d[j].Unixtime {

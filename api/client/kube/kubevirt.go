@@ -85,7 +85,10 @@ func UpdateKubeVirtVM(dynamicClient dynamic.Interface, vm *kubevirtcorev1.Virtua
 		unstructuredVMObj := &unstructured.Unstructured{Object: unstructuredVM}
 		updatedObj, err := dynamicClient.Resource(vmres).Namespace(vm.Namespace).Update(context.Background(), unstructuredVMObj, metav1.UpdateOptions{})
 		if err != nil {
-			gotObj, _ := GetDynamicCachedResources(dynamicClient).VMLister.ByNamespace(vm.Namespace).Get(vm.Name)
+			gotObj, err := GetDynamicCachedResources(dynamicClient).VMLister.ByNamespace(vm.Namespace).Get(vm.Name)
+			if err != nil {
+				return err
+			}
 			// got, _ := GetKubeVirtVM(dynamicClient, vm.Namespace, vm.Name)
 			got, _ := UnDynamicObject[*kubevirtcorev1.VirtualMachine](gotObj)
 			if got != nil {

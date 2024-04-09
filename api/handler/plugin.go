@@ -404,6 +404,17 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 		if err := p.checkBuildPluginParam(buildReq, reqPluginRel[buildReq.PluginID]); err != nil {
 			return err
 		}
+
+		pluginBuildVersion := buildReq.DbModel(reqPluginRel[buildReq.PluginID])
+		// Create record before build task, or the build task cant not
+		// find the record by deploy version
+		if err := db.GetManager().TenantEnvPluginBuildVersionDao().AddModel(pluginBuildVersion); err != nil {
+			if !strings.Contains(err.Error(), "exist") {
+				logrus.Errorf("build plugin error: %s", err.Error())
+				return err
+			}
+		}
+
 		logger := event.GetManager().GetLogger(buildReq.EventID)
 		taskBody := &builder_model.BuildPluginTaskBody{
 			TenantEnvID:   buildReq.TenantEnvID,
@@ -434,7 +445,6 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 			TaskBody: taskBody,
 			Topic:    client.BuilderTopic,
 		})
-		pluginBuildVersion := buildReq.DbModel(reqPluginRel[buildReq.PluginID])
 		if err != nil {
 			if reqPluginRel[buildReq.PluginID].PluginType != api_model.PluginTypeSys {
 				pluginBuildVersion.Status = "failure"

@@ -70,14 +70,12 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 	if as.NeedProxy {
 		dv.SetVolume(dbmodel.ShareFileVolumeType, "kube-config", "/etc/kubernetes", "/wtdata/kubernetes", corev1.HostPathDirectoryOrCreate, true)
 	}
-	nodeName := createNodeName(as, dbmanager)
+
 	var nodeSelector map[string]string
 	var tolerations []corev1.Toleration
-	// 如果已经指定了节点，那么就不需要标签选择器和容忍度了
-	if nodeName == "" {
-		nodeSelector = createNodeSelector(as, dbmanager)
-		tolerations = createNodeTolerations(as, dbmanager)
-	}
+	nodeSelector = createNodeSelector(as, dbmanager)
+	tolerations = createNodeTolerations(as, dbmanager)
+
 	injectLabels := getInjectLabels(as)
 	podtmpSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -102,7 +100,7 @@ func TenantEnvServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 				}
 				return ""
 			}(),
-			NodeName: nodeName,
+			// NodeName: nodeName, // 不适合使用 nodeName 指定节点，因为如果一旦该节点被禁止调度，Pod 会不断创建
 			HostNetwork: func() bool {
 				if _, ok := as.ExtensionSet["hostnetwork"]; ok {
 					return true
@@ -516,7 +514,7 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 		as.ContainerMemory = 512
 	}
 	if as.ContainerCPU == 0 {
-		as.ContainerCPU = 500
+		as.ContainerCPU = 2000
 	}
 
 	rr := createResourcesBySetting(int64(as.ContainerRequestMemory), int64(as.ContainerMemory), int64(as.ContainerRequestCPU), int64(as.ContainerCPU), as.ContainerGPUType, int64(as.ContainerGPU))
@@ -666,14 +664,6 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 	return nil
 }
 
-func createNodeName(as *v1.AppService, dbmanager db.Manager) string {
-	node, _ := dbmanager.TenantEnvServiceSchedulingNodeDao().GetServiceSchedulingNode(as.ServiceID)
-	if node != nil {
-		return node.NodeName
-	}
-	return ""
-}
-
 func createNodeSelector(as *v1.AppService, dbmanager db.Manager) map[string]string {
 	selector := make(map[string]string)
 	labels, err := dbmanager.TenantEnvServiceSchedulingLabelDao().ListServiceSchedulingLabels(as.ServiceID)
@@ -791,6 +781,34 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	if len(podAntAffinity) > 0 {
 		affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: podAntAffinity,
+		}
+	}
+	nodes, _ := dbmanager.TenantEnvServiceSchedulingNodeDao().ListServiceSchedulingNodes(as.ServiceID)
+	if len(nodes) > 0 {
+		var nodeNames []string
+		for _, n := range nodes {
+			nodeNames = append(nodeNames, n.NodeName)
+		}
+		af := corev1.PreferredSchedulingTerm{
+			Weight: 100,
+			Preference: corev1.NodeSelectorTerm{
+				MatchExpressions: []corev1.NodeSelectorRequirement{
+					{
+						Key:      "kubernetes.io/hostname",
+						Operator: corev1.NodeSelectorOpIn,
+						Values:   nodeNames,
+					},
+				},
+			},
+		}
+		if affinity.NodeAffinity == nil {
+			affinity.NodeAffinity = &corev1.NodeAffinity{
+				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.PreferredSchedulingTerm{
+					af,
+				},
+			}
+		} else {
+			affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution = append(affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution, af)
 		}
 	}
 	return &affinity

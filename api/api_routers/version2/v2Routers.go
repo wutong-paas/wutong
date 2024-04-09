@@ -94,6 +94,7 @@ func (v2 *V2) eventsRouter() chi.Router {
 func (v2 *V2) clusterRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", controller.GetManager().GetClusterInfo)
+	r.Get("/storageclasses", controller.GetManager().ListStorageClasses)
 	r.Mount("/nodes", v2.nodeRouter())
 	r.Mount("/scheduling", v2.schedulingRouter())
 	r.Get("/events", controller.GetManager().GetClusterEvents)
@@ -129,14 +130,19 @@ func (v2 *V2) schedulingRouter() chi.Router {
 func (v2 *V2) nodeNameRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", controller.GetManager().GetNode)
+	r.Get("/label", controller.GetManager().GetNodeLabels)
+	r.Get("/common/label", controller.GetManager().GetCommonLabels)
 	r.Put("/label", controller.GetManager().SetNodeLabel)
 	r.Delete("/label", controller.GetManager().DeleteNodeLabel)
+	r.Get("/annotation", controller.GetManager().GetNodeAnnotations)
 	r.Put("/annotation", controller.GetManager().SetNodeAnnotation)
 	r.Delete("/annotation", controller.GetManager().DeleteNodeAnnotation)
+	r.Get("/taint", controller.GetManager().GetNodeTaints)
 	r.Put("/taint", controller.GetManager().TaintNode)
 	r.Delete("/taint", controller.GetManager().DeleteTaintNode)
 	r.Put("/cordon", controller.GetManager().CordonNode)
 	r.Put("/uncordon", controller.GetManager().UncordonNode)
+	r.Get("/scheduling/vm/label", controller.GetManager().GetVMSchedulingLabels)
 	r.Put("/scheduling/vm/label", controller.GetManager().SetVMSchedulingLabel)
 	r.Delete("/scheduling/vm/label", controller.GetManager().DeleteVMSchedulingLabel)
 	return r
@@ -383,7 +389,7 @@ func (v2 *V2) serviceSchedulingRouter() chi.Router {
 	r.Put("/labels", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SYNEVENTTYPE))
 	r.Delete("/labels", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingLabel, dbmodel.TargetTypeService, "删除调度标签", dbmodel.SYNEVENTTYPE))
 
-	r.Post("/node", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SYNEVENTTYPE))
+	r.Post("/nodes", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SYNEVENTTYPE))
 
 	r.Post("/tolerations", middleware.WrapEL(controller.GetManager().AddServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
 	r.Put("/tolerations", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
@@ -478,6 +484,7 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r.Delete("/gateways/{gateway_id}", controller.GetManager().DeleteVMPortGateway)
 	r.Delete("/ports", controller.GetManager().DeleteVMPort)
 	r.Get("/", controller.GetManager().GetVM)
+	r.Get("/conditions", controller.GetManager().GetVMConditions)
 	r.Get("/volumes", controller.GetManager().ListVMVolumes)
 	r.Post("/volumes", controller.GetManager().AddVMVolume)
 	r.Delete("/volumes/{volume_name}", controller.GetManager().DeleteVMVolume)

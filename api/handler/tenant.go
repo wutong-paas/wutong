@@ -29,7 +29,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/client/prometheus"
-	"github.com/wutong-paas/wutong/api/model"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/api/util/bcode"
@@ -42,7 +41,6 @@ import (
 	"github.com/wutong-paas/wutong/worker/client"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -428,7 +426,7 @@ func (t *TenantEnvAction) initClusterResource(ctx context.Context) error {
 				continue
 			}
 			for _, c := range node.Status.Conditions {
-				if c.Type == v1.NodeReady && c.Status != v1.ConditionTrue {
+				if c.Type == corev1.NodeReady && c.Status != corev1.ConditionTrue {
 					continue
 				}
 			}
@@ -622,7 +620,7 @@ func (t *TenantEnvAction) GetClusterResource(ctx context.Context) *ClusterResour
 }
 
 // CheckResourceName checks resource name.
-func (t *TenantEnvAction) CheckResourceName(ctx context.Context, namespace string, req *model.CheckResourceNameReq) (*model.CheckResourceNameResp, error) {
+func (t *TenantEnvAction) CheckResourceName(ctx context.Context, namespace string, req *api_model.CheckResourceNameReq) (*api_model.CheckResourceNameResp, error) {
 	obj, ok := t.resources[req.Type]
 	if !ok {
 		return nil, bcode.NewBadRequest("unsupported resource: " + req.Type)
@@ -642,7 +640,7 @@ func (t *TenantEnvAction) CheckResourceName(ctx context.Context, namespace strin
 		req.Name += "-" + rutil.NewUUID()[:5]
 	}
 
-	return &model.CheckResourceNameResp{
+	return &api_model.CheckResourceNameResp{
 		Name: req.Name,
 	}, nil
 }
@@ -666,7 +664,7 @@ func (t *TenantEnvAction) GetKubeConfig(namespace string) (string, error) {
 }
 
 // GetKubeResources get kube resources for tenantEnv
-func (s *TenantEnvAction) GetKubeResources(namespace, tenantEnvID string, customSetting model.KubeResourceCustomSetting) (string, error) {
+func (s *TenantEnvAction) GetKubeResources(namespace, tenantEnvID string, customSetting api_model.KubeResourceCustomSetting) (string, error) {
 	if msgs := validation.IsDNS1123Label(customSetting.Namespace); len(msgs) > 0 {
 		return "", fmt.Errorf("invalid namespace name: %s", customSetting.Namespace)
 	}
@@ -698,37 +696,37 @@ func (t *TenantEnvAction) completeSecretFromServiceAccount(sa *corev1.ServiceAcc
 }
 
 // buildConfigFromSecret -
-func buildConfigFromSecret(kubecfg *rest.Config, secret *corev1.Secret) model.Config {
+func buildConfigFromSecret(kubecfg *rest.Config, secret *corev1.Secret) api_model.Config {
 	cfgContext := "context-" + rand.String(5)
 	cfgCluster := "cluster-" + rand.String(5)
 	cfgUser := "user-" + rand.String(5)
-	cfg := model.Config{
+	cfg := api_model.Config{
 		APIVersion:     "v1",
 		Kind:           "Config",
 		CurrentContext: cfgContext,
-		Contexts: []*model.ContextItem{
+		Contexts: []*api_model.ContextItem{
 			{
 				Name: cfgContext,
-				Context: &model.Context{
+				Context: &api_model.Context{
 					Cluster:   cfgCluster,
 					AuthInfo:  cfgUser,
 					Namespace: string(secret.Data["namespace"]),
 				},
 			},
 		},
-		Clusters: []*model.ClusterItem{
+		Clusters: []*api_model.ClusterItem{
 			{
 				Name: cfgCluster,
-				Cluster: &model.Cluster{
+				Cluster: &api_model.Cluster{
 					Server:                   kubecfg.Host,
 					CertificateAuthorityData: secret.Data["ca.crt"],
 				},
 			},
 		},
-		AuthInfos: []*model.AuthInfoItem{
+		AuthInfos: []*api_model.AuthInfoItem{
 			{
 				Name: cfgUser,
-				AuthInfo: &model.AuthInfo{
+				AuthInfo: &api_model.AuthInfo{
 					Token: string(secret.Data["token"]),
 				},
 			},
