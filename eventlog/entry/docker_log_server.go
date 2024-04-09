@@ -95,7 +95,6 @@ func (s *DockerLogServer) Serve() {
 // OnConnect is called when the connection was accepted,
 // If the return value of false is closed
 func (s *DockerLogServer) OnConnect(c *util.Conn) bool {
-	s.log.Error("c.GetRawConn().RemoteAddr():", c.GetRawConn().RemoteAddr())
 	s.log.Debugf("receive a log client connect.")
 	return true
 }
