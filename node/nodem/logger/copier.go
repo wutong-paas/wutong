@@ -76,12 +76,7 @@ loop:
 			//If there is an error in the collection log process,
 			//the collection should be restarted and not stopped
 			time.Sleep(time.Second * 5)
-			// if c.runtimeClient != nil {
-			// 	// When using the CRI runtime, use this interface to get non-json logs
-			// 	go ReadLogs(context.Background(), c.logfile.logPath, c.containerID, &ReadConfig{Follow: true, Since: c.since, Tail: -1}, *c.runtimeClient, c.reader)
-			// } else {
 			go c.logfile.ReadLogs(ReadConfig{Follow: true, Since: c.since, Tail: 0}, c.reader)
-			// }
 			continue
 		case msg, ok := <-c.reader.Msg:
 			if !ok {

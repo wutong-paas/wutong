@@ -458,9 +458,6 @@ loop:
 			buffer := bytes.NewBuffer(containerID)
 			buffer.WriteString(":")
 			buffer.Write(log)
-			if strings.Contains(string(log), "GET [200]") {
-				logrus.Error("OK MSG:", string(log))
-			}
 			message := db.EventLogMessage{
 				Message: buffer.String(),
 				Content: buffer.Bytes(),

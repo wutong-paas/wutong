@@ -76,11 +76,6 @@ func NewStore(storeType string, manager *storeManager) MessageStore {
 				return barrel
 			},
 		}
-		// go handle.handleGarbageMessage() // 开启一个处理垃圾事件的协程
-		// for i := 0; i < handle.handleEventGoroutines; i++ {
-		// 	// 每个 Core 开启一个处理事件的协程
-		// 	go handle.handleBarrelEvent()
-		// }
 		return handle
 	case "read":
 		read := &readMessageStore{

@@ -103,6 +103,8 @@ func (m *Manager) SetMiddleware() {
 	//Gracefully absorb panics and prints the stack trace
 	r.Use(middleware.Recoverer)
 	//request time out
+	// r.Use(middleware.Timeout(time.Second * 5))
+	// set timeout middleware for different paths
 	r.Use(func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			timeout := time.Second * 5

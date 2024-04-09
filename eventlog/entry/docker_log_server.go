@@ -20,7 +20,6 @@ package entry
 
 import (
 	"net"
-	"strings"
 	"time"
 
 	"github.com/wutong-paas/wutong/eventlog/conf"
@@ -107,15 +106,10 @@ func (s *DockerLogServer) OnMessage(p util.Packet) bool {
 	var msg = p.Serialize()
 	if len(msg) > 0 {
 		select {
+		// eventlog receive message here
 		case s.messageChan <- msg:
-			if strings.Contains(string(msg), "GET [200]") {
-				s.log.Errorf("OK MSG: receive a log message %s", string(msg))
-			}
 			return true
 		default:
-			if strings.Contains(string(msg), "GET [200]") {
-				s.log.Errorf("通道阻塞？OK MSG: receive a log message %s", string(msg))
-			}
 			//TODO: return false and receive exist
 			return true
 		}

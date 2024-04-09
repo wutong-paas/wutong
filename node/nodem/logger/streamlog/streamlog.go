@@ -251,18 +251,11 @@ func (s *StreamLog) sendMsg(msg string) {
 		err := s.writer.Write(msg)
 		if err != nil {
 			logrus.Debug("send log message to stream server error.", err.Error())
-			if strings.Contains(msg, "GET [200]") {
-				logrus.Error("CACHE MSG:", msg)
-			}
 			s.cache(msg)
 			if len(s.reConnecting) < 1 {
 				s.reConect()
 			}
 		} else {
-			// DEBUG
-			if strings.Contains(msg, "GET [200]") {
-				logrus.Error("OK MSG:", msg)
-			}
 			if s.intervalSendMicrosecondTime > s.minIntervalSendMicrosecondTime {
 				s.intervalSendMicrosecondTime -= 100
 			}

@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"net"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -123,22 +122,15 @@ func (c *Client) write(message string) error {
 	}
 	err := c.conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 	if err != nil {
-		logrus.Errorf("set write deadline error %s, msg: %s", err.Error(), message)
 		return err
 	}
 	if c.writer != nil {
 		wrote, err := c.writer.WriteString(message)
 		ferr := c.writer.Flush()
 		if wrote < len(message) {
-			if strings.Contains(message, "GET [200]") {
-				logrus.Errorf("write log message error %s, msg[%d]: %s", err.Error(), wrote, message)
-			}
 			return err
 		}
 		if ferr != nil {
-			if strings.Contains(message, "GET [200]") {
-				logrus.Errorf("flush log message error %s, message: %s", ferr.Error(), message)
-			}
 			return ferr
 		}
 
