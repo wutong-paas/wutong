@@ -448,20 +448,52 @@ loop:
 			if m == nil {
 				continue
 			}
-			if len(m) < 47 {
-				continue
+
+			var containerID, serviceID, log, logTime []byte
+			var logTimeUnixNano int64
+
+			if bytes.HasPrefix(m, []byte("v2:")) {
+				// v2 log archivement
+				if len(m) < 70 {
+					continue
+				}
+				// 1712710226503215565, 长度为 19
+				logTime = m[3:22] // 3-22
+				logTimeUnixNano, _ = strconv.ParseInt(string(logTime), 10, 64)
+
+				containerID = m[23:35] // 23-35
+				serviceID = m[36:68]   // 36-68
+				log = m[68:]
+			} else {
+				if len(m) < 47 {
+					continue
+				}
+				containerID = m[0:12] //0-12
+				serviceID = m[13:45]  //13-45
+				log = m[45:]
 			}
-			containerID := m[0:12]        //0-12
-			serviceID := string(m[13:45]) //13-45
-			log := m[45:]
+
 			logrus.Debugf("containerID [%s] serviceID [%s] log [%s]", containerID, serviceID, string(log))
-			buffer := bytes.NewBuffer(containerID)
-			buffer.WriteString(":")
-			buffer.Write(log)
+			var buffer *bytes.Buffer
+			if len(logTime) > 0 {
+				// v2 log archivement
+				buffer = bytes.NewBuffer([]byte("v2:"))
+				buffer.Write(logTime)
+				buffer.WriteString(" ")
+				buffer.Write(containerID)
+				buffer.WriteString(":")
+				buffer.Write(log)
+			} else {
+				buffer = bytes.NewBuffer(containerID)
+				buffer.WriteString(":")
+				buffer.Write(log)
+			}
+
 			message := db.EventLogMessage{
-				Message: buffer.String(),
-				Content: buffer.Bytes(),
-				EventID: serviceID,
+				Message:      buffer.String(),
+				Content:      buffer.Bytes(),
+				EventID:      string(serviceID),
+				TimeUnixNano: logTimeUnixNano,
 			}
 			s.dockerLogStore.InsertMessage(&message)
 			buffer.Reset()

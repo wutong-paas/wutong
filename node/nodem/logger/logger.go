@@ -63,6 +63,7 @@ type Message struct {
 func (m *Message) reset() {
 	m.Line = m.Line[:0]
 	m.Source = ""
+	m.Timestamp = time.Time{}
 	m.Attrs = nil
 	m.Partial = false
 }

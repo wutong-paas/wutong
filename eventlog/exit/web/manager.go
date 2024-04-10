@@ -19,6 +19,7 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -227,7 +228,12 @@ func (s *SocketServer) pushDockerLog(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					s.log.Warningf("error setting write deadline: %v", err)
 				}
-				err = conn.WriteMessage(websocket.TextMessage, message.Content)
+				// v2 log archivement
+				var content = message.Content
+				if bytes.HasPrefix(content, []byte("v2:")) && len(content) > 23 {
+					content = content[23:]
+				}
+				err = conn.WriteMessage(websocket.TextMessage, content)
 				if err != nil {
 					s.log.Warn("Push message to client error.", err.Error())
 					return
@@ -401,6 +407,7 @@ func (s *SocketServer) pushNewMonitorMessage(w http.ResponseWriter, r *http.Requ
 		}
 	}
 }
+
 func (s *SocketServer) reader(ws *websocket.Conn, ch chan struct{}) {
 	defer ws.Close()
 	ws.SetReadLimit(512)

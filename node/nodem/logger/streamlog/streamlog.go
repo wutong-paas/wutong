@@ -222,9 +222,13 @@ func ValidateLogOpt(cfg map[string]string) error {
 }
 
 func (s *StreamLog) cache(msg string) {
+	defer func() {
+		recover()
+	}()
 	select {
 	case s.cacheQueue <- msg:
 	default:
+		return
 	}
 }
 
@@ -281,9 +285,20 @@ func (s *StreamLog) Log(msg *logger.Message) error {
 		}
 	}()
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString(s.containerID[0:12] + ",")
-	buf.WriteString(s.serviceID)
-	buf.Write(msg.Line)
+	// v1
+	{
+		// buf.WriteString(s.containerID[0:12] + ",")
+		// buf.WriteString(s.serviceID)
+		// buf.Write(msg.Line)
+	}
+	// v2: write timestamp
+	{
+		buf.WriteString(fmt.Sprintf("v2:%d,", msg.Timestamp.UnixNano()))
+		buf.WriteString(s.containerID[0:12] + ",")
+		buf.WriteString(s.serviceID)
+		buf.Write(msg.Line)
+	}
+
 	s.cache(buf.String())
 	return nil
 }

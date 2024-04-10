@@ -27,7 +27,6 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -92,6 +91,9 @@ func (c *ContainerLogManage) handleLogger() {
 			switch cevent.Action {
 			case sources.CONTAINER_ACTION_START, sources.CONTAINER_ACTION_CREATE:
 				if cevent.Container.ContainerRuntime == sources.ContainerRuntimeDocker {
+					if cevent.Action == sources.CONTAINER_ACTION_CREATE {
+						continue
+					}
 					loggerType := cevent.Container.HostConfig.LogConfig.Type
 					if loggerType != "json-file" && loggerType != "syslog" {
 						continue
@@ -142,11 +144,13 @@ func (c *ContainerLogManage) handleLogger() {
 					}()
 				}
 			case sources.CONTAINER_ACTION_STOP, sources.CONTAINER_ACTION_DESTROY, sources.CONTAINER_ACTION_DIE:
+				if cevent.Container.ContainerRuntime == sources.ContainerRuntimeDocker && cevent.Action != sources.CONTAINER_ACTION_STOP {
+					continue
+				}
 				if logger, ok := c.containerLogs.Load(cevent.Container.GetId()); ok {
 					clog, okf := logger.(*ContainerLog)
 					if okf {
 						clog.Stop()
-						clog.Close()
 					}
 					c.containerLogs.Delete(cevent.Container.GetId())
 					logrus.Infof("remove copy container log for container %s", cevent.Container.GetMetadata().GetName())
@@ -182,14 +186,16 @@ func (c *ContainerLogManage) loollist() {
 			return
 		case <-ticker.C:
 			for _, container := range c.listContainer() {
-				cj, _ := c.getContainer(container.GetId())
-				if cj == nil || cj.GetLogPath() == "" {
+				cj, err := c.getContainer(container.GetId())
+				if err != nil || cj == nil || cj.GetLogPath() == "" {
 					continue
 				}
-				// loggerType := cj.HostConfig.LogConfig.Type
-				// if loggerType != "json-file" && loggerType != "syslog" {
-				// 	continue
-				// }
+				if cj.ContainerRuntime == sources.ContainerRuntimeDocker {
+					loggerType := cj.HostConfig.LogConfig.Type
+					if loggerType != "json-file" && loggerType != "syslog" {
+						continue
+					}
+				}
 				if _, exist := c.containerLogs.Load(container.GetId()); !exist {
 					c.cacheContainer(sources.ContainerEvent{Action: sources.CONTAINER_ACTION_START, Container: cj})
 				}
@@ -338,7 +344,7 @@ type ContainerInfoMetadata struct {
 	Name string `json:"name"`
 }
 
-// ContainerEnv ...
+// ContainerInfoEnv ...
 type ContainerInfoEnv struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -487,25 +493,15 @@ func (container *ContainerLog) Stop() {
 	if container.LogCopier != nil {
 		container.LogCopier.Close()
 	}
-	container.since = time.Now()
-	var containerLogStop = true
-	container.stoped = &containerLogStop
-	logrus.Debugf("wutong logger stop for container %s", container.ContainerStatus.GetMetadata().GetName())
-}
-
-// Close close
-func (container *ContainerLog) Close() {
-	if container.LogCopier != nil {
-		container.LogCopier.Close()
-	}
 	if container.reader != nil {
 		container.reader.Close()
 	}
-
 	for _, ld := range container.LogDriver {
 		ld.Close()
 	}
 	container.LogDriver = nil
+	container.since = time.Time{}
+	container.stoped = nil
 	container.cancel()
-	logrus.Debugf("wutong logger close for container %s", container.ContainerStatus.GetMetadata().GetName())
+	logrus.Debugf("wutong logger stop for container %s", container.ContainerStatus.GetMetadata().GetName())
 }

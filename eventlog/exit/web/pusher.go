@@ -19,6 +19,7 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strings"
@@ -245,11 +246,15 @@ func (c *Chan) handleChan() {
 					c.p.SendMessage(WebsocketMessage{Event: "pusher:close", Data: message.Message, Channel: c.channel})
 					return
 				}
-				if message.MonitorData != nil {
-					c.p.SendMessage(WebsocketMessage{Event: c.reevent, Data: string(message.MonitorData), Channel: c.channel})
-				} else {
-					c.p.SendMessage(WebsocketMessage{Event: c.reevent, Data: string(message.Content), Channel: c.channel})
+				var data = message.MonitorData
+				if data == nil {
+					data = message.Content
 				}
+				// v2 log archivement
+				if bytes.HasPrefix(data, []byte("v2:")) && len(data) > 23 {
+					data = data[23:]
+				}
+				c.p.SendMessage(WebsocketMessage{Event: c.reevent, Data: string(data), Channel: c.channel})
 			}
 		}
 	}

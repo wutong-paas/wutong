@@ -19,6 +19,7 @@
 package store
 
 import (
+	"bytes"
 	"sync"
 	"time"
 
@@ -63,6 +64,7 @@ func (d *dockerLogStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter
 
 	return nil
 }
+
 func (d *dockerLogStore) insertMessage(message *db.EventLogMessage) bool {
 	d.rwLock.RLock() //读锁
 	defer d.rwLock.RUnlock()
@@ -72,6 +74,7 @@ func (d *dockerLogStore) insertMessage(message *db.EventLogMessage) bool {
 	}
 	return false
 }
+
 func (d *dockerLogStore) InsertMessage(message *db.EventLogMessage) {
 	if message == nil || message.EventID == "" {
 		return
@@ -90,6 +93,7 @@ func (d *dockerLogStore) InsertMessage(message *db.EventLogMessage) {
 	d.barrels[message.EventID] = ba
 	d.barrelSize++
 }
+
 func (d *dockerLogStore) subChan(eventID, subID string) chan *db.EventLogMessage {
 	d.rwLock.RLock() //读锁
 	defer d.rwLock.RUnlock()
@@ -265,7 +269,12 @@ func (d *dockerLogStore) GetHistoryMessage(eventID string, length int) (re []str
 	if ba, ok := d.barrels[eventID]; ok {
 		for _, m := range ba.barrel {
 			if len(m.Content) > 0 {
-				re = append(re, string(m.Content))
+				// v2 log archivement
+				var content = m.Content
+				if bytes.HasPrefix(content, []byte("v2:")) && len(content) > 23 {
+					content = content[23:]
+				}
+				re = append(re, string(content))
 			}
 		}
 	}

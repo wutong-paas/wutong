@@ -44,6 +44,7 @@ type readMessageStore struct {
 func (r *readMessageStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
 	return nil
 }
+
 func (r *readMessageStore) InsertMessage(message *db.EventLogMessage) {
 	if message == nil || message.EventID == "" {
 		return

@@ -158,6 +158,7 @@ func decodeFunc(rdr io.Reader) func() (*Message, error) {
 		return msg, err
 	}
 }
+
 func getTailReader(ctx context.Context, r SizeReaderAt, req int) (io.Reader, int, error) {
 	return tailfile.NewTailReader(ctx, r, req)
 }
@@ -391,6 +392,7 @@ func decompressfile(fileName, destFileName string, since time.Time) (*os.File, e
 
 	return rs, nil
 }
+
 func followLogs(f *os.File, logWatcher *LogWatcher, createDecoder makeDecoderFunc, since, until time.Time) {
 	decodeLogLine := createDecoder(f)
 
@@ -610,7 +612,7 @@ func NewLogFile(logPath string, maxFiles int, compress bool, decodeFunc makeDeco
 		return nil, err
 	}
 
-	size, err := log.Seek(0, os.SEEK_END)
+	size, err := log.Seek(0, io.SeekEnd)
 	if err != nil {
 		return nil, err
 	}
