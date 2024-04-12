@@ -68,7 +68,7 @@ func (c *Copier) copySrc() {
 	defer c.reader.ConsumerGone()
 loop:
 	for {
-		select {
+		select { // memory leak here
 		case <-c.closed:
 			return
 		case err := <-c.reader.Err:

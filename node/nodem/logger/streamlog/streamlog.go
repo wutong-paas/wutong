@@ -109,24 +109,24 @@ func init() {
 
 // StreamLog 消息流log
 type StreamLog struct {
-	writer      *Client
-	serviceID   string
-	tenantEnvID string
-	containerID string
-	// errorQueue                     [][]byte
+	writer        *Client
+	serviceID     string
+	tenantEnvID   string
+	containerID   string
 	reConnecting  chan bool
 	serverAddress string
 	ctx           context.Context
 	cancel        context.CancelFunc
-	cacheSize     int
 	cacheQueue    chan string
-	// lock                           sync.Mutex
-	config                         map[string]string
+	// config                         map[string]string
+	streamServer                   string
 	intervalSendMicrosecondTime    int64
 	minIntervalSendMicrosecondTime int64
 	closedChan                     chan struct{}
 	once                           sync.Once
 }
+
+const cacheQueueCap = 20000
 
 // New new logger
 func New(ctx logger.Info) (logger.Logger, error) {
@@ -166,23 +166,25 @@ func New(ctx logger.Info) (logger.Logger, error) {
 		return nil, err
 	}
 
-	cacheSize, err := strconv.Atoi(ctx.Config["cache-log-size"])
-	if err != nil {
-		cacheSize = 1024
-	}
+	// cacheSize, err := strconv.Atoi(ctx.Config["cache-log-size"])
+	// if err != nil {
+	// 	// cacheSize = 1024
+	// 	cacheSize = 20000
+	// }
 	currentCtx, cancel := context.WithCancel(context.Background())
 	logger := &StreamLog{
-		writer:                         writer,
-		serviceID:                      serviceID,
-		tenantEnvID:                    tenantEnvID,
-		containerID:                    ctx.ContainerID,
-		ctx:                            currentCtx,
-		cancel:                         cancel,
-		cacheSize:                      cacheSize,
-		config:                         ctx.Config,
+		writer:      writer,
+		serviceID:   serviceID,
+		tenantEnvID: tenantEnvID,
+		containerID: ctx.ContainerID,
+		ctx:         currentCtx,
+		cancel:      cancel,
+		// cacheSize:                      cacheSize,
+		// config:                         ctx.Config,
+		streamServer:                   ctx.Config["stream-server"],
 		serverAddress:                  address,
 		reConnecting:                   make(chan bool, 1),
-		cacheQueue:                     make(chan string, 20000),
+		cacheQueue:                     make(chan string, cacheQueueCap),
 		intervalSendMicrosecondTime:    1000 * 10,
 		minIntervalSendMicrosecondTime: 1000,
 		closedChan:                     make(chan struct{}),
@@ -225,10 +227,13 @@ func (s *StreamLog) cache(msg string) {
 	defer func() {
 		recover()
 	}()
-	select {
-	case s.cacheQueue <- msg:
-	default:
-		return
+	if len(s.cacheQueue) < cacheQueueCap {
+		s.cacheQueue <- msg
+	} else {
+		// channel is full，retry after 1 second
+		time.Sleep(time.Second)
+		// retry
+		s.cache(msg)
 	}
 }
 
@@ -236,7 +241,7 @@ func (s *StreamLog) send() {
 	ticker := time.NewTimer(time.Second * 3)
 	defer ticker.Stop()
 	for {
-		select {
+		select { // memory leak here
 		case msg := <-s.cacheQueue:
 			if msg != "" && msg != "\n" {
 				s.sendMsg(msg)
@@ -322,7 +327,7 @@ func (s *StreamLog) reConect() {
 			}
 		}
 		//step2 get new server address and reconnect
-		server := getTCPConnConfig(s.serviceID, s.config["stream-server"])
+		server := getTCPConnConfig(s.serviceID, s.streamServer)
 		if server == s.writer.server {
 			logrus.Warningf("stream log server address(%s) not change ,will reconnect", server)
 			err := s.writer.ReConnect()

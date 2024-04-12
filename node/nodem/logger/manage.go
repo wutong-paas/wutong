@@ -60,14 +60,8 @@ func CreatContainerLogManage(conf *option.Conf) *ContainerLogManage {
 
 // Start start
 func (c *ContainerLogManage) Start() error {
-	errchan := make(chan error)
-	go func() {
-		if err := <-errchan; err != nil {
-			logrus.Errorf(err.Error())
-		}
-	}()
 	go c.handleLogger()
-	go c.listAndWatchContainer(errchan)
+	go c.listAndWatchContainer()
 	go c.loollist()
 	logrus.Infof("start container log manage success")
 	return nil
@@ -204,7 +198,7 @@ func (c *ContainerLogManage) loollist() {
 	}
 }
 
-func (c *ContainerLogManage) listAndWatchContainer(errchan chan error) {
+func (c *ContainerLogManage) listAndWatchContainer() {
 	containers := c.listContainer()
 	logrus.Infof("found %d containers", len(containers))
 	for _, con := range containers {

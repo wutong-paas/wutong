@@ -104,13 +104,17 @@ func (s *DockerLogServer) OnConnect(c *util.Conn) bool {
 func (s *DockerLogServer) OnMessage(p util.Packet) bool {
 	var msg = p.Serialize()
 	if len(msg) > 0 {
-		select {
-		// eventlog receive message here
-		case s.messageChan <- msg:
-			return true
-		default:
-			//TODO: return false and receive exist
-			return true
+		if len(s.messageChan) < cap(s.messageChan) {
+			s.messageChan <- msg
+		} else {
+			// channel is full，retry 5 times
+			for retry := 0; retry < 5; retry++ {
+				time.Sleep(1 * time.Second)
+				if len(s.messageChan) < cap(s.messageChan) {
+					s.messageChan <- msg
+					break
+				}
+			}
 		}
 	} else {
 		logrus.Error("receive a null message")
