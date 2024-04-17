@@ -175,8 +175,8 @@ func readLastLogTimeUnixNano(stdoutLogPath string) int64 {
 	if len(lastln) < 23 || !bytes.HasPrefix([]byte(lastln), []byte("v2:")) {
 		return 0
 	}
-
-	logTimeUnixNano, _ := strconv.ParseInt(string(lastln[3:23]), 10, 64)
+	// v2:[19位 UnixNano 时间戳] [12位 containerID]:[YYYY/MM/DD HH:MM:SS] [日志内容]
+	logTimeUnixNano, _ := strconv.ParseInt(string(lastln[3:22]), 10, 64)
 	return logTimeUnixNano
 }
 

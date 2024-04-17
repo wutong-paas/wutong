@@ -30,7 +30,6 @@ import (
 	"github.com/wutong-paas/wutong/eventlog/cluster"
 	"github.com/wutong-paas/wutong/eventlog/cluster/discover"
 	"github.com/wutong-paas/wutong/eventlog/conf"
-	"github.com/wutong-paas/wutong/eventlog/exit/monitor"
 	"github.com/wutong-paas/wutong/eventlog/store"
 	"github.com/wutong-paas/wutong/util"
 	httputil "github.com/wutong-paas/wutong/util/http"
@@ -40,9 +39,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/version"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
@@ -477,7 +473,7 @@ func (s *SocketServer) listen() {
 	r.Get("/services/{serviceID}/pubsub", s.pubsub)
 	r.Get("/tenants/{tenant_name}/envs/{tenantEnvName}/services/{serviceID}/logs", s.getDockerLogs)
 	//monitor setting
-	s.prometheus(r)
+	// s.prometheus(r)
 	//pprof debug
 	util.ProfilerSetup(r)
 
@@ -562,12 +558,12 @@ func (s *SocketServer) receiveEventMessage(w http.ResponseWriter, r *http.Reques
 	return
 }
 
-func (s *SocketServer) prometheus(r *chi.Mux) {
-	prometheus.MustRegister(version.NewCollector("event_log"))
-	exporter := monitor.NewExporter(s.storemanager, s.cluster)
-	prometheus.MustRegister(exporter)
-	r.Handle(s.conf.PrometheusMetricPath, promhttp.Handler())
-}
+// func (s *SocketServer) prometheus(r *chi.Mux) {
+// 	prometheus.MustRegister(version.NewCollector("event_log"))
+// 	exporter := monitor.NewExporter(s.storemanager, s.cluster)
+// 	prometheus.MustRegister(exporter)
+// 	r.Handle(s.conf.PrometheusMetricPath, promhttp.Handler())
+// }
 
 // ResponseType 返回内容
 type ResponseType struct {

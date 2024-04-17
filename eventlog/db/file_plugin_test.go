@@ -18,7 +18,9 @@
 
 package db
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFileSaveMessage(t *testing.T) {
 

@@ -53,7 +53,7 @@ type Monitor struct {
 // Start start
 func (d *Monitor) Start() {
 	d.discoverv1.AddProject("prometheus", &callback.Prometheus{Prometheus: d.manager})
-	d.discoverv1.AddProject("event_log_event_http", &callback.EventLog{Prometheus: d.manager})
+	// d.discoverv1.AddProject("event_log_event_http", &callback.EventLog{Prometheus: d.manager})
 	d.discoverv1.AddProject("acp_webcli", &callback.Webcli{Prometheus: d.manager})
 	d.discoverv1.AddProject("gateway", &callback.GatewayNode{Prometheus: d.manager})
 	d.discoverv2.AddProject("builder", &callback.Builder{Prometheus: d.manager})
@@ -61,7 +61,7 @@ func (d *Monitor) Start() {
 	d.discoverv2.AddProject("app_sync_runtime_server", &callback.Worker{Prometheus: d.manager})
 
 	// node and app runtime metrics needs to be monitored separately
-	go d.discoverNodes(&callback.Node{Prometheus: d.manager}, &callback.App{Prometheus: d.manager}, d.ctx.Done())
+	// go d.discoverNodes(&callback.Node{Prometheus: d.manager}, &callback.App{Prometheus: d.manager}, d.ctx.Done())
 
 	// monitor etcd members
 	go d.discoverEtcd(&callback.Etcd{
@@ -93,57 +93,57 @@ func (d *Monitor) Start() {
 	d.serviceMonitor.Run(d.stopCh)
 }
 
-func (d *Monitor) discoverNodes(node *callback.Node, app *callback.App, done <-chan struct{}) {
-	// start listen node modified
-	watcher := watch.New(d.client, "")
-	w, err := watcher.WatchList(d.ctx, "/wutong/nodes", "")
-	if err != nil {
-		logrus.Error("failed to watch list for discover all nodes: ", err)
-		return
-	}
-	defer w.Stop()
+// func (d *Monitor) discoverNodes(node *callback.Node, app *callback.App, done <-chan struct{}) {
+// 	// start listen node modified
+// 	watcher := watch.New(d.client, "")
+// 	w, err := watcher.WatchList(d.ctx, "/wutong/nodes", "")
+// 	if err != nil {
+// 		logrus.Error("failed to watch list for discover all nodes: ", err)
+// 		return
+// 	}
+// 	defer w.Stop()
 
-	for {
-		select {
-		case event, ok := <-w.ResultChan():
-			if !ok {
-				logrus.Warn("the events channel is closed.")
-				return
-			}
+// 	for {
+// 		select {
+// 		case event, ok := <-w.ResultChan():
+// 			if !ok {
+// 				logrus.Warn("the events channel is closed.")
+// 				return
+// 			}
 
-			switch event.Type {
-			case watch.Added:
-				node.Add(&event)
+// 			switch event.Type {
+// 			case watch.Added:
+// 				node.Add(&event)
 
-				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
-				if isSlave == "true" {
-					app.Add(&event)
-				}
-			case watch.Modified:
-				node.Modify(&event)
+// 				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
+// 				if isSlave == "true" {
+// 					app.Add(&event)
+// 				}
+// 			case watch.Modified:
+// 				node.Modify(&event)
 
-				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
-				if isSlave == "true" {
-					app.Modify(&event)
-				}
-			case watch.Deleted:
-				node.Delete(&event)
+// 				isSlave := gjson.Get(event.GetValueString(), "labels.wutong_node_rule_compute").String()
+// 				if isSlave == "true" {
+// 					app.Modify(&event)
+// 				}
+// 			case watch.Deleted:
+// 				node.Delete(&event)
 
-				isSlave := gjson.Get(event.GetPreValueString(), "labels.wutong_node_rule_compute").String()
-				if isSlave == "true" {
-					app.Delete(&event)
-				}
-			case watch.Error:
-				logrus.Error("error when read a event from result chan for discover all nodes: ", event.Error)
-			}
-		case <-done:
-			logrus.Info("stop discover nodes because received stop signal.")
-			return
-		}
+// 				isSlave := gjson.Get(event.GetPreValueString(), "labels.wutong_node_rule_compute").String()
+// 				if isSlave == "true" {
+// 					app.Delete(&event)
+// 				}
+// 			case watch.Error:
+// 				logrus.Error("error when read a event from result chan for discover all nodes: ", event.Error)
+// 			}
+// 		case <-done:
+// 			logrus.Info("stop discover nodes because received stop signal.")
+// 			return
+// 		}
 
-	}
+// 	}
 
-}
+// }
 
 func (d *Monitor) discoverCadvisor(c *callback.Cadvisor, done <-chan struct{}) {
 	// start listen node modified

@@ -126,7 +126,7 @@ type StreamLog struct {
 	once                           sync.Once
 }
 
-const cacheQueueCap = 20000
+const cacheQueueCap = 2000 // 20000 is too large, adjust to 2000
 
 // New new logger
 func New(ctx logger.Info) (logger.Logger, error) {
