@@ -21,6 +21,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"path"
@@ -62,7 +63,7 @@ func (s *LogServer) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.Conf.Entry.EventLogServer.BindPort, "eventlog.bind.port", 6366, "Collect the log service to listen the Port")
 	fs.IntVar(&s.Conf.Entry.EventLogServer.CacheMessageSize, "eventlog.cache", 100, "the event log server cache the receive message size")
 	fs.StringVar(&s.Conf.Entry.DockerLogServer.BindIP, "dockerlog.bind.ip", "0.0.0.0", "Collect the log service to listen the IP")
-	fs.StringVar(&s.Conf.Entry.DockerLogServer.Mode, "dockerlog.mode", "stream", "the server mode zmq or stream")
+	// fs.StringVar(&s.Conf.Entry.DockerLogServer.Mode, "dockerlog.mode", "stream", "the server mode zmq or stream")
 	fs.IntVar(&s.Conf.Entry.DockerLogServer.BindPort, "dockerlog.bind.port", 6362, "Collect the log service to listen the Port")
 	fs.IntVar(&s.Conf.Entry.DockerLogServer.CacheMessageSize, "dockerlog.cache", 200, "the docker log server cache the receive message size")
 	fs.StringSliceVar(&s.Conf.Entry.MonitorMessageServer.SubAddress, "monitor.subaddress", []string{"tcp://127.0.0.1:9442"}, "monitor message source address")
@@ -86,9 +87,9 @@ func (s *LogServer) AddFlags(fs *pflag.FlagSet) {
 	fs.Int64Var(&s.Conf.EventStore.PeerEventMaxLogNumber, "message.max.number", 100000, "the max number log message for peer event")
 	fs.IntVar(&s.Conf.EventStore.PeerEventMaxCacheLogNumber, "message.cache.number", 256, "Maintain log the largest number in the memory peer event")
 	fs.Int64Var(&s.Conf.EventStore.PeerDockerMaxCacheLogNumber, "dockermessage.cache.number", 128, "Maintain log the largest number in the memory peer docker service")
-	fs.IntVar(&s.Conf.EventStore.HandleMessageCoreNumber, "message.handle.core.number", 2, "The number of concurrent processing receive log data.")
-	fs.IntVar(&s.Conf.EventStore.HandleSubMessageCoreNumber, "message.sub.handle.core.number", 3, "The number of concurrent processing receive log data. more than message.handle.core.number")
-	fs.IntVar(&s.Conf.EventStore.HandleDockerLogCoreNumber, "message.dockerlog.handle.core.number", 2, "The number of concurrent processing receive log data. more than message.handle.core.number")
+	fs.IntVar(&s.Conf.EventStore.HandleMessageGoroutinues, "message.handle.core.number", 2, "The number of concurrent processing receive log data.")
+	fs.IntVar(&s.Conf.EventStore.HandleDockerLogGoroutinues, "message.dockerlog.handle.core.number", 2, "The number of concurrent processing receive log data. more than message.handle.core.number")
+	fs.IntVar(&s.Conf.EventStore.HandleSubMessageGoroutinues, "message.sub.handle.core.number", 3, "The number of concurrent processing receive log data. more than message.handle.core.number")
 	fs.StringVar(&s.Conf.Log.LogLevel, "log.level", "info", "app log level")
 	fs.StringVar(&s.Conf.Log.LogOutType, "log.type", "stdout", "app log output type. stdout or file ")
 	fs.StringVar(&s.Conf.Log.LogPath, "log.path", "/var/log/", "app log output file path.it is effective when log.type=file")
@@ -113,6 +114,7 @@ func (s *LogServer) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.Conf.Entry.NewMonitorMessageServerConf.ListenerPort, "monitor.udp.port", 6166, "receive new monitor udp server port")
 	fs.StringVar(&s.Conf.Cluster.Discover.NodeID, "node-id", "", "the unique ID for this node.")
 	fs.DurationVar(&s.Conf.Cluster.PubSub.PollingTimeout, "zmq4-polling-timeout", 200*time.Millisecond, "The timeout determines the time-out on the polling of sockets")
+	// 是否开启 pprof
 	fs.BoolVar(&s.Conf.EnableDebugPprof, "enable-debug-pprof", false, "enable debug pprof")
 }
 
@@ -170,12 +172,17 @@ func (s *LogServer) InitConf() {
 	if os.Getenv("CLUSTER_BIND_IP") != "" {
 		s.Conf.Cluster.PubSub.PubBindIP = os.Getenv("CLUSTER_BIND_IP")
 	}
+	if s.Conf.EnableDebugPprof {
+		go func() {
+			http.ListenAndServe(":6607", nil) // 使用 pprof 进行性能分析，监听 6607 端口
+		}()
+	}
 }
 
 // Run 执行
 func (s *LogServer) Run() error {
-	s.Logger.Debug("Start run server.")
 	log := s.Logger
+	log.Debug("Start run server.")
 
 	etcdClientArgs := &etcdutil.ClientArgs{
 		Endpoints: s.Conf.Cluster.Discover.EtcdAddr,
@@ -214,6 +221,8 @@ func (s *LogServer) Run() error {
 		}
 		defer s.Cluster.Stop()
 	}
+
+	//  WebSocket 服务，eventlog，docker log 服务，monitor message 服务
 	s.SocketServer = web.NewSocket(s.Conf.WebSocket, s.Conf.Cluster.Discover, etcdClient,
 		log.WithField("module", "SocketServer"), storeManager, s.Cluster, healthInfo)
 	if err := s.SocketServer.Run(); err != nil {

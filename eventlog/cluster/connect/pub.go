@@ -53,7 +53,7 @@ type Pub struct {
 	RadioChan      chan db.ClusterMessage
 }
 
-//NewPub 创建zmq pub服务端
+// NewPub 创建zmq pub服务端
 func NewPub(conf conf.PubSubConf, log *logrus.Entry, storeManager store.Manager, discover discover.Manager) *Pub {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Pub{
@@ -69,7 +69,7 @@ func NewPub(conf conf.PubSubConf, log *logrus.Entry, storeManager store.Manager,
 	}
 }
 
-//Run 执行
+// Run 执行
 func (s *Pub) Run() error {
 	s.log.Info("message receive server start.")
 	pub, err := zmq4.NewSocket(zmq4.PUB)
@@ -90,7 +90,7 @@ func (s *Pub) Run() error {
 	return nil
 }
 
-//Stop 停止
+// Stop 停止
 func (s *Pub) Stop() {
 	if s.instance != nil {
 		s.discover.CancellationInstance(s.instance)

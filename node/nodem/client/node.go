@@ -51,7 +51,7 @@ type APIHostNode struct {
 	ExternalIP  string            `json:"external_ip" validate:"external_ip|ip"`
 	RootPass    string            `json:"root_pass,omitempty"`
 	Privatekey  string            `json:"private_key,omitempty"`
-	Role        HostRule          `json:"role" validate:"role|required"`
+	Role        HostRole          `json:"role" validate:"role|required"`
 	PodCIDR     string            `json:"podCIDR"`
 	AutoInstall bool              `json:"auto_install"`
 	Labels      map[string]string `json:"labels"`
@@ -90,7 +90,7 @@ type HostNode struct {
 	AvailableMemory int64             `json:"available_memory"`
 	AvailableCPU    int64             `json:"available_cpu"`
 	Mode            string            `json:"mode"`
-	Role            HostRule          `json:"role"` //compute, manage, storage, gateway
+	Role            HostRole          `json:"role"` //compute, manage, storage, gateway
 	Status          string            `json:"status"`
 	Labels          map[string]string `json:"labels"`        // system labels
 	CustomLabels    map[string]string `json:"custom_labels"` // custom labels
@@ -380,11 +380,11 @@ func (n *HostNode) UpdataCondition(conditions ...NodeCondition) {
 	}
 }
 
-// HostRule 节点角色
-type HostRule []string
+// HostRole 节点角色
+type HostRole []string
 
-// SupportNodeRule -
-var SupportNodeRule = []string{ComputeNode, ManageNode, StorageNode, GatewayNode}
+// SupportNodeRole -
+var SupportNodeRole = []string{ComputeNode, ManageNode, StorageNode, GatewayNode}
 
 // ComputeNode 计算节点
 var ComputeNode = "compute"
@@ -398,21 +398,21 @@ var StorageNode = "storage"
 // GatewayNode 边缘负载均衡节点
 var GatewayNode = "gateway"
 
-// HasRule 是否具有什么角色
-func (h HostRule) HasRule(rule string) bool {
+// HasRole 是否具有什么角色
+func (h HostRole) HasRole(role string) bool {
 	for _, v := range h {
-		if v == rule {
+		if v == role {
 			return true
 		}
 	}
 	return false
 }
-func (h HostRule) String() string {
+func (h HostRole) String() string {
 	return strings.Join(h, ",")
 }
 
 // Add add role
-func (h *HostRule) Add(role ...string) {
+func (h *HostRole) Add(role ...string) {
 	for _, r := range role {
 		if !util.StringArrayContains(*h, r) {
 			*h = append(*h, r)
@@ -421,12 +421,12 @@ func (h *HostRule) Add(role ...string) {
 }
 
 // Validation host rule validation
-func (h HostRule) Validation() error {
+func (h HostRole) Validation() error {
 	if len(h) == 0 {
 		return fmt.Errorf("node rule must be seted")
 	}
 	for _, role := range h {
-		if !util.StringArrayContains(SupportNodeRule, role) {
+		if !util.StringArrayContains(SupportNodeRole, role) {
 			return fmt.Errorf("node role %s can not be supported", role)
 		}
 	}

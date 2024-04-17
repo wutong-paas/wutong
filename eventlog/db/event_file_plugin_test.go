@@ -99,7 +99,7 @@ func TestEventFileSaveMessage(t *testing.T) {
 
 func TestGetMessage(t *testing.T) {
 	eventFilePlugin := EventFilePlugin{
-		HomePath: "/tmp",
+		HomePath: "./test",
 	}
 	list, err := eventFilePlugin.GetMessages("eventidsadasd", "debug", 0)
 	if err != nil {

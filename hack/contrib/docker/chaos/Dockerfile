@@ -1,6 +1,4 @@
 FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/alpine:3.15
-ARG RELEASE_DESC
-
 
 ENV WORK_DIR=/run
 
@@ -9,7 +7,5 @@ COPY wutong-chaos entrypoint.sh /run/
 COPY export-app /src/export-app
 
 WORKDIR $WORK_DIR
-
-ENV RELEASE_DESC=${RELEASE_DESC}
 
 ENTRYPOINT ["/run/entrypoint.sh"]

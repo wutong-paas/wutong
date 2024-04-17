@@ -36,7 +36,7 @@ import (
 
 // EventFilePlugin EventFilePlugin
 type EventFilePlugin struct {
-	HomePath string
+	HomePath string // /wtdata/logs
 }
 
 // SaveMessage save event log to file
@@ -44,11 +44,11 @@ func (m *EventFilePlugin) SaveMessage(events []*EventLogMessage) error {
 	if len(events) == 0 {
 		return nil
 	}
-	filePath := eventutil.EventLogFilePath(m.HomePath)
+	filePath := eventutil.EventLogFilePath(m.HomePath) // /wtdata/logs/eventlog
 	if err := util.CheckAndCreateDir(filePath); err != nil {
 		return err
 	}
-	filename := eventutil.EventLogFileName(filePath, events[0].EventID)
+	filename := eventutil.EventLogFileName(filePath, events[0].EventID) // 根据 eventID 生成文件名
 	writeFile, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
 		return err
@@ -59,14 +59,11 @@ func (m *EventFilePlugin) SaveMessage(events []*EventLogMessage) error {
 		if e == nil {
 			continue
 		}
-		writeFile.Write(GetLevelFlag(e.Level))
 		logtime := GetTimeUnix(e.Time)
 		if logtime != 0 {
 			lastTime = logtime
 		}
-		writeFile.Write([]byte(fmt.Sprintf("%d ", lastTime)))
-		writeFile.Write([]byte(e.Message))
-		writeFile.Write([]byte("\n"))
+		writeFile.Write([]byte(fmt.Sprintf("%d %d %s\n", GetLevelFlag(e.Level), lastTime, e.Message)))
 	}
 	return nil
 }
@@ -119,13 +116,6 @@ func (m *EventFilePlugin) GetMessages(eventID, level string, length int) (interf
 				if len(info) == 3 {
 					timestr := info[1]
 					unixnano := cast.ToInt64(timestr)
-					// timeunix := info[1]
-					// unix, _ := strconv.ParseInt(timeunix, 10, 64)
-					// t, e := time.Parse(time.RFC3339Nano, timestr)
-					// if e != nil {
-					// 	t, _ = time.Parse(time.RFC3339, timestr)
-					// }
-					// tm := time.Unix(unix, 0)
 					md := MessageData{
 						Message:  info[2],
 						Unixtime: unixnano,
@@ -162,38 +152,21 @@ func CheckLevel(flag, level string) bool {
 
 // GetTimeUnix get specified time unix
 func GetTimeUnix(timeStr string) int64 {
-	// var timeLayout string
-	// if strings.Contains(timeStr, ".") {
-	// 	timeLayout = "2006-01-02T15:04:05"
-	// } else {
-	// 	timeLayout = "2006-01-02T15:04:05+08:00"
-	// }
-	// loc, _ := time.LoadLocation("Local")
-	// utime, err := time.ParseInLocation(timeLayout, timeStr, loc)
-	// if err != nil {
-	// 	logrus.Errorf("Parse log time error %s", err.Error())
-	// 	return 0
-	// }
-
 	utime, _ := time.Parse(time.RFC3339Nano, timeStr)
-	// if err != nil {
-	// 	utime, _ = time.Parse(time.RFC3339, timeStr)
-	// }
-
 	return utime.UnixNano()
 }
 
 // GetLevelFlag get log level flag
-func GetLevelFlag(level string) []byte {
+func GetLevelFlag(level string) int {
 	switch level {
 	case "error":
-		return []byte("0 ")
+		return 0
 	case "info":
-		return []byte("1 ")
+		return 1
 	case "debug":
-		return []byte("2 ")
+		return 2
 	default:
-		return []byte("0 ")
+		return 0
 	}
 }
 

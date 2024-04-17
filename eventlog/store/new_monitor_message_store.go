@@ -44,25 +44,25 @@ type newMonitorMessageStore struct {
 	allLogCount float64
 }
 
-func (h *newMonitorMessageStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
+func (m *newMonitorMessageStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
 	chanDesc := prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, exporter, "new_monitor_store_barrel_count"),
 		"the handle container log count size.",
 		[]string{"from"}, nil,
 	)
-	ch <- prometheus.MustNewConstMetric(chanDesc, prometheus.GaugeValue, float64(len(h.barrels)), from)
+	ch <- prometheus.MustNewConstMetric(chanDesc, prometheus.GaugeValue, float64(len(m.barrels)), from)
 	logDesc := prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, exporter, "new_monitor_store_log_count"),
 		"the handle monitor log count size.",
 		[]string{"from"}, nil,
 	)
-	ch <- prometheus.MustNewConstMetric(logDesc, prometheus.GaugeValue, h.allLogCount, from)
+	ch <- prometheus.MustNewConstMetric(logDesc, prometheus.GaugeValue, m.allLogCount, from)
 
 	return nil
 }
-func (h *newMonitorMessageStore) insertMessage(message *db.EventLogMessage) ([]MonitorMessage, bool) {
-	h.lock.RLock()
-	defer h.lock.RUnlock()
+func (m *newMonitorMessageStore) insertMessage(message *db.EventLogMessage) ([]MonitorMessage, bool) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 	mm := fromByte(message.MonitorData)
 	if len(mm) < 1 {
 		return mm, true
@@ -70,73 +70,73 @@ func (h *newMonitorMessageStore) insertMessage(message *db.EventLogMessage) ([]M
 	if mm[0].ServiceID == "" {
 		return mm, true
 	}
-	if ba, ok := h.barrels[mm[0].ServiceID]; ok {
+	if ba, ok := m.barrels[mm[0].ServiceID]; ok {
 		ba.Insert(mm...)
 		return mm, true
 	}
 	return mm, false
 }
 
-func (h *newMonitorMessageStore) InsertMessage(message *db.EventLogMessage) {
+func (m *newMonitorMessageStore) InsertMessage(message *db.EventLogMessage) {
 	if message == nil {
 		return
 	}
-	h.size++
-	h.allLogCount++
-	mm, ok := h.insertMessage(message)
+	m.size++
+	m.allLogCount++
+	mm, ok := m.insertMessage(message)
 	if ok {
 		return
 	}
-	h.lock.Lock()
-	defer h.lock.Unlock()
+	m.lock.Lock()
+	defer m.lock.Unlock()
 	ba := CreateCacheMonitorMessageList(mm[0].ServiceID)
 	ba.Insert(mm...)
-	h.barrels[mm[0].ServiceID] = ba
+	m.barrels[mm[0].ServiceID] = ba
 }
-func (h *newMonitorMessageStore) GetMonitorData() *db.MonitorData {
+func (m *newMonitorMessageStore) GetMonitorData() *db.MonitorData {
 	data := &db.MonitorData{
-		ServiceSize:  len(h.barrels),
-		LogSizePeerM: h.size,
+		ServiceSize:  len(m.barrels),
+		LogSizePeerM: m.size,
 	}
 	return data
 }
 
-func (h *newMonitorMessageStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
-	h.lock.Lock()
-	defer h.lock.Unlock()
-	if ba, ok := h.barrels[eventID]; ok {
+func (m *newMonitorMessageStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	if ba, ok := m.barrels[eventID]; ok {
 		return ba.addSubChan(subID)
 	}
 	ba := CreateCacheMonitorMessageList(eventID)
-	h.barrels[eventID] = ba
+	m.barrels[eventID] = ba
 	return ba.addSubChan(subID)
 }
-func (h *newMonitorMessageStore) RealseSubChan(eventID, subID string) {
-	h.lock.RLock()
-	defer h.lock.RUnlock()
-	if ba, ok := h.barrels[eventID]; ok {
+func (m *newMonitorMessageStore) ReleaseSubChan(eventID, subID string) {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
+	if ba, ok := m.barrels[eventID]; ok {
 		ba.delSubChan(subID)
 	}
 }
-func (h *newMonitorMessageStore) Run() {
-	go h.Gc()
+func (m *newMonitorMessageStore) Run() {
+	go m.Gc()
 }
-func (h *newMonitorMessageStore) Gc() {
+func (m *newMonitorMessageStore) Gc() {
 	tiker := time.NewTicker(time.Second * 30)
 	defer tiker.Stop()
 	for {
 		select {
 		case <-tiker.C:
-		case <-h.ctx.Done():
-			h.log.Debug("read message store gc stop.")
+		case <-m.ctx.Done():
+			m.log.Debug("read message store gc stop.")
 			return
 		}
-		h.size = 0
-		if len(h.barrels) == 0 {
+		m.size = 0
+		if len(m.barrels) == 0 {
 			continue
 		}
 		var gcEvent []string
-		for k, v := range h.barrels {
+		for k, v := range m.barrels {
 			if len(v.subSocketChan) == 0 {
 				if v.UpdateTime.Add(time.Minute * 3).Before(time.Now()) { // barrel 超时未收到消息
 					gcEvent = append(gcEvent, k)
@@ -145,19 +145,19 @@ func (h *newMonitorMessageStore) Gc() {
 		}
 		if len(gcEvent) > 0 {
 			for _, id := range gcEvent {
-				h.log.Infof("monitor message barrel %s will be gc", id)
-				barrel := h.barrels[id]
+				m.log.Infof("monitor message barrel %s will be gc", id)
+				barrel := m.barrels[id]
 				barrel.empty()
-				delete(h.barrels, id)
+				delete(m.barrels, id)
 			}
 		}
 	}
 }
-func (h *newMonitorMessageStore) stop() {
-	h.cancel()
+func (m *newMonitorMessageStore) stop() {
+	m.cancel()
 }
-func (h *newMonitorMessageStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
-func (h *newMonitorMessageStore) GetHistoryMessage(eventID string, length int) (re []string) {
+func (m *newMonitorMessageStore) InsertGarbageMessage(message ...*db.EventLogMessage) {}
+func (m *newMonitorMessageStore) GetHistoryMessage(eventID string, length int) (re []string) {
 	return nil
 }
 

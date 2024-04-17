@@ -20,18 +20,16 @@ package discover
 
 import (
 	"net"
-	"time"
 )
 
-//Instance 实例
+// Instance 实例
 type Instance struct {
-	HostID          string
-	HostIP          net.IP
-	PubPort         int
-	DockerLogPort   int
-	WebPort         int
-	HostName        string
-	Status          string
-	TagNumber       int //当TagNumber大于集群总数的一半，则下线此节点
-	LastHealthCheck time.Time
+	HostID        string
+	HostIP        net.IP // 运行在集群中，为 eventlog 的 pod IP
+	PubPort       int
+	DockerLogPort int
+	WebPort       int
+	HostName      string
+	Status        string
+	TagNumber     int //当TagNumber大于集群总数的一半，则下线此节点
 }

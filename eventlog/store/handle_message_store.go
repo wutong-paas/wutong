@@ -35,8 +35,8 @@ import (
 )
 
 type handleMessageStore struct {
-	barrels                map[string]*EventBarrel
-	lock                   sync.RWMutex
+	barrels                map[string]*EventBarrel // key 为 eventID
+	lock                   sync.RWMutex            // 读写锁
 	garbageLock            sync.Mutex
 	conf                   conf.EventStoreConf
 	log                    *logrus.Entry
@@ -44,9 +44,9 @@ type handleMessageStore struct {
 	garbageGC              chan int
 	ctx                    context.Context
 	barrelEvent            chan []string
-	dbPlugin               db.Manager
+	eventfilePlugin        db.Manager // eventfile
 	cancel                 func()
-	handleEventCoreSize    int
+	handleEventGoroutines  int
 	stopGarbage            chan struct{}
 	pool                   *sync.Pool
 	manager                *storeManager
@@ -55,7 +55,10 @@ type handleMessageStore struct {
 }
 
 func (h *handleMessageStore) Run() {
-	go h.handleBarrelEvent()
+	go h.handleGarbageMessage()
+	for i := 0; i < h.handleEventGoroutines; i++ {
+		go h.handleBarrelEvent()
+	}
 	go h.Gc()
 }
 func (h *handleMessageStore) Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error {
@@ -91,7 +94,7 @@ func (h *handleMessageStore) GetMonitorData() *db.MonitorData {
 func (h *handleMessageStore) SubChan(eventID, subID string) chan *db.EventLogMessage {
 	return nil
 }
-func (h *handleMessageStore) RealseSubChan(eventID, subID string) {}
+func (h *handleMessageStore) ReleaseSubChan(eventID, subID string) {}
 
 // GC 操作进行时 消息接收会停止
 // TODD 怎么加快gc?
@@ -154,7 +157,7 @@ func (h *handleMessageStore) saveBeforeGc(v *EventBarrel) {
 	v.persistencelock.Lock()
 	v.gcPersistence()
 	if len(v.persistenceBarrel) > 0 {
-		if err := h.dbPlugin.SaveMessage(v.persistenceBarrel); err != nil {
+		if err := h.eventfilePlugin.SaveMessage(v.persistenceBarrel); err != nil {
 			h.log.Error("persistence barrel message error.", err.Error())
 			h.InsertGarbageMessage(v.persistenceBarrel...)
 		}
@@ -224,6 +227,7 @@ func (h *handleMessageStore) handleGarbageMessage() {
 	}
 }
 
+// 保存垃圾消息到文件
 func (h *handleMessageStore) saveGarbageMessage() {
 	h.garbageLock.Lock()
 	defer h.garbageLock.Unlock()
@@ -242,14 +246,16 @@ func (h *handleMessageStore) saveGarbageMessage() {
 	h.garbageMessage = h.garbageMessage[:0]
 }
 
+// 持久化事件，将事件日志写到 /wtdata/logs/eventlog/{eventID}.log 文件中
 func (h *handleMessageStore) persistence(eventID string) {
 	h.lock.RLock()
 	defer h.lock.RUnlock()
 	if ba, ok := h.barrels[eventID]; ok {
 		ba.persistencelock.Lock()
 		if ba.needPersistence {
-			if err := h.dbPlugin.SaveMessage(ba.persistenceBarrel); err != nil {
+			if err := h.eventfilePlugin.SaveMessage(ba.persistenceBarrel); err != nil {
 				h.log.Error("persistence barrel message error.", err.Error())
+				// 持久化失败，将数据放入垃圾消息中
 				h.InsertGarbageMessage(ba.persistenceBarrel...)
 			}
 			h.log.Debugf("handleMessageStore.persistence: persistence barrel(%s) %d message  to db.", eventID, len(ba.persistenceBarrel))
@@ -260,7 +266,6 @@ func (h *handleMessageStore) persistence(eventID string) {
 	}
 }
 
-// TODD
 func (h *handleMessageStore) handleBarrelEvent() {
 	for {
 		select {
@@ -270,12 +275,12 @@ func (h *handleMessageStore) handleBarrelEvent() {
 			}
 
 			h.log.Debug("Handle message store do event.", event)
-			if event[0] == "persistence" { //持久化命令
+			switch event[0] {
+			case "persistence": // 持久化事件
 				if len(event) == 2 {
-					h.persistence(event[1])
+					h.persistence(event[1]) // event[1] 为 eventID
 				}
-			}
-			if event[0] == "callback" { //回调
+			case "callback": // 回调事件，更新数据库中 event 的数据
 				if len(event) == 4 {
 					eventID := event[1]
 					status := event[2]
@@ -283,22 +288,20 @@ func (h *handleMessageStore) handleBarrelEvent() {
 					event, err := cdb.GetManager().ServiceEventDao().GetEventByEventID(eventID)
 					if err != nil {
 						logrus.Errorf("get event by event id %s failure %s", eventID, err.Error())
-
-					} else {
-						event.Status = status
-						if strings.Contains(event.FinalStatus, "empty") {
-							event.FinalStatus = model.EventFinalStatusEmptyComplete.String()
-						} else {
-							event.FinalStatus = "complete"
-						}
-						event.Message = message
-						event.EndTime = time.Now().Format(time.RFC3339)
-						logrus.Infof("updating event %s's status: %s", eventID, status)
-						if err := cdb.GetManager().ServiceEventDao().UpdateModel(event); err != nil {
-							logrus.Errorf("update event status failure %s", err.Error())
-						}
+						continue
 					}
-
+					event.Status = status
+					if strings.Contains(event.FinalStatus, model.EventFinalStatusEmpty.String()) {
+						event.FinalStatus = model.EventFinalStatusEmptyComplete.String()
+					} else {
+						event.FinalStatus = model.EventFinalStatusComplete.String()
+					}
+					event.Message = message
+					event.EndTime = time.Now().Format(time.RFC3339)
+					logrus.Infof("updating event %s's status: %s", eventID, status)
+					if err := cdb.GetManager().ServiceEventDao().UpdateModel(event); err != nil {
+						logrus.Errorf("update event status failure %s", err.Error())
+					}
 				}
 			}
 		case <-h.ctx.Done():

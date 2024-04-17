@@ -41,7 +41,7 @@ func NewGWServer() *GWServer {
 	return &GWServer{}
 }
 
-//Config contains all configuration
+// Config contains all configuration
 type Config struct {
 	K8SConfPath  string
 	EtcdEndpoint []string
@@ -98,7 +98,7 @@ func (g *GWServer) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&g.ListenPorts.HTTP, "service-http-port", 80, `Port to use for the http service rule`)
 	fs.IntVar(&g.ListenPorts.HTTPS, "service-https-port", 443, `Port to use for the https service rule`)
 	fs.IntVar(&g.WorkerProcesses, "worker-processes", 0, "Default get current compute cpu core number.This number should be, at maximum, the number of CPU cores on your system.")
-	fs.IntVar(&g.WorkerConnections, "worker-connections", 4000, "Determines how many clients will be served by each worker process.")
+	fs.IntVar(&g.WorkerConnections, "worker-connections", 10000, "Determines how many clients will be served by each worker process.")
 	fs.IntVar(&g.WorkerRlimitNofile, "worker-rlimit-nofile", 200000, "Number of file descriptors used for Nginx. This is set in the OS with 'ulimit -n 200000'")
 	fs.BoolVar(&g.EnableEpool, "enable-epool", true, "essential for linux, optmized to serve many clients with each thread")
 	fs.BoolVar(&g.EnableMultiAccept, "enable-multi-accept", true, "Accept as many connections as possible, after nginx gets notification about a new connection.")
@@ -138,7 +138,7 @@ func (g *GWServer) SetLog() {
 	logrus.SetLevel(level)
 }
 
-//CheckConfig check config
+// CheckConfig check config
 func (g *GWServer) CheckConfig() error {
 	if g.NodeName == "" {
 		g.NodeName, _ = os.Hostname()

@@ -1597,7 +1597,7 @@ func (a *appRuntimeStore) keepNodeShellPod(node string) error {
 	// 判断 pod 是否存在，不存在则创建
 	pod, err := a.listers.Pod.Pods(a.conf.WTNamespace).Get(podName)
 	if err == nil {
-		if pod.Status.Phase == corev1.PodRunning {
+		if pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodPending {
 			return nil
 		}
 

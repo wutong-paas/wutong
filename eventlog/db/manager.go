@@ -20,27 +20,27 @@ package db
 
 import (
 	"fmt"
-
-	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/eventlog/conf"
 )
 
 type Manager interface {
+	// SaveMessage 保存消息
 	SaveMessage([]*EventLogMessage) error
+	// Close 关闭
 	Close() error
+	// GetMessages 获取消息
 	GetMessages(id, level string, length int) (interface{}, error)
 }
 
-//NewManager 创建存储管理器
-func NewManager(conf conf.DBConf, log *logrus.Entry) (Manager, error) {
-	switch conf.Type {
+// NewManager 创建存储管理器
+func NewManager(plugin, storePath string) (Manager, error) {
+	switch plugin {
 	case "file":
 		return &filePlugin{
-			homePath: conf.HomePath,
+			homePath: storePath,
 		}, nil
 	case "eventfile":
 		return &EventFilePlugin{
-			HomePath: conf.HomePath,
+			HomePath: storePath,
 		}, nil
 	default:
 		return nil, fmt.Errorf("do not support plugin")

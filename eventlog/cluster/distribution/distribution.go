@@ -86,6 +86,7 @@ func (d *Distribution) Update(m db.MonitorData) {
 	if md, ok := d.monitorDatas[m.InstanceID]; ok {
 		md.LogSizePeerM = m.LogSizePeerM
 		md.ServiceSize = m.ServiceSize
+		// try delete abnormal node if exist
 		delete(d.abnormalNode, m.InstanceID)
 	} else {
 		d.monitorDatas[m.InstanceID] = &m
@@ -104,16 +105,16 @@ func (d *Distribution) checkHealth() {
 		}
 		d.lock.Lock()
 		for k, v := range d.updateTime {
-			if v.Add(time.Second * 10).Before(time.Now()) { //节点下线或者节点故障
+			if v.Add(time.Second * 10).Before(time.Now()) { // 如果是 10s 之前更新的节点，那么开始检查节点状态
 				status := d.discover.InstanceCheckHealth(k)
-				if status == "delete" {
+				if status == "delete" { // 如果节点状态是删除，那么删除节点
 					delete(d.monitorDatas, k)
 					delete(d.updateTime, k)
-					d.log.Warnf("instance (%s) health is delete.", k)
+					d.log.Errorf("instance (%s) health is delete.", k)
 				}
-				if status == "abnormal" {
+				if status == "abnormal" { // 如果是异常节点，那么标记为异常
 					d.abnormalNode[k] = 1
-					d.log.Warnf("instance (%s) health is abnormal.", k)
+					d.log.Errorf("instance (%s) health is abnormal.", k)
 				}
 			}
 		}

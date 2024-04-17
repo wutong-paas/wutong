@@ -263,7 +263,7 @@ func (n *NodeService) CordonNode(nodeID string, unschedulable bool) *utils.APIHa
 	if apierr != nil {
 		return apierr
 	}
-	if !hostNode.Role.HasRule(client.ComputeNode) {
+	if !hostNode.Role.HasRole(client.ComputeNode) {
 		return utils.CreateAPIHandleError(400, fmt.Errorf("this node can not support this api"))
 	}
 	k8snode := hostNode.NodeStatus.KubeNode
@@ -306,7 +306,7 @@ func (n *NodeService) PutNodeLabel(nodeID string, labels map[string]string) (map
 	for k, v := range labels {
 		hostNode.CustomLabels[k] = v
 	}
-	if hostNode.Role.HasRule(client.ComputeNode) && hostNode.NodeStatus.KubeNode != nil {
+	if hostNode.Role.HasRole(client.ComputeNode) && hostNode.NodeStatus.KubeNode != nil {
 		labels := hostNode.MergeLabels()
 		node, err := n.kubecli.UpdateLabels(nodeID, labels)
 		if err != nil {
@@ -332,7 +332,7 @@ func (n *NodeService) DeleteNodeLabel(nodeID string, labels map[string]string) (
 		}
 	}
 	hostNode.CustomLabels = newLabels
-	if hostNode.Role.HasRule(client.ComputeNode) && hostNode.NodeStatus.KubeNode != nil {
+	if hostNode.Role.HasRole(client.ComputeNode) && hostNode.NodeStatus.KubeNode != nil {
 		labels := hostNode.MergeLabels()
 		node, err := n.kubecli.UpdateLabels(nodeID, labels)
 		if err != nil {
@@ -351,7 +351,7 @@ func (n *NodeService) DownNode(nodeID string) (*client.HostNode, *utils.APIHandl
 		return nil, apierr
 	}
 	// add the node from k8s if type is compute
-	if hostNode.Role.HasRule(client.ComputeNode) && hostNode.NodeStatus.KubeNode != nil {
+	if hostNode.Role.HasRole(client.ComputeNode) && hostNode.NodeStatus.KubeNode != nil {
 		err := n.kubecli.DownK8sNode(hostNode.ID)
 		if err != nil {
 			logrus.Error("Failed to down node: ", err)
@@ -372,7 +372,7 @@ func (n *NodeService) UpNode(nodeID string) (*client.HostNode, *utils.APIHandleE
 	}
 	hostNode.Unschedulable = false
 	// add the node to k8s if type is compute
-	if hostNode.Role.HasRule(client.ComputeNode) {
+	if hostNode.Role.HasRole(client.ComputeNode) {
 		if k8snode, _ := n.kubecli.GetNode(hostNode.ID); k8snode == nil {
 			node, err := n.kubecli.UpK8sNode(hostNode)
 			if err != nil {
@@ -393,7 +393,7 @@ func (n *NodeService) GetNodeResource(nodeUID string) (*model.NodePodResource, *
 	if err != nil {
 		return nil, err
 	}
-	if !node.Role.HasRule("compute") {
+	if !node.Role.HasRole("compute") {
 		return nil, utils.CreateAPIHandleError(401, fmt.Errorf("node is not compute node"))
 	}
 	ps, error := n.kubecli.GetPodsByNodes(nodeUID)

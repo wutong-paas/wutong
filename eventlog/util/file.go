@@ -20,14 +20,14 @@ package util
 
 import "os"
 
-//AppendToFile 文件名字(带全路径)
+// AppendToFile 文件名字(带全路径)
 // content: 写入的内容
 func AppendToFile(fileName string, content string) error {
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
-	_, err = f.WriteString(content)
 	defer f.Close()
+	_, err = f.WriteString(content)
 	return err
 }

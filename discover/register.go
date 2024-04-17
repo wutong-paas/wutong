@@ -75,11 +75,7 @@ func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, serverName string, hos
 
 // Start 开始
 func (k *KeepAlive) Start() error {
-	// duration := time.Duration(k.TTL) * time.Second
-	// timer := time.NewTimer(duration)
-	// defer timer.Stop()
 	ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
 	etcdclient, err := etcdutil.NewClient(ctx, k.EtcdClentArgs)
 	if err != nil {
 		cancel()

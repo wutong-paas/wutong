@@ -18,7 +18,9 @@
 
 package db
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestFileSaveMessage(t *testing.T) {
 
@@ -60,8 +62,8 @@ func TestGetMessages(t *testing.T) {
 }
 
 func TestGetServiceAliasID(t *testing.T) {
-	should := "53e94ac00f234eb4"
-	got := GetServiceAliasID("3b63e4ac9de370bb423f62f5e2358c63")
+	should := "fd2b16501f00b10d"
+	got := GetServiceAliasID("265f906f94545829b7bb1546d4318d17")
 	if should != got {
 		t.Fatalf("should get %v, but get %v\n", should, got)
 	}

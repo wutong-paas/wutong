@@ -1,5 +1,5 @@
 FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-chaos-base:stable
-ARG RELEASE_DESC
+
 ARG TARGETARCH
 
 WORKDIR /run
@@ -8,5 +8,4 @@ COPY ${TARGETARCH}/ /run/
 COPY entrypoint.sh /run/entrypoint.sh
 COPY export-app /src/export-app
 
-ENV RELEASE_DESC=${RELEASE_DESC}
 ENTRYPOINT ["/run/entrypoint.sh"]

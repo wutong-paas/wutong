@@ -73,7 +73,7 @@ type Conf struct {
 	HostIP                          string
 	PodIP                           string
 	RunMode                         string //ACP_NODE 运行模式:master,node
-	NodeRule                        string //节点属性 compute manage storage
+	NodeRole                        string //节点属性 compute manage storage
 	Service                         string //服务注册与发现
 	InitStatus                      string
 	NodePath                        string   //Wutong node model basic information storage path in etcd
@@ -172,7 +172,8 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.GrpcAPIAddr, "grpc-api-addr", ":6101", "The node grpc api server listen address")
 	fs.StringVar(&a.K8SConfPath, "kube-conf", "", "absolute path to the kubeconfig file  ./kubeconfig")
 	fs.StringVar(&a.RunMode, "run-mode", "worker", "the acp_node run mode,could be 'worker' or 'master'")
-	fs.StringVar(&a.NodeRule, "noderule", "compute", "current node rule,maybe is `compute` `manage` `storage` ")
+	// noderole
+	fs.StringVar(&a.NodeRole, "noderule", "compute", "current node role,maybe is `compute` `manage` `storage` ")
 	fs.StringVar(&a.StatsdConfig.StatsdListenAddress, "statsd.listen-address", "", "The UDP address on which to receive statsd metric lines. DEPRECATED, use statsd.listen-udp instead.")
 	fs.StringVar(&a.StatsdConfig.StatsdListenUDP, "statsd.listen-udp", ":9125", "The UDP address on which to receive statsd metric lines. \"\" disables it.")
 	fs.StringVar(&a.StatsdConfig.StatsdListenTCP, "statsd.listen-tcp", ":9125", "The TCP address on which to receive statsd metric lines. \"\" disables it.")

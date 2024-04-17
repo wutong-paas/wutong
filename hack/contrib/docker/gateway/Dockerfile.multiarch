@@ -1,5 +1,5 @@
 FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-gateway-base:stable
-ARG RELEASE_DESC
+
 ARG TARGETARCH
 
 WORKDIR /run
@@ -11,12 +11,12 @@ COPY nginxtmp /run/nginxtmp
 COPY entrypoint.sh /run/entrypoint.sh
 
 RUN if [ $(uname -m) = "aarch64" ]; then \
-        wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
+    wget https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/arm/librestychash.so -O /run/nginx/lua/vendor/so/librestychash.so; \
     fi
 
 ENV NGINX_CONFIG_TMPL=/run/nginxtmp
 ENV NGINX_CUSTOM_CONFIG=/run/nginx/conf
-ENV RELEASE_DESC=${RELEASE_DESC}
+
 ENV OPENRESTY_HOME=/usr/local/openresty
 ENV PATH="${PATH}:${OPENRESTY_HOME}/nginx/sbin"
 EXPOSE 8080

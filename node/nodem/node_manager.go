@@ -36,7 +36,6 @@ import (
 	"github.com/wutong-paas/wutong/node/nodem/gc"
 	"github.com/wutong-paas/wutong/node/nodem/healthy"
 	"github.com/wutong-paas/wutong/node/nodem/info"
-	"github.com/wutong-paas/wutong/node/nodem/monitor"
 	"github.com/wutong-paas/wutong/node/nodem/service"
 	"github.com/wutong-paas/wutong/util"
 )
@@ -48,12 +47,12 @@ type NodeManager struct {
 	currentNode *client.HostNode
 	ctx         context.Context
 	cluster     client.ClusterClient
-	monitor     monitor.Manager
-	healthy     healthy.Manager
-	controller  controller.Manager
-	cfg         *option.Conf
-	apim        *api.Manager
-	clm         *logger.ContainerLogManage
+	// monitor     monitor.Manager
+	healthy    healthy.Manager
+	controller controller.Manager
+	cfg        *option.Conf
+	apim       *api.Manager
+	clm        *logger.ContainerLogManage
 
 	imageGCManager gc.ImageGCManager
 }
@@ -62,15 +61,12 @@ type NodeManager struct {
 func NewNodeManager(ctx context.Context, conf *option.Conf) (*NodeManager, error) {
 	healthyManager := healthy.CreateManager()
 	cluster := client.NewClusterClient(conf)
-	monitor, err := monitor.CreateManager(ctx, conf)
-	if err != nil {
-		return nil, err
-	}
+	// monitor, err := monitor.CreateManager(ctx, conf)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	clm := logger.CreatContainerLogManage(conf)
 	controller := controller.NewManagerService(conf, healthyManager, cluster)
-	if err != nil {
-		return nil, fmt.Errorf("Get host id error:%s", err.Error())
-	}
 
 	imageGCPolicy := gc.ImageGCPolicy{
 		MinAge:               conf.ImageMinimumGCAge,
@@ -86,10 +82,10 @@ func NewNodeManager(ctx context.Context, conf *option.Conf) (*NodeManager, error
 	}
 
 	nodem := &NodeManager{
-		cfg:            conf,
-		ctx:            ctx,
-		cluster:        cluster,
-		monitor:        monitor,
+		cfg:     conf,
+		ctx:     ctx,
+		cluster: cluster,
+		// monitor:        monitor,
 		healthy:        healthyManager,
 		controller:     controller,
 		clm:            clm,
@@ -102,8 +98,8 @@ func NewNodeManager(ctx context.Context, conf *option.Conf) (*NodeManager, error
 // AddAPIManager AddApiManager
 func (n *NodeManager) AddAPIManager(apim *api.Manager) error {
 	n.apim = apim
-	n.controller.SetAPIRoute(apim)
-	return n.monitor.SetAPIRoute(apim)
+	return n.controller.SetAPIRoute(apim)
+	// return n.monitor.SetAPIRoute(apim)
 }
 
 // InitStart init start is first start module.
@@ -136,7 +132,7 @@ func (n *NodeManager) Start(errchan chan error) error {
 	if err := n.controller.Online(); err != nil {
 		return err
 	}
-	if n.currentNode.Role.HasRule(client.ComputeNode) && n.cfg.EnableCollectLog {
+	if n.currentNode.Role.HasRole(client.ComputeNode) && n.cfg.EnableCollectLog {
 		logrus.Infof("this node is %s node and enable collect conatiner log", n.currentNode.Role)
 		if err := n.clm.Start(); err != nil {
 			return err
@@ -148,13 +144,13 @@ func (n *NodeManager) Start(errchan chan error) error {
 	//TODO: imageGCManager with containerd
 	if n.cfg.EnableImageGC && n.cfg.ContainerRuntime == "docker" {
 		logrus.Info("Start the image garbage collection mechanism")
-		if n.currentNode.Role.HasRule(client.ManageNode) && !n.currentNode.Role.HasRule(client.ComputeNode) {
+		if n.currentNode.Role.HasRole(client.ManageNode) && !n.currentNode.Role.HasRole(client.ComputeNode) {
 			n.imageGCManager.SetServiceImages(n.controller.ListServiceImages())
 			go n.imageGCManager.Start()
 		}
 	}
 
-	go n.monitor.Start(errchan)
+	// go n.monitor.Start(errchan)
 	go n.heartbeat()
 	return nil
 }
@@ -162,16 +158,14 @@ func (n *NodeManager) Start(errchan chan error) error {
 // Stop Stop
 func (n *NodeManager) Stop() {
 	n.cluster.DownNode(n.currentNode)
-	// if n.controller != nil {
 	n.controller.Stop()
+	// if n.monitor != nil {
+	// 	n.monitor.Stop()
 	// }
-	if n.monitor != nil {
-		n.monitor.Stop()
-	}
 	if n.healthy != nil {
 		n.healthy.Stop()
 	}
-	if n.clm != nil && n.currentNode.Role.HasRule(client.ComputeNode) && n.cfg.EnableCollectLog {
+	if n.clm != nil && n.currentNode.Role.HasRole(client.ComputeNode) && n.cfg.EnableCollectLog {
 		n.clm.Stop()
 	}
 }
@@ -288,9 +282,9 @@ func (n *NodeManager) init() error {
 	//update node mode
 	node.Mode = n.cfg.RunMode
 	//update node rule
-	node.Role = strings.Split(n.cfg.NodeRule, ",")
+	node.Role = strings.Split(n.cfg.NodeRole, ",")
 	//update system info
-	if !node.Role.HasRule("compute") {
+	if !node.Role.HasRole("compute") {
 		node.NodeStatus.NodeInfo = info.GetSystemInfo()
 	}
 	//set node labels
@@ -386,6 +380,6 @@ func (n *NodeManager) UpdateConfig() error {
 }
 
 // GetMonitorManager get monitor manager
-func (n *NodeManager) GetMonitorManager() monitor.Manager {
-	return n.monitor
-}
+// func (n *NodeManager) GetMonitorManager() monitor.Manager {
+// 	return n.monitor
+// }

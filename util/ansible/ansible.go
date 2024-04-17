@@ -34,7 +34,7 @@ type Host struct {
 	//ssh port
 	AnsibleHostPort          int
 	HostID                   string
-	Role                     client.HostRule
+	Role                     client.HostRole
 	CreateTime               time.Time
 	AnsibleSSHPrivateKeyFile string
 }
@@ -105,14 +105,14 @@ func GetAnsibleHostConfig(name string) *HostConfig {
 	return &HostConfig{
 		FileName: name,
 		GroupList: map[string]*HostGroup{
-			"all":         &HostGroup{Name: "all"},
-			"manage":      &HostGroup{Name: "manage"},
-			"new-manage":  &HostGroup{Name: "new-manage"},
-			"gateway":     &HostGroup{Name: "gateway"},
-			"new-gateway": &HostGroup{Name: "new-gateway"},
-			"compute":     &HostGroup{Name: "compute"},
-			"new-compute": &HostGroup{Name: "new-compute"},
-			"etcd":        &HostGroup{Name: "etcd"},
+			"all":         {Name: "all"},
+			"manage":      {Name: "manage"},
+			"new-manage":  {Name: "new-manage"},
+			"gateway":     {Name: "gateway"},
+			"new-gateway": {Name: "new-gateway"},
+			"compute":     {Name: "compute"},
+			"new-compute": {Name: "new-compute"},
+			"etcd":        {Name: "etcd"},
 		},
 	}
 }
@@ -194,7 +194,7 @@ func (c *HostConfig) AddHost(h *client.HostNode, installConfPath string) {
 	checkNeedInstall := func(h *client.HostNode) bool {
 		return h.Status == client.NotInstalled || h.Status == client.InstallFailed || h.Status == client.Installing
 	}
-	if h.Role.HasRule("manage") {
+	if h.Role.HasRole("manage") {
 		if checkNeedInstall(h) {
 			c.GroupList["new-manage"].AddHost(ansibleHost)
 		} else {
@@ -204,14 +204,14 @@ func (c *HostConfig) AddHost(h *client.HostNode, installConfPath string) {
 			c.GroupList["etcd"].AddHost(ansibleHost)
 		}
 	}
-	if h.Role.HasRule("compute") {
+	if h.Role.HasRole("compute") {
 		if checkNeedInstall(h) {
 			c.GroupList["new-compute"].AddHost(ansibleHost)
 		} else {
 			c.GroupList["compute"].AddHost(ansibleHost)
 		}
 	}
-	if h.Role.HasRule("gateway") {
+	if h.Role.HasRole("gateway") {
 		if checkNeedInstall(h) {
 			c.GroupList["new-gateway"].AddHost(ansibleHost)
 		} else {

@@ -175,7 +175,7 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *ReadConfig, r
 			klog.V(2).InfoS("Finished parsing log file", "path", path)
 			return nil
 		}
-		l, err := r.ReadBytes(eol[0])
+		l, err := r.ReadBytes(eol[0]) // read until the first '\n'
 		if err != nil {
 			if err != io.EOF { // This is an real error
 				return fmt.Errorf("failed to read log file %q: %v", path, err)
@@ -251,9 +251,9 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *ReadConfig, r
 			klog.ErrorS(err, "Failed when parsing line in log file", "path", path, "line", l)
 			continue
 		}
+
 		msgTemporary := *msg
-		watch.Msg <- &msgTemporary
-		watch.Msg <- msg
+		watch.Msg <- &msgTemporary // 因为 msg 是一个指针，所以这里需要拷贝一份，要不然可能会指向同一个地址
 		if limitedMode {
 			limitedNum--
 		}

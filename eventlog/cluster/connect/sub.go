@@ -61,7 +61,7 @@ type SubClient struct {
 	quit    chan interface{}
 }
 
-//NewSub 创建zmq sub客户端
+// NewSub 创建zmq sub客户端
 func NewSub(conf conf.PubSubConf, log *logrus.Entry, storeManager store.Manager, discover dis.Manager, distribution *distribution.Distribution) *Sub {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Sub{
@@ -79,7 +79,7 @@ func NewSub(conf conf.PubSubConf, log *logrus.Entry, storeManager store.Manager,
 	}
 }
 
-//Run 执行
+// Run 执行
 func (s *Sub) Run() error {
 	go s.instanceListen()
 	go s.checkHealth()
@@ -87,7 +87,7 @@ func (s *Sub) Run() error {
 	return nil
 }
 
-//Stop 停止
+// Stop 停止
 func (s *Sub) Stop() {
 	s.cancel()
 	s.subLock.Lock()
@@ -99,12 +99,13 @@ func (s *Sub) Stop() {
 }
 
 func (s *Sub) checkHealth() {
-	tike := time.Tick(time.Minute * 2)
+	ticker := time.NewTicker(time.Minute * 2)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-s.context.Done():
 			return
-		case <-tike:
+		case <-ticker.C:
 		}
 		var unHealth []string
 		s.mapLock.Lock()
@@ -122,7 +123,6 @@ func (s *Sub) checkHealth() {
 		} else {
 			s.log.Info("sub manager check listen client health: UnHealth instances:", unHealth)
 		}
-
 	}
 }
 func (s *Sub) instanceListen() {
@@ -193,7 +193,7 @@ func (s *Sub) listen(ins *dis.Instance) {
 		}
 		reactor := zmq4.NewReactor()
 		reactor.AddSocket(sock, zmq4.POLLIN, socketHandler)
-		reactor.AddChannel(chQuit, 0, quitHandler)
+		reactor.AddChannel(chQuit, 0, quitHandler) // Goroutines increase
 		err := reactor.Run(s.conf.PollingTimeout)
 		chErr <- err
 	}

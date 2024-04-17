@@ -5,35 +5,19 @@ set -o errexit
 REGISTRY=${REGISTRY:-'swr.cn-southwest-2.myhuaweicloud.com/wutong'}
 VERSION=${VERSION:-'latest'}
 WORK_DIR=/go/src/github.com/wutong-paas/wutong
-BASE_NAME=wutong
 
 GO_VERSION=1.21
 
 GOPROXY=${GOPROXY:-'https://goproxy.io'}
 
-if [ "$DISABLE_GOPROXY" == "true" ]; then
-	GOPROXY=
-fi
-if [ "$DEBUG" ]; then
-	set -x
-fi
-BRANCH=$(git symbolic-ref HEAD 2>/dev/null | cut -d"/" -f 3)
-if [ -z "$VERSION" ]; then
-	VERSION=$BRANCH-dev
-fi
-
-buildTime=$(date +%F-%H)
-git_commit=$(git log -n 1 --pretty --format=%h)
-
-# release_desc=${VERSION}-${git_commit}-${buildTime}
 build_items=(api chaos gateway monitor mq webcli worker eventlog init-probe mesh-data-panel wtctl node resource-proxy)
 
 build::binary() {
 	echo "---> build binary:$1"
 	home=$(pwd)
 	local go_mod_cache="${home}/.cache"
-	local AMD64_OUTPATH="./_output/binary/linux/amd64/${BASE_NAME}-$1"
-	local ARM64_OUTPATH="./_output/binary/linux/arm64/${BASE_NAME}-$1"
+	local AMD64_OUTPATH="./_output/binary/linux/amd64/wutong-$1"
+	local ARM64_OUTPATH="./_output/binary/linux/arm64/wutong-$1"
 	local DOCKER_PATH="./hack/contrib/docker/$1"
 	local build_image="golang:${GO_VERSION}"
 	local build_args="-w -s -X github.com/wutong-paas/wutong/cmd.version=${VERSION}"
@@ -58,8 +42,8 @@ build::binary() {
 
 build::image() {
 	local build_binary_dir="./_output/binary/linux"
-	local AMD64_OUTPATH="${build_binary_dir}/amd64/${BASE_NAME}-$1"
-	local ARM64_OUTPATH="${build_binary_dir}/arm64/${BASE_NAME}-$1"
+	local AMD64_OUTPATH="${build_binary_dir}/amd64/wutong-$1"
+	local ARM64_OUTPATH="${build_binary_dir}/arm64/wutong-$1"
 	local build_image_dir="./_output/image/$1/"
 	local source_dir="./hack/contrib/docker/$1"
 	local DOCKERFILE_BASE="Dockerfile.multiarch"
@@ -76,7 +60,7 @@ build::image() {
 	pushd "${build_image_dir}"
 	echo "---> build image:$1"
     docker buildx use swrbuilder || docker buildx create --use --name swrbuilder --driver docker-container --driver-opt image=swr.cn-southwest-2.myhuaweicloud.com/wutong/buildkit:stable
-	docker buildx build --platform linux/amd64,linux/arm64 --push --build-arg RELEASE_DESC="${release_desc}" -t ${REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
+	docker buildx build --platform linux/amd64,linux/arm64 --push -t ${REGISTRY}/wt-$1:${VERSION} -f "${DOCKERFILE_BASE}" .
 	# docker buildx rm swrbuilder
 	popd
 	rm -rf "${build_image_dir}"

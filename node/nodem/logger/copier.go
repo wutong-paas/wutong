@@ -66,9 +66,9 @@ func (c *Copier) Run() {
 
 func (c *Copier) copySrc() {
 	defer c.reader.ConsumerGone()
-lool:
+loop:
 	for {
-		select {
+		select { // memory leak here
 		case <-c.closed:
 			return
 		case err := <-c.reader.Err:
@@ -80,7 +80,7 @@ lool:
 			continue
 		case msg, ok := <-c.reader.Msg:
 			if !ok {
-				break lool
+				break loop
 			}
 			for _, d := range c.dst {
 				if err := d.Log(msg); err != nil {

@@ -18,7 +18,7 @@
 
 package db
 
-//EventLogMessage 事件日志实体
+// EventLogMessage 事件日志实体
 type EventLogMessage struct {
 	EventID string `json:"event_id"`
 	Step    string `json:"step"`
@@ -28,7 +28,8 @@ type EventLogMessage struct {
 	Time    string `json:"time"`
 	Content []byte `json:"-"`
 	//monitor消息使用
-	MonitorData []byte `json:"monitorData,omitempty"`
+	MonitorData  []byte `json:"monitorData,omitempty"`
+	TimeUnixNano int64  `json:"timeUnixNano,omitempty"`
 }
 
 type MonitorData struct {

@@ -37,22 +37,23 @@ var (
 	ErrConnClosing   = errors.New("use of closed network connection")
 	ErrWriteBlocking = errors.New("write packet was blocking")
 	ErrReadBlocking  = errors.New("read packet was blocking")
+
+	readPeriod        = time.Second * 15
+	connLingerSeconds = 10
 )
 
 // Conn exposes a set of callbacks for the various events that occur on a connection
 type Conn struct {
-	srv               *Server
-	conn              *net.TCPConn  // the raw connection
-	extraData         interface{}   // to save extra data
-	closeOnce         sync.Once     // close the conn, once, per instance
-	closeFlag         int32         // close flag
-	closeChan         chan struct{} // close chanel
-	packetSendChan    chan Packet   // packet send chanel
-	packetReceiveChan chan Packet   // packeet receive chanel
-	buffer            *Buffer
-	ctx               context.Context
-	pro               Protocol
-	timer             *time.Timer
+	srv       *Server
+	conn      *net.TCPConn  // the raw connection
+	extraData interface{}   // to save extra data
+	closeOnce sync.Once     // close the conn, once, per instance
+	closeFlag int32         // close flag
+	closeChan chan struct{} // close chanel
+	// packetReceiveChan chan Packet   // packeet receive chanel
+	ctx   context.Context
+	pro   Protocol
+	timer *time.Timer
 }
 
 // ConnCallback is an interface of methods that are used as callbacks on a connection
@@ -73,16 +74,14 @@ type ConnCallback interface {
 func newConn(conn *net.TCPConn, srv *Server, ctx context.Context) *Conn {
 	p := &MessageProtocol{}
 	p.SetConn(conn)
-	conn.SetLinger(3)
+	conn.SetLinger(connLingerSeconds)
 	conn.SetReadBuffer(1024 * 1024 * 24)
 	return &Conn{
-		ctx:               ctx,
-		srv:               srv,
-		conn:              conn,
-		closeChan:         make(chan struct{}),
-		packetSendChan:    make(chan Packet, srv.config.PacketSendChanLimit),
-		packetReceiveChan: make(chan Packet, srv.config.PacketReceiveChanLimit),
-		pro:               p,
+		ctx:       ctx,
+		srv:       srv,
+		conn:      conn,
+		closeChan: make(chan struct{}),
+		pro:       p,
 	}
 }
 
@@ -106,8 +105,6 @@ func (c *Conn) Close() {
 	c.closeOnce.Do(func() {
 		atomic.StoreInt32(&c.closeFlag, 1)
 		close(c.closeChan)
-		close(c.packetSendChan)
-		close(c.packetReceiveChan)
 		c.conn.Close()
 		c.srv.callback.OnClose(c)
 	})
@@ -118,51 +115,14 @@ func (c *Conn) IsClosed() bool {
 	return atomic.LoadInt32(&c.closeFlag) == 1
 }
 
-// AsyncWritePacket async writes a packet, this method will never block
-func (c *Conn) AsyncWritePacket(p Packet, timeout time.Duration) (err error) {
-	if c.IsClosed() {
-		return ErrConnClosing
-	}
-
-	defer func() {
-		if e := recover(); e != nil {
-			err = ErrConnClosing
-		}
-	}()
-
-	if timeout == 0 {
-		select {
-		case c.packetSendChan <- p:
-			return nil
-
-		default:
-			return ErrWriteBlocking
-		}
-
-	} else {
-		timeoutC := time.After(timeout)
-		select {
-		case c.packetSendChan <- p:
-			return nil
-
-		case <-c.closeChan:
-			return ErrConnClosing
-
-		case <-timeoutC:
-			return ErrWriteBlocking
-		}
-	}
-}
-
 // Do it
 func (c *Conn) Do() {
 	if !c.srv.callback.OnConnect(c) {
 		return
 	}
-	asyncDo(c.readLoop, c.srv.waitGroup)
-}
 
-var timeOut = time.Second * 15
+	go c.readLoop()
+}
 
 func (c *Conn) readLoop() {
 	defer func() {
@@ -171,10 +131,10 @@ func (c *Conn) readLoop() {
 		}
 		c.Close()
 	}()
-	//15秒未接受到消息或ping,则关闭连接
-	c.timer = time.NewTimer(timeOut)
+	// 15 秒未接受到消息或 ping，则关闭连接
+	c.timer = time.NewTimer(readPeriod)
 	defer c.timer.Stop()
-	asyncDo(c.readPing, c.srv.waitGroup)
+	go c.readPing()
 	for {
 		select {
 		case <-c.srv.exitChan:
@@ -185,6 +145,7 @@ func (c *Conn) readLoop() {
 			return
 		default:
 		}
+
 		p, err := c.pro.ReadPacket()
 		if err == io.EOF {
 			return
@@ -200,7 +161,8 @@ func (c *Conn) readLoop() {
 		}
 		if err != nil {
 			if strings.HasSuffix(err.Error(), "use of closed network connection") {
-				logrus.Error("use of closed network connection")
+				// wt-node 组件 streamlog 写关闭或者重连时，会关闭连接，这里不需要打印错误日志
+				// logrus.Error("use of closed network connection")
 				return
 			}
 			logrus.Error("read package error:", err.Error())
@@ -210,16 +172,17 @@ func (c *Conn) readLoop() {
 			return
 		}
 		if p.IsPing() {
-			if ok := c.timer.Reset(timeOut); !ok {
-				c.timer = time.NewTimer(timeOut)
+			if ok := c.timer.Reset(readPeriod); !ok {
+				c.timer = time.NewTimer(readPeriod)
 			}
 			continue
 		}
 		if ok := c.srv.callback.OnMessage(p); !ok {
 			continue
 		}
-		if ok := c.timer.Reset(timeOut); !ok {
-			c.timer = time.NewTimer(timeOut)
+
+		if ok := c.timer.Reset(readPeriod); !ok {
+			c.timer = time.NewTimer(readPeriod)
 		}
 	}
 }
@@ -234,18 +197,9 @@ func (c *Conn) readPing() {
 		case <-c.closeChan:
 			return
 		case <-c.timer.C:
-			logrus.Debug("can not receive message more than 15s.close the con")
+			logrus.Debug("can not receive message more than 15s. close the con")
 			c.conn.Close()
 			return
-
 		}
 	}
-}
-
-func asyncDo(fn func(), wg *sync.WaitGroup) {
-	//wg.Add(1)
-	go func() {
-		fn()
-		//wg.Done()
-	}()
 }

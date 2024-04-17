@@ -109,24 +109,24 @@ func init() {
 
 // StreamLog 消息流log
 type StreamLog struct {
-	writer      *Client
-	serviceID   string
-	tenantEnvID string
-	containerID string
-	// errorQueue                     [][]byte
+	writer        *Client
+	serviceID     string
+	tenantEnvID   string
+	containerID   string
 	reConnecting  chan bool
 	serverAddress string
 	ctx           context.Context
 	cancel        context.CancelFunc
-	cacheSize     int
 	cacheQueue    chan string
-	// lock                           sync.Mutex
-	config                         map[string]string
+	// config                         map[string]string
+	streamServer                   string
 	intervalSendMicrosecondTime    int64
 	minIntervalSendMicrosecondTime int64
 	closedChan                     chan struct{}
 	once                           sync.Once
 }
+
+const cacheQueueCap = 2000 // 20000 is too large, adjust to 2000
 
 // New new logger
 func New(ctx logger.Info) (logger.Logger, error) {
@@ -166,23 +166,25 @@ func New(ctx logger.Info) (logger.Logger, error) {
 		return nil, err
 	}
 
-	cacheSize, err := strconv.Atoi(ctx.Config["cache-log-size"])
-	if err != nil {
-		cacheSize = 1024
-	}
+	// cacheSize, err := strconv.Atoi(ctx.Config["cache-log-size"])
+	// if err != nil {
+	// 	// cacheSize = 1024
+	// 	cacheSize = 20000
+	// }
 	currentCtx, cancel := context.WithCancel(context.Background())
 	logger := &StreamLog{
-		writer:                         writer,
-		serviceID:                      serviceID,
-		tenantEnvID:                    tenantEnvID,
-		containerID:                    ctx.ContainerID,
-		ctx:                            currentCtx,
-		cancel:                         cancel,
-		cacheSize:                      cacheSize,
-		config:                         ctx.Config,
+		writer:      writer,
+		serviceID:   serviceID,
+		tenantEnvID: tenantEnvID,
+		containerID: ctx.ContainerID,
+		ctx:         currentCtx,
+		cancel:      cancel,
+		// cacheSize:                      cacheSize,
+		// config:                         ctx.Config,
+		streamServer:                   ctx.Config["stream-server"],
 		serverAddress:                  address,
 		reConnecting:                   make(chan bool, 1),
-		cacheQueue:                     make(chan string, 20000),
+		cacheQueue:                     make(chan string, cacheQueueCap),
 		intervalSendMicrosecondTime:    1000 * 10,
 		minIntervalSendMicrosecondTime: 1000,
 		closedChan:                     make(chan struct{}),
@@ -222,17 +224,24 @@ func ValidateLogOpt(cfg map[string]string) error {
 }
 
 func (s *StreamLog) cache(msg string) {
-	select {
-	case s.cacheQueue <- msg:
-	default:
+	defer func() {
+		recover()
+	}()
+	if len(s.cacheQueue) < cacheQueueCap {
+		s.cacheQueue <- msg
+	} else {
+		// channel is full，retry after 1 second
+		time.Sleep(time.Second)
+		// retry
+		s.cache(msg)
 	}
 }
 
 func (s *StreamLog) send() {
-	tike := time.NewTimer(time.Second * 3)
-	defer tike.Stop()
+	ticker := time.NewTimer(time.Second * 3)
+	defer ticker.Stop()
 	for {
-		select {
+		select { // memory leak here
 		case msg := <-s.cacheQueue:
 			if msg != "" && msg != "\n" {
 				s.sendMsg(msg)
@@ -240,20 +249,21 @@ func (s *StreamLog) send() {
 		case <-s.ctx.Done():
 			close(s.closedChan)
 			return
-		case <-tike.C:
+		case <-ticker.C:
 			s.ping()
 		}
 	}
 }
+
 func (s *StreamLog) sendMsg(msg string) {
 	if !s.writer.IsClosed() {
 		err := s.writer.Write(msg)
 		if err != nil {
 			logrus.Debug("send log message to stream server error.", err.Error())
 			s.cache(msg)
-			// if len(s.reConnecting) < 1 {
-			// 	s.reConect()
-			// }
+			if len(s.reConnecting) < 1 {
+				s.reConect()
+			}
 		} else {
 			if s.intervalSendMicrosecondTime > s.minIntervalSendMicrosecondTime {
 				s.intervalSendMicrosecondTime -= 100
@@ -280,27 +290,23 @@ func (s *StreamLog) Log(msg *logger.Message) error {
 		}
 	}()
 	buf := bytes.NewBuffer(nil)
-	buf.WriteString(s.containerID[0:12] + ",")
-	buf.WriteString(s.serviceID)
-	buf.Write(msg.Line)
+	// v1
+	{
+		// buf.WriteString(s.containerID[0:12] + ",")
+		// buf.WriteString(s.serviceID)
+		// buf.Write(msg.Line)
+	}
+	// v2: write timestamp
+	{
+		buf.WriteString(fmt.Sprintf("v2:%d,", msg.Timestamp.UnixNano()))
+		buf.WriteString(s.containerID[0:12] + ",")
+		buf.WriteString(s.serviceID)
+		buf.Write(msg.Line)
+	}
+
 	s.cache(buf.String())
 	return nil
 }
-
-// func isConnectionClosed(err error) bool {
-// 	if err == errClosed || err == errNoConnect {
-// 		return true
-// 	}
-// 	if strings.HasSuffix(err.Error(), "i/o timeout") {
-// 		return true
-// 	}
-// 	errMsg := err.Error()
-// 	ok := strings.HasSuffix(errMsg, "connection refused") || strings.HasSuffix(errMsg, "use of closed network connection")
-// 	if !ok {
-// 		return strings.HasSuffix(errMsg, "broken pipe") || strings.HasSuffix(errMsg, "connection reset by peer")
-// 	}
-// 	return ok
-// }
 
 func (s *StreamLog) reConect() {
 	s.reConnecting <- true
@@ -309,45 +315,43 @@ func (s *StreamLog) reConect() {
 		s.intervalSendMicrosecondTime = 1000 * 10
 	}()
 
-	// ticker := time.NewTicker(time.Second * 5)
-	// defer ticker.Stop()
-	// for {
-
-	logrus.Info("StreamLog.reConect: start reconnect stream log server.")
-	//step1 try reconnect current address
-	if s.writer != nil {
-		err := s.writer.ReConnect()
-		if err == nil {
-			return
+	ticker := time.NewTicker(time.Second * 5)
+	defer ticker.Stop()
+	for {
+		logrus.Info("StreamLog.reConect: start reconnect stream log server.")
+		//step1 try reconnect current address
+		if s.writer != nil {
+			err := s.writer.ReConnect()
+			if err == nil {
+				return
+			}
 		}
-	}
-	//step2 get new server address and reconnect
-	server := getTCPConnConfig(s.serviceID, s.config["stream-server"])
-	if server == s.writer.server {
-		logrus.Warningf("stream log server address(%s) not change ,will reconnect", server)
-		err := s.writer.ReConnect()
-		if err != nil {
-			logrus.Error("stream log server connect error." + err.Error())
+		//step2 get new server address and reconnect
+		server := getTCPConnConfig(s.serviceID, s.streamServer)
+		if server == s.writer.server {
+			logrus.Warningf("stream log server address(%s) not change ,will reconnect", server)
+			err := s.writer.ReConnect()
+			if err != nil {
+				logrus.Error("stream log server connect error." + err.Error())
+			} else {
+				return
+			}
 		} else {
+			err := s.writer.ChangeAddress(server)
+			if err != nil {
+				logrus.Errorf("stream log server connect %s error. %v", server, err.Error())
+			} else {
+				s.serverAddress = server
+				return
+			}
+		}
+		select {
+		case <-ticker.C:
+		case <-s.ctx.Done():
 			return
 		}
-	} else {
-		err := s.writer.ChangeAddress(server)
-		if err != nil {
-			logrus.Errorf("stream log server connect %s error. %v", server, err.Error())
-		} else {
-			s.serverAddress = server
-			return
-		}
+
 	}
-
-	// select {
-	// case <-ticker.C:
-	// case <-s.ctx.Done():
-	// 	return
-	// }
-
-	// }
 }
 
 // Close 关闭
@@ -403,66 +407,3 @@ func getLogAddress(clusterAddress []string) string {
 	logrus.Warning("no cluster is running. return default address")
 	return defaultAddress
 }
-
-// func ffjsonWriteJSONBytesAsString(buf *bytes.Buffer, s []byte) {
-// 	const hex = "0123456789abcdef"
-
-// 	buf.WriteByte('"')
-// 	start := 0
-// 	for i := 0; i < len(s); {
-// 		if b := s[i]; b < utf8.RuneSelf {
-// 			if 0x20 <= b && b != '\\' && b != '"' && b != '<' && b != '>' && b != '&' {
-// 				i++
-// 				continue
-// 			}
-// 			if start < i {
-// 				buf.Write(s[start:i])
-// 			}
-// 			switch b {
-// 			case '\\', '"':
-// 				buf.WriteByte('\\')
-// 				buf.WriteByte(b)
-// 			case '\n':
-// 				buf.WriteByte('\\')
-// 				buf.WriteByte('n')
-// 			case '\r':
-// 				buf.WriteByte('\\')
-// 				buf.WriteByte('r')
-// 			default:
-
-// 				buf.WriteString(`\u00`)
-// 				buf.WriteByte(hex[b>>4])
-// 				buf.WriteByte(hex[b&0xF])
-// 			}
-// 			i++
-// 			start = i
-// 			continue
-// 		}
-// 		c, size := utf8.DecodeRune(s[i:])
-// 		if c == utf8.RuneError && size == 1 {
-// 			if start < i {
-// 				buf.Write(s[start:i])
-// 			}
-// 			buf.WriteString(`\ufffd`)
-// 			i += size
-// 			start = i
-// 			continue
-// 		}
-
-// 		if c == '\u2028' || c == '\u2029' {
-// 			if start < i {
-// 				buf.Write(s[start:i])
-// 			}
-// 			buf.WriteString(`\u202`)
-// 			buf.WriteByte(hex[c&0xF])
-// 			i += size
-// 			start = i
-// 			continue
-// 		}
-// 		i += size
-// 	}
-// 	if start < len(s) {
-// 		buf.Write(s[start:])
-// 	}
-// 	buf.WriteByte('"')
-// }

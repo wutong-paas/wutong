@@ -29,13 +29,13 @@ import (
 	"golang.org/x/net/context"
 )
 
-//MessageStore store
+// MessageStore store
 type MessageStore interface {
 	InsertMessage(*db.EventLogMessage)
 	InsertGarbageMessage(...*db.EventLogMessage)
 	GetHistoryMessage(eventID string, length int) []string
 	SubChan(eventID, subID string) chan *db.EventLogMessage
-	RealseSubChan(eventID, subID string)
+	ReleaseSubChan(eventID, subID string)
 	GetMonitorData() *db.MonitorData
 	Run()
 	Gc()
@@ -43,10 +43,11 @@ type MessageStore interface {
 	Scrape(ch chan<- prometheus.Metric, namespace, exporter, from string) error
 }
 
-//NewStore 创建
+// NewStore 创建
 func NewStore(storeType string, manager *storeManager) MessageStore {
 	ctx, cancel := context.WithCancel(context.Background())
-	if storeType == "handle" {
+	switch storeType {
+	case "handle":
 		handle := &handleMessageStore{
 			barrels:   make(map[string]*EventBarrel, 100),
 			conf:      manager.conf,
@@ -57,14 +58,14 @@ func NewStore(storeType string, manager *storeManager) MessageStore {
 			//TODO:
 			//此通道过小会阻塞接收消息的插入，造成死锁
 			//更改持久化事件为无阻塞插入
-			barrelEvent:         make(chan []string, 100),
-			dbPlugin:            manager.dbPlugin,
-			handleEventCoreSize: 2,
-			stopGarbage:         make(chan struct{}),
-			manager:             manager,
+			barrelEvent:           make(chan []string, 100),
+			eventfilePlugin:       manager.eventfilePlugin,
+			handleEventGoroutines: 2,
+			stopGarbage:           make(chan struct{}),
+			manager:               manager,
 		}
 		handle.pool = &sync.Pool{
-			New: func() interface{} {
+			New: func() any {
 				barrel := &EventBarrel{
 					barrel:            make([]*db.EventLogMessage, 0),
 					persistenceBarrel: make([]*db.EventLogMessage, 0),
@@ -75,13 +76,8 @@ func NewStore(storeType string, manager *storeManager) MessageStore {
 				return barrel
 			},
 		}
-		go handle.handleGarbageMessage()
-		for i := 0; i < handle.handleEventCoreSize; i++ {
-			go handle.handleBarrelEvent()
-		}
 		return handle
-	}
-	if storeType == "read" {
+	case "read":
 		read := &readMessageStore{
 			barrels: make(map[string]*readEventBarrel, 100),
 			conf:    manager.conf,
@@ -98,8 +94,7 @@ func NewStore(storeType string, manager *storeManager) MessageStore {
 			},
 		}
 		return read
-	}
-	if storeType == "docker_log" {
+	case "docker_log":
 		docker := &dockerLogStore{
 			barrels:    make(map[string]*dockerLogEventBarrel, 100),
 			conf:       manager.conf,
@@ -124,8 +119,7 @@ func NewStore(storeType string, manager *storeManager) MessageStore {
 			},
 		}
 		return docker
-	}
-	if storeType == "newmonitor" {
+	case "newmonitor":
 		monitor := &newMonitorMessageStore{
 			barrels: make(map[string]*CacheMonitorMessageList, 100),
 			conf:    manager.conf,

@@ -16,7 +16,7 @@ var errNoConnect = errors.New("no connect")
 var errClosed = errors.New("conn is closed")
 var errCreate = errors.New("conn is not tcp conn")
 
-//Client stream client
+// Client stream client
 type Client struct {
 	writer    *bufio.Writer
 	conn      *net.TCPConn
@@ -24,7 +24,7 @@ type Client struct {
 	closeFlag int32
 }
 
-//NewClient 新建客户端
+// NewClient 新建客户端
 func NewClient(server string) (c *Client, err error) {
 	conn, err := net.Dial("tcp", server)
 	if err != nil {
@@ -49,7 +49,7 @@ func NewClient(server string) (c *Client, err error) {
 	return c, nil
 }
 
-//Dial 连接
+// Dial 连接
 func (c *Client) Dial() error {
 	if c.IsClosed() {
 		conn, err := net.Dial("tcp", c.server)
@@ -58,7 +58,7 @@ func (c *Client) Dial() error {
 		}
 		if tcpConn, ok := conn.(*net.TCPConn); ok {
 			c.conn = tcpConn
-			c.conn.SetWriteBuffer(1024 * 1024 * 12)
+			c.conn.SetWriteBuffer(1024 * 1024 * 24)
 		} else {
 			return errCreate
 		}
@@ -68,13 +68,13 @@ func (c *Client) Dial() error {
 	return nil
 }
 
-//ChangeAddress 更换服务地址
+// ChangeAddress 更换服务地址
 func (c *Client) ChangeAddress(server string) error {
 	c.server = server
 	return c.ReConnect()
 }
 
-//ReConnect 重连
+// ReConnect 重连
 func (c *Client) ReConnect() error {
 	if !c.IsClosed() {
 		c.Close()
@@ -82,7 +82,7 @@ func (c *Client) ReConnect() error {
 	return c.Dial()
 }
 
-//Close close
+// Close close
 func (c *Client) Close() {
 	if c.conn != nil {
 		c.conn.Close()
@@ -92,12 +92,12 @@ func (c *Client) Close() {
 	atomic.StoreInt32(&c.closeFlag, 1)
 }
 
-//IsClosed close
+// IsClosed close
 func (c *Client) IsClosed() bool {
 	return atomic.LoadInt32(&c.closeFlag) == 1
 }
 
-//write if get a error. will close the conn.
+// write if get a error. will close the conn.
 func (c *Client) Write(message string) error {
 	if message == "" {
 		return nil
@@ -112,7 +112,6 @@ func (c *Client) Write(message string) error {
 	err = c.write(string(msg))
 	if err != nil {
 		c.Close()
-		//TODO reconect
 	}
 	return err
 }
@@ -121,16 +120,26 @@ func (c *Client) write(message string) error {
 	if c.conn == nil {
 		return errClosed
 	}
-	c.conn.SetWriteDeadline(time.Now().Add(time.Second * 1))
+	err := c.conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
+	if err != nil {
+		return err
+	}
 	if c.writer != nil {
-		_, err := c.writer.WriteString(message)
-		c.writer.Flush()
+		wrote, err := c.writer.WriteString(message)
+		ferr := c.writer.Flush()
+		if wrote < len(message) {
+			return err
+		}
+		if ferr != nil {
+			return ferr
+		}
+
 		return err
 	}
 	return errClosed
 }
 
-//Encode 编码
+// Encode 编码
 func (c *Client) encode(message string) ([]byte, error) {
 	// 读取消息的长度
 	var length = int32(len(message))

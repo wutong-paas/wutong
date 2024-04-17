@@ -44,7 +44,7 @@ const (
 )
 
 type filePlugin struct {
-	homePath string
+	homePath string // /wtdata/logs
 }
 
 func (m *filePlugin) getStdFilePath(serviceID string) (string, error) {
@@ -62,6 +62,8 @@ func (m *filePlugin) getStdFilePath(serviceID string) (string, error) {
 	}
 	return apath, nil
 }
+
+var fileCache = make(map[string]int64)
 
 func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 	if len(events) == 0 {
@@ -93,6 +95,7 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 			return err
 		}
 	} else {
+		// 如果日志文件不是当天的，将日志文件压缩并重命名
 		if logFile.ModTime().Day() != time.Now().Day() {
 			logFiles := []string{stdoutLogPath}
 			// Assert if stdout-legacy.log is existed , if exists, append to archive
@@ -106,6 +109,18 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 			}
 		}
 	}
+	// 最后记录日志的时间，如果当前日志的时间小于等于这个时间，不再记录
+	lastLogTimeUnixNano, ok := fileCache[stdoutLogPath]
+	if !ok {
+		lastLogTimeUnixNano = readLastLogTimeUnixNano(stdoutLogPath)
+		if lastLogTimeUnixNano > 0 {
+			fileCache[stdoutLogPath] = lastLogTimeUnixNano
+		}
+	}
+	if lastLogTimeUnixNano > 0 && events[len(events)-1].TimeUnixNano < lastLogTimeUnixNano {
+		return nil
+	}
+
 	if logfile == nil {
 		logfile, err = os.OpenFile(stdoutLogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
@@ -124,6 +139,7 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 	body := bytes.Join(content, []byte("\n"))
 	body = append(body, []byte("\n")...)
 	if logFile != nil && logFile.Size() > int64(logMaxSize) {
+		// 如果日志文件超过一定大小（默认 10M），将日志文件重命名为 stdout-legacy.log
 		legacyLogPath := path.Join(filePathDir, "stdout-legacy.log")
 		err = os.Rename(stdoutLogPath, legacyLogPath)
 		if err != nil {
@@ -142,8 +158,61 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 		return err
 	}
 	_, err = logfile.Write(body)
+	if err != nil {
+		return err
+	}
+	fileCache[stdoutLogPath] = events[len(events)-1].TimeUnixNano
 	return err
 }
+
+// readLastLogTimeUnixNano 读取归档日志文件最后一行日志的 Timestamp UnixNano
+func readLastLogTimeUnixNano(stdoutLogPath string) int64 {
+	lastln, err := fileLastln(stdoutLogPath)
+	if err != nil {
+		return 0
+	}
+
+	if len(lastln) < 23 || !bytes.HasPrefix([]byte(lastln), []byte("v2:")) {
+		return 0
+	}
+	// v2:[19位 UnixNano 时间戳] [12位 containerID]:[YYYY/MM/DD HH:MM:SS] [日志内容]
+	logTimeUnixNano, _ := strconv.ParseInt(string(lastln[3:22]), 10, 64)
+	return logTimeUnixNano
+}
+
+// fileLastln 读取文件最后一行
+func fileLastln(path string) ([]byte, error) {
+	var lastln []byte
+	file, err := os.OpenFile(path, os.O_RDONLY, 0600)
+	if err != nil {
+		return lastln, err
+	}
+	defer file.Close()
+
+	info, _ := file.Stat()
+	if info.Size() > 0 {
+		index := int64(-1)
+		r := bufio.NewReader(file)
+		for {
+			index--
+			file.Seek(index, io.SeekEnd)
+			readByte, err := r.ReadByte()
+			if readByte == '\n' {
+				file.Seek(0, io.SeekEnd)
+				break
+			}
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				fmt.Println(err)
+			}
+		}
+		lastln, _, _ = r.ReadLine()
+	}
+	return lastln, nil
+}
+
 func (m *filePlugin) GetMessages(serviceID, level string, length int) (interface{}, error) {
 	if length <= 0 {
 		return nil, nil
@@ -173,6 +242,11 @@ func (m *filePlugin) GetMessages(serviceID, level string, length int) (interface
 		if len(line) == 0 {
 			continue
 		}
+		// v2 log archivement
+		// 去除前缀以及 Timestamp 部分
+		if bytes.HasPrefix(line, []byte("v2:")) && len(line) > 23 {
+			line = line[23:]
+		}
 		lines = append(lines, string(line))
 	}
 	return lines, nil
@@ -182,10 +256,9 @@ func (m *filePlugin) Close() error {
 	return nil
 }
 
-//GetServiceAliasID python:
-//new_word = str(ord(string[10])) + string + str(ord(string[3])) + 'log' + str(ord(string[2]) / 7)
-//new_id = hashlib.sha224(new_word).hexdigest()[0:16]
-//
+// GetServiceAliasID python:
+// new_word = str(ord(string[10])) + string + str(ord(string[3])) + 'log' + str(ord(string[2]) / 7)
+// new_id = hashlib.sha224(new_word).hexdigest()[0:16]
 func GetServiceAliasID(ServiceID string) string {
 	if len(ServiceID) > 11 {
 		newWord := strconv.Itoa(int(ServiceID[10])) + ServiceID + strconv.Itoa(int(ServiceID[3])) + "log" + strconv.Itoa(int(ServiceID[2])/7)
@@ -196,7 +269,7 @@ func GetServiceAliasID(ServiceID string) string {
 	return ServiceID
 }
 
-//MvLogFile 更改文件名称，压缩
+// MvLogFile 更改文件名称，压缩
 func MvLogFile(newName string, filePaths []string) error {
 	// 将压缩文档内容写入文件
 	f, err := os.OpenFile(newName, os.O_CREATE|os.O_WRONLY, 0666)
