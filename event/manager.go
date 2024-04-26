@@ -29,12 +29,10 @@ import (
 
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/discover"
 	"github.com/wutong-paas/wutong/discover/config"
 	eventclient "github.com/wutong-paas/wutong/eventlog/entry/grpc/client"
 	eventpb "github.com/wutong-paas/wutong/eventlog/entry/grpc/pb"
 	"github.com/wutong-paas/wutong/util"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	"golang.org/x/net/context"
 )
 
@@ -50,7 +48,7 @@ type Manager interface {
 // EventConfig event config struct
 type EventConfig struct {
 	EventLogServers []string
-	DiscoverArgs    *etcdutil.ClientArgs
+	// DiscoverArgs    *etcdutil.ClientArgs
 }
 type manager struct {
 	ctx            context.Context
@@ -62,7 +60,7 @@ type manager struct {
 	lock           sync.Mutex
 	eventServer    []string
 	abnormalServer map[string]string
-	dis            discover.Discover
+	// dis            discover.Discover
 }
 
 var defaultManager Manager
@@ -77,22 +75,22 @@ const (
 
 // NewManager 创建manager
 func NewManager(conf EventConfig) error {
-	dis, err := discover.GetDiscover(config.DiscoverConfig{EtcdClientArgs: conf.DiscoverArgs})
-	if err != nil {
-		logrus.Error("create discover manager error.", err.Error())
-		if len(conf.EventLogServers) < 1 {
-			return err
-		}
-	}
+	// dis, err := discover.GetDiscover(config.DiscoverConfig{EtcdClientArgs: conf.DiscoverArgs})
+	// if err != nil {
+	// 	logrus.Error("create discover manager error.", err.Error())
+	// 	if len(conf.EventLogServers) < 1 {
+	// 		return err
+	// 	}
+	// }
 	ctx, cancel := context.WithCancel(context.Background())
 	defaultManager = &manager{
-		ctx:            ctx,
-		cancel:         cancel,
-		config:         conf,
-		loggers:        make(map[string]Logger, 1024),
-		handles:        make(map[string]handle),
-		eventServer:    conf.EventLogServers,
-		dis:            dis,
+		ctx:         ctx,
+		cancel:      cancel,
+		config:      conf,
+		loggers:     make(map[string]Logger, 1024),
+		handles:     make(map[string]handle),
+		eventServer: conf.EventLogServers,
+		// dis:            dis,
 		abnormalServer: make(map[string]string),
 	}
 	return defaultManager.Start()
@@ -129,9 +127,9 @@ func (m *manager) Start() error {
 		m.handles[m.eventServer[i]] = h
 		go h.HandleLog()
 	}
-	if m.dis != nil {
-		m.dis.AddProject("event_log_event_grpc", m)
-	}
+	// if m.dis != nil {
+	// 	m.dis.AddProject("event_log_event_grpc", m)
+	// }
 	go m.GC()
 	return nil
 }
@@ -181,9 +179,9 @@ func (m *manager) Error(err error) {
 }
 func (m *manager) Close() error {
 	m.cancel()
-	if m.dis != nil {
-		m.dis.Stop()
-	}
+	// if m.dis != nil {
+	// 	m.dis.Stop()
+	// }
 	return nil
 }
 
@@ -207,8 +205,7 @@ func (m *manager) GC() {
 	}, time.Second*20)
 }
 
-// GetLogger
-// 使用完成后必须调用ReleaseLogger方法
+// GetLogger 使用完成后必须调用ReleaseLogger方法
 func (m *manager) GetLogger(eventID string) Logger {
 	m.lock.Lock()
 	defer m.lock.Unlock()

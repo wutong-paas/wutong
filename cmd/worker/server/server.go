@@ -31,7 +31,8 @@ import (
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/pkg/common"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+
+	// etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/worker/appm/componentdefinition"
 	"github.com/wutong-paas/wutong/worker/appm/controller"
@@ -46,7 +47,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//Run start run
+// Run start run
 func Run(s *option.Worker) error {
 	errChan := make(chan error, 2)
 	dbconfig := config.Config{
@@ -60,15 +61,15 @@ func Run(s *option.Worker) error {
 		return err
 	}
 	defer db.CloseManager()
-	etcdClientArgs := &etcdutil.ClientArgs{
-		Endpoints: s.Config.EtcdEndPoints,
-		CaFile:    s.Config.EtcdCaFile,
-		CertFile:  s.Config.EtcdCertFile,
-		KeyFile:   s.Config.EtcdKeyFile,
-	}
+	// etcdClientArgs := &etcdutil.ClientArgs{
+	// 	Endpoints: s.Config.EtcdEndPoints,
+	// 	CaFile:    s.Config.EtcdCaFile,
+	// 	CertFile:  s.Config.EtcdCertFile,
+	// 	KeyFile:   s.Config.EtcdKeyFile,
+	// }
 	if err := event.NewManager(event.EventConfig{
 		EventLogServers: s.Config.EventLogServers,
-		DiscoverArgs:    etcdClientArgs,
+		// DiscoverArgs:    etcdClientArgs,
 	}); err != nil {
 		return err
 	}

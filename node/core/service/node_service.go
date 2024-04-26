@@ -37,7 +37,7 @@ import (
 	"github.com/wutong-paas/wutong/node/utils"
 	"github.com/wutong-paas/wutong/util"
 	ansibleUtil "github.com/wutong-paas/wutong/util/ansible"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	// etcdutil "github.com/wutong-paas/wutong/util/etcd"
 )
 
 // NodeService node service
@@ -49,16 +49,16 @@ type NodeService struct {
 
 // CreateNodeService create
 func CreateNodeService(c *option.Conf, nodecluster *node.Cluster, kubecli kubecache.KubeClient) *NodeService {
-	etcdClientArgs := &etcdutil.ClientArgs{
-		Endpoints:   c.EtcdEndpoints,
-		CaFile:      c.EtcdCaFile,
-		CertFile:    c.EtcdCertFile,
-		KeyFile:     c.EtcdKeyFile,
-		DialTimeout: c.EtcdDialTimeout,
-	}
+	// etcdClientArgs := &etcdutil.ClientArgs{
+	// 	Endpoints:   c.EtcdEndpoints,
+	// 	CaFile:      c.EtcdCaFile,
+	// 	CertFile:    c.EtcdCertFile,
+	// 	KeyFile:     c.EtcdKeyFile,
+	// 	DialTimeout: c.EtcdDialTimeout,
+	// }
 	if err := event.NewManager(event.EventConfig{
 		EventLogServers: c.EventLogServer,
-		DiscoverArgs:    etcdClientArgs,
+		// DiscoverArgs:    etcdClientArgs,
 	}); err != nil {
 		logrus.Errorf("create event manager faliure")
 	}
@@ -107,19 +107,6 @@ func (n *NodeService) InstallNode(node *client.HostNode) *utils.APIHandleError {
 	n.nodecluster.UpdateNode(node)
 	go n.AsynchronousInstall(node, node.Labels["event_id"])
 	return nil
-}
-
-// check install scripts exists or not, if more than one master node has install scripts, choose one master node do it
-func (n *NodeService) beforeInstall() (flag bool, err error) {
-	// ansible file must exists
-	// if ok, _ := util.FileExists("/opt/wutong/wutong-ansible/scripts/node.sh"); !ok {
-	// 	// TODO 通过etcd创建任务？
-	// 	return false, nil
-	// }
-
-	// TODO 存在任务则加锁（etcd全局锁），让自己能够执行，加锁失败则不让执行
-
-	return true, nil
 }
 
 // write ansible hosts file
@@ -245,7 +232,7 @@ func (n *NodeService) GetServicesHealthy() (map[string][]map[string]string, *uti
 		for _, v := range n.NodeStatus.Conditions {
 			status, ok := StatusMap[string(v.Type)]
 			if !ok {
-				StatusMap[string(v.Type)] = []map[string]string{map[string]string{"type": string(v.Type), "status": string(v.Status), "message": string(v.Message), "hostname": n.HostName}}
+				StatusMap[string(v.Type)] = []map[string]string{{"type": string(v.Type), "status": string(v.Status), "message": string(v.Message), "hostname": n.HostName}}
 			} else {
 				list := status
 				list = append(list, map[string]string{"type": string(v.Type), "status": string(v.Status), "message": string(v.Message), "hostname": n.HostName})

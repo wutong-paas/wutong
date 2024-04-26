@@ -25,8 +25,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-	grpcutil "github.com/wutong-paas/wutong/util/grpc"
 	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
 )
@@ -54,26 +52,42 @@ type mqClient struct {
 }
 
 // NewMqClient new a mq client
-func NewMqClient(etcdClientArgs *etcdutil.ClientArgs, defaultserver string) (MQClient, error) {
+// func NewMqClient(etcdClientArgs *etcdutil.ClientArgs, defaultserver string) (MQClient, error) {
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	var conn *grpc.ClientConn
+// 	if etcdClientArgs != nil && etcdClientArgs.Endpoints != nil && len(defaultserver) > 1 {
+// 		c, err := etcdutil.NewClient(ctx, etcdClientArgs)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		r := &grpcutil.GRPCResolver{Client: c}
+// 		b := grpc.RoundRobin(r)
+// 		conn, err = grpc.DialContext(ctx, "/wutong/discover/wutong_mq", grpc.WithBalancer(b), grpc.WithInsecure())
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	} else {
+// 		var err error
+// 		conn, err = grpc.DialContext(ctx, defaultserver, grpc.WithInsecure())
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
+// 	cli := pb.NewTaskQueueClient(conn)
+// 	client := &mqClient{
+// 		ctx:    ctx,
+// 		cancel: cancel,
+// 	}
+// 	client.TaskQueueClient = cli
+// 	return client, nil
+// }
+
+// NewMqClient new a mq client
+func NewMqClient(mqAddr string) (MQClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	var conn *grpc.ClientConn
-	if etcdClientArgs != nil && etcdClientArgs.Endpoints != nil && len(defaultserver) > 1 {
-		c, err := etcdutil.NewClient(ctx, etcdClientArgs)
-		if err != nil {
-			return nil, err
-		}
-		r := &grpcutil.GRPCResolver{Client: c}
-		b := grpc.RoundRobin(r)
-		conn, err = grpc.DialContext(ctx, "/wutong/discover/wutong_mq", grpc.WithBalancer(b), grpc.WithInsecure())
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		var err error
-		conn, err = grpc.DialContext(ctx, defaultserver, grpc.WithInsecure())
-		if err != nil {
-			return nil, err
-		}
+	conn, err := grpc.DialContext(ctx, mqAddr, grpc.WithInsecure())
+	if err != nil {
+		return nil, err
 	}
 	cli := pb.NewTaskQueueClient(conn)
 	client := &mqClient{

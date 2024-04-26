@@ -64,12 +64,13 @@ func Run(s *option.Builder) error {
 	}
 	if err := event.NewManager(event.EventConfig{
 		EventLogServers: s.Config.EventLogServers,
-		DiscoverArgs:    etcdClientArgs,
+		// DiscoverArgs:    etcdClientArgs,
 	}); err != nil {
 		return err
 	}
 	defer event.CloseManager()
-	client, err := client.NewMqClient(etcdClientArgs, s.Config.MQAPI)
+	// client, err := client.NewMqClient(etcdClientArgs, s.Config.MQAPI)
+	client, err := client.NewMqClient(s.Config.MQAPI)
 	if err != nil {
 		logrus.Errorf("new Mq client error, %v", err)
 		return err

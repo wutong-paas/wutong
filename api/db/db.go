@@ -19,21 +19,17 @@
 package db
 
 import (
-	"encoding/json"
+	"context"
 	"time"
 
 	tsdbClient "github.com/bluebreezecf/opentsdb-goclient/client"
 	tsdbConfig "github.com/bluebreezecf/opentsdb-goclient/config"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/cmd/api/option"
+	"github.com/wutong-paas/wutong/config/configs"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/config"
 	dbModel "github.com/wutong-paas/wutong/db/model"
-	"github.com/wutong-paas/wutong/event"
-	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
-	"github.com/wutong-paas/wutong/mq/client"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	"github.com/wutong-paas/wutong/worker/discover/model"
 )
 
@@ -43,68 +39,96 @@ type ConDB struct {
 	DBType         string
 }
 
+func Database() *ConDB {
+	return &ConDB{}
+}
+
 // CreateDBManager get db manager
 // TODO: need to try when happened error, try 4 times
-func CreateDBManager(conf option.Config) error {
+// func CreateDBManager(conf option.Config) error {
+// 	dbCfg := config.Config{
+// 		MysqlConnectionInfo: conf.DBConnectionInfo,
+// 		DBType:              conf.DBType,
+// 		ShowSQL:             conf.ShowSQL,
+// 	}
+// 	if err := db.CreateManager(dbCfg); err != nil {
+// 		logrus.Errorf("get db manager failed,%s", err.Error())
+// 		return err
+// 	}
+// 	// api database initialization
+// 	go dataInitialization()
+
+// 	return nil
+// }
+
+// CreateEventManager create event manager
+// func CreateEventManager(conf option.Config) error {
+// 	var tryTime time.Duration
+// 	var err error
+// 	etcdClientArgs := &etcdutil.ClientArgs{
+// 		Endpoints: conf.EtcdEndpoint,
+// 		CaFile:    conf.EtcdCaFile,
+// 		CertFile:  conf.EtcdCertFile,
+// 		KeyFile:   conf.EtcdKeyFile,
+// 	}
+// 	for tryTime < 4 {
+// 		tryTime++
+// 		if err = event.NewManager(event.EventConfig{
+// 			EventLogServers: conf.EventLogServers,
+// 			DiscoverArgs:    etcdClientArgs,
+// 		}); err != nil {
+// 			logrus.Errorf("get event manager failed, try time is %v,%s", tryTime, err.Error())
+// 			time.Sleep((5 + tryTime*10) * time.Second)
+// 		} else {
+// 			break
+// 		}
+// 	}
+// 	if err != nil {
+// 		logrus.Errorf("get event manager failed. %v", err.Error())
+// 		return err
+// 	}
+// 	logrus.Debugf("init event manager success")
+// 	return nil
+// }
+
+// MQManager mq manager
+// type MQManager struct {
+// 	EtcdClientArgs *etcdutil.ClientArgs
+// 	DefaultServer  string
+// }
+
+// NewMQManager new mq manager
+// func (m *MQManager) NewMQManager() (client.MQClient, error) {
+// 	client, err := client.NewMqClient(m.EtcdClientArgs, m.DefaultServer)
+// 	if err != nil {
+// 		logrus.Errorf("new mq manager error, %v", err)
+// 		return client, err
+// 	}
+// 	return client, nil
+// }
+
+// Start -
+func (_ *ConDB) Start(ctx context.Context, cfg *configs.Config) error {
+	logrus.Info("start db client...")
 	dbCfg := config.Config{
-		MysqlConnectionInfo: conf.DBConnectionInfo,
-		DBType:              conf.DBType,
-		ShowSQL:             conf.ShowSQL,
+		MysqlConnectionInfo: cfg.APIConfig.DBConnectionInfo,
+		DBType:              cfg.APIConfig.DBType,
+		ShowSQL:             cfg.APIConfig.ShowSQL,
 	}
 	if err := db.CreateManager(dbCfg); err != nil {
 		logrus.Errorf("get db manager failed,%s", err.Error())
 		return err
 	}
-	// api database initialization
-	go dataInitialization()
-
 	return nil
 }
 
-// CreateEventManager create event manager
-func CreateEventManager(conf option.Config) error {
-	var tryTime time.Duration
-	var err error
-	etcdClientArgs := &etcdutil.ClientArgs{
-		Endpoints: conf.EtcdEndpoint,
-		CaFile:    conf.EtcdCaFile,
-		CertFile:  conf.EtcdCertFile,
-		KeyFile:   conf.EtcdKeyFile,
-	}
-	for tryTime < 4 {
-		tryTime++
-		if err = event.NewManager(event.EventConfig{
-			EventLogServers: conf.EventLogServers,
-			DiscoverArgs:    etcdClientArgs,
-		}); err != nil {
-			logrus.Errorf("get event manager failed, try time is %v,%s", tryTime, err.Error())
-			time.Sleep((5 + tryTime*10) * time.Second)
-		} else {
-			break
-		}
-	}
-	if err != nil {
-		logrus.Errorf("get event manager failed. %v", err.Error())
-		return err
-	}
-	logrus.Debugf("init event manager success")
-	return nil
-}
+// CloseHandle -
+func (_ *ConDB) CloseHandle() {
+	err := db.CloseManager()
 
-// MQManager mq manager
-type MQManager struct {
-	EtcdClientArgs *etcdutil.ClientArgs
-	DefaultServer  string
-}
-
-// NewMQManager new mq manager
-func (m *MQManager) NewMQManager() (client.MQClient, error) {
-	client, err := client.NewMqClient(m.EtcdClientArgs, m.DefaultServer)
 	if err != nil {
-		logrus.Errorf("new mq manager error, %v", err)
-		return client, err
+		logrus.Errorf("close db manager failed,%s", err.Error())
 	}
-	return client, nil
 }
 
 // TaskStruct task struct
@@ -132,22 +156,22 @@ func (o *OpentsdbManager) NewOpentsdbManager() (tsdbClient.Client, error) {
 }
 
 // BuildTask build task
-func BuildTask(t *TaskStruct) (*pb.EnqueueRequest, error) {
-	var er pb.EnqueueRequest
-	taskJSON, err := json.Marshal(t.TaskBody)
-	if err != nil {
-		logrus.Errorf("tran task json error")
-		return &er, err
-	}
-	er.Topic = "worker"
-	er.Message = &pb.TaskMessage{
-		TaskType:   t.TaskType,
-		CreateTime: time.Now().Format(time.RFC3339),
-		TaskBody:   taskJSON,
-		User:       t.User,
-	}
-	return &er, nil
-}
+// func BuildTask(t *TaskStruct) (*pb.EnqueueRequest, error) {
+// 	var er pb.EnqueueRequest
+// 	taskJSON, err := json.Marshal(t.TaskBody)
+// 	if err != nil {
+// 		logrus.Errorf("tran task json error")
+// 		return &er, err
+// 	}
+// 	er.Topic = "worker"
+// 	er.Message = &pb.TaskMessage{
+// 		TaskType:   t.TaskType,
+// 		CreateTime: time.Now().Format(time.RFC3339),
+// 		TaskBody:   taskJSON,
+// 		User:       t.User,
+// 	}
+// 	return &er, nil
+// }
 
 // GetBegin get db transaction
 func GetBegin() *gorm.DB {

@@ -23,16 +23,16 @@ import (
 	"os"
 	"path"
 
-	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-
 	"github.com/sirupsen/logrus"
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
@@ -59,15 +59,20 @@ func InitClient(kubeconfig string) error {
 		homePath, _ := sources.Home()
 		kubeconfig = path.Join(homePath, ".kube/config")
 	}
+	var config *rest.Config
 	_, err := os.Stat(kubeconfig)
 	if err != nil {
 		fmt.Printf("Please make sure the kube-config file(%s) exists\n", kubeconfig)
-		os.Exit(1)
-	}
-	// use the current context in kubeconfig
-	config, err := k8sutil.NewRestConfig(kubeconfig)
-	if err != nil {
-		return err
+		if config, err = rest.InClusterConfig(); err != nil {
+			logrus.Error("get cluster config error:", err)
+			return err
+		}
+	} else {
+		// use the current context in kubeconfig
+		config, err = k8sutil.NewRestConfig(kubeconfig)
+		if err != nil {
+			return err
+		}
 	}
 	config.QPS = 50
 	config.Burst = 100
@@ -83,7 +88,20 @@ func InitClient(kubeconfig string) error {
 	}
 	runtimeClient, err := client.New(config, client.Options{Scheme: scheme, Mapper: mapper})
 	if err != nil {
-		return fmt.Errorf("New kube client failure %+v", err)
+		return fmt.Errorf("new kube client failure %+v", err)
+	}
+	WutongKubeClient = runtimeClient
+	return nil
+}
+
+func K8SClientInitClient(k8sClient kubernetes.Interface, config *rest.Config) error {
+	mapper, err := apiutil.NewDynamicRESTMapper(config, apiutil.WithLazyDiscovery)
+	if err != nil {
+		return fmt.Errorf("NewDynamicRESTMapper failure %+v", err)
+	}
+	runtimeClient, err := client.New(config, client.Options{Scheme: scheme, Mapper: mapper})
+	if err != nil {
+		return fmt.Errorf("new kube client failure %+v", err)
 	}
 	WutongKubeClient = runtimeClient
 	return nil

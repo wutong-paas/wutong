@@ -35,11 +35,12 @@ type RegistryAuthSecretAction struct {
 }
 
 // CreateRegistryAuthSecretManager creates registry auth secret manager
-func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *RegistryAuthSecretAction {
+// func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *RegistryAuthSecretAction {
+func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient) *RegistryAuthSecretAction {
 	return &RegistryAuthSecretAction{
 		dbmanager: dbmanager,
 		mqclient:  mqclient,
-		etcdCli:   etcdCli,
+		// etcdCli:   etcdCli,
 	}
 }
 

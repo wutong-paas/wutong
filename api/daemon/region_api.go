@@ -18,48 +18,48 @@
 
 package daemon
 
-import (
-	"net/http"
-	"os"
-	"os/exec"
-	"time"
+// import (
+// 	"net/http"
+// 	"os"
+// 	"os/exec"
+// 	"time"
 
-	"github.com/wutong-paas/wutong/api/util"
+// 	"github.com/wutong-paas/wutong/api/util"
 
-	"github.com/sirupsen/logrus"
-)
+// 	"github.com/sirupsen/logrus"
+// )
 
-// StartRegionAPI 启动
-func StartRegionAPI(ch chan os.Signal) {
-	logrus.Info("old region api begin start..")
-	arg := []string{"region_api.wsgi", "-b=127.0.0.1:8887", "--max-requests=5000", "--reload", "--debug", "--workers=4", "--log-file", "-", "--access-logfile", "-", "--error-logfile", "-"}
-	cmd := exec.Command("gunicorn", arg...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	go func() {
-		if err := cmd.Start(); err != nil {
-			logrus.Error("start region old api error.", err.Error())
-		}
-		tick := time.NewTicker(time.Second * 5)
-		defer tick.Stop()
-		select {
-		case si := <-ch:
-			cmd.Process.Signal(si)
-			return
-		case <-tick.C:
-			monitor()
-		}
-	}()
-}
-func monitor() {
-	response, err := http.Get("http://127.0.0.1:8887/monitor")
-	if err != nil {
-		logrus.Error("monitor region old api error.", err.Error())
-		return
-	}
-	defer util.CloseResponse(response)
-	if response != nil && response.StatusCode/100 > 2 {
-		logrus.Errorf("monitor region old api error. response code is %s", response.Status)
-	}
-}
+// // StartRegionAPI 启动
+// func StartRegionAPI(ch chan os.Signal) {
+// 	logrus.Info("old region api begin start..")
+// 	arg := []string{"region_api.wsgi", "-b=127.0.0.1:8887", "--max-requests=5000", "--reload", "--debug", "--workers=4", "--log-file", "-", "--access-logfile", "-", "--error-logfile", "-"}
+// 	cmd := exec.Command("gunicorn", arg...)
+// 	cmd.Stdin = os.Stdin
+// 	cmd.Stdout = os.Stdout
+// 	cmd.Stderr = os.Stderr
+// 	go func() {
+// 		if err := cmd.Start(); err != nil {
+// 			logrus.Error("start region old api error.", err.Error())
+// 		}
+// 		tick := time.NewTicker(time.Second * 5)
+// 		defer tick.Stop()
+// 		select {
+// 		case si := <-ch:
+// 			cmd.Process.Signal(si)
+// 			return
+// 		case <-tick.C:
+// 			monitor()
+// 		}
+// 	}()
+// }
+// func monitor() {
+// 	response, err := http.Get("http://127.0.0.1:8887/monitor")
+// 	if err != nil {
+// 		logrus.Error("monitor region old api error.", err.Error())
+// 		return
+// 	}
+// 	defer util.CloseResponse(response)
+// 	if response != nil && response.StatusCode/100 > 2 {
+// 		logrus.Errorf("monitor region old api error. response code is %s", response.Status)
+// 	}
+// }

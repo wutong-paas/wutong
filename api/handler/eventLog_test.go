@@ -24,26 +24,10 @@ import (
 	"testing"
 	"time"
 
-	api_db "github.com/wutong-paas/wutong/api/db"
 	api_model "github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/cmd/api/option"
 
 	"github.com/sirupsen/logrus"
 )
-
-func TestEmessage(t *testing.T) {
-	fmt.Printf("begin.\n")
-	conf := option.Config{
-		DBType:           "mysql",
-		DBConnectionInfo: "admin:admin@tcp(127.0.0.1:3306)/region",
-	}
-	//创建db manager
-	if err := api_db.CreateDBManager(conf); err != nil {
-		fmt.Printf("create db manager error, %v", err)
-	}
-	_, _ = getLevelLog("dd09a25eb9744afa9b3ad5f5541013e7", "info")
-	fmt.Printf("end.\n")
-}
 
 func getLevelLog(eventID string, level string) (*api_model.DataLog, error) {
 	//messages, err := db.GetManager().EventLogDao().GetEventLogMessages(eventID)

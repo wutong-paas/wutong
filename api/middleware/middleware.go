@@ -235,10 +235,10 @@ func Proxy(next http.Handler) http.Handler {
 			handler.GetNodeProxy().Proxy(w, r)
 			return
 		}
-		if strings.HasPrefix(r.RequestURI, "/v2/rules") {
-			handler.GetMonitorProxy().Proxy(w, r)
-			return
-		}
+		// if strings.HasPrefix(r.RequestURI, "/v2/rules") {
+		// 	handler.GetMonitorProxy().Proxy(w, r)
+		// 	return
+		// }
 		if strings.HasPrefix(r.RequestURI, "/console/filebrowser") {
 			paths := strings.Split(r.URL.Path, "/")
 			if len(paths) > 3 {

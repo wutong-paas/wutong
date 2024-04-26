@@ -19,59 +19,114 @@
 package handler
 
 import (
-	"github.com/coreos/etcd/clientv3"
-	"github.com/sirupsen/logrus"
-	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
-	"github.com/wutong-paas/wutong/api/client/prometheus"
-	api_db "github.com/wutong-paas/wutong/api/db"
 	"github.com/wutong-paas/wutong/api/handler/group"
 	"github.com/wutong-paas/wutong/api/handler/share"
 	"github.com/wutong-paas/wutong/cmd/api/option"
 	"github.com/wutong-paas/wutong/db"
-	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-	"github.com/wutong-paas/wutong/worker/client"
-	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/wutong-paas/wutong/pkg/component/etcd"
+	"github.com/wutong-paas/wutong/pkg/component/grpc"
+	"github.com/wutong-paas/wutong/pkg/component/k8s"
+	"github.com/wutong-paas/wutong/pkg/component/mq"
+	"github.com/wutong-paas/wutong/pkg/component/prom"
 )
 
 // InitHandle 初始化handle
-func InitHandle(conf option.Config,
-	etcdClientArgs *etcdutil.ClientArgs,
-	statusCli *client.AppRuntimeSyncClient,
-	etcdcli *clientv3.Client,
-	config *rest.Config,
-	kubeClient kubernetes.Interface,
-	wutongClient versioned.Interface,
-	k8sClient k8sclient.Client,
-	dynamicClient dynamic.Interface,
-	apiextClient apiextclient.Interface,
-	veleroClient veleroversioned.Interface,
-) error {
-	mq := api_db.MQManager{
-		EtcdClientArgs: etcdClientArgs,
-		DefaultServer:  conf.MQAPI,
-	}
-	mqClient, errMQ := mq.NewMQManager()
-	if errMQ != nil {
-		logrus.Errorf("new MQ manager failed, %v", errMQ)
-		return errMQ
-	}
-	prometheusCli, err := prometheus.NewPrometheus(&prometheus.Options{
-		Endpoint: conf.PrometheusEndpoint,
-	})
-	if err != nil {
-		logrus.Errorf("new prometheus client failure, %v", err)
-		return err
-	}
+// func InitHandle(conf option.Config,
+// 	etcdClientArgs *etcdutil.ClientArgs,
+// 	statusCli *client.AppRuntimeSyncClient,
+// 	etcdcli *clientv3.Client,
+// 	config *rest.Config,
+// 	kubeClient kubernetes.Interface,
+// 	wutongClient versioned.Interface,
+// 	k8sClient k8sclient.Client,
+// 	dynamicClient dynamic.Interface,
+// 	apiextClient apiextclient.Interface,
+// 	veleroClient veleroversioned.Interface,
+// ) error {
+// 	mq := api_db.MQManager{
+// 		EtcdClientArgs: etcdClientArgs,
+// 		DefaultServer:  conf.MQAPI,
+// 	}
+// 	mqClient, errMQ := mq.NewMQManager()
+// 	if errMQ != nil {
+// 		logrus.Errorf("new MQ manager failed, %v", errMQ)
+// 		return errMQ
+// 	}
+// 	prometheusCli, err := prometheus.NewPrometheus(&prometheus.Options{
+// 		Endpoint: conf.PrometheusEndpoint,
+// 	})
+// 	if err != nil {
+// 		logrus.Errorf("new prometheus client failure, %v", err)
+// 		return err
+// 	}
+// 	dbmanager := db.GetManager()
+// 	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, dynamicClient, apiextClient, veleroClient)
+// 	defaultPluginHandler = CreatePluginManager(mqClient)
+// 	defaultAppHandler = CreateAppManager(mqClient)
+// 	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)
+// 	defaultNetRulesHandler = CreateNetRulesManager(etcdcli)
+// 	defaultAPPBackupHandler = group.CreateBackupHandle(mqClient, statusCli, etcdcli)
+// 	defaultEventHandler = CreateLogManager(etcdcli)
+// 	shareHandler = &share.ServiceShareHandle{MQClient: mqClient, EtcdCli: etcdcli}
+// 	pluginShareHandler = &share.PluginShareHandle{MQClient: mqClient, EtcdCli: etcdcli}
+// 	defaultGatewayHandler = CreateGatewayManager(dbmanager, mqClient, etcdcli)
+// 	def3rdPartySvcHandler = Create3rdPartySvcHandler(dbmanager, statusCli)
+// 	operationHandler = CreateOperationHandler(mqClient)
+// 	batchOperationHandler = CreateBatchOperationHandler(mqClient, statusCli, operationHandler)
+// 	defaultAppRestoreHandler = NewAppRestoreHandler()
+// 	defPodHandler = NewPodHandler(statusCli)
+// 	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace, conf.PrometheusEndpoint)
+// 	defNodeHandler = NewNodeHandler(kubeClient, prometheusCli)
+// 	defSchedulingHandler = NewSchedulingHandler(kubeClient)
+// 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)
+// 	defaultEtcdHandler = NewEtcdHandler(etcdcli)
+// 	defaultmonitorHandler = NewMonitorHandler(prometheusCli)
+// 	defServiceEventHandler = NewServiceEventHandler()
+// 	defApplicationHandler = NewApplicationHandler(statusCli, prometheusCli, wutongClient, kubeClient)
+// 	defRegistryAuthSecretHandler = CreateRegistryAuthSecretManager(dbmanager, mqClient, etcdcli)
+// 	return nil
+// }
+
+// InitHandle 初始化handle
+func InitHandle(conf option.Config) error {
+	// mq := api_db.MQManager{
+	// 	EtcdClientArgs: etcdClientArgs,
+	// 	DefaultServer:  conf.MQAPI,
+	// }
+	// mqClient, errMQ := mq.NewMQManager()
+	// if errMQ != nil {
+	// 	logrus.Errorf("new MQ manager failed, %v", errMQ)
+	// 	return errMQ
+	// }
+	// prometheusCli, err := prometheus.NewPrometheus(&prometheus.Options{
+	// 	Endpoint: conf.PrometheusEndpoint,
+	// })
+	// if err != nil {
+	// 	logrus.Errorf("new prometheus client failure, %v", err)
+	// 	return err
+	// }
+
+	etcdcli := etcd.Default().EtcdClient
+	statusCli := grpc.Default().StatusClient
+	kubeClient := k8s.Default().Clientset
+	wutongClient := k8s.Default().WutongClient
+	k8sClient := k8s.Default().K8sClient
+	restconfig := k8s.Default().RestConfig
+	dynamicClient := k8s.Default().DynamicClient
+	// gatewayClient := k8s.Default().GatewayClient
+	// kubevirtCli := k8s.Default().KubevirtCli
+	apiextClient := k8s.Default().ApiExtClient
+	veleroClient := k8s.Default().VeleroClient
+	// mapper := k8s.Default().Mapper
+	// registryCli := cr.Default().RegistryCli
+	mqClient := mq.Default().MqClient
+	prometheusCli := prom.Default().PrometheusCli
+
 	dbmanager := db.GetManager()
 	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, dynamicClient, apiextClient, veleroClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
-	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, config, kubeClient, prometheusCli, k8sClient)
+	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, restconfig, kubeClient, prometheusCli, k8sClient)
 	defaultNetRulesHandler = CreateNetRulesManager(etcdcli)
 	defaultAPPBackupHandler = group.CreateBackupHandle(mqClient, statusCli, etcdcli)
 	defaultEventHandler = CreateLogManager(etcdcli)
@@ -91,7 +146,7 @@ func InitHandle(conf option.Config,
 	defaultmonitorHandler = NewMonitorHandler(prometheusCli)
 	defServiceEventHandler = NewServiceEventHandler()
 	defApplicationHandler = NewApplicationHandler(statusCli, prometheusCli, wutongClient, kubeClient)
-	defRegistryAuthSecretHandler = CreateRegistryAuthSecretManager(dbmanager, mqClient, etcdcli)
+	defRegistryAuthSecretHandler = CreateRegistryAuthSecretManager(dbmanager, mqClient)
 	return nil
 }
 

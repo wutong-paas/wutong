@@ -21,7 +21,6 @@ package handler
 import (
 	"fmt"
 
-	"github.com/wutong-paas/wutong/api/discover"
 	"github.com/wutong-paas/wutong/api/proxy"
 	"github.com/wutong-paas/wutong/cmd/api/option"
 	"github.com/wutong-paas/wutong/db"
@@ -43,7 +42,7 @@ var dbgateProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
 func InitProxy(conf option.Config) {
 	if nodeProxy == nil {
 		nodeProxy = proxy.CreateProxy("acp_node", "http", conf.NodeAPI)
-		discover.GetEndpointDiscover().AddProject("acp_node", nodeProxy)
+		// discover.GetEndpointDiscover().AddProject("acp_node", nodeProxy)
 	}
 	if builderProxy == nil {
 		builderProxy = proxy.CreateProxy("builder", "http", conf.BuilderAPI)
@@ -51,10 +50,10 @@ func InitProxy(conf option.Config) {
 	if prometheusProxy == nil {
 		prometheusProxy = proxy.CreateProxy("prometheus", "http", []string{conf.PrometheusEndpoint})
 	}
-	if monitorProxy == nil {
-		monitorProxy = proxy.CreateProxy("monitor", "http", []string{"127.0.0.1:3329"})
-		discover.GetEndpointDiscover().AddProject("monitor", monitorProxy)
-	}
+	// if monitorProxy == nil {
+	// 	monitorProxy = proxy.CreateProxy("monitor", "http", []string{"127.0.0.1:3329"})
+	// 	discover.GetEndpointDiscover().AddProject("monitor", monitorProxy)
+	// }
 	if obsProxy == nil {
 		obsProxy = proxy.CreateProxy("obs", "http", conf.ObsAPI)
 	}
@@ -85,9 +84,9 @@ func GetPrometheusProxy() proxy.Proxy {
 }
 
 // GetMonitorProxy GetMonitorProxy
-func GetMonitorProxy() proxy.Proxy {
-	return monitorProxy
-}
+// func GetMonitorProxy() proxy.Proxy {
+// 	return monitorProxy
+// }
 
 // GetFileBrowserProxy GetFileBrowserProxy
 func GetFileBrowserProxy(serviceID string) proxy.Proxy {

@@ -32,6 +32,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
 	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/pkg/interceptors"
 
 	"github.com/wutong-paas/wutong/util"
 
@@ -101,7 +102,8 @@ func (m *Manager) SetMiddleware() {
 		r.Use(middleware.DefaultLogger)
 	}
 	//Gracefully absorb panics and prints the stack trace
-	r.Use(middleware.Recoverer)
+	// r.Use(middleware.Recoverer)
+	r.Use(interceptors.Recoverer)
 	//request time out
 	// r.Use(middleware.Timeout(time.Second * 5))
 	// set timeout middleware for different paths

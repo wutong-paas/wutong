@@ -41,7 +41,8 @@ var mode string
 func main() {
 	AddFlags(pflag.CommandLine)
 	pflag.Parse()
-	c, err := client.NewMqClient(nil, server)
+	// c, err := client.NewMqClient(nil, server)
+	c, err := client.NewMqClient(server)
 	if err != nil {
 		logrus.Error("new mq client error.", err.Error())
 		os.Exit(1)
@@ -83,7 +84,8 @@ func main() {
 }
 
 func AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&server, "server", "127.0.0.1:6300", "mq server")
+	// fs.StringVar(&server, "server", "127.0.0.1:6300", "mq server")
+	fs.StringVar(&server, "server", "wt-mq:6300", "mq server")
 	fs.StringVar(&topic, "topic", "builder", "mq topic")
 	fs.StringVar(&taskbody, "task-body", "", "mq task body")
 	fs.StringVar(&taskfile, "task-file", "", "mq task body file")

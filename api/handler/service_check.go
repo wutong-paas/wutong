@@ -80,12 +80,13 @@ func maybeIsWindowsContainerImage(source string) bool {
 func (s *ServiceAction) GetServiceCheckInfo(uuid string) (*exector.ServiceCheckResult, *util.APIHandleError) {
 	k := fmt.Sprintf("/servicecheck/%s", uuid)
 	var si exector.ServiceCheckResult
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	resp, err := s.EtcdCli.Get(ctx, k)
 	if err != nil {
 		logrus.Errorf("get etcd k %s error, %v", k, err)
-		return nil, util.CreateAPIHandleError(500, err)
+		// return nil, util.CreateAPIHandleError(500, err)
+		return nil, util.CreateAPIHandleError(503, err)
 	}
 	if resp.Count == 0 {
 		return &si, nil
