@@ -24,7 +24,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/wutong-paas/wutong/node/api/controller"
-	"github.com/wutong-paas/wutong/pkg/interceptors"
 	"github.com/wutong-paas/wutong/util/log"
 
 	"github.com/go-chi/chi"
@@ -42,7 +41,7 @@ func Routers(mode string, enableDebugPprof bool) *chi.Mux {
 	logger.SetLevel(logrus.GetLevel())
 	r.Use(log.NewStructuredLogger(logger))
 	//Gracefully absorb panics and prints the stack trace
-	r.Use(interceptors.Recoverer)
+	r.Use(middleware.Recoverer)
 	//request time out
 	r.Use(middleware.Timeout(time.Second * 5))
 	if enableDebugPprof {
