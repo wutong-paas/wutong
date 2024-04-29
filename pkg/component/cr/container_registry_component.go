@@ -2,6 +2,7 @@ package cr
 
 import (
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -9,6 +10,7 @@ import (
 	"github.com/wutong-paas/wutong/chaos/sources/registry"
 	"github.com/wutong-paas/wutong/config/configs"
 	"github.com/wutong-paas/wutong/pkg/component/k8s"
+	"github.com/wutong-paas/wutong/pkg/gogo"
 	"github.com/wutong-paas/wutong/wtctl/clients"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -45,9 +47,19 @@ func (r *RegistryComponent) Start(ctx context.Context, cfg *configs.Config) erro
 		registryConfig.Domain = cfg.APIConfig.WtHub
 	}
 
-	r.RegistryCli, err = registry.NewInsecure(registryConfig.Domain, registryConfig.Username, registryConfig.Password)
-	logrus.Info("init hub registry success")
-	return err
+	gogo.Go(func(ctx context.Context) error {
+		var err error
+		for {
+			r.RegistryCli, err = registry.NewInsecure(registryConfig.Domain, registryConfig.Username, registryConfig.Password)
+			if err == nil {
+				logrus.Infof("create hub client success")
+				return nil
+			}
+			logrus.Errorf("create hub client failed, try time is %d,%s", 10, err.Error())
+			time.Sleep(10 * time.Second)
+		}
+	})
+	return nil
 }
 
 // CloseHandle -

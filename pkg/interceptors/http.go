@@ -2,9 +2,7 @@ package interceptors
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/wutong-paas/wutong/pkg/component/cr"
 	"github.com/wutong-paas/wutong/pkg/component/etcd"
@@ -29,17 +27,17 @@ func Recoverer(next http.Handler) http.Handler {
 }
 
 // isNilPointerException Check if the panic is a nil pointer exception
-func isNilPointerException(p interface{}) bool {
-	if p == nil {
-		return false
-	}
+// func isNilPointerException(p interface{}) bool {
+// 	if p == nil {
+// 		return false
+// 	}
 
-	errMsg := fmt.Sprintf("%v", p)
-	return strings.Contains(errMsg, "runtime error: invalid memory address or nil pointer dereference") || strings.Contains(errMsg, "runtime error: slice bounds out of range")
-}
+// 	errMsg := fmt.Sprintf("%v", p)
+// 	return strings.Contains(errMsg, "runtime error: invalid memory address or nil pointer dereference") || strings.Contains(errMsg, "runtime error: slice bounds out of range")
+// }
 
 // handleServiceUnavailable -
-func handleServiceUnavailable(w http.ResponseWriter, r *http.Request) {
+func handleServiceUnavailable(w http.ResponseWriter, _ *http.Request) {
 	// Additional information about why etcd service is not available
 	errorMessage := "部分服务不可用"
 
