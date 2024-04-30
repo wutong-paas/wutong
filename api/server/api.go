@@ -113,6 +113,9 @@ func (m *Manager) SetMiddleware() {
 			if strings.Contains(r.URL.Path, "/obs") {
 				timeout = time.Minute
 			}
+			if strings.Contains(r.URL.Path, "/console/filebrowser") {
+				timeout = time.Minute * 10
+			}
 			ctx, cancel := context.WithTimeout(r.Context(), timeout)
 			defer func() {
 				cancel()

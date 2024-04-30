@@ -241,7 +241,7 @@ func Proxy(next http.Handler) http.Handler {
 		// }
 		if strings.HasPrefix(r.RequestURI, "/console/filebrowser") {
 			paths := strings.Split(r.URL.Path, "/")
-			if len(paths) > 3 {
+			if len(paths) > 3 && len(paths[3]) == 32 {
 				serviceID := paths[3]
 				proxy := handler.GetFileBrowserProxy(serviceID)
 				r.URL.Path = strings.Replace(r.URL.Path, "/console/filebrowser/"+serviceID, "", 1)
