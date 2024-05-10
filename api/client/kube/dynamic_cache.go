@@ -146,6 +146,12 @@ func vmEventHandler() cache.ResourceEventHandlerFuncs {
 				keepVirtVNC(vm)
 			}
 		},
+		UpdateFunc: func(_, obj interface{}) {
+			vm, err := convertToVirtualMachine(obj)
+			if err == nil && vm.Labels["creator"] == "Wutong" {
+				keepVirtVNC(vm)
+			}
+		},
 		DeleteFunc: func(obj interface{}) {
 			vm, err := convertToVirtualMachine(obj)
 			if err == nil && vm.Labels["creator"] == "Wutong" {
