@@ -54,6 +54,7 @@ func init() {
 	TCPMESHIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-mesh-data-panel"), CIVERSION)
 	NODESHELLIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "node-shell"), "stable")
 	WTCHANNELIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-channel"), "stable")
+	VIRTVNCIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "virt-vnc"), "stable")
 }
 
 // GetImageUserInfoV2 -
@@ -101,6 +102,9 @@ var NODESHELLIMAGENAME string
 
 // WTCHANNELIMAGENAME wt-channel image name
 var WTCHANNELIMAGENAME string
+
+// VIRTVNCIMAGENAME virt-vnc image name
+var VIRTVNCIMAGENAME string
 
 // CIVERSION -
 var CIVERSION string

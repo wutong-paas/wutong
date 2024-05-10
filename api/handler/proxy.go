@@ -29,14 +29,22 @@ import (
 var nodeProxy proxy.Proxy
 var builderProxy proxy.Proxy
 var prometheusProxy proxy.Proxy
-var monitorProxy proxy.Proxy
+
+// var monitorProxy proxy.Proxy
 var obsProxy proxy.Proxy
 var obsmimirProxy proxy.Proxy
 var obstempoProxy proxy.Proxy
 var obslokiProxy proxy.Proxy
 
-var filebrowserProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
-var dbgateProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
+var filebrowserProxies = make(map[string]proxy.Proxy, 20)
+var dbgateProxies = make(map[string]proxy.Proxy, 20)
+
+type VirtVNCProxy struct {
+	HTTPProxy      proxy.Proxy
+	WebSocketProxy proxy.Proxy
+}
+
+var virtVNCProxies = make(map[string]*VirtVNCProxy, 20)
 
 // InitProxy 初始化
 func InitProxy(conf option.Config) {
@@ -73,7 +81,7 @@ func GetNodeProxy() proxy.Proxy {
 	return nodeProxy
 }
 
-// GetBuilderProxy GetNodeProxy
+// GetBuilderProxy GetBuilderProxy
 func GetBuilderProxy() proxy.Proxy {
 	return builderProxy
 }
@@ -128,19 +136,37 @@ func GetDbgateProxy(serviceID string) proxy.Proxy {
 	return dbgateProxy
 }
 
+func GetVirtVNCProxy(namespace, vm string) *VirtVNCProxy {
+	key := namespace + "/" + vm
+	virtVNCProxy, ok := virtVNCProxies[key]
+	if !ok || virtVNCProxy == nil {
+		// get serviceID and fb plugin
+		virtVNCProxy = new(VirtVNCProxy)
+		virtVNCProxy.HTTPProxy = proxy.CreateProxy("virt-vnc", "http", []string{fmt.Sprintf("%s-vnc.%s", vm, namespace)})
+		virtVNCProxy.WebSocketProxy = proxy.CreateProxy("virt-vnc-websocket", "websocket", []string{fmt.Sprintf("%s-vnc.%s", vm, namespace)})
+
+		virtVNCProxies[key] = virtVNCProxy
+	}
+	return virtVNCProxy
+
+}
+
 // GetObsProxy GetObsProxy
 func GetObsProxy() proxy.Proxy {
 	return obsProxy
 }
 
+// GetObsMimirProxy GetObsMimirProxy
 func GetObsMimirProxy() proxy.Proxy {
 	return obsmimirProxy
 }
 
+// GetObsTempoProxy GetObsTempoProxy
 func GetObsTempoProxy() proxy.Proxy {
 	return obstempoProxy
 }
 
+// GetObsLokiProxy GetObsLokiProxy
 func GetObsLokiProxy() proxy.Proxy {
 	return obslokiProxy
 }

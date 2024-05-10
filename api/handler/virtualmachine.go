@@ -1138,6 +1138,12 @@ func (s *ServiceAction) DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 }
 
 func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) error {
+	// 0、关闭虚拟机，如果虚拟机还处于运行状态
+	if _, err := s.StopVM(tenantEnv, vmID); err != nil {
+		logrus.Errorf("stop vm failed, error: %s", err.Error())
+		return fmt.Errorf("关闭虚拟机 %s 失败！", vmID)
+	}
+
 	// 1、删除虚拟机端口服务下所有已开通的网关
 	services, err := kube.GetCachedResources(s.kubeClient).ServiceLister.Services(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id": vmID,
@@ -1156,14 +1162,7 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		}
 	}
 
-	// 2、删除虚拟机
-	err = kube.DeleteKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
-	if err != nil {
-		logrus.Errorf("delete vm failed, error: %s", err.Error())
-		return fmt.Errorf("删除虚拟机 %s 失败！", vmID)
-	}
-
-	// 3、删除虚拟机存储卷
+	// 2、删除虚拟机存储卷
 	pvcs, err := kube.GetCachedResources(s.kubeClient).PersistentVolumeClaimLister.PersistentVolumeClaims(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id": vmID,
 	}))
@@ -1176,6 +1175,13 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		if err != nil {
 			return fmt.Errorf("删除虚拟机 %s 下存储卷 %s 失败！", vmID, pvc.Labels["wutong.io/vm-volume"])
 		}
+	}
+
+	// 3、删除虚拟机
+	err = kube.DeleteKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		logrus.Errorf("delete vm failed, error: %s", err.Error())
+		return fmt.Errorf("删除虚拟机 %s 失败！", vmID)
 	}
 
 	return nil

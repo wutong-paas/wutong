@@ -33,8 +33,6 @@ type Config struct {
 	APIAddrSSL           string
 	DBConnectionInfo     string
 	EventLogServers      []string
-	DockerConsoleServers []string
-	EventLogEndpoints    []string
 	NodeAPI              []string
 	BuilderAPI           []string
 	V1API                string
@@ -68,8 +66,11 @@ type Config struct {
 	ObsMimirAPI          []string
 	ObsTempoAPI          []string
 	ObsLokiAPI           []string
+	DockerConsoleServers []string
+	EventLogEndpoints    []string
 	WtHub                string
 	WtWorker             string
+	VirtVNCAPI           []string
 }
 
 // APIServer  apiserver server
@@ -134,6 +135,7 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.WtWorker, "worker-api", "wt-worker:6535", "the wt-worker server api")
 	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"wt-eventlog:6366"}, "event log server address")
 	fs.StringSliceVar(&a.EventLogEndpoints, "event-log", []string{"local=>wt-eventlog:6363"}, "event log websocket address")
+	fs.StringSliceVar(&a.VirtVNCAPI, "virt-vnc-api", []string{"wt-virt-vnc"}, "the virt-vnc api")
 }
 
 // SetLog 设置log
