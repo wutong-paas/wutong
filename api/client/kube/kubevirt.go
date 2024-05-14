@@ -89,7 +89,6 @@ func UpdateKubeVirtVM(dynamicClient dynamic.Interface, vm *kubevirtcorev1.Virtua
 			if err != nil {
 				return err
 			}
-			// got, _ := GetKubeVirtVM(dynamicClient, vm.Namespace, vm.Name)
 			got, _ := UnDynamicObject[*kubevirtcorev1.VirtualMachine](gotObj)
 			if got != nil {
 				vm.SetResourceVersion(got.GetResourceVersion())

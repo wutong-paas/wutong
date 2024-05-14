@@ -488,6 +488,7 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r.Get("/volumes", controller.GetManager().ListVMVolumes)
 	r.Post("/volumes", controller.GetManager().AddVMVolume)
 	r.Delete("/volumes/{volume_name}", controller.GetManager().DeleteVMVolume)
+	r.Delete("/disks/boot", controller.GetManager().RemoveBootDisk)
 	return r
 }
 

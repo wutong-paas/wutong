@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"runtime"
 	"testing"
+
+	"github.com/wutong-paas/wutong/util"
+	kubevirtcorev1 "kubevirt.io/api/core/v1"
 )
 
 func TestValidatePassword(t *testing.T) {
@@ -43,4 +47,38 @@ func TestValidatePassword(t *testing.T) {
 			t.Logf("ValidatePassword(%v) = %v, want %v, err: %v", v.password, got, v.want, err)
 		}
 	}
+}
+
+func TestBootDisk(t *testing.T) {
+	var disks = []kubevirtcorev1.Disk{
+		{
+			Name: "containerdisk",
+			DiskDevice: kubevirtcorev1.DiskDevice{
+				Disk: &kubevirtcorev1.DiskTarget{
+					Bus: "virtio",
+				},
+			},
+			BootOrder: util.Ptr(uint(2)),
+		},
+		{
+			Name: "bootdisk",
+			DiskDevice: kubevirtcorev1.DiskDevice{
+				CDRom: &kubevirtcorev1.CDRomTarget{
+					Bus: util.If(runtime.GOARCH == "arm64", kubevirtcorev1.DiskBusSCSI, kubevirtcorev1.DiskBusSATA),
+				},
+			},
+			BootOrder: util.Ptr(uint(1)),
+		},
+	}
+
+	containsBootDisk := func(disks []kubevirtcorev1.Disk) bool {
+		for _, disk := range disks {
+			if disk.Name == "bootdisk" && disk.BootOrder != nil && *disk.BootOrder == 1 {
+				return true
+			}
+		}
+		return false
+	}
+
+	t.Log(containsBootDisk(disks))
 }

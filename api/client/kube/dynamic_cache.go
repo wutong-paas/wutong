@@ -62,8 +62,8 @@ func initializeDynamicCachedResources(dynamicClient dynamic.Interface) *DynamicC
 
 	// shared informers
 	vmSharedInformer := vmInformer.Informer()
-	vmSharedInformer.AddEventHandlerWithResyncPeriod(vmEventHandler(), time.Minute*30)
 	vmiSharedInformer := vmiInformer.Informer()
+	vmiSharedInformer.AddEventHandlerWithResyncPeriod(vmiEventHandler(), time.Minute*30)
 
 	informers := map[string]cache.SharedInformer{
 		"vmSharedInformer":  vmSharedInformer,
@@ -124,49 +124,49 @@ func UnDynamicObjectList[O runtime.Object](objs []runtime.Object) ([]O, error) {
 	return result, nil
 }
 
-func convertToVirtualMachine(obj interface{}) (*kubevirtcorev1.VirtualMachine, error) {
+func convertToVirtualMachineInstance(obj interface{}) (*kubevirtcorev1.VirtualMachineInstance, error) {
 	unstructuredObj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
 		return nil, fmt.Errorf("cannot cast obj as unstructured: %v", obj)
 	}
 
-	vm := &kubevirtcorev1.VirtualMachine{}
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, vm); err != nil {
-		return nil, fmt.Errorf("error converting to VirtualMachine: %v", err)
+	vmi := &kubevirtcorev1.VirtualMachineInstance{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, vmi); err != nil {
+		return nil, fmt.Errorf("error converting to VirtualMachineInstance: %v", err)
 	}
 
-	return vm, nil
+	return vmi, nil
 }
 
-func vmEventHandler() cache.ResourceEventHandlerFuncs {
+func vmiEventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			vm, err := convertToVirtualMachine(obj)
-			if err == nil && vm.Labels["creator"] == "Wutong" {
-				keepVirtVNC(vm)
+			vmi, err := convertToVirtualMachineInstance(obj)
+			if err == nil && vmi.Labels["creator"] == "Wutong" {
+				keepVirtVNC(vmi)
 			}
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			vm, err := convertToVirtualMachine(obj)
-			if err == nil && vm.Labels["creator"] == "Wutong" {
-				keepVirtVNC(vm)
+			vmi, err := convertToVirtualMachineInstance(obj)
+			if err == nil && vmi.Labels["creator"] == "Wutong" {
+				keepVirtVNC(vmi)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			vm, err := convertToVirtualMachine(obj)
-			if err == nil && vm.Labels["creator"] == "Wutong" {
-				reclaimVirtVNC(vm)
+			vmi, err := convertToVirtualMachineInstance(obj)
+			if err == nil && vmi.Labels["creator"] == "Wutong" {
+				reclaimVirtVNC(vmi)
 			}
 		},
 	}
 }
 
-func keepVirtVNC(vm *kubevirtcorev1.VirtualMachine) {
-	namespace := vm.Namespace
-	wutongLabels := vm.Labels
-	vncName := fmt.Sprintf("%s-vnc", vm.Name)
+func keepVirtVNC(vmi *kubevirtcorev1.VirtualMachineInstance) {
+	namespace := vmi.Namespace
+	wutongLabels := vmi.Labels
+	vncName := fmt.Sprintf("%s-vnc", vmi.Name)
 	selectorLabels := map[string]string{
-		"wutong.io/vm-id":    vm.Name,
+		"wutong.io/vm-id":    vmi.Name,
 		"wutong.io/vnc-name": vncName,
 	}
 	wutongLabels = labels.Merge(wutongLabels, selectorLabels)
@@ -192,7 +192,7 @@ func keepVirtVNC(vm *kubevirtcorev1.VirtualMachine) {
 					APIGroups:     []string{"subresources.kubevirt.io"},
 					Resources:     []string{"virtualmachineinstances/console", "virtualmachineinstances/vnc"},
 					Verbs:         []string{"get"},
-					ResourceNames: []string{vm.Name},
+					ResourceNames: []string{vmi.Name},
 				},
 			},
 		}
@@ -272,11 +272,11 @@ func keepVirtVNC(vm *kubevirtcorev1.VirtualMachine) {
 									},
 									{
 										Name:  "VM_NAME",
-										Value: vm.Name,
+										Value: vmi.Name,
 									},
 									{
 										Name:  "VNC_PATH_PREFIX",
-										Value: fmt.Sprintf("/console/virt-vnc/%s/%s/k8s", namespace, vm.Name),
+										Value: fmt.Sprintf("/console/virt-vnc/%s/%s/k8s", namespace, vmi.Name),
 									},
 								},
 								LivenessProbe: &corev1.Probe{
@@ -323,9 +323,9 @@ func keepVirtVNC(vm *kubevirtcorev1.VirtualMachine) {
 	}
 }
 
-func reclaimVirtVNC(vm *kubevirtcorev1.VirtualMachine) {
-	namespace := vm.Namespace
-	vncName := fmt.Sprintf("%s-vnc", vm.Name)
+func reclaimVirtVNC(vmi *kubevirtcorev1.VirtualMachineInstance) {
+	namespace := vmi.Namespace
+	vncName := fmt.Sprintf("%s-vnc", vmi.Name)
 	if err := RegionClientset().CoreV1().ServiceAccounts(namespace).Delete(context.Background(), vncName, metav1.DeleteOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
 		logrus.Warningf("delete service account %s failed: %v", vncName, err)
 	}

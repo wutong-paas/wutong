@@ -143,6 +143,7 @@ type ServiceHandler interface {
 	ListVMVolumes(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMVolumesResponse, error)
 	AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMVolumeRequest) error
 	DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volumeName string) error
+	RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID string) error
 
 	// Scheduling
 	GetServiceSchedulingDetails(serviceID string) (*api_model.GetServiceSchedulingDetailsResponse, error)
