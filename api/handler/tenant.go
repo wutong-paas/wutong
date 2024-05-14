@@ -508,19 +508,6 @@ func (t *TenantEnvAction) GetServicesResources(tr *api_model.ServicesResources) 
 	return res, nil
 }
 
-func (t *TenantEnvAction) getPodNums(serviceID string) int {
-	pods, err := t.statusCli.GetAppPods(context.TODO(), &pb.ServiceRequest{
-		ServiceId: serviceID,
-	})
-
-	if err != nil {
-		logrus.Warningf("get app pods: %v", err)
-		return 0
-	}
-
-	return len(pods.OldPods) + len(pods.NewPods)
-}
-
 // TenantEnvsSum TenantEnvsSum
 func (t *TenantEnvAction) TenantEnvsSum(tenantName string) (int, error) {
 	s, err := db.GetManager().TenantEnvDao().GetTenantEnvs(tenantName, "")

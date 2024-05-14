@@ -19,11 +19,8 @@
 package handler
 
 import (
-	"bytes"
-	"compress/zlib"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"path"
 
@@ -127,67 +124,4 @@ func (l *LogAction) GetLevelLog(eventID string, level string) (*model.DataLog, e
 		Status: "success",
 		Data:   nil,
 	}, nil
-}
-
-// Decompress zlib解码
-func decompress(zb []byte) ([]byte, error) {
-	b := bytes.NewReader(zb)
-	var out bytes.Buffer
-	r, err := zlib.NewReader(b)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := io.Copy(&out, r); err != nil {
-		return nil, err
-	}
-	return out.Bytes(), nil
-}
-
-func checkLevel(level, info string) bool {
-	switch level {
-	case "error":
-		if info == "error" {
-			return true
-		}
-		return false
-	case "info":
-		if info == "info" || info == "error" {
-			return true
-		}
-		return false
-	case "debug":
-		if info == "info" || info == "error" || info == "debug" {
-			return true
-		}
-		return false
-	default:
-		if info == "info" || info == "error" {
-			return true
-		}
-		return false
-	}
-}
-
-func uncompress(source []byte) (re []byte, err error) {
-	r, err := zlib.NewReader(bytes.NewReader(source))
-	if err != nil {
-		return nil, err
-	}
-	var buffer bytes.Buffer
-	io.Copy(&buffer, r)
-	r.Close()
-	return buffer.Bytes(), nil
-}
-
-func bubSort(d []model.MessageData) []model.MessageData {
-	for i := 0; i < len(d); i++ {
-		for j := i + 1; j < len(d); j++ {
-			if d[i].Unixtime > d[j].Unixtime {
-				temp := d[i]
-				d[i] = d[j]
-				d[j] = temp
-			}
-		}
-	}
-	return d
 }

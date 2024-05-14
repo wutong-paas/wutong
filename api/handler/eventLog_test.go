@@ -24,34 +24,8 @@ import (
 	"testing"
 	"time"
 
-	api_model "github.com/wutong-paas/wutong/api/model"
-
 	"github.com/sirupsen/logrus"
 )
-
-func getLevelLog(eventID string, level string) (*api_model.DataLog, error) {
-	//messages, err := db.GetManager().EventLogDao().GetEventLogMessages(eventID)
-	//if err != nil {
-	//	return nil, err
-	//}
-	////var d []api_model.MessageData
-	//for _, v := range messages {
-	//	log, err := uncompress(v.Message)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	logrus.Debugf("log is %v", log)
-	//	fmt.Printf("log is %v", string(log))
-	//
-	//	var mLogs []msgStruct
-	//	if err := ffjson.Unmarshal(log, &mLogs); err != nil {
-	//		return nil, err
-	//	}
-	//	fmt.Printf("jlog %v", mLogs)
-	//	break
-	//}
-	return nil, nil
-}
 
 func TestLines(t *testing.T) {
 	filePath := "/Users/pujielan/Downloads/log"
@@ -94,27 +68,6 @@ func TestSort(t *testing.T) {
 		}
 	}
 	fmt.Println(arr)
-}
-
-func quickSort(array []int, left int, right int) {
-	if left < right {
-		key := array[left]
-		low := left
-		high := right
-		for low < high {
-			for low < high && array[high] > key {
-				high--
-			}
-			array[low] = array[high]
-			for low < high && array[low] < key {
-				low++
-			}
-			array[high] = array[low]
-		}
-		array[low] = key
-		quickSort(array, left, low-1)
-		quickSort(array, low+1, right)
-	}
 }
 
 func qsort(array []int, low, high int) {
