@@ -280,7 +280,7 @@ func Proxy(next http.Handler) http.Handler {
 			return
 		}
 		// virt-vnc proxy
-		if strings.HasPrefix(r.RequestURI, "/console/virt-vnc") {
+		if strings.HasPrefix(r.RequestURI, "/consolev3/virt-vnc") {
 			paths := strings.Split(r.URL.Path, "/")
 			var namespace, vm string
 			if len(paths) > 4 {
@@ -295,11 +295,14 @@ func Proxy(next http.Handler) http.Handler {
 				httputil.ReturnError(r, w, 400, "virt-vnc: vm is required")
 				return
 			}
-			if strings.HasPrefix(r.RequestURI, fmt.Sprintf("/console/virt-vnc/%s/%s/k8s", namespace, vm)) {
+			if vm == "package.json" {
+				return
+			}
+			if strings.HasPrefix(r.RequestURI, fmt.Sprintf("/consolev3/virt-vnc/%s/%s/k8s", namespace, vm)) {
 				handler.GetVirtVNCProxy(namespace, vm).WebSocketProxy.Proxy(w, r)
 				return
 			}
-			r.URL.Path = strings.Replace(r.URL.Path, fmt.Sprintf("/console/virt-vnc/%s/%s", namespace, vm), "", 1)
+			r.URL.Path = strings.Replace(r.URL.Path, fmt.Sprintf("/consolev3/virt-vnc/%s/%s", namespace, vm), "", 1)
 			handler.GetVirtVNCProxy(namespace, vm).HTTPProxy.Proxy(w, r)
 			return
 		}
