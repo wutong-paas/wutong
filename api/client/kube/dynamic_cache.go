@@ -276,7 +276,7 @@ func keepVirtVNC(vmi *kubevirtcorev1.VirtualMachineInstance) {
 									},
 									{
 										Name:  "VNC_PATH_PREFIX",
-										Value: fmt.Sprintf("/consolev3/virt-vnc/%s/%s/k8s", namespace, vmi.Name),
+										Value: fmt.Sprintf("/console/virt-vnc/%s/%s/k8s", namespace, vmi.Name),
 									},
 								},
 								LivenessProbe: &corev1.Probe{
