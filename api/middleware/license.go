@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/wutong-paas/wutong/api/client/kube"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	httputil "github.com/wutong-paas/wutong/util/http"
 	"github.com/wutong-paas/wutong/util/k8s"
 )

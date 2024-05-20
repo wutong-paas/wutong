@@ -28,8 +28,8 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

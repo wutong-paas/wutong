@@ -30,13 +30,13 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/handler"
 	"github.com/wutong-paas/wutong/api/util"
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 

@@ -25,7 +25,7 @@ package server
 // 	"syscall"
 
 // 	"github.com/sirupsen/logrus"
-// 	"github.com/wutong-paas/wutong/api/client/kube"
+// 	"github.com/wutong-paas/wutong/pkg/kube"
 // 	"github.com/wutong-paas/wutong/api/controller"
 // 	"github.com/wutong-paas/wutong/api/db"
 // 	"github.com/wutong-paas/wutong/api/discover"

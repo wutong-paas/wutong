@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/model"
 	apiutil "github.com/wutong-paas/wutong/api/util"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	"github.com/wutong-paas/wutong/util"
 
 	corev1 "k8s.io/api/core/v1"

@@ -3,8 +3,8 @@ package prom
 import (
 	"context"
 
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/config/configs"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 )
 
 var defaultPromComponent *Component

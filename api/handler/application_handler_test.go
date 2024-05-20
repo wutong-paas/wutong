@@ -3,7 +3,7 @@ package handler
 import (
 	"testing"
 
-	"github.com/wutong-paas/wutong/api/client/prometheus"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 )
 
 func TestGetDiskUsage(t *testing.T) {

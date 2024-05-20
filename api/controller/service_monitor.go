@@ -3,7 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/wutong-paas/wutong/api/client/prometheus"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 
 	"github.com/go-chi/chi"
 	"github.com/wutong-paas/wutong/api/handler"

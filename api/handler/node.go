@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/pkg/kube"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 	"github.com/wutong-paas/wutong/util"
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"

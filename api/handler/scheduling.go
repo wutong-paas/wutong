@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
