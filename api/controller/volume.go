@@ -241,6 +241,20 @@ func (t *TenantEnvStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
+// DeleteAllVolumes 删除组件所有存储
+func (t *TenantEnvStruct) DeleteAllVolumes(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	tsv := &dbmodel.TenantEnvServiceVolume{
+		ServiceID: serviceID,
+	}
+	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, "", "delete_all"); err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
 //以下为V2.1版本持久化API,支持多种持久化模式
 
 // AddVolumeDependency add volume dependency

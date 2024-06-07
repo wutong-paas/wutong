@@ -1266,6 +1266,11 @@ func (s *ServiceAction) ServiceDepend(action string, ds *api_model.DependService
 			logrus.Errorf("delete depend error, %v", err)
 			return err
 		}
+	case "delete_all":
+		if err := db.GetManager().TenantEnvServiceRelationDao().DeleteByComponentIDs([]string{ds.ServiceID}); err != nil {
+			logrus.Errorf("delete depend error, %v", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -1290,6 +1295,11 @@ func (s *ServiceAction) EnvAttr(action string, at *dbmodel.TenantEnvServiceEnvVa
 			}
 
 			logrus.Errorf("delete env %v error, %v", at.AttrName, err)
+			return err
+		}
+	case "delete_all":
+		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentIDs([]string{at.ServiceID}); err != nil {
+			logrus.Errorf("delete envs error, %v", err)
 			return err
 		}
 	case "update":
@@ -1366,6 +1376,21 @@ func (s *ServiceAction) deletePorts(componentID string, ports *api_model.Service
 	})
 }
 
+func (s *ServiceAction) deleteAllPorts(componentID string) error {
+	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
+		if err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).DelByServiceID(componentID); err != nil {
+			return err
+		}
+
+		// delete related ingress rules
+		if err := GetGatewayHandler().DeleteHTTPRuleByServiceIDWithTransaction(componentID, tx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 // SyncComponentPorts -
 func (s *ServiceAction) SyncComponentPorts(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
 	var (
@@ -1399,6 +1424,8 @@ func (s *ServiceAction) PortVar(action, tenantEnvID, serviceID string, vps *api_
 	switch action {
 	case "delete":
 		return s.deletePorts(serviceID, vps)
+	case "delete_all":
+		return s.deleteAllPorts(serviceID)
 	case "update":
 		tx := db.GetManager().Begin()
 		defer func() {
@@ -1828,6 +1855,26 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 		if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DelByVolumeID(tsv.ServiceID, tsv.VolumeName); err != nil {
 			tx.Rollback()
 			return apiutil.CreateAPIHandleErrorFromDBError("error deleting config files", err)
+		}
+		// end transaction
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+			return apiutil.CreateAPIHandleErrorFromDBError("error ending transaction", err)
+		}
+	case "delete_all":
+		// begin transaction
+		tx := db.GetManager().Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				logrus.Errorf("Unexpected panic occurred, rollback transaction: %v", r)
+				tx.Rollback()
+			}
+		}()
+		if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).DeleteTenantEnvServiceVolumesByServiceID(tsv.ServiceID); err != nil {
+			return apiutil.CreateAPIHandleErrorFromDBError("delete all volume", err)
+		}
+		if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DelByServiceID(tsv.ServiceID); err != nil {
+			return apiutil.CreateAPIHandleErrorFromDBError("delete all config file", err)
 		}
 		// end transaction
 		if err := tx.Commit().Error; err != nil {
