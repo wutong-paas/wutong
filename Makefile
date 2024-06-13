@@ -1,5 +1,5 @@
 REGISTRY ?= swr.cn-southwest-2.myhuaweicloud.com/wutong
-VERSION ?= v1.13.1
+VERSION ?= v1.13.1-alpha.0
 
 export REGISTRY
 export VERSION

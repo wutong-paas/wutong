@@ -337,7 +337,7 @@ type ServiceStruct struct {
 	// 服务分类：application,cache,store
 	// in: body
 	// required: false
-	Category string `json:"category" validate:"category"`
+	// Category string `json:"category" validate:"category"`
 	// 服务当前状态：undeploy,running,closed,unusual,starting,checking,stoping
 	// in: body
 	// required: false
