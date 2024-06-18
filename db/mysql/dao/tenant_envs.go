@@ -1007,6 +1007,16 @@ func (t *TenantEnvServiceEnvVarDaoImpl) DeleteByComponentIDs(componentIDs []stri
 	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantEnvServiceEnvVar{}).Error
 }
 
+// DeleteByComponentID -
+func (t *TenantEnvServiceEnvVarDaoImpl) DeleteByComponentID(componentID string) error {
+	return t.DB.Where("service_id = ?", componentID).Delete(&model.TenantEnvServiceEnvVar{}).Error
+}
+
+// DeleteByComponentIDAndScope -
+func (t *TenantEnvServiceEnvVarDaoImpl) DeleteByComponentIDAndScope(componentID, scope string) error {
+	return t.DB.Where("service_id = ? and scope = ?", componentID, scope).Delete(&model.TenantEnvServiceEnvVar{}).Error
+}
+
 // CreateOrUpdateEnvsInBatch Batch insert or update environment variables
 func (t *TenantEnvServiceEnvVarDaoImpl) CreateOrUpdateEnvsInBatch(envs []*model.TenantEnvServiceEnvVar) error {
 	var objects []interface{}
@@ -1954,13 +1964,13 @@ func (t *ServiceLabelDaoImpl) CreateOrUpdateLabelsInBatch(labels []*model.Tenant
 	return nil
 }
 
-// TenantEnvServceAutoscalerRulesDaoImpl -
-type TenantEnvServceAutoscalerRulesDaoImpl struct {
+// TenantEnvServiceAutoscalerRulesDaoImpl -
+type TenantEnvServiceAutoscalerRulesDaoImpl struct {
 	DB *gorm.DB
 }
 
 // AddModel -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) AddModel(mo model.Interface) error {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) AddModel(mo model.Interface) error {
 	rule := mo.(*model.TenantEnvServiceAutoscalerRules)
 	var old model.TenantEnvServiceAutoscalerRules
 	if ok := t.DB.Where("rule_id = ?", rule.RuleID).Find(&old).RecordNotFound(); ok {
@@ -1974,7 +1984,7 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) AddModel(mo model.Interface) err
 }
 
 // UpdateModel -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) UpdateModel(mo model.Interface) error {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) UpdateModel(mo model.Interface) error {
 	rule := mo.(*model.TenantEnvServiceAutoscalerRules)
 	if err := t.DB.Save(rule).Error; err != nil {
 		return err
@@ -1983,7 +1993,7 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) UpdateModel(mo model.Interface) 
 }
 
 // GetByRuleID -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) GetByRuleID(ruleID string) (*model.TenantEnvServiceAutoscalerRules, error) {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) GetByRuleID(ruleID string) (*model.TenantEnvServiceAutoscalerRules, error) {
 	var rule model.TenantEnvServiceAutoscalerRules
 	if err := t.DB.Where("rule_id=?", ruleID).Find(&rule).Error; err != nil {
 		return nil, err
@@ -1992,7 +2002,7 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) GetByRuleID(ruleID string) (*mod
 }
 
 // ListByServiceID -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) ListByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error) {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) ListByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error) {
 	var rules []*model.TenantEnvServiceAutoscalerRules
 	if err := t.DB.Where("service_id=?", serviceID).Find(&rules).Error; err != nil {
 		return nil, err
@@ -2001,7 +2011,7 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) ListByServiceID(serviceID string
 }
 
 // ListEnableOnesByServiceID -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) ListEnableOnesByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error) {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) ListEnableOnesByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error) {
 	var rules []*model.TenantEnvServiceAutoscalerRules
 	if err := t.DB.Where("service_id=? and enable=?", serviceID, true).Find(&rules).Error; err != nil {
 		return nil, err
@@ -2010,7 +2020,7 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) ListEnableOnesByServiceID(servic
 }
 
 // ListByComponentIDs -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) ListByComponentIDs(componentIDs []string) ([]*model.TenantEnvServiceAutoscalerRules, error) {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) ListByComponentIDs(componentIDs []string) ([]*model.TenantEnvServiceAutoscalerRules, error) {
 	var rules []*model.TenantEnvServiceAutoscalerRules
 	if err := t.DB.Where("service_id in (?)", componentIDs).Find(&rules).Error; err != nil {
 		return nil, err
@@ -2019,12 +2029,19 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) ListByComponentIDs(componentIDs 
 }
 
 // DeleteByComponentIDs deletes rule based on componentIDs
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
 	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantEnvServiceAutoscalerRules{}).Error
 }
 
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) DeleteByRuleID(ruleID string) error {
+	if err := t.DB.Where("rule_id=?", ruleID).Delete(&model.TenantEnvServiceAutoscalerRules{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // CreateOrUpdateScaleRulesInBatch -
-func (t *TenantEnvServceAutoscalerRulesDaoImpl) CreateOrUpdateScaleRulesInBatch(rules []*model.TenantEnvServiceAutoscalerRules) error {
+func (t *TenantEnvServiceAutoscalerRulesDaoImpl) CreateOrUpdateScaleRulesInBatch(rules []*model.TenantEnvServiceAutoscalerRules) error {
 	var objects []interface{}
 	for _, rule := range rules {
 		objects = append(objects, *rule)
@@ -2035,13 +2052,13 @@ func (t *TenantEnvServceAutoscalerRulesDaoImpl) CreateOrUpdateScaleRulesInBatch(
 	return nil
 }
 
-// TenantEnvServceAutoscalerRuleMetricsDaoImpl -
-type TenantEnvServceAutoscalerRuleMetricsDaoImpl struct {
+// TenantEnvServiceAutoscalerRuleMetricsDaoImpl -
+type TenantEnvServiceAutoscalerRuleMetricsDaoImpl struct {
 	DB *gorm.DB
 }
 
 // AddModel -
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) AddModel(mo model.Interface) error {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) AddModel(mo model.Interface) error {
 	metric := mo.(*model.TenantEnvServiceAutoscalerRuleMetrics)
 	var old model.TenantEnvServiceAutoscalerRuleMetrics
 	if ok := t.DB.Where("rule_id=? and metric_type=? and metric_name=?", metric.RuleID, metric.MetricsType, metric.MetricsName).Find(&old).RecordNotFound(); ok {
@@ -2055,7 +2072,7 @@ func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) AddModel(mo model.Interfac
 }
 
 // UpdateModel -
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) UpdateModel(mo model.Interface) error {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) UpdateModel(mo model.Interface) error {
 	metric := mo.(*model.TenantEnvServiceAutoscalerRuleMetrics)
 	if err := t.DB.Save(metric).Error; err != nil {
 		return err
@@ -2064,7 +2081,7 @@ func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) UpdateModel(mo model.Inter
 }
 
 // UpdateOrCreate -
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) UpdateOrCreate(metric *model.TenantEnvServiceAutoscalerRuleMetrics) error {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) UpdateOrCreate(metric *model.TenantEnvServiceAutoscalerRuleMetrics) error {
 	var old model.TenantEnvServiceAutoscalerRuleMetrics
 	if ok := t.DB.Where("rule_id=? and metric_type=? and metric_name=?", metric.RuleID, metric.MetricsType, metric.MetricsName).Find(&old).RecordNotFound(); ok {
 		if err := t.DB.Create(metric).Error; err != nil {
@@ -2081,7 +2098,7 @@ func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) UpdateOrCreate(metric *mod
 }
 
 // ListByRuleID -
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) ListByRuleID(ruleID string) ([]*model.TenantEnvServiceAutoscalerRuleMetrics, error) {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) ListByRuleID(ruleID string) ([]*model.TenantEnvServiceAutoscalerRuleMetrics, error) {
 	var metrics []*model.TenantEnvServiceAutoscalerRuleMetrics
 	if err := t.DB.Where("rule_id=?", ruleID).Find(&metrics).Error; err != nil {
 		return nil, err
@@ -2090,7 +2107,7 @@ func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) ListByRuleID(ruleID string
 }
 
 // DeleteByRuleID -
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) DeleteByRuleID(ruldID string) error {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) DeleteByRuleID(ruldID string) error {
 	if err := t.DB.Where("rule_id=?", ruldID).Delete(&model.TenantEnvServiceAutoscalerRuleMetrics{}).Error; err != nil {
 		return err
 	}
@@ -2099,12 +2116,12 @@ func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) DeleteByRuleID(ruldID stri
 }
 
 // DeleteByRuleIDs deletes rule metrics based on componentIDs
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) DeleteByRuleIDs(ruleIDs []string) error {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) DeleteByRuleIDs(ruleIDs []string) error {
 	return t.DB.Where("rule_id in (?)", ruleIDs).Delete(&model.TenantEnvServiceAutoscalerRuleMetrics{}).Error
 }
 
 // CreateOrUpdateScaleRuleMetricsInBatch -
-func (t *TenantEnvServceAutoscalerRuleMetricsDaoImpl) CreateOrUpdateScaleRuleMetricsInBatch(metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) error {
+func (t *TenantEnvServiceAutoscalerRuleMetricsDaoImpl) CreateOrUpdateScaleRuleMetricsInBatch(metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) error {
 	var objects []interface{}
 	for _, metric := range metrics {
 		objects = append(objects, *metric)

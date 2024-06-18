@@ -27,8 +27,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/api/util/bcode"
@@ -37,6 +35,8 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	mqclient "github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/pkg/kube"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 	rutil "github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/worker/client"
 	"github.com/wutong-paas/wutong/worker/server/pb"
@@ -506,19 +506,6 @@ func (t *TenantEnvAction) GetServicesResources(tr *api_model.ServicesResources) 
 		}
 	}
 	return res, nil
-}
-
-func (t *TenantEnvAction) getPodNums(serviceID string) int {
-	pods, err := t.statusCli.GetAppPods(context.TODO(), &pb.ServiceRequest{
-		ServiceId: serviceID,
-	})
-
-	if err != nil {
-		logrus.Warningf("get app pods: %v", err)
-		return 0
-	}
-
-	return len(pods.OldPods) + len(pods.NewPods)
 }
 
 // TenantEnvsSum TenantEnvsSum

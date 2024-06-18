@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
@@ -30,10 +31,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/wutong-paas/wutong/api/client/kube"
 	api_model "github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	"github.com/wutong-paas/wutong/util"
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
@@ -51,6 +53,14 @@ import (
 
 var defailtOSDiskSize int64 = 40
 
+var (
+	bootDiskName            = "bootdisk"
+	containerDiskName       = "containerdisk"
+	cloudInitDiskName       = "cloudinitdisk"
+	virtioContainerDiskName = "virtiocontainerdisk"
+)
+
+// CreateVM 创建 kubevirt 虚拟机
 func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.CreateVMRequest) (*api_model.CreateVMResponse, error) {
 	if req.OSDiskSize == 0 {
 		req.OSDiskSize = defailtOSDiskSize
@@ -97,194 +107,143 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		"wutong.io/vm-id": req.Name,
 	})
 
-	var nodeSelector = map[string]string{
-		"wutong.io/vm-schedulable": "true",
+	var installType api_model.VMInstallType
+	if req.OSSourceFrom == api_model.OSSourceFromHTTP && strings.HasSuffix(req.OSSourceURL, ".iso") {
+		installType = api_model.VMInstallTypeISO
 	}
 
-	for _, labelKey := range req.NodeSelectorLabels {
-		nodeSelector["vm-scheduling-label.wutong.io/"+labelKey] = ""
-	}
+	vm := buildVMBase(req, tenantEnv.Namespace, wutongLabels)
 
-	var source cdicorev1beta1.DataVolumeSource
-	var sourceUrl string
-	switch req.OSSourceFrom {
-	case api_model.OSSourceFromHTTP:
-		sourceUrl = req.OSSourceURL
-		source = cdicorev1beta1.DataVolumeSource{
-			HTTP: &cdicorev1beta1.DataVolumeSourceHTTP{
-				URL: sourceUrl,
+	// 根据安装类型设置虚拟机配置，例如：ISO 安装时需要准备启动引导盘和数据盘
+	switch installType {
+	case api_model.VMInstallTypeISO:
+		// 创建数据盘 pvc
+		err := createContainerDiskPVC(req, tenantEnv, wutongLabels, s)
+		if err != nil {
+			return nil, err
+		}
+
+		// 设置 datavolume templates
+		dvName := req.Name + "-iso"
+		vm.Spec.DataVolumeTemplates = buildVMDataVolumeTemplates(dvName, req.OSSourceFrom, req.OSSourceURL, 10)
+
+		// 设置 disks
+		vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtcorev1.Disk{
+			{
+				Name: containerDiskName,
+				DiskDevice: kubevirtcorev1.DiskDevice{
+					Disk: &kubevirtcorev1.DiskTarget{
+						Bus: kubevirtcorev1.DiskBusVirtio,
+					},
+				},
+				BootOrder: util.Ptr(uint(2)),
+			},
+			{
+				Name: bootDiskName,
+				DiskDevice: kubevirtcorev1.DiskDevice{
+					CDRom: &kubevirtcorev1.CDRomTarget{
+						Bus: util.If(runtime.GOARCH == "arm64", kubevirtcorev1.DiskBusSCSI, kubevirtcorev1.DiskBusSATA),
+					},
+				},
+				BootOrder: util.Ptr(uint(1)),
 			},
 		}
-	case api_model.OSSourceFromRegistry:
-		sourceUrl = "docker://" + req.OSSourceURL
-		source = cdicorev1beta1.DataVolumeSource{
-			Registry: &cdicorev1beta1.DataVolumeSourceRegistry{
-				URL: util.Ptr(sourceUrl),
+
+		// 设置 volumes
+		vm.Spec.Template.Spec.Volumes = []kubevirtcorev1.Volume{
+			{
+				Name: containerDiskName,
+				VolumeSource: kubevirtcorev1.VolumeSource{
+					PersistentVolumeClaim: &kubevirtcorev1.PersistentVolumeClaimVolumeSource{
+						PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: pvcName(req.Name, "data"),
+						},
+					},
+				},
+			}, {
+				Name: bootDiskName,
+				VolumeSource: kubevirtcorev1.VolumeSource{
+					DataVolume: &kubevirtcorev1.DataVolumeSource{
+						Name: dvName,
+					},
+				},
+			},
+		}
+	default:
+		// 设置 datavolume templates
+		dvName := req.Name + "-data"
+		vm.Spec.DataVolumeTemplates = buildVMDataVolumeTemplates(dvName, req.OSSourceFrom, req.OSSourceURL, req.OSDiskSize)
+
+		// 设置 disks
+		vm.Spec.Template.Spec.Domain.Devices.Disks = []kubevirtcorev1.Disk{
+			{
+				Name: containerDiskName,
+				DiskDevice: kubevirtcorev1.DiskDevice{
+					Disk: &kubevirtcorev1.DiskTarget{
+						Bus: kubevirtcorev1.DiskBusVirtio,
+					},
+				},
+			},
+			{
+				Name: cloudInitDiskName,
+				DiskDevice: kubevirtcorev1.DiskDevice{
+					Disk: &kubevirtcorev1.DiskTarget{
+						Bus: kubevirtcorev1.DiskBusVirtio,
+					},
+				},
+			},
+		}
+
+		// 设置 cloudinit
+		vmUserData, err := buildVMUserData(s.kubeClient, req.User, req.Password)
+		if err != nil {
+			return nil, err
+		}
+		// 设置 volumes
+		vm.Spec.Template.Spec.Volumes = []kubevirtcorev1.Volume{
+			{
+				Name: containerDiskName,
+				VolumeSource: kubevirtcorev1.VolumeSource{
+					DataVolume: &kubevirtcorev1.DataVolumeSource{
+						Name: dvName,
+					},
+				},
+			},
+			{
+				Name: cloudInitDiskName,
+				VolumeSource: kubevirtcorev1.VolumeSource{
+					CloudInitNoCloud: &kubevirtcorev1.CloudInitNoCloudSource{
+						UserData: vmUserData,
+					},
+				},
 			},
 		}
 	}
 
-	vmUserData := vmUserData(s.kubeClient, req.User, req.Password)
+	// 该功能待集成，安装 virtio 驱动（windows），arm64 环境下待验证。
+	if req.LoadVirtioDriver {
+		vm.Spec.Template.Spec.Domain.Devices.Disks = append(vm.Spec.Template.Spec.Domain.Devices.Disks, kubevirtcorev1.Disk{
+			Name: virtioContainerDiskName,
+			DiskDevice: kubevirtcorev1.DiskDevice{
+				CDRom: &kubevirtcorev1.CDRomTarget{
+					Bus: util.If(runtime.GOARCH == "arm64", kubevirtcorev1.DiskBusSCSI, kubevirtcorev1.DiskBusSATA),
+				},
+			},
+		})
 
-	vm := &kubevirtcorev1.VirtualMachine{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "VirtualMachine",
-			APIVersion: kubevirtcorev1.GroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      req.Name,
-			Namespace: tenantEnv.Namespace,
-			Labels:    wutongLabels,
-			Annotations: map[string]string{
-				"wutong.io/display-name":                req.DisplayName,
-				"wutong.io/desc":                        req.Desc,
-				"wutong.io/creator":                     req.Operator,
-				"wutong.io/last-modifier":               req.Operator,
-				"wutong.io/vm-disk-size":                fmt.Sprintf("%d", req.OSDiskSize),
-				"wutong.io/vm-request-cpu":              fmt.Sprintf("%d", req.RequestCPU),
-				"wutong.io/vm-request-memory":           fmt.Sprintf("%d", req.RequestMemory),
-				"wutong.io/vm-os-name":                  req.OSName,
-				"wutong.io/vm-os-version":               req.OSVersion,
-				"wutong.io/vm-os-source-from":           string(req.OSSourceFrom),
-				"wutong.io/vm-os-source-url":            req.OSSourceURL,
-				"wutong.io/vm-default-login-user":       req.User,
-				"wutong.io/last-modification-timestamp": metav1.Now().UTC().Format(time.RFC3339),
-			},
-		},
-		Spec: kubevirtcorev1.VirtualMachineSpec{
-			DataVolumeTemplates: []kubevirtcorev1.DataVolumeTemplateSpec{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:   req.Name + "-dv",
-						Labels: wutongLabels,
-						Annotations: map[string]string{
-							"cdi.kubevirt.io/storage.import.source":   string(req.OSSourceFrom),
-							"cdi.kubevirt.io/storage.import.endpoint": sourceUrl,
-						},
-					},
-					Spec: cdicorev1beta1.DataVolumeSpec{
-						PVC: &corev1.PersistentVolumeClaimSpec{
-							AccessModes: []corev1.PersistentVolumeAccessMode{
-								corev1.ReadWriteOnce,
-							},
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceStorage: *resource.NewQuantity(req.OSDiskSize*1024*1024*1024, resource.BinarySI),
-								},
-							},
-							StorageClassName: util.Ptr(kube.GetDefaultStorageClass(s.kubeClient)),
-						},
-						Source: &source,
-					},
+		vm.Spec.Template.Spec.Volumes = append(vm.Spec.Template.Spec.Volumes, kubevirtcorev1.Volume{
+			Name: virtioContainerDiskName,
+			VolumeSource: kubevirtcorev1.VolumeSource{
+				ContainerDisk: &kubevirtcorev1.ContainerDiskSource{
+					Image: chaos.VIRTIOCONTAINERDISKIMAGENAME,
 				},
 			},
-			Running: util.Ptr(req.Running),
-			Template: &kubevirtcorev1.VirtualMachineInstanceTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: wutongLabels,
-				},
-				Spec: kubevirtcorev1.VirtualMachineInstanceSpec{
-					Domain: kubevirtcorev1.DomainSpec{
-						Clock: &kubevirtcorev1.Clock{
-							ClockOffset: kubevirtcorev1.ClockOffset{
-								Timezone: util.Ptr(kubevirtcorev1.ClockOffsetTimezone("Asia/Shanghai")), // default timezone
-							},
-						},
-						Devices: kubevirtcorev1.Devices{
-							Disks: []kubevirtcorev1.Disk{
-								{
-									Name: "containerdisk",
-									DiskDevice: kubevirtcorev1.DiskDevice{
-										Disk: &kubevirtcorev1.DiskTarget{
-											Bus: "virtio",
-										},
-									},
-								},
-								{
-									Name: "cloudinitdisk",
-									DiskDevice: kubevirtcorev1.DiskDevice{
-										Disk: &kubevirtcorev1.DiskTarget{
-											Bus: "virtio",
-										},
-									},
-								},
-							},
-							Interfaces: []kubevirtcorev1.Interface{
-								{
-									Name: "default",
-									InterfaceBindingMethod: kubevirtcorev1.InterfaceBindingMethod{
-										Masquerade: &kubevirtcorev1.InterfaceMasquerade{},
-									},
-									MacAddress: util.GenerateMACAddress(),
-								},
-							},
-						},
-						Memory: &kubevirtcorev1.Memory{
-							Guest: util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))),
-						},
-						Resources: kubevirtcorev1.ResourceRequirements{
-							Requests: corev1.ResourceList{
-								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
-								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
-							},
-							Limits: corev1.ResourceList{
-								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
-								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
-							},
-						},
-					},
-					NodeSelector: nodeSelector,
-					Networks: []kubevirtcorev1.Network{
-						{
-							Name: "default",
-							NetworkSource: kubevirtcorev1.NetworkSource{
-								Pod: &kubevirtcorev1.PodNetwork{},
-							},
-						},
-					},
-					Volumes: []kubevirtcorev1.Volume{
-						{
-							Name: "containerdisk",
-							VolumeSource: kubevirtcorev1.VolumeSource{
-								DataVolume: &kubevirtcorev1.DataVolumeSource{
-									Name: req.Name + "-dv",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		})
 	}
 
 	var result = &api_model.CreateVMResponse{
 		VMProfile: vmProfileFromKubeVirtVM(vm, nil),
 	}
-
-	bcrypt.GenerateFromPassword([]byte("ubuntu"), bcrypt.DefaultCost)
-	bcryptedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		logrus.Errorf("bcrypt password failed, error: %s", err.Error())
-		return nil, fmt.Errorf("虚拟机初始用户密码加密失败！")
-	}
-
-	vmUserData += fmt.Sprintf(`bootcmd:
-  - sudo cp -r /home/%s/.ssh /root/
-`, req.User)
-
-	vmUserData += fmt.Sprintf(`runcmd:
-  - sudo dhclient
-%s`, filebrowserRunCmd(req.User, string(bcryptedPassword)))
-
-	// set cloudinit
-	vm.Spec.Template.Spec.Volumes = append(vm.Spec.Template.Spec.Volumes, kubevirtcorev1.Volume{
-		Name: "cloudinitdisk",
-		VolumeSource: kubevirtcorev1.VolumeSource{
-			CloudInitNoCloud: &kubevirtcorev1.CloudInitNoCloudSource{
-				UserData: vmUserData,
-			},
-		},
-	})
 
 	created, err := kube.CreateKubevirtVM(s.dynamicClient, vm)
 	if err != nil {
@@ -295,16 +254,20 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		return result, fmt.Errorf("创建虚拟机 %s 失败！", req.Name)
 	}
 
-	// create ssh, filebrowser port
-	s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
-		VMPort:   22,
-		Protocol: api_model.VMPortProtocolSSH,
-	})
+	// 用户使用 iso 自行安装虚拟机时，不需要自动添加额外的端口
+	if installType != api_model.VMInstallTypeISO {
+		// 创建 ssh 端口
+		s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
+			VMPort:   22,
+			Protocol: api_model.VMPortProtocolSSH,
+		})
 
-	s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
-		VMPort:   6173,
-		Protocol: api_model.VMPortProtocolHTTP,
-	})
+		// 创建 file-browser 端口
+		s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
+			VMPort:   6173,
+			Protocol: api_model.VMPortProtocolHTTP,
+		})
+	}
 
 	result.Status = string(created.Status.PrintableStatus)
 	return result, nil
@@ -348,7 +311,6 @@ func (s *ServiceAction) GetVMConditions(tenantEnv *dbmodel.TenantEnvs, vmID stri
 	return &api_model.GetVMConditionsResponse{
 		Conditions: vmConditions(vm),
 	}, nil
-
 }
 
 func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.UpdateVMRequest) (*api_model.UpdateVMResponse, error) {
@@ -506,14 +468,14 @@ func (s *ServiceAction) RestartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*
 }
 
 func (s *ServiceAction) AddVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMPortRequest) error {
-	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svcName := serviceName(vmID, req.VMPort, req.Protocol)
 
 	wutongLabels := labelsFromTenantEnv(tenantEnv)
 	wutongLabels = labels.Merge(wutongLabels, map[string]string{
 		"wutong.io/vm-id":            vmID,
 		"wutong.io/vm-port-enabled":  "false",
 		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
-		"wutong.io/vm-port-protocol": string(req.Protocol),
+		"wutong.io/vm-port-protocol": req.Protocol,
 	})
 
 	svc := &corev1.Service{
@@ -551,7 +513,7 @@ func (s *ServiceAction) AddVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, re
 
 func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.EnableVMPortRequest) error {
 	// 1、端口配置
-	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svcName := serviceName(vmID, req.VMPort, req.Protocol)
 	svc, err := kube.GetCachedResources(s.kubeClient).ServiceLister.Services(tenantEnv.Namespace).Get(svcName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -582,7 +544,7 @@ func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 	gateways, err := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id":            vmID,
 		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
-		"wutong.io/vm-port-protocol": string(req.Protocol),
+		"wutong.io/vm-port-protocol": req.Protocol,
 	}))
 	if err != nil {
 		logrus.Errorf("list ingress failed, error: %s", err.Error())
@@ -621,7 +583,7 @@ func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 
 func (s *ServiceAction) DisableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DisableVMPortRequest) error {
 	// 1、service 添加关闭标签
-	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svcName := serviceName(vmID, req.VMPort, req.Protocol)
 	svc, err := kube.GetCachedResources(s.kubeClient).ServiceLister.Services(tenantEnv.Namespace).Get(svcName)
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -652,7 +614,7 @@ func (s *ServiceAction) DisableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string
 	gateways, err := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id":            vmID,
 		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
-		"wutong.io/vm-port-protocol": string(req.Protocol),
+		"wutong.io/vm-port-protocol": req.Protocol,
 	}))
 	if err != nil {
 		logrus.Errorf("list ingress failed, error: %s", err.Error())
@@ -723,7 +685,7 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 					vpg := api_model.VMPortGateway{
 						GatewayID: ing.Name,
 					}
-					if protocol == string(api_model.VMPortProtocolHTTP) {
+					if protocol == api_model.VMPortProtocolHTTP {
 						if len(ing.Spec.Rules) > 0 {
 							vpg.GatewayHost = ing.Spec.Rules[0].Host
 							if ing.Spec.Rules[0].HTTP != nil && len(ing.Spec.Rules[0].HTTP.Paths) > 0 {
@@ -756,7 +718,7 @@ func (s *ServiceAction) GetVMPorts(tenantEnv *dbmodel.TenantEnvs, vmID string) (
 }
 
 func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMPortGatewayRequest) error {
-	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svcName := serviceName(vmID, req.VMPort, req.Protocol)
 
 	svc, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
 	if err != nil {
@@ -804,7 +766,7 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 		},
 	}
 
-	if protocol == string(api_model.VMPortProtocolHTTP) {
+	if protocol == api_model.VMPortProtocolHTTP {
 		// http mode ingerss
 		if req.GatewayPath == "" {
 			req.GatewayPath = "/"
@@ -875,7 +837,7 @@ func (s *ServiceAction) CreateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID 
 		return fmt.Errorf("创建虚拟机 %s 网关失败！", vmID)
 	}
 
-	if protocol == string(api_model.VMPortProtocolHTTP) {
+	if protocol == api_model.VMPortProtocolHTTP {
 		// register http domain and host
 		err := db.GetManager().HTTPRuleDao().CreateOrUpdateHTTPRuleInBatch([]*dbmodel.HTTPRule{
 			{
@@ -936,7 +898,7 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 
 	ingToUpdate := ingBeforUpdate.DeepCopy()
 
-	if protocol == string(api_model.VMPortProtocolHTTP) {
+	if protocol == api_model.VMPortProtocolHTTP {
 		// http mode ingerss
 		if req.GatewayPath == "" {
 			req.GatewayPath = "/"
@@ -1014,7 +976,7 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 		return fmt.Errorf("更新虚拟机 %s 网关 %d -> %s%s 失败！", vmID, port, req.GatewayHost, req.GatewayPath)
 	}
 
-	if protocol == string(api_model.VMPortProtocolHTTP) {
+	if protocol == api_model.VMPortProtocolHTTP {
 		// update registered http domain and host
 		httpRule, err := db.GetManager().HTTPRuleDao().GetHTTPRuleByID(gatewayID)
 		if err != nil {
@@ -1079,7 +1041,7 @@ func (s *ServiceAction) DeleteVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 		return fmt.Errorf("虚拟机 %s 端口协议未知！", vmID)
 	}
 
-	if protocol == string(api_model.VMPortProtocolHTTP) {
+	if protocol == api_model.VMPortProtocolHTTP {
 		err = db.GetManager().HTTPRuleDao().DeleteHTTPRuleByID(gatewayID)
 		if err != nil {
 			logrus.Errorf("delete http rule failed, error: %s", err.Error())
@@ -1110,7 +1072,7 @@ func (s *ServiceAction) DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 	gateways, err := kube.GetCachedResources(s.kubeClient).IngressV1Lister.Ingresses(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id":            vmID,
 		"wutong.io/vm-port":          fmt.Sprintf("%d", req.VMPort),
-		"wutong.io/vm-port-protocol": string(req.Protocol),
+		"wutong.io/vm-port-protocol": req.Protocol,
 	}))
 	if err != nil {
 		logrus.Errorf("list ingress failed, error: %s", err.Error())
@@ -1124,7 +1086,7 @@ func (s *ServiceAction) DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 	}
 
 	// 2、删除虚拟机端口服务
-	svcName := serviceName(vmID, req.VMPort, string(req.Protocol))
+	svcName := serviceName(vmID, req.VMPort, req.Protocol)
 	err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Delete(context.Background(), svcName, metav1.DeleteOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -1138,6 +1100,18 @@ func (s *ServiceAction) DeleteVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 }
 
 func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) error {
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	// 0、关闭虚拟机，如果虚拟机还处于运行状态
+	if _, err := s.StopVM(tenantEnv, vmID); err != nil {
+		logrus.Errorf("stop vm failed, error: %s", err.Error())
+		return fmt.Errorf("关闭虚拟机 %s 失败！", vmID)
+	}
+
 	// 1、删除虚拟机端口服务下所有已开通的网关
 	services, err := kube.GetCachedResources(s.kubeClient).ServiceLister.Services(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id": vmID,
@@ -1156,14 +1130,7 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		}
 	}
 
-	// 2、删除虚拟机
-	err = kube.DeleteKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
-	if err != nil {
-		logrus.Errorf("delete vm failed, error: %s", err.Error())
-		return fmt.Errorf("删除虚拟机 %s 失败！", vmID)
-	}
-
-	// 3、删除虚拟机存储卷
+	// 2、删除虚拟机存储卷
 	pvcs, err := kube.GetCachedResources(s.kubeClient).PersistentVolumeClaimLister.PersistentVolumeClaims(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id": vmID,
 	}))
@@ -1175,6 +1142,26 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		err = s.DeleteVMVolume(tenantEnv, vmID, pvc.Labels["wutong.io/vm-volume"])
 		if err != nil {
 			return fmt.Errorf("删除虚拟机 %s 下存储卷 %s 失败！", vmID, pvc.Labels["wutong.io/vm-volume"])
+		}
+	}
+
+	// 3、删除虚拟机
+	err = kube.DeleteKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		logrus.Errorf("delete vm failed, error: %s", err.Error())
+		return fmt.Errorf("删除虚拟机 %s 失败！", vmID)
+	}
+
+	// 4、如果使用 .iso 系统源创建的虚拟机，需要额外回收数据盘 pvc
+	if vm.Labels["wutong.io/vm-os-source-from"] == api_model.OSSourceFromHTTP && strings.HasSuffix(vm.Labels["wutong.io/vm-os-source-type"], ".iso") {
+		dataPVCName := pvcName(vmID, "data")
+		err = s.kubeClient.CoreV1().PersistentVolumeClaims(vm.Namespace).Delete(context.Background(), dataPVCName, metav1.DeleteOptions{})
+		if err != nil {
+			if k8sErrors.IsNotFound(err) {
+				return nil
+			}
+			logrus.Errorf("delete vm data pvc failed, error: %s", err.Error())
+			return fmt.Errorf("删除虚拟机 %s 数据盘失败！", vmID)
 		}
 	}
 
@@ -1215,7 +1202,7 @@ func (s *ServiceAction) ListVMVolumes(tenantEnv *dbmodel.TenantEnvs, vmID string
 		return pvcs[i].CreationTimestamp.After(pvcs[j].CreationTimestamp.Time)
 	})
 
-	podPvcVolumes := vmPodVolumes(s.vmPod(tenantEnv, vmID))
+	podPvcVolumes := vmPodVolumes(vmPod(s.kubeClient, tenantEnv, vmID))
 
 	volumes := make([]api_model.VMVolume, 0)
 	for _, pvc := range pvcs {
@@ -1374,7 +1361,216 @@ func (s *ServiceAction) DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volu
 	return nil
 }
 
-func vmUserData(kubeClient kubernetes.Interface, username, password string) string {
+// RemoveBootDisk 取消虚拟机启动盘设置
+// 并未直接删除，因为可能后续需要依赖该启动盘重装系统等操作
+func (s *ServiceAction) RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID string) error {
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	for i := range vm.Spec.Template.Spec.Domain.Devices.Disks {
+		// 取消 bootdisk disk 启动顺序设置
+		if vm.Spec.Template.Spec.Domain.Devices.Disks[i].Name == bootDiskName {
+			vm.Spec.Template.Spec.Domain.Devices.Disks[i].BootOrder = nil
+		}
+
+		// 设置 containerdisk 为启动盘
+		if vm.Spec.Template.Spec.Domain.Devices.Disks[i].Name == containerDiskName &&
+			vm.Spec.Template.Spec.Domain.Devices.Disks[i].BootOrder != nil &&
+			*vm.Spec.Template.Spec.Domain.Devices.Disks[i].BootOrder == 2 {
+			vm.Spec.Template.Spec.Domain.Devices.Disks[i].BootOrder = util.Ptr[uint](1)
+		}
+	}
+
+	// 更新虚拟机
+	_, err = kube.UpdateKubeVirtVM(s.dynamicClient, vm)
+	if err != nil {
+		logrus.Errorf("update vm failed, error: %s", err.Error())
+		return fmt.Errorf("更新虚拟机 %s 启动顺序失败！", vmID)
+	}
+
+	// 重启
+	_, err = s.RestartVM(tenantEnv, vmID)
+	if err != nil {
+		logrus.Errorf("restart vm failed, error: %s", err.Error())
+		return fmt.Errorf("重启虚拟机 %s 失败！", vmID)
+	}
+	return nil
+}
+
+// buildVMBase 构建虚拟机基础结构实例
+func buildVMBase(req *api_model.CreateVMRequest, namespace string, labels map[string]string) *kubevirtcorev1.VirtualMachine {
+	var nodeSelector = map[string]string{
+		"wutong.io/vm-schedulable": "true",
+	}
+
+	for _, labelKey := range req.NodeSelectorLabels {
+		nodeSelector["vm-scheduling-label.wutong.io/"+labelKey] = ""
+	}
+
+	vm := &kubevirtcorev1.VirtualMachine{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "VirtualMachine",
+			APIVersion: kubevirtcorev1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.Name,
+			Namespace: namespace,
+			Labels:    labels,
+			Annotations: map[string]string{
+				"wutong.io/display-name":                req.DisplayName,
+				"wutong.io/desc":                        req.Desc,
+				"wutong.io/creator":                     req.Operator,
+				"wutong.io/last-modifier":               req.Operator,
+				"wutong.io/vm-disk-size":                fmt.Sprintf("%d", req.OSDiskSize),
+				"wutong.io/vm-request-cpu":              fmt.Sprintf("%d", req.RequestCPU),
+				"wutong.io/vm-request-memory":           fmt.Sprintf("%d", req.RequestMemory),
+				"wutong.io/vm-os-name":                  req.OSName,
+				"wutong.io/vm-os-version":               req.OSVersion,
+				"wutong.io/vm-os-source-from":           req.OSSourceFrom,
+				"wutong.io/vm-os-source-url":            req.OSSourceURL,
+				"wutong.io/vm-default-login-user":       req.User,
+				"wutong.io/last-modification-timestamp": metav1.Now().UTC().Format(time.RFC3339),
+			},
+		},
+		Spec: kubevirtcorev1.VirtualMachineSpec{
+			Running: util.Ptr(req.Running),
+			Template: &kubevirtcorev1.VirtualMachineInstanceTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: kubevirtcorev1.VirtualMachineInstanceSpec{
+					Domain: kubevirtcorev1.DomainSpec{
+						Clock: &kubevirtcorev1.Clock{
+							ClockOffset: kubevirtcorev1.ClockOffset{
+								Timezone: util.Ptr(kubevirtcorev1.ClockOffsetTimezone("Asia/Shanghai")), // default timezone
+							},
+						},
+						Devices: kubevirtcorev1.Devices{
+							Interfaces: []kubevirtcorev1.Interface{
+								{
+									Name: "default",
+									InterfaceBindingMethod: kubevirtcorev1.InterfaceBindingMethod{
+										Masquerade: &kubevirtcorev1.InterfaceMasquerade{},
+									},
+									MacAddress: util.GenerateMACAddress(), // 自动生成 mac 地址，避免冲突导致网络异常
+								},
+							},
+						},
+						Memory: &kubevirtcorev1.Memory{
+							Guest: util.Ptr(resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory))),
+						},
+						Resources: kubevirtcorev1.ResourceRequirements{
+							Requests: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
+								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
+							},
+							Limits: corev1.ResourceList{
+								corev1.ResourceCPU:    resource.MustParse(fmt.Sprintf("%dm", req.RequestCPU)),
+								corev1.ResourceMemory: resource.MustParse(fmt.Sprintf("%dGi", req.RequestMemory)),
+							},
+						},
+					},
+					NodeSelector: nodeSelector,
+					Networks: []kubevirtcorev1.Network{
+						{
+							Name: "default",
+							NetworkSource: kubevirtcorev1.NetworkSource{
+								Pod: &kubevirtcorev1.PodNetwork{},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return vm
+}
+
+// createContainerDiskPVC 创建虚拟机数据盘 PVC
+func createContainerDiskPVC(req *api_model.CreateVMRequest, tenantEnv *dbmodel.TenantEnvs, wutongLabels map[string]string, s *ServiceAction) error {
+	pvc := corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      pvcName(req.Name, "data"),
+			Namespace: tenantEnv.Namespace,
+			Labels:    wutongLabels,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: *resource.NewQuantity(req.OSDiskSize*1024*1024*1024, resource.BinarySI),
+				},
+			},
+		},
+	}
+
+	_, err := s.kubeClient.CoreV1().PersistentVolumeClaims(tenantEnv.Namespace).Create(context.Background(), &pvc, metav1.CreateOptions{})
+	if err != nil {
+		logrus.Errorf("create pvc failed, error: %s", err.Error())
+		return fmt.Errorf("创建虚拟机 %s 安装磁盘失败！", req.Name)
+	}
+	return nil
+}
+
+// buildVMDataVolumeTemplates 构建虚拟机数据盘模板
+func buildVMDataVolumeTemplates(name string, sourceFrom api_model.OSSourceFrom, sourceUrl string, size int64) []kubevirtcorev1.DataVolumeTemplateSpec {
+	var source *cdicorev1beta1.DataVolumeSource
+	switch sourceFrom {
+	case api_model.OSSourceFromHTTP:
+		source = &cdicorev1beta1.DataVolumeSource{
+			HTTP: &cdicorev1beta1.DataVolumeSourceHTTP{
+				URL: sourceUrl,
+			},
+		}
+	case api_model.OSSourceFromRegistry:
+		sourceUrl = "docker://" + sourceUrl
+		source = &cdicorev1beta1.DataVolumeSource{
+			Registry: &cdicorev1beta1.DataVolumeSourceRegistry{
+				URL: util.Ptr(sourceUrl),
+			},
+		}
+	}
+	result := []kubevirtcorev1.DataVolumeTemplateSpec{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: name,
+				Annotations: map[string]string{
+					"cdi.kubevirt.io/storage.import.source":   sourceFrom,
+					"cdi.kubevirt.io/storage.import.endpoint": sourceUrl,
+				},
+			},
+			Spec: cdicorev1beta1.DataVolumeSpec{
+				PVC: &corev1.PersistentVolumeClaimSpec{
+					AccessModes: []corev1.PersistentVolumeAccessMode{
+						corev1.ReadWriteOnce,
+					},
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceStorage: *resource.NewQuantity(size*1024*1024*1024, resource.BinarySI),
+						},
+					},
+				},
+				Source: source,
+			},
+		},
+	}
+	return result
+}
+
+// buildVMUserData 构建虚拟机初始化用户数据，对支持 cloud-init 的虚拟机有效
+// 1. 初始用户账号密码
+// 2. 初始用户 ssh key
+// 3. 默认安装 file-browser 服务，供用户管理虚拟机文件
+func buildVMUserData(kubeClient kubernetes.Interface, username, password string) (string, error) {
 	vmSSHPubKey, _ := kube.GetWTChannelSSHPubKey(kubeClient)
 	vmUserData := fmt.Sprintf(`#cloud-config
 disable_root: false
@@ -1398,9 +1594,24 @@ ssh_pwauth: True
 ssh_authorized_keys:
   - %s\n`, username, username, username, username, password, vmSSHPubKey, password, vmSSHPubKey)
 
-	return vmUserData
+	bcryptedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		logrus.Errorf("bcrypt password failed, error: %s", err.Error())
+		return "", fmt.Errorf("虚拟机初始用户密码加密失败！")
+	}
+
+	vmUserData += fmt.Sprintf(`bootcmd:
+  - sudo cp -r /home/%s/.ssh /root/
+`, username)
+
+	vmUserData += fmt.Sprintf(`runcmd:
+  - sudo dhclient
+%s`, filebrowserRunCmd(username, string(bcryptedPassword)))
+
+	return vmUserData, nil
 }
 
+// filebrowserRunCmd 安装 file-browser 服务命令
 func filebrowserRunCmd(username, bcryptedPassword string) string {
 	// `sudo sh -c 'cat <<\EOF` cat 命令使用单引号， `\EOF` 前添加 \ 是为了防止文本转义，bcryptedPassword 中一般包含 $ 符号
 	return fmt.Sprintf(`  - sudo wget -O /usr/local/bin/filebrowser https://wutong-paas.obs.cn-east-3.myhuaweicloud.com/linux/$(uname -m)/filebrowser
@@ -1428,6 +1639,7 @@ func filebrowserRunCmd(username, bcryptedPassword string) string {
   - sudo systemctl start filebrowser`, username, bcryptedPassword)
 }
 
+// labelsFromTenantEnv 从租户环境信息组成基础标签信息
 func labelsFromTenantEnv(te *dbmodel.TenantEnvs) map[string]string {
 	return map[string]string{
 		"creator":         "Wutong",
@@ -1454,7 +1666,7 @@ func generateGatewayHost(namespace, vmID string, port int) string {
 	if strings.Contains(exDomain, ":") {
 		exDomain = strings.Split(exDomain, ":")[0]
 	}
-	svcName := serviceName(vmID, port, string(api_model.VMPortProtocolHTTP))
+	svcName := serviceName(vmID, port, api_model.VMPortProtocolHTTP)
 	return fmt.Sprintf("%s.%s.%s", svcName, namespace, exDomain)
 }
 
@@ -1496,6 +1708,17 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 			Arch:    vm.Spec.Template.Spec.Architecture,
 		},
 	}
+
+	containsBootDisk := func(vm *kubevirtcorev1.VirtualMachine) bool {
+		for _, disk := range vm.Spec.Template.Spec.Domain.Devices.Disks {
+			if disk.Name == bootDiskName && disk.BootOrder != nil && *disk.BootOrder == 1 {
+				return true
+			}
+		}
+		return false
+	}
+
+	result.ContainsBootDisk = containsBootDisk(vm)
 
 	result.Conditions = vmConditions(vm)
 
@@ -1563,8 +1786,8 @@ const (
 	VolumeStatusLost             = "已丢失"
 )
 
-func (s *ServiceAction) vmPod(tenantEnv *dbmodel.TenantEnvs, vmID string) *corev1.Pod {
-	pods, _ := kube.GetCachedResources(s.kubeClient).PodLister.Pods(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
+func vmPod(kubeClient kubernetes.Interface, tenantEnv *dbmodel.TenantEnvs, vmID string) *corev1.Pod {
+	pods, _ := kube.GetCachedResources(kubeClient).PodLister.Pods(tenantEnv.Namespace).List(labels.SelectorFromSet(labels.Set{
 		"wutong.io/vm-id": vmID,
 		"kubevirt.io":     "virt-launcher",
 	}))

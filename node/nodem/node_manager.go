@@ -184,7 +184,7 @@ func (n *NodeManager) CheckNodeHealthy() (bool, error) {
 				return false, fmt.Errorf(result.Info)
 			}
 		} else {
-			return false, fmt.Errorf("The data is not ready yet")
+			return false, fmt.Errorf("the data is not ready yet")
 		}
 	}
 	return true, nil

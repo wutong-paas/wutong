@@ -26,8 +26,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/util"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-	grpcutil "github.com/wutong-paas/wutong/util/grpc"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	"google.golang.org/grpc"
@@ -36,52 +34,67 @@ import (
 // AppRuntimeSyncClient grpc client
 type AppRuntimeSyncClient struct {
 	pb.AppRuntimeSyncClient
-	AppRuntimeSyncClientConf
+	// AppRuntimeSyncClientConf
 	cc  *grpc.ClientConn
 	ctx context.Context
 }
 
 // AppRuntimeSyncClientConf client conf
-type AppRuntimeSyncClientConf struct {
-	NonBlock             bool
-	EtcdEndpoints        []string
-	EtcdCaFile           string
-	EtcdCertFile         string
-	EtcdKeyFile          string
-	DefaultServerAddress []string
-}
+// type AppRuntimeSyncClientConf struct {
+// 	NonBlock             bool
+// 	EtcdEndpoints        []string
+// 	EtcdCaFile           string
+// 	EtcdCertFile         string
+// 	EtcdKeyFile          string
+// 	DefaultServerAddress []string
+// }
 
 // NewClient new client
 // ctx must be cancel where client not used
-func NewClient(ctx context.Context, conf AppRuntimeSyncClientConf) (*AppRuntimeSyncClient, error) {
-	var arsc AppRuntimeSyncClient
-	arsc.AppRuntimeSyncClientConf = conf
-	arsc.ctx = ctx
-	etcdClientArgs := &etcdutil.ClientArgs{
-		Endpoints: conf.EtcdEndpoints,
-		CaFile:    conf.EtcdCaFile,
-		CertFile:  conf.EtcdCertFile,
-		KeyFile:   conf.EtcdKeyFile,
-	}
-	c, err := etcdutil.NewClient(ctx, etcdClientArgs)
+// func NewClient(ctx context.Context, conf AppRuntimeSyncClientConf) (*AppRuntimeSyncClient, error) {
+// 	var arsc AppRuntimeSyncClient
+// 	arsc.AppRuntimeSyncClientConf = conf
+// 	arsc.ctx = ctx
+// 	etcdClientArgs := &etcdutil.ClientArgs{
+// 		Endpoints: conf.EtcdEndpoints,
+// 		CaFile:    conf.EtcdCaFile,
+// 		CertFile:  conf.EtcdCertFile,
+// 		KeyFile:   conf.EtcdKeyFile,
+// 	}
+// 	c, err := etcdutil.NewClient(ctx, etcdClientArgs)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	r := &grpcutil.GRPCResolver{Client: c}
+// 	b := grpc.RoundRobin(r)
+// 	dialOpts := []grpc.DialOption{
+// 		grpc.WithBalancer(b),
+// 		grpc.WithInsecure(),
+// 	}
+// 	if !conf.NonBlock {
+// 		dialOpts = append(dialOpts, grpc.WithBlock())
+// 	}
+// 	arsc.cc, err = grpc.DialContext(ctx, "/wutong/discover/app_sync_runtime_server", dialOpts...)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	arsc.AppRuntimeSyncClient = pb.NewAppRuntimeSyncClient(arsc.cc)
+// 	return &arsc, nil
+// }
+
+// NewClient new client (tx must be cancel where client not used)
+func NewClient(ctx context.Context, grpcServer string) (c *AppRuntimeSyncClient, err error) {
+	c = new(AppRuntimeSyncClient)
+	c.ctx = ctx
+	logrus.Infof("discover app runtime sync server address %s", grpcServer)
+	c.cc, err = grpc.Dial(grpcServer, grpc.WithInsecure())
+
 	if err != nil {
 		return nil, err
 	}
-	r := &grpcutil.GRPCResolver{Client: c}
-	b := grpc.RoundRobin(r)
-	dialOpts := []grpc.DialOption{
-		grpc.WithBalancer(b),
-		grpc.WithInsecure(),
-	}
-	if !conf.NonBlock {
-		dialOpts = append(dialOpts, grpc.WithBlock())
-	}
-	arsc.cc, err = grpc.DialContext(ctx, "/wutong/discover/app_sync_runtime_server", dialOpts...)
-	if err != nil {
-		return nil, err
-	}
-	arsc.AppRuntimeSyncClient = pb.NewAppRuntimeSyncClient(arsc.cc)
-	return &arsc, nil
+	c.AppRuntimeSyncClient = pb.NewAppRuntimeSyncClient(c.cc)
+
+	return c, nil
 }
 
 // when watch occurred error,will exec this method

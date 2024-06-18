@@ -313,7 +313,9 @@ func ParseImageName(s string) (i Image) {
 	}
 	i.name = name
 	i.Tag = sources.GetTagFromNamedRef(name)
-	if strings.Contains(s, ":") {
+	// fix: may be got an image name like this: [host:port/namespace/name:tag]
+	imageNameList := strings.Split(s, "/")
+	if strings.Contains(imageNameList[len(imageNameList)-1], ":") {
 		i.Name = s[:len(s)-(len(i.Tag)+1)]
 	} else {
 		i.Name = s

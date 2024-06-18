@@ -18,7 +18,7 @@
 
 package handler
 
-import "github.com/wutong-paas/wutong/api/client/prometheus"
+import "github.com/wutong-paas/wutong/pkg/prometheus"
 
 // MonitorHandler monitor api handler
 type MonitorHandler interface {

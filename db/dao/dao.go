@@ -313,6 +313,8 @@ type TenantEnvServiceEnvVarDao interface {
 	DelByServiceIDAndScope(sid, scope string) error
 	CreateOrUpdateEnvsInBatch(envs []*model.TenantEnvServiceEnvVar) error
 	DeleteByComponentIDs(componentIDs []string) error
+	DeleteByComponentID(componentID string) error
+	DeleteByComponentIDAndScope(componentID, scope string) error
 }
 
 // TenantEnvServiceMountRelationDao TenantEnvServiceMountRelationDao
@@ -600,6 +602,7 @@ type TenantEnvServceAutoscalerRulesDao interface {
 	ListEnableOnesByServiceID(serviceID string) ([]*model.TenantEnvServiceAutoscalerRules, error)
 	ListByComponentIDs(componentIDs []string) ([]*model.TenantEnvServiceAutoscalerRules, error)
 	DeleteByComponentIDs(componentIDs []string) error
+	DeleteByRuleID(ruleID string) error
 	CreateOrUpdateScaleRulesInBatch(rules []*model.TenantEnvServiceAutoscalerRules) error
 }
 

@@ -76,7 +76,7 @@ func NewBuilder() *Builder {
 // AddFlags config
 func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LogLevel, "log-level", "info", "the builder log level")
-	fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://127.0.0.1:2379"}, "etcd v3 cluster endpoints.")
+	// fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://127.0.0.1:2379"}, "etcd v3 cluster endpoints.")
 	fs.StringVar(&a.EtcdCaFile, "etcd-ca", "", "")
 	fs.StringVar(&a.EtcdCertFile, "etcd-cert", "", "")
 	fs.StringVar(&a.EtcdKeyFile, "etcd-key", "", "")
@@ -86,11 +86,11 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.KanikoImage, "kaniko-image", "swr.cn-southwest-2.myhuaweicloud.com/wutong/kaniko-executor:latest", "kaniko image version")
 	fs.StringVar(&a.DBType, "db-type", "mysql", "db type mysql or etcd")
 	fs.StringVar(&a.MysqlConnectionInfo, "mysql", "root:admin@tcp(127.0.0.1:3306)/region", "mysql db connection info")
-	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
+	// fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
 	fs.StringVar(&a.KubeConfig, "kube-config", "", "kubernetes api server config file")
 	fs.IntVar(&a.MaxTasks, "max-tasks", 50, "Maximum number of simultaneous build tasks")
 	fs.IntVar(&a.APIPort, "api-port", 3228, "the port for api server")
-	fs.StringVar(&a.MQAPI, "mq-api", "127.0.0.1:6300", "acp_mq api")
+	// fs.StringVar(&a.MQAPI, "mq-api", "127.0.0.1:6300", "acp_mq api")
 	fs.StringVar(&a.RunMode, "run", "sync", "sync data when worker start")
 	fs.StringVar(&a.DockerEndpoint, "dockerd", "127.0.0.1:2376", "dockerd endpoint")
 	fs.StringVar(&a.HostIP, "hostIP", "", "Current node Intranet IP")
@@ -105,6 +105,9 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.CachePath, "cache-path", "/cache", "volume cache mount path, when cache-mode using hostpath, default path is /cache")
 	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
 	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.DefaultDockerSock, "container runtime endpoint")
+	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"wt-eventlog:6366"}, "event log server address. simple lb")
+	fs.StringVar(&a.MQAPI, "mq-api", "wt-mq:6300", "acp_mq api")
+	fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://wt-etcd:2379"}, "etcd v3 cluster endpoints.")
 }
 
 // SetLog 设置log

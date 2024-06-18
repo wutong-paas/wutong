@@ -1347,3 +1347,14 @@ func (t *TenantEnvStruct) DeleteVMVolume(w http.ResponseWriter, r *http.Request)
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
+
+func (t *TenantEnvStruct) RemoveBootDisk(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	err := handler.GetServiceManager().RemoveBootDisk(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}

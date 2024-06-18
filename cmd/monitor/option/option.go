@@ -98,7 +98,8 @@ func NewConfig() *Config {
 	host, _ := os.Hostname()
 
 	config := &Config{
-		EtcdEndpointsLine:    "http://127.0.0.1:2379",
+		// EtcdEndpointsLine:    "http://127.0.0.1:2379",
+		EtcdEndpointsLine:    "http://wt-etcd:2379",
 		EtcdEndpoints:        []string{},
 		AdvertiseAddr:        host + ":9999",
 		BindIP:               host,

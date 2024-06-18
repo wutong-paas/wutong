@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 
@@ -39,6 +40,8 @@ func (t *TenantEnvStruct) AutoscalerRules(w http.ResponseWriter, r *http.Request
 		t.addAutoscalerRule(w, r)
 	case "PUT":
 		t.updAutoscalerRule(w, r)
+	case "DELETE":
+		t.deleteAutoScalerRule(w, r)
 	}
 }
 
@@ -81,6 +84,26 @@ func (t *TenantEnvStruct) updAutoscalerRule(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		logrus.Errorf("update autoscaler rule: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) deleteAutoScalerRule(w http.ResponseWriter, r *http.Request) {
+	// serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	ruleID := chi.URLParam(r, "rule_id")
+	if ruleID == "" {
+		httputil.ReturnError(r, w, 400, "rule_id is required")
+		return
+	}
+	if err := handler.GetServiceManager().DeleteAutoscalerRule(ruleID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			httputil.ReturnError(r, w, 404, err.Error())
+			return
+		}
+		logrus.Errorf("delete autoscaler rule: %v", err)
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}

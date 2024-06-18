@@ -615,28 +615,28 @@ func (m *Manager) GwRuleConfigDaoTransactions(db *gorm.DB) dao.GwRuleConfigDao {
 
 // TenantEnvServceAutoscalerRulesDao -
 func (m *Manager) TenantEnvServceAutoscalerRulesDao() dao.TenantEnvServceAutoscalerRulesDao {
-	return &mysqldao.TenantEnvServceAutoscalerRulesDaoImpl{
+	return &mysqldao.TenantEnvServiceAutoscalerRulesDaoImpl{
 		DB: m.db,
 	}
 }
 
 // TenantEnvServceAutoscalerRulesDaoTransactions -
 func (m *Manager) TenantEnvServceAutoscalerRulesDaoTransactions(db *gorm.DB) dao.TenantEnvServceAutoscalerRulesDao {
-	return &mysqldao.TenantEnvServceAutoscalerRulesDaoImpl{
+	return &mysqldao.TenantEnvServiceAutoscalerRulesDaoImpl{
 		DB: db,
 	}
 }
 
 // TenantEnvServceAutoscalerRuleMetricsDao -
 func (m *Manager) TenantEnvServceAutoscalerRuleMetricsDao() dao.TenantEnvServceAutoscalerRuleMetricsDao {
-	return &mysqldao.TenantEnvServceAutoscalerRuleMetricsDaoImpl{
+	return &mysqldao.TenantEnvServiceAutoscalerRuleMetricsDaoImpl{
 		DB: m.db,
 	}
 }
 
 // TenantEnvServceAutoscalerRuleMetricsDaoTransactions -
 func (m *Manager) TenantEnvServceAutoscalerRuleMetricsDaoTransactions(db *gorm.DB) dao.TenantEnvServceAutoscalerRuleMetricsDao {
-	return &mysqldao.TenantEnvServceAutoscalerRuleMetricsDaoImpl{
+	return &mysqldao.TenantEnvServiceAutoscalerRuleMetricsDaoImpl{
 		DB: db,
 	}
 }

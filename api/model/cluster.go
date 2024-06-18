@@ -35,6 +35,21 @@ func (l ClusterEventLevel) String() string {
 	return string(l)
 }
 
+func (l ClusterEventLevel) Humanize() string {
+	switch l {
+	case ClusterEventLevelNormal:
+		return "正常"
+	case ClusterEventLevelGeneral:
+		return "一般"
+	case ClusterEventLevelWarning:
+		return "警告"
+	case ClusterEventLevelFatal:
+		return "紧急"
+	default:
+		return "未知"
+	}
+}
+
 const (
 	ClusterEventLevelNormal  ClusterEventLevel = "Normal"
 	ClusterEventLevelGeneral ClusterEventLevel = "General"

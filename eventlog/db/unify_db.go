@@ -29,7 +29,6 @@ import (
 
 // CreateDBManager -
 func CreateDBManager(conf conf.DBConf) error {
-	logrus.Infof("creating dbmanager ,details %v", conf)
 	var tryTime time.Duration
 	var err error
 	for tryTime < 4 {

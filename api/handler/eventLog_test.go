@@ -24,50 +24,8 @@ import (
 	"testing"
 	"time"
 
-	api_db "github.com/wutong-paas/wutong/api/db"
-	api_model "github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/cmd/api/option"
-
 	"github.com/sirupsen/logrus"
 )
-
-func TestEmessage(t *testing.T) {
-	fmt.Printf("begin.\n")
-	conf := option.Config{
-		DBType:           "mysql",
-		DBConnectionInfo: "admin:admin@tcp(127.0.0.1:3306)/region",
-	}
-	//创建db manager
-	if err := api_db.CreateDBManager(conf); err != nil {
-		fmt.Printf("create db manager error, %v", err)
-	}
-	_, _ = getLevelLog("dd09a25eb9744afa9b3ad5f5541013e7", "info")
-	fmt.Printf("end.\n")
-}
-
-func getLevelLog(eventID string, level string) (*api_model.DataLog, error) {
-	//messages, err := db.GetManager().EventLogDao().GetEventLogMessages(eventID)
-	//if err != nil {
-	//	return nil, err
-	//}
-	////var d []api_model.MessageData
-	//for _, v := range messages {
-	//	log, err := uncompress(v.Message)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	logrus.Debugf("log is %v", log)
-	//	fmt.Printf("log is %v", string(log))
-	//
-	//	var mLogs []msgStruct
-	//	if err := ffjson.Unmarshal(log, &mLogs); err != nil {
-	//		return nil, err
-	//	}
-	//	fmt.Printf("jlog %v", mLogs)
-	//	break
-	//}
-	return nil, nil
-}
 
 func TestLines(t *testing.T) {
 	filePath := "/Users/pujielan/Downloads/log"
@@ -110,27 +68,6 @@ func TestSort(t *testing.T) {
 		}
 	}
 	fmt.Println(arr)
-}
-
-func quickSort(array []int, left int, right int) {
-	if left < right {
-		key := array[left]
-		low := left
-		high := right
-		for low < high {
-			for low < high && array[high] > key {
-				high--
-			}
-			array[low] = array[high]
-			for low < high && array[low] < key {
-				low++
-			}
-			array[high] = array[low]
-		}
-		array[low] = key
-		quickSort(array, left, low-1)
-		quickSort(array, low+1, right)
-	}
 }
 
 func qsort(array []int, low, high int) {

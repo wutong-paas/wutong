@@ -20,12 +20,15 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/cmd"
 	"github.com/wutong-paas/wutong/cmd/api/option"
-	"github.com/wutong-paas/wutong/cmd/api/server"
+	"github.com/wutong-paas/wutong/config/configs"
+	"github.com/wutong-paas/wutong/pkg/component"
+	"github.com/wutong-paas/wutong/pkg/wutong"
 
 	"github.com/spf13/pflag"
 )
@@ -38,8 +41,25 @@ func main() {
 	s.AddFlags(pflag.CommandLine)
 	pflag.Parse()
 	s.SetLog()
-	if err := server.Run(s); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
+
+	configs.SetDefault(&configs.Config{
+		AppName:   "wt-api",
+		APIConfig: s.Config,
+	})
+	// 启动 wt-api
+	err := wutong.New(context.Background(), configs.Default()).Registry(component.Database()).
+		Registry(component.Grpc()).
+		Registry(component.Event()).
+		Registry(component.K8sClient()).
+		Registry(component.HubRegistry()).
+		Registry(component.Proxy()).
+		Registry(component.Etcd()).
+		Registry(component.MQ()).
+		Registry(component.Prometheus()).
+		Registry(component.Handler()).
+		Registry(component.Router()).
+		Start()
+	if err != nil {
+		logrus.Errorf("start wt-api error %s", err.Error())
 	}
 }

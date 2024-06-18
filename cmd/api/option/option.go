@@ -27,45 +27,50 @@ import (
 
 // Config config
 type Config struct {
-	DBType             string
-	APIAddr            string
-	APIHealthzAddr     string
-	APIAddrSSL         string
-	DBConnectionInfo   string
-	EventLogServers    []string
-	NodeAPI            []string
-	BuilderAPI         []string
-	V1API              string
-	MQAPI              string
-	EtcdEndpoint       []string
-	EtcdCaFile         string
-	EtcdCertFile       string
-	EtcdKeyFile        string
-	APISSL             bool
-	APICertFile        string
-	APIKeyFile         string
-	APICaFile          string
-	WebsocketSSL       bool
-	WebsocketCertFile  string
-	WebsocketKeyFile   string
-	WebsocketAddr      string
-	Opentsdb           string
-	RegionTag          string
-	LoggerFile         string
-	EnableFeature      []string
-	Debug              bool
-	MinExtPort         int // minimum external port
-	LicensePath        string
-	LicSoPath          string
-	LogPath            string
-	KubeConfigPath     string
-	PrometheusEndpoint string
-	WtNamespace        string
-	ShowSQL            bool
-	ObsAPI             []string
-	ObsMimirAPI        []string
-	ObsTempoAPI        []string
-	ObsLokiAPI         []string
+	DBType               string
+	APIAddr              string
+	APIHealthzAddr       string
+	APIAddrSSL           string
+	DBConnectionInfo     string
+	EventLogServers      []string
+	NodeAPI              []string
+	BuilderAPI           []string
+	V1API                string
+	MQAPI                string
+	EtcdEndpoint         []string
+	EtcdCaFile           string
+	EtcdCertFile         string
+	EtcdKeyFile          string
+	APISSL               bool
+	APICertFile          string
+	APIKeyFile           string
+	APICaFile            string
+	WebsocketSSL         bool
+	WebsocketCertFile    string
+	WebsocketKeyFile     string
+	WebsocketAddr        string
+	Opentsdb             string
+	RegionTag            string
+	LoggerFile           string
+	EnableFeature        []string
+	Debug                bool
+	MinExtPort           int // minimum external port
+	LicensePath          string
+	LicSoPath            string
+	LogPath              string
+	KubeConfigPath       string
+	PrometheusEndpoint   string
+	WtNamespace          string
+	ShowSQL              bool
+	ObsAPI               []string
+	ObsMimirAPI          []string
+	ObsTempoAPI          []string
+	ObsLokiAPI           []string
+	DockerConsoleServers []string
+	EventLogEndpoints    []string
+	WtHub                string
+	WtWorker             string
+	VirtVNCAPI           []string
 }
 
 // APIServer  apiserver server
@@ -97,12 +102,12 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.WebsocketCertFile, "ws-ssl-certfile", "/etc/ssl/wutong-paas.com/wutong-paas.com.crt", "websocket and fileserver ssl cert file")
 	fs.StringVar(&a.WebsocketKeyFile, "ws-ssl-keyfile", "/etc/ssl/wutong-paas.com/wutong-paas.com.key", "websocket and fileserver ssl key file")
 	fs.StringVar(&a.V1API, "v1-api", "127.0.0.1:8887", "the region v1 api")
-	fs.StringSliceVar(&a.NodeAPI, "node-api", []string{"127.0.0.1:6100"}, "the node server api")
+	// fs.StringSliceVar(&a.NodeAPI, "node-api", []string{"127.0.0.1:6100"}, "the node server api")
 	fs.StringSliceVar(&a.BuilderAPI, "builder-api", []string{"wt-chaos:3228"}, "the builder api")
-	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
-	fs.StringVar(&a.MQAPI, "mq-api", "127.0.0.1:6300", "acp_mq api")
+	// fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
+	// fs.StringVar(&a.MQAPI, "mq-api", "127.0.0.1:6300", "acp_mq api")
 	fs.BoolVar(&a.StartRegionAPI, "start", false, "Whether to start region old api")
-	fs.StringSliceVar(&a.EtcdEndpoint, "etcd", []string{"http://127.0.0.1:2379"}, "etcd server or proxy address")
+	// fs.StringSliceVar(&a.EtcdEndpoint, "etcd", []string{"http://127.0.0.1:2379"}, "etcd server or proxy address")
 	fs.StringVar(&a.EtcdCaFile, "etcd-ca", "", "verify etcd certificates of TLS-enabled secure servers using this CA bundle")
 	fs.StringVar(&a.EtcdCertFile, "etcd-cert", "", "identify secure etcd client using this TLS certificate file")
 	fs.StringVar(&a.EtcdKeyFile, "etcd-key", "", "identify secure etcd client using this TLS key file")
@@ -114,13 +119,23 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&a.EnableFeature, "enable-feature", []string{}, "List of special features supported, such as `windows`")
 	fs.StringVar(&a.LogPath, "log-path", "/wtdata/logs", "Where Docker log files and event log files are stored.")
 	fs.StringVar(&a.KubeConfigPath, "kube-config", "", "kube config file path, No setup is required to run in a cluster.")
-	fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")
+	// fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")
 	fs.StringVar(&a.WtNamespace, "wt-namespace", "wt-system", "wt component namespace")
 	fs.BoolVar(&a.ShowSQL, "show-sql", false, "The trigger for showing sql.")
 	fs.StringSliceVar(&a.ObsAPI, "obs-api", []string{"wutong-obs-application.wutong-obs:8089"}, "the obs api")
-	fs.StringSliceVar(&a.ObsMimirAPI, "obsmimir-api", []string{"obs-mimir-gateway.wutong-obs:8080"}, "the obsmimir api")
-	fs.StringSliceVar(&a.ObsTempoAPI, "obstempo-api", []string{"obs-tempo.wutong-obs:3200"}, "the obstempo api")
+	fs.StringSliceVar(&a.ObsMimirAPI, "obsmimir-api", []string{"obs-mimir-gateway.wutong-obs"}, "the obsmimir api")
+	fs.StringSliceVar(&a.ObsTempoAPI, "obstempo-api", []string{"obs-tempo-gateway.wutong-obs"}, "the obstempo api")
 	fs.StringSliceVar(&a.ObsLokiAPI, "obsloki-api", []string{"obs-loki-gateway.wutong-obs"}, "the obsloki api")
+	fs.StringSliceVar(&a.EtcdEndpoint, "etcd", []string{"http://wt-etcd:2379"}, "etcd server or proxy address")
+	fs.StringSliceVar(&a.DockerConsoleServers, "docker-console", []string{"wt-webcli:7171"}, "docker console address")
+	fs.StringVar(&a.PrometheusEndpoint, "prom-api", "wt-monitor:9999", "The service DNS name of Prometheus api. Default to wt-monitor:9999")
+	fs.StringVar(&a.WtHub, "hub-api", "http://wt-hub:5000", "the wt-hub server api")
+	fs.StringSliceVar(&a.NodeAPI, "node-api", []string{"wt-node:6100"}, "the wt-node server api")
+	fs.StringVar(&a.MQAPI, "mq-api", "wt-mq:6300", "the wt-mq server api")
+	fs.StringVar(&a.WtWorker, "worker-api", "wt-worker:6535", "the wt-worker server api")
+	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"wt-eventlog:6366"}, "event log server address")
+	fs.StringSliceVar(&a.EventLogEndpoints, "event-log", []string{"local=>wt-eventlog:6363"}, "event log websocket address")
+	fs.StringSliceVar(&a.VirtVNCAPI, "virt-vnc-api", []string{"wt-virt-vnc"}, "the virt-vnc api")
 }
 
 // SetLog 设置log

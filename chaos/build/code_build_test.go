@@ -19,7 +19,6 @@ import (
 	"github.com/wutong-paas/wutong/cmd/chaos/option"
 	"github.com/wutong-paas/wutong/event"
 
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 
 	"k8s.io/client-go/kubernetes"
@@ -36,7 +35,7 @@ func TestCreateJob(t *testing.T) {
 	}
 	event.NewManager(event.EventConfig{
 		EventLogServers: conf.EventLogServers,
-		DiscoverArgs:    &etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints},
+		// DiscoverArgs:    &etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints},
 	})
 	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/wutong/remote/192.168.2.206/admin.kubeconfig")
 	if err != nil {

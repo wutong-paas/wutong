@@ -88,7 +88,7 @@ func Run(cfg *option.Conf) error {
 
 		err = eventLog.NewManager(eventLog.EventConfig{
 			EventLogServers: cfg.EventLogServer,
-			DiscoverArgs:    etcdClientArgs,
+			// DiscoverArgs:    etcdClientArgs,
 		})
 		if err != nil {
 			logrus.Errorf("error creating eventlog manager")

@@ -39,8 +39,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	apiutil "github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/api/util/bcode"
@@ -52,6 +50,8 @@ import (
 	"github.com/wutong-paas/wutong/event"
 	gclient "github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/pkg/kube"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 	"github.com/wutong-paas/wutong/util"
 	typesv1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/client"
@@ -1266,6 +1266,11 @@ func (s *ServiceAction) ServiceDepend(action string, ds *api_model.DependService
 			logrus.Errorf("delete depend error, %v", err)
 			return err
 		}
+	case "delete_all":
+		if err := db.GetManager().TenantEnvServiceRelationDao().DeleteByComponentIDs([]string{ds.ServiceID}); err != nil {
+			logrus.Errorf("delete depend error, %v", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -1290,6 +1295,19 @@ func (s *ServiceAction) EnvAttr(action string, at *dbmodel.TenantEnvServiceEnvVa
 			}
 
 			logrus.Errorf("delete env %v error, %v", at.AttrName, err)
+			return err
+		}
+	case "delete_all":
+		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentID(at.ServiceID); err != nil {
+			logrus.Errorf("delete envs error, %v", err)
+			return err
+		}
+	case "delete_all_inner":
+		if at.Scope != "" {
+			return errors.New("scope is empty")
+		}
+		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentIDAndScope(at.ServiceID, at.Scope); err != nil {
+			logrus.Errorf("delete envs error, %v", err)
 			return err
 		}
 	case "update":
@@ -1366,6 +1384,21 @@ func (s *ServiceAction) deletePorts(componentID string, ports *api_model.Service
 	})
 }
 
+func (s *ServiceAction) deleteAllPorts(componentID string) error {
+	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
+		if err := db.GetManager().TenantEnvServicesPortDaoTransactions(tx).DelByServiceID(componentID); err != nil {
+			return err
+		}
+
+		// delete related ingress rules
+		if err := GetGatewayHandler().DeleteHTTPRuleByServiceIDWithTransaction(componentID, tx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 // SyncComponentPorts -
 func (s *ServiceAction) SyncComponentPorts(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
 	var (
@@ -1399,6 +1432,8 @@ func (s *ServiceAction) PortVar(action, tenantEnvID, serviceID string, vps *api_
 	switch action {
 	case "delete":
 		return s.deletePorts(serviceID, vps)
+	case "delete_all":
+		return s.deleteAllPorts(serviceID)
 	case "update":
 		tx := db.GetManager().Begin()
 		defer func() {
@@ -1828,6 +1863,26 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantEnvServiceVolume, tenantEnv
 		if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DelByVolumeID(tsv.ServiceID, tsv.VolumeName); err != nil {
 			tx.Rollback()
 			return apiutil.CreateAPIHandleErrorFromDBError("error deleting config files", err)
+		}
+		// end transaction
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+			return apiutil.CreateAPIHandleErrorFromDBError("error ending transaction", err)
+		}
+	case "delete_all":
+		// begin transaction
+		tx := db.GetManager().Begin()
+		defer func() {
+			if r := recover(); r != nil {
+				logrus.Errorf("Unexpected panic occurred, rollback transaction: %v", r)
+				tx.Rollback()
+			}
+		}()
+		if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).DeleteTenantEnvServiceVolumesByServiceID(tsv.ServiceID); err != nil {
+			return apiutil.CreateAPIHandleErrorFromDBError("delete all volume", err)
+		}
+		if err := db.GetManager().TenantEnvServiceConfigFileDaoTransactions(tx).DelByServiceID(tsv.ServiceID); err != nil {
+			return apiutil.CreateAPIHandleErrorFromDBError("delete all config file", err)
 		}
 		// end transaction
 		if err := tx.Commit().Error; err != nil {
@@ -2663,6 +2718,44 @@ func (s *ServiceAction) UpdAutoscalerRule(req *api_model.AutoscalerRuleReq) erro
 	logrus.Infof("rule id: %s; successfully send 'refreshhpa' task.", rule.RuleID)
 
 	return tx.Commit().Error
+}
+
+// DelAutoscalerRule -
+func (s *ServiceAction) DeleteAutoscalerRule(ruleID string) error {
+	rule, err := db.GetManager().TenantEnvServceAutoscalerRulesDao().GetByRuleID(ruleID)
+	if err != nil {
+		return err
+	}
+
+	tx := db.GetManager().Begin()
+	if err := db.GetManager().TenantEnvServceAutoscalerRulesDaoTransactions(tx).DeleteByRuleID(ruleID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := db.GetManager().TenantEnvServceAutoscalerRuleMetricsDaoTransactions(tx).DeleteByRuleID(ruleID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	taskbody := map[string]interface{}{
+		"service_id": rule.ServiceID,
+		"rule_id":    rule.RuleID,
+	}
+	if err := s.MQClient.SendBuilderTopic(gclient.TaskStruct{
+		TaskType: "refreshhpa",
+		TaskBody: taskbody,
+		Topic:    gclient.WorkerTopic,
+	}); err != nil {
+		logrus.Errorf("send 'refreshhpa' task: %v", err)
+		return err
+	}
+	logrus.Infof("rule id: %s; successfully send 'refreshhpa' task.", rule.RuleID)
+
+	return nil
 }
 
 // ListScalingRecords -

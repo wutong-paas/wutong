@@ -34,7 +34,6 @@ import (
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 
 	mqclient "github.com/wutong-paas/wutong/mq/client"
-	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 )
 
@@ -47,10 +46,10 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 		WtNamespace:         "wt-system",
 		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
 	}
-	etcdArgs := etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints}
+	// etcdArgs := etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints}
 	event.NewManager(event.EventConfig{
 		EventLogServers: conf.EventLogServers,
-		DiscoverArgs:    &etcdArgs,
+		// DiscoverArgs:    &etcdArgs,
 	})
 	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/wutong/admin.kubeconfig")
 	if err != nil {
@@ -71,7 +70,7 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 	} else {
 		maxConcurrentTask = conf.MaxTasks
 	}
-	mqClient, err := mqclient.NewMqClient(&etcdArgs, conf.MQAPI)
+	mqClient, err := mqclient.NewMqClient(conf.MQAPI)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -21,7 +21,6 @@ package handler
 import (
 	"fmt"
 
-	"github.com/wutong-paas/wutong/api/discover"
 	"github.com/wutong-paas/wutong/api/proxy"
 	"github.com/wutong-paas/wutong/cmd/api/option"
 	"github.com/wutong-paas/wutong/db"
@@ -30,20 +29,28 @@ import (
 var nodeProxy proxy.Proxy
 var builderProxy proxy.Proxy
 var prometheusProxy proxy.Proxy
-var monitorProxy proxy.Proxy
+
+// var monitorProxy proxy.Proxy
 var obsProxy proxy.Proxy
 var obsmimirProxy proxy.Proxy
 var obstempoProxy proxy.Proxy
 var obslokiProxy proxy.Proxy
 
-var filebrowserProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
-var dbgateProxies map[string]proxy.Proxy = make(map[string]proxy.Proxy, 20)
+var filebrowserProxies = make(map[string]proxy.Proxy, 20)
+var dbgateProxies = make(map[string]proxy.Proxy, 20)
+
+type VirtVNCProxy struct {
+	HTTPProxy      proxy.Proxy
+	WebSocketProxy proxy.Proxy
+}
+
+var virtVNCProxies = make(map[string]*VirtVNCProxy, 20)
 
 // InitProxy 初始化
 func InitProxy(conf option.Config) {
 	if nodeProxy == nil {
 		nodeProxy = proxy.CreateProxy("acp_node", "http", conf.NodeAPI)
-		discover.GetEndpointDiscover().AddProject("acp_node", nodeProxy)
+		// discover.GetEndpointDiscover().AddProject("acp_node", nodeProxy)
 	}
 	if builderProxy == nil {
 		builderProxy = proxy.CreateProxy("builder", "http", conf.BuilderAPI)
@@ -51,10 +58,10 @@ func InitProxy(conf option.Config) {
 	if prometheusProxy == nil {
 		prometheusProxy = proxy.CreateProxy("prometheus", "http", []string{conf.PrometheusEndpoint})
 	}
-	if monitorProxy == nil {
-		monitorProxy = proxy.CreateProxy("monitor", "http", []string{"127.0.0.1:3329"})
-		discover.GetEndpointDiscover().AddProject("monitor", monitorProxy)
-	}
+	// if monitorProxy == nil {
+	// 	monitorProxy = proxy.CreateProxy("monitor", "http", []string{"127.0.0.1:3329"})
+	// 	discover.GetEndpointDiscover().AddProject("monitor", monitorProxy)
+	// }
 	if obsProxy == nil {
 		obsProxy = proxy.CreateProxy("obs", "http", conf.ObsAPI)
 	}
@@ -74,7 +81,7 @@ func GetNodeProxy() proxy.Proxy {
 	return nodeProxy
 }
 
-// GetBuilderProxy GetNodeProxy
+// GetBuilderProxy GetBuilderProxy
 func GetBuilderProxy() proxy.Proxy {
 	return builderProxy
 }
@@ -85,9 +92,9 @@ func GetPrometheusProxy() proxy.Proxy {
 }
 
 // GetMonitorProxy GetMonitorProxy
-func GetMonitorProxy() proxy.Proxy {
-	return monitorProxy
-}
+// func GetMonitorProxy() proxy.Proxy {
+// 	return monitorProxy
+// }
 
 // GetFileBrowserProxy GetFileBrowserProxy
 func GetFileBrowserProxy(serviceID string) proxy.Proxy {
@@ -129,19 +136,37 @@ func GetDbgateProxy(serviceID string) proxy.Proxy {
 	return dbgateProxy
 }
 
+func GetVirtVNCProxy(namespace, vm string) *VirtVNCProxy {
+	key := namespace + "/" + vm
+	virtVNCProxy, ok := virtVNCProxies[key]
+	if !ok || virtVNCProxy == nil {
+		// get serviceID and fb plugin
+		virtVNCProxy = new(VirtVNCProxy)
+		virtVNCProxy.HTTPProxy = proxy.CreateProxy("virt-vnc", "http", []string{fmt.Sprintf("%s-vnc.%s", vm, namespace)})
+		virtVNCProxy.WebSocketProxy = proxy.CreateProxy("virt-vnc-websocket", "websocket", []string{fmt.Sprintf("%s-vnc.%s", vm, namespace)})
+
+		virtVNCProxies[key] = virtVNCProxy
+	}
+	return virtVNCProxy
+
+}
+
 // GetObsProxy GetObsProxy
 func GetObsProxy() proxy.Proxy {
 	return obsProxy
 }
 
+// GetObsMimirProxy GetObsMimirProxy
 func GetObsMimirProxy() proxy.Proxy {
 	return obsmimirProxy
 }
 
+// GetObsTempoProxy GetObsTempoProxy
 func GetObsTempoProxy() proxy.Proxy {
 	return obstempoProxy
 }
 
+// GetObsLokiProxy GetObsLokiProxy
 func GetObsLokiProxy() proxy.Proxy {
 	return obslokiProxy
 }

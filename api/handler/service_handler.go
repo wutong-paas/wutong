@@ -85,6 +85,7 @@ type ServiceHandler interface {
 
 	AddAutoscalerRule(req *api_model.AutoscalerRuleReq) error
 	UpdAutoscalerRule(req *api_model.AutoscalerRuleReq) error
+	DeleteAutoscalerRule(ruleID string) error
 	ListScalingRecords(serviceID string, page, pageSize int) ([]*dbmodel.TenantEnvServiceScalingRecords, int, error)
 
 	UpdateServiceMonitor(tenantEnvID, serviceID, name string, update api_model.UpdateServiceMonitorRequestStruct) (*dbmodel.TenantEnvServiceMonitor, error)
@@ -143,6 +144,7 @@ type ServiceHandler interface {
 	ListVMVolumes(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMVolumesResponse, error)
 	AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMVolumeRequest) error
 	DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volumeName string) error
+	RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID string) error
 
 	// Scheduling
 	GetServiceSchedulingDetails(serviceID string) (*api_model.GetServiceSchedulingDetailsResponse, error)

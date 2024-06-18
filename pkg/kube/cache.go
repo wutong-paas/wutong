@@ -73,7 +73,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	eventInformer := filteredSharedInformer.Core().V1().Events()
 	storageClassInformer := sharedInformers.Storage().V1().StorageClasses()
 	nodeInformer := sharedInformers.Core().V1().Nodes()
-	persistentVolumeClaimLister := sharedInformers.Core().V1().PersistentVolumeClaims()
+	persistentVolumeClaimInformer := sharedInformers.Core().V1().PersistentVolumeClaims()
 
 	// shared informers
 	deploymentSharedInformer := deploymentInformer.Informer()
@@ -88,7 +88,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	eventSharedInformer := eventInformer.Informer()
 	storageClassSharedInformer := storageClassInformer.Informer()
 	nodeSharedInformer := nodeInformer.Informer()
-	persistentVolumeClaimSharedInformer := persistentVolumeClaimLister.Informer()
+	persistentVolumeClaimSharedInformer := persistentVolumeClaimInformer.Informer()
 
 	informers := map[string]cache.SharedInformer{
 		"deploymentSharedInformer":            deploymentSharedInformer,
@@ -131,6 +131,6 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		EventLister:                 eventInformer.Lister(),
 		StorageClassLister:          storageClassInformer.Lister(),
 		NodeLister:                  nodeInformer.Lister(),
-		PersistentVolumeClaimLister: persistentVolumeClaimLister.Lister(),
+		PersistentVolumeClaimLister: persistentVolumeClaimInformer.Lister(),
 	}
 }

@@ -1427,6 +1427,7 @@ func (a *appRuntimeStore) crdEventHandler() cache.ResourceEventHandlerFuncs {
 			crd := obj.(*apiextensions.CustomResourceDefinition)
 			if isKubevirtVMCRD(crd) {
 				a.recycleWTChannel()
+				// a.recycleVirtVNC()
 			}
 		},
 	}
@@ -1803,6 +1804,9 @@ func (a *appRuntimeStore) keepWTChannel() error {
 func (a *appRuntimeStore) recycleWTChannel() error {
 	resourceName := "wt-channel"
 	if err := a.clientset.AppsV1().StatefulSets(a.conf.WTNamespace).Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {
+		return err
+	}
+	if err := a.clientset.CoreV1().Services(a.conf.WTNamespace).Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {
 		return err
 	}
 	if err := a.clientset.RbacV1().ClusterRoleBindings().Delete(context.Background(), resourceName, metav1.DeleteOptions{}); err != nil {

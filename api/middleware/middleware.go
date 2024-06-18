@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -29,13 +30,13 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/handler"
 	"github.com/wutong-paas/wutong/api/util"
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
@@ -235,13 +236,13 @@ func Proxy(next http.Handler) http.Handler {
 			handler.GetNodeProxy().Proxy(w, r)
 			return
 		}
-		if strings.HasPrefix(r.RequestURI, "/v2/rules") {
-			handler.GetMonitorProxy().Proxy(w, r)
-			return
-		}
+		// if strings.HasPrefix(r.RequestURI, "/v2/rules") {
+		// 	handler.GetMonitorProxy().Proxy(w, r)
+		// 	return
+		// }
 		if strings.HasPrefix(r.RequestURI, "/console/filebrowser") {
 			paths := strings.Split(r.URL.Path, "/")
-			if len(paths) > 3 {
+			if len(paths) > 3 && len(paths[3]) == 32 {
 				serviceID := paths[3]
 				proxy := handler.GetFileBrowserProxy(serviceID)
 				r.URL.Path = strings.Replace(r.URL.Path, "/console/filebrowser/"+serviceID, "", 1)
@@ -251,7 +252,7 @@ func Proxy(next http.Handler) http.Handler {
 		}
 		if strings.HasPrefix(r.RequestURI, "/console/dbgate") {
 			paths := strings.Split(r.URL.Path, "/")
-			if len(paths) > 3 {
+			if len(paths) > 3 && len(paths[3]) == 32 {
 				serviceID := paths[3]
 				proxy := handler.GetDbgateProxy(serviceID)
 				proxy.Proxy(w, r)
@@ -276,6 +277,33 @@ func Proxy(next http.Handler) http.Handler {
 		if strings.HasPrefix(r.RequestURI, "/obs") {
 			r.URL.Path = strings.Replace(r.URL.Path, "/obs", "", 1)
 			handler.GetObsProxy().Proxy(w, r)
+			return
+		}
+		// virt-vnc proxy
+		if strings.HasPrefix(r.RequestURI, "/console/virt-vnc") {
+			paths := strings.Split(r.URL.Path, "/")
+			var namespace, vm string
+			if len(paths) > 4 {
+				namespace = paths[3]
+				vm = paths[4]
+			}
+			if namespace == "" {
+				httputil.ReturnError(r, w, 400, "virt-vnc: namespace is required")
+				return
+			}
+			if vm == "" {
+				httputil.ReturnError(r, w, 400, "virt-vnc: vm is required")
+				return
+			}
+			if vm == "package.json" {
+				return
+			}
+			if strings.HasPrefix(r.RequestURI, fmt.Sprintf("/console/virt-vnc/%s/%s/k8s", namespace, vm)) {
+				handler.GetVirtVNCProxy(namespace, vm).WebSocketProxy.Proxy(w, r)
+				return
+			}
+			r.URL.Path = strings.Replace(r.URL.Path, fmt.Sprintf("/console/virt-vnc/%s/%s", namespace, vm), "", 1)
+			handler.GetVirtVNCProxy(namespace, vm).HTTPProxy.Proxy(w, r)
 			return
 		}
 		next.ServeHTTP(w, r)

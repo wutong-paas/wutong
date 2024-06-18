@@ -40,6 +40,7 @@ type VMProfile struct {
 	CreatedBy          string        `json:"createdBy"`
 	LastModifiedBy     string        `json:"lastModifiedBy"`
 	NodeSelectorLabels []string      `json:"nodeSelectorLabels"`
+	ContainsBootDisk   bool          `json:"containsBootDisk"`
 }
 
 type VMCondition struct {
@@ -58,7 +59,7 @@ type VMOSInfo struct {
 	KernelVersion string `json:"kernelVersion"`
 }
 
-type VMPortProtocol string
+type VMPortProtocol = string
 
 const (
 	VMPortProtocolHTTP  VMPortProtocol = "http"
@@ -97,11 +98,17 @@ type VMPortGateway struct {
 	GatewayPath string `json:"gatewayPath"`
 }
 
-type OSSourceFrom string
+type OSSourceFrom = string
 
 const (
 	OSSourceFromHTTP     OSSourceFrom = "http"
 	OSSourceFromRegistry OSSourceFrom = "registry"
+)
+
+type VMInstallType = string
+
+const (
+	VMInstallTypeISO VMInstallType = "iso"
 )
 
 // CreateVMRequest
@@ -124,6 +131,7 @@ type CreateVMRequest struct {
 	// Labels   map[string]string `json:"labels"`
 	Operator           string   `json:"operator"`
 	NodeSelectorLabels []string `json:"nodeSelectorLabels"`
+	LoadVirtioDriver   bool     `json:"loadVirtioDriver"`
 }
 
 // CreateVMResponse

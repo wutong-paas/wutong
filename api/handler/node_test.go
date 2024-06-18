@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/wutong-paas/wutong/api/client/kube"
 	"github.com/wutong-paas/wutong/api/model"
+	"github.com/wutong-paas/wutong/pkg/kube"
 )
 
 func TestListNodes(t *testing.T) {

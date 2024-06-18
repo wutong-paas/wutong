@@ -1043,6 +1043,20 @@ func (t *TenantEnvStruct) Dependency(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeleteDependencies 删除组件依赖
+func (t *TenantEnvStruct) DeleteDependencies(w http.ResponseWriter, r *http.Request) {
+	logrus.Debugf("trans delete depend service")
+	ds := &api_model.DependService{
+		TenantEnvID: r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string),
+		ServiceID:   r.Context().Value(ctxutil.ContextKey("service_id")).(string),
+	}
+	if err := handler.GetServiceManager().ServiceDepend("delete_all", ds); err != nil {
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete dependency error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
 // AddDependency AddDependency
 // swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/dependency v2 addDependency
 //
@@ -1143,6 +1157,37 @@ func (t *TenantEnvStruct) Env(w http.ResponseWriter, r *http.Request) {
 	case "PUT":
 		t.UpdateEnv(w, r)
 	}
+}
+
+// DeleteAllEnvs 删除组件所有环境变量
+func (t *TenantEnvStruct) DeleteAllEnvs(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	if err := handler.GetServiceManager().EnvAttr("delete_all", &dbmodel.TenantEnvServiceEnvVar{
+		ServiceID:   serviceID,
+		TenantEnvID: tenantEnvID,
+	}); err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
+		logrus.Errorf("delete all envs error, %v", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("Delete env error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// DeleteAllInnerEnvs 删除组件所有内部环境变量
+func (t *TenantEnvStruct) DeleteAllInnerEnvs(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	if err := handler.GetServiceManager().EnvAttr("delete_all_inner", &dbmodel.TenantEnvServiceEnvVar{
+		ServiceID:   serviceID,
+		TenantEnvID: tenantEnvID,
+		Scope:       "inner",
+	}); err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
+		logrus.Errorf("delete all inner envs error, %v", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("Delete env error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
 }
 
 // AddEnv AddEnv
@@ -1303,6 +1348,17 @@ func (t *TenantEnvStruct) Ports(w http.ResponseWriter, r *http.Request) {
 	case "PUT":
 		t.updatePortController(w, r)
 	}
+}
+
+// DeletePorts PortVar
+func (t *TenantEnvStruct) DeleteAllPorts(w http.ResponseWriter, r *http.Request) {
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	if err := handler.GetServiceManager().PortVar("delete_all", tenantEnvID, serviceID, nil, 0); err != nil {
+		httputil.ReturnBcodeError(r, w, err)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
 }
 
 // PutPorts PortVar

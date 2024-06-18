@@ -110,7 +110,7 @@ func (g *GWServer) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&g.KeepaliveTimeout, "keepalive-timeout", 30, "Timeout for keep-alive connections. Server will close connections after this time.")
 	fs.DurationVar(&g.ResyncPeriod, "resync-period", 10*time.Minute, "the default resync period for any handlers added via AddEventHandler and how frequently the listener wants a full resync from the shared informer")
 	// etcd
-	fs.StringSliceVar(&g.EtcdEndpoint, "etcd-endpoints", []string{"http://127.0.0.1:2379"}, "etcd cluster endpoints.")
+	// fs.StringSliceVar(&g.EtcdEndpoint, "etcd-endpoints", []string{"http://127.0.0.1:2379"}, "etcd cluster endpoints.")
 	fs.IntVar(&g.EtcdTimeout, "etcd-timeout", 10, "etcd http timeout seconds")
 	fs.StringVar(&g.EtcdCaFile, "etcd-ca", "", "etcd tls ca file ")
 	fs.StringVar(&g.EtcdCertFile, "etcd-cert", "", "etcd tls cert file")
@@ -126,6 +126,7 @@ func (g *GWServer) AddFlags(fs *pflag.FlagSet) {
 	fs.Uint64Var(&g.ShareMemory, "max-config-share-memory", 512, "Nginx maximum Shared memory size, which should be increased for larger clusters.")
 	fs.Float32Var(&g.SyncRateLimit, "sync-rate-limit", 0.3, "Define the sync frequency upper limit")
 	fs.StringArrayVar(&g.IgnoreInterface, "ignore-interface", []string{"docker0", "tunl0", "cni0", "kube-ipvs0", "flannel"}, "The network interface name that ignore by gateway")
+	fs.StringSliceVar(&g.EtcdEndpoint, "etcd-endpoints", []string{"http://wt-etcd:2379"}, "etcd cluster endpoints.")
 }
 
 // SetLog sets log

@@ -21,7 +21,6 @@ package handler
 import (
 	"fmt"
 
-	"github.com/coreos/etcd/clientv3"
 	apimodel "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/mq/client"
@@ -31,15 +30,15 @@ import (
 type RegistryAuthSecretAction struct {
 	dbmanager db.Manager
 	mqclient  client.MQClient
-	etcdCli   *clientv3.Client
 }
 
 // CreateRegistryAuthSecretManager creates registry auth secret manager
-func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *RegistryAuthSecretAction {
+// func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *RegistryAuthSecretAction {
+func CreateRegistryAuthSecretManager(dbmanager db.Manager, mqclient client.MQClient) *RegistryAuthSecretAction {
 	return &RegistryAuthSecretAction{
 		dbmanager: dbmanager,
 		mqclient:  mqclient,
-		etcdCli:   etcdCli,
+		// etcdCli:   etcdCli,
 	}
 }
 

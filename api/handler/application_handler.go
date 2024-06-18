@@ -14,14 +14,14 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/wutong-paas/wutong/api/client/kube"
-	"github.com/wutong-paas/wutong/api/client/prometheus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/pkg/kube"
+	"github.com/wutong-paas/wutong/pkg/prometheus"
 	util "github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/util/commonutil"
 	"github.com/wutong-paas/wutong/util/constants"
@@ -85,7 +85,10 @@ func NewApplicationHandler(statusCli *client.AppRuntimeSyncClient, promClient pr
 
 // CreateApp -
 func (a *ApplicationAction) CreateApp(ctx context.Context, req *model.Application) (*model.Application, error) {
-	appID := util.NewUUID()
+	appID := req.AppID
+	if appID == "" {
+		appID = util.NewUUID()
+	}
 	if req.K8sApp == "" {
 		req.K8sApp = fmt.Sprintf("app-%s", appID[:8])
 	}

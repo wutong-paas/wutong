@@ -110,6 +110,7 @@ type TenantEnvInterface interface {
 	ListVMVolumes(w http.ResponseWriter, r *http.Request)
 	AddVMVolume(w http.ResponseWriter, r *http.Request)
 	DeleteVMVolume(w http.ResponseWriter, r *http.Request)
+	RemoveBootDisk(w http.ResponseWriter, r *http.Request)
 }
 
 // ServiceInterface ServiceInterface
@@ -122,8 +123,12 @@ type ServiceInterface interface {
 	CreateService(w http.ResponseWriter, r *http.Request)
 	UpdateService(w http.ResponseWriter, r *http.Request)
 	Dependency(w http.ResponseWriter, r *http.Request)
+	DeleteDependencies(w http.ResponseWriter, r *http.Request)
 	Env(w http.ResponseWriter, r *http.Request)
+	DeleteAllEnvs(w http.ResponseWriter, r *http.Request)
+	DeleteAllInnerEnvs(w http.ResponseWriter, r *http.Request)
 	Ports(w http.ResponseWriter, r *http.Request)
+	DeleteAllPorts(w http.ResponseWriter, r *http.Request)
 	PutPorts(w http.ResponseWriter, r *http.Request)
 	PortOuterController(w http.ResponseWriter, r *http.Request)
 	PortInnerController(w http.ResponseWriter, r *http.Request)
@@ -131,6 +136,7 @@ type ServiceInterface interface {
 	AddVolume(w http.ResponseWriter, r *http.Request)
 	UpdVolume(w http.ResponseWriter, r *http.Request)
 	DeleteVolume(w http.ResponseWriter, r *http.Request)
+	DeleteAllVolumes(w http.ResponseWriter, r *http.Request)
 	Pods(w http.ResponseWriter, r *http.Request)
 	VolumeDependency(w http.ResponseWriter, r *http.Request)
 	Probe(w http.ResponseWriter, r *http.Request)
