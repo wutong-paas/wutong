@@ -1298,7 +1298,15 @@ func (s *ServiceAction) EnvAttr(action string, at *dbmodel.TenantEnvServiceEnvVa
 			return err
 		}
 	case "delete_all":
-		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentIDs([]string{at.ServiceID}); err != nil {
+		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentID(at.ServiceID); err != nil {
+			logrus.Errorf("delete envs error, %v", err)
+			return err
+		}
+	case "delete_all_inner":
+		if at.Scope != "" {
+			return errors.New("scope is empty")
+		}
+		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentIDAndScope(at.ServiceID, at.Scope); err != nil {
 			logrus.Errorf("delete envs error, %v", err)
 			return err
 		}
@@ -2710,6 +2718,44 @@ func (s *ServiceAction) UpdAutoscalerRule(req *api_model.AutoscalerRuleReq) erro
 	logrus.Infof("rule id: %s; successfully send 'refreshhpa' task.", rule.RuleID)
 
 	return tx.Commit().Error
+}
+
+// DelAutoscalerRule -
+func (s *ServiceAction) DeleteAutoscalerRule(ruleID string) error {
+	rule, err := db.GetManager().TenantEnvServceAutoscalerRulesDao().GetByRuleID(ruleID)
+	if err != nil {
+		return err
+	}
+
+	tx := db.GetManager().Begin()
+	if err := db.GetManager().TenantEnvServceAutoscalerRulesDaoTransactions(tx).DeleteByRuleID(ruleID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := db.GetManager().TenantEnvServceAutoscalerRuleMetricsDaoTransactions(tx).DeleteByRuleID(ruleID); err != nil {
+		tx.Rollback()
+		return err
+	}
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	taskbody := map[string]interface{}{
+		"service_id": rule.ServiceID,
+		"rule_id":    rule.RuleID,
+	}
+	if err := s.MQClient.SendBuilderTopic(gclient.TaskStruct{
+		TaskType: "refreshhpa",
+		TaskBody: taskbody,
+		Topic:    gclient.WorkerTopic,
+	}); err != nil {
+		logrus.Errorf("send 'refreshhpa' task: %v", err)
+		return err
+	}
+	logrus.Infof("rule id: %s; successfully send 'refreshhpa' task.", rule.RuleID)
+
+	return nil
 }
 
 // ListScalingRecords -

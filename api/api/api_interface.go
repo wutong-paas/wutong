@@ -126,6 +126,7 @@ type ServiceInterface interface {
 	DeleteDependencies(w http.ResponseWriter, r *http.Request)
 	Env(w http.ResponseWriter, r *http.Request)
 	DeleteAllEnvs(w http.ResponseWriter, r *http.Request)
+	DeleteAllInnerEnvs(w http.ResponseWriter, r *http.Request)
 	Ports(w http.ResponseWriter, r *http.Request)
 	DeleteAllPorts(w http.ResponseWriter, r *http.Request)
 	PutPorts(w http.ResponseWriter, r *http.Request)

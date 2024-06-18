@@ -294,6 +294,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Post("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "add-service-env", dbmodel.SYNEVENTTYPE))
 	r.Put("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "update-service-env", dbmodel.SYNEVENTTYPE))
 	r.Delete("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "delete-service-env", dbmodel.SYNEVENTTYPE))
+	r.Delete("/envs/inner", middleware.WrapEL(controller.GetManager().DeleteAllInnerEnvs, dbmodel.TargetTypeService, "delete-service-all-inner-envs", dbmodel.SYNEVENTTYPE))
 	r.Delete("/envs", middleware.WrapEL(controller.GetManager().DeleteAllEnvs, dbmodel.TargetTypeService, "delete-service-all-envs", dbmodel.SYNEVENTTYPE))
 	//端口变量增删改(source)
 	r.Post("/ports", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "add-service-port", dbmodel.SYNEVENTTYPE))
@@ -366,6 +367,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 	// autoscaler
 	r.Post("/xparules", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "add-app-autoscaler-rule", dbmodel.SYNEVENTTYPE))
 	r.Put("/xparules", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "update-app-autoscaler-rule", dbmodel.SYNEVENTTYPE))
+	r.Delete("/xparules/{rule_id}", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "delete-app-autoscaler-rule", dbmodel.SYNEVENTTYPE))
 	r.Get("/xparecords", controller.GetManager().ScalingRecords)
 
 	//service monitor
