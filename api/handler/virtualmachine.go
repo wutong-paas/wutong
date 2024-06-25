@@ -66,21 +66,23 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 		req.OSDiskSize = defailtOSDiskSize
 	}
 
-	req.User = strings.TrimSpace(req.User)
-	if req.User == "" {
-		return nil, fmt.Errorf("虚拟机初始用户名称不能为空！")
-	}
-	if req.User == "root" {
-		return nil, fmt.Errorf("虚拟机初始用户名称不能为root！")
-	}
+	if !strings.HasSuffix(req.OSSourceURL, ".iso") {
+		req.User = strings.TrimSpace(req.User)
+		if req.User == "" {
+			return nil, fmt.Errorf("虚拟机初始用户名称不能为空！")
+		}
+		if req.User == "root" {
+			return nil, fmt.Errorf("虚拟机初始用户名称不能为root！")
+		}
 
-	req.Password = strings.TrimSpace(req.Password)
-	if req.Password == "" {
-		return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
-	}
+		req.Password = strings.TrimSpace(req.Password)
+		if req.Password == "" {
+			return nil, fmt.Errorf("虚拟机初始用户密码不能为空！")
+		}
 
-	if ok, err := validatePassword(req.Password); !ok {
-		return nil, err
+		if ok, err := validatePassword(req.Password); !ok {
+			return nil, err
+		}
 	}
 
 	if err := CheckTenantEnvResource(context.Background(), tenantEnv, int(req.RequestMemory)*1024); err == ErrTenantEnvLackOfMemory {
