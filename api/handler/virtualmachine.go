@@ -1155,7 +1155,7 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 	}
 
 	// 4、如果使用 .iso 系统源创建的虚拟机，需要额外回收数据盘 pvc
-	if vm.Labels["wutong.io/vm-os-source-from"] == api_model.OSSourceFromHTTP && strings.HasSuffix(vm.Labels["wutong.io/vm-os-source-type"], ".iso") {
+	if vm.Labels["wutong.io/vm-os-source-from"] == api_model.OSSourceFromHTTP && strings.HasSuffix(vm.Labels["wutong.io/vm-os-source-url"], ".iso") {
 		dataPVCName := pvcName(vmID, "data")
 		err = s.kubeClient.CoreV1().PersistentVolumeClaims(vm.Namespace).Delete(context.Background(), dataPVCName, metav1.DeleteOptions{})
 		if err != nil {
@@ -1712,6 +1712,9 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 	}
 
 	containsBootDisk := func(vm *kubevirtcorev1.VirtualMachine) bool {
+		if !vm.Status.Ready {
+			return false
+		}
 		for _, disk := range vm.Spec.Template.Spec.Domain.Devices.Disks {
 			if disk.Name == bootDiskName && disk.BootOrder != nil && *disk.BootOrder == 1 {
 				return true
