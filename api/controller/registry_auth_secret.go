@@ -24,7 +24,6 @@ import (
 
 	"github.com/wutong-paas/wutong/api/handler"
 	api_model "github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/cmd/api/option"
 	"github.com/wutong-paas/wutong/mq/client"
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
@@ -32,7 +31,7 @@ import (
 // RegistryAuthSecretStruct -
 type RegistryAuthSecretStruct struct {
 	MQClient client.MQClient
-	cfg      *option.Config
+	// cfg      *option.Config
 }
 
 // HTTPRule is used to add, update or delete http rule which enables

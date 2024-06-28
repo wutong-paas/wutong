@@ -32,7 +32,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/handler"
-	"github.com/wutong-paas/wutong/api/model"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
@@ -2021,7 +2020,7 @@ func (t *TenantEnvStruct) TransPlugins(w http.ResponseWriter, r *http.Request) {
 
 // CheckResourceName checks the resource name.
 func (t *TenantEnvStruct) CheckResourceName(w http.ResponseWriter, r *http.Request) {
-	var req model.CheckResourceNameReq
+	var req api_model.CheckResourceNameReq
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil) {
 		return
 	}
