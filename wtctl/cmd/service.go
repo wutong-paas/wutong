@@ -46,6 +46,12 @@ func NewCmdService() cli.Command {
 	c := cli.Command{
 		Name:  "service",
 		Usage: "about  application service operation，wtctl service -h",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "kubeconfig,kube",
+				Usage: "target kubernetes cluster kubeconfig path, default <USER_HOME>/.kube/config",
+			},
+		},
 		Subcommands: []cli.Command{
 			{
 				Name: "list",

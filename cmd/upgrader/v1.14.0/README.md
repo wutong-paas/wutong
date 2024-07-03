@@ -29,32 +29,18 @@ telepresence helm install --set client.routing.allowConflictingSubnets='{10.244.
 telepresence helm upgrade --set client.routing.allowConflictingSubnets='{10.244.0.0/22,10.244.4.0/24}'
 ```
 
-2、部署边端孤立集群 wt-api 的代理组件
+2、使用 `wtctl` 工具获取边端孤立集群配置信息：
 
 ```bash
-# http
-kubectl create deployment <edge-isolated-cluster-code>-wt-api-http -n wt-system --image swr.cn-southwest-2.myhuaweicloud.com/wutong/infinity
-kubectl expose deployment <edge-isolated-cluster-code>-wt-api-http -n wt-system --name <edge-isolated-cluster-code>-wt-api-http --port 8888
-
-# ws
-kubectl create deployment <edge-isolated-cluster-code>-wt-api-ws -n wt-system --image swr.cn-southwest-2.myhuaweicloud.com/wutong/infinity
-kubectl expose deployment <edge-isolated-cluster-code>-wt-api-ws -n wt-system --name <edge-isolated-cluster-code>-wt-api-ws --type NodePort --port 6060
+docker run -it --rm -v /:/rootfs swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-wtctl:v1.14.0 copy
+mv /usr/local/bin/wutong-wtctl /usr/local/bin/wtctl
+wtctl install
+wtctl config
 ```
 
-3、添加一个边端孤立集群
+3、添加一个边端孤立集
 
-```json
-{
-    "regionType": "edge-isloated",
-    "clusterCode": "edge-cluster-01",
-    "edgeIsloatedClusterConflictingSubnets": [
-        "10.244.0.0/22",
-        "10.244.4.0/22"
-    ]
-}
-```
-
-这会在 console 端创建一个集群，并且该集群访问 url 为 `http://edge-cluster-01-wt-api.wt-system:8888`，wsurl 则需要额外配置，例如配置 管理集群节点的 IP 和 NodePort `ws://<node-ip>:<node-port>`。
+进入 Console 控制台，集群设置 => 添加集群 => 接入已安装平台集群，将步骤 2 中获取到的边端孤立集群配置信息录入。
 
 ## 边端孤立集群
 
@@ -76,3 +62,11 @@ spec:
   edgeIsolatedClusterCode: <edge-isolated-cluster-code>
 ...
 ```
+
+控制逻辑：
+
+1、识别到 `edgeIsolatedClusterCode` 配置，在梧桐管理集群中创建 `<edgeIsolatedClusterCode>-wt-api-agent` Deployment 和 Service，用于代理边端 wt-api 服务；
+
+2、在边端孤立集群中创建 `wt-api-telepresence-interceptor` Deployment，用于连接梧桐管理集群 telepresence traffic manager 并向 `<edgeIsolatedClusterCode>-wt-api-agent` 注入 `traffic-agent` sidecar 容器；
+
+`wt-api-telepresence-interceptor` 将配置健康检查（LivenessProbe），使用 kubectl 工具检测 `<edgeIsolatedClusterCode>-wt-api-agent.wt-system:8888` 服务是否正常连接，如果连接失败，则滚动则重启容器，重启后会重新注入 telepresence traffic-agent。

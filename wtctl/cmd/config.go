@@ -29,7 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//NewCmdConfig config command
+// NewCmdConfig config command
 func NewCmdConfig() cli.Command {
 	c := cli.Command{
 		Name: "config",
@@ -43,6 +43,10 @@ func NewCmdConfig() cli.Command {
 				Usage: "wutong default namespace",
 				Value: "wt-system",
 			},
+			cli.StringFlag{
+				Name:  "kubeconfig,kube",
+				Usage: "target kubernetes cluster kubeconfig path, default <USER_HOME>/.kube/config",
+			},
 		},
 		Usage: "show region config file",
 		Action: func(c *cli.Context) {
@@ -52,6 +56,7 @@ func NewCmdConfig() cli.Command {
 			if err != nil {
 				showError(err.Error())
 			}
+
 			regionConfig := map[string]string{
 				"client.pem":          string(configMap.BinaryData["client.pem"]),
 				"client.key.pem":      string(configMap.BinaryData["client.key.pem"]),
@@ -61,6 +66,11 @@ func NewCmdConfig() cli.Command {
 				"defaultDomainSuffix": configMap.Data["defaultDomainSuffix"],
 				"defaultTCPHost":      configMap.Data["defaultTCPHost"],
 			}
+			edgeIsolatedApiAddress, ok := configMap.Data["edgeIsolatedApiAddress"]
+			if ok && edgeIsolatedApiAddress != "" {
+				regionConfig["edgeIsolatedApiAddress"] = edgeIsolatedApiAddress
+			}
+
 			body, err := yaml.Marshal(regionConfig)
 			if err != nil {
 				showError(err.Error())

@@ -48,6 +48,10 @@ func NewCmdInstall() cli.Command {
 				EnvVar: "WTNamespace",
 				Value:  "wt-system",
 			},
+			cli.StringFlag{
+				Name:  "kubeconfig,kube",
+				Usage: "target kubernetes cluster kubeconfig path, default <USER_HOME>/.kube/config",
+			},
 		},
 		Usage: "wtctl install",
 		Action: func(c *cli.Context) error {

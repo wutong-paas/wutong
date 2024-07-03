@@ -39,6 +39,12 @@ import (
 // NewSourceBuildCmd cmd for source build test
 func NewSourceBuildCmd() cli.Command {
 	c := cli.Command{
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "kubeconfig,kube",
+				Usage: "target kubernetes cluster kubeconfig path, default <USER_HOME>/.kube/config",
+			},
+		},
 		Subcommands: []cli.Command{
 			{
 				Name:  "list",

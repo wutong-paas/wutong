@@ -27,10 +27,10 @@ import (
 	"github.com/wutong-paas/wutong/wtctl/cmd"
 )
 
-//App wtctl command app
+// App wtctl command app
 var App *cli.App
 
-//Run Run
+// Run Run
 func Run() error {
 	App = cli.NewApp()
 	App.Version = version.GetVersion()

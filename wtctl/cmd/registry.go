@@ -89,6 +89,12 @@ func NewCmdRegistry() cli.Command {
 				},
 			},
 		},
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "kubeconfig,kube",
+				Usage: "target kubernetes cluster kubeconfig path, default <USER_HOME>/.kube/config",
+			},
+		},
 	}
 	return c
 }

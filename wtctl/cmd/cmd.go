@@ -53,8 +53,11 @@ func Common(c *cli.Context) {
 		logrus.Warn("Load config file error.", err.Error())
 	}
 	kc := c.GlobalString("kubeconfig")
-	if kc != "" {
-		config.Kubernets.KubeConf = kc
+	if kc == "" {
+		kc = c.String("kubeconfig")
+		if kc != "" {
+			config.Kubernets.KubeConf = kc
+		}
 	}
 	if err := clients.InitClient(config.Kubernets.KubeConf); err != nil {
 		logrus.Errorf("error config k8s,details %s", err.Error())
