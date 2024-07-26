@@ -40,7 +40,7 @@ type EndpointDaoImpl struct {
 func (e *EndpointDaoImpl) AddModel(mo model.Interface) error {
 	ep, ok := mo.(*model.Endpoint)
 	if !ok {
-		return fmt.Errorf("Type conversion error. From %s to *model.Endpoint", reflect.TypeOf(mo))
+		return fmt.Errorf("type conversion error. From %s to *model.Endpoint", reflect.TypeOf(mo))
 	}
 	var o model.Endpoint
 	if ok := e.DB.Where("service_id=? and ip=? and port=?", ep.ServiceID, ep.IP, ep.Port).Find(&o).RecordNotFound(); ok {
@@ -57,7 +57,7 @@ func (e *EndpointDaoImpl) AddModel(mo model.Interface) error {
 func (e *EndpointDaoImpl) UpdateModel(mo model.Interface) error {
 	ep, ok := mo.(*model.Endpoint)
 	if !ok {
-		return fmt.Errorf("Type conversion error. From %s to *model.Endpoint", reflect.TypeOf(mo))
+		return fmt.Errorf("type conversion error. From %s to *model.Endpoint", reflect.TypeOf(mo))
 	}
 	if strings.Replace(ep.UUID, " ", "", -1) == "" {
 		return fmt.Errorf("uuid can not be empty")
@@ -108,7 +108,7 @@ type ThirdPartySvcDiscoveryCfgDaoImpl struct {
 func (t *ThirdPartySvcDiscoveryCfgDaoImpl) AddModel(mo model.Interface) error {
 	cfg, ok := mo.(*model.ThirdPartySvcDiscoveryCfg)
 	if !ok {
-		return fmt.Errorf("Type conversion error. From %s to *model.ThirdPartySvcDiscoveryCfg",
+		return fmt.Errorf("type conversion error. From %s to *model.ThirdPartySvcDiscoveryCfg",
 			reflect.TypeOf(mo))
 	}
 	var old model.ThirdPartySvcDiscoveryCfg
@@ -117,7 +117,7 @@ func (t *ThirdPartySvcDiscoveryCfgDaoImpl) AddModel(mo model.Interface) error {
 			return err
 		}
 	} else {
-		return fmt.Errorf("Discovery configuration exists based on servicd_id(%s)", cfg.ServiceID)
+		return fmt.Errorf("discovery configuration exists based on servicd_id(%s)", cfg.ServiceID)
 	}
 	return nil
 }

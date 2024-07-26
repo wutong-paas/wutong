@@ -61,11 +61,21 @@ func (v2 *V2) Routes() chi.Router {
 	r.Put("/volume-options/{volume_type}", controller.UpdateVolumeType)
 	r.Mount("/enterprise", v2.enterpriseRouter())
 	r.Mount("/monitor", v2.monitorRouter())
-
+	r.Post("/sys-plugin", controller.GetManager().SysPluginAction)
+	r.Mount("/sys-plugin/{plugin_id}", v2.sysPluginRouter())
 	// helm resources
 	r.Get("/helm/{helm_namespace}/apps", controller.GetManager().ListHelmApps)
 	r.Get("/helm/{helm_namespace}/apps/{helm_name}/resources", controller.GetManager().ListHelmAppResources)
 
+	return r
+}
+
+func (v2 *V2) sysPluginRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Use(middleware.InitSysPlugin)
+	r.Put("/", controller.GetManager().SysPluginAction)
+	r.Delete("/", controller.GetManager().SysPluginAction)
+	r.Post("/build", controller.GetManager().SysPluginBuild)
 	return r
 }
 

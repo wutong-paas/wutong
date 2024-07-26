@@ -101,9 +101,44 @@ func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.
 	return nil
 }
 
+func (p *PluginAction) CreateSysPluginAct(cps *api_model.CreateSysPluginStruct) *util.APIHandleError {
+	tp := &dbmodel.TenantEnvPlugin{
+		PluginID:    cps.Body.PluginID,
+		PluginInfo:  cps.Body.PluginInfo,
+		PluginModel: cps.Body.PluginModel,
+		PluginName:  cps.Body.PluginName,
+		ImageURL:    cps.Body.ImageURL,
+		BuildModel:  cps.Body.BuildModel,
+		PluginType:  cps.Body.PluginType,
+	}
+	if err := db.GetManager().TenantEnvPluginDao().AddModel(tp); err != nil {
+		return util.CreateAPIHandleErrorFromDBError("create sys plugin", err)
+	}
+	return nil
+}
+
 // UpdatePluginAct UpdatePluginAct
 func (p *PluginAction) UpdatePluginAct(pluginID, tenantEnvID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError {
 	tp, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, tenantEnvID)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("get old plugin info", err)
+	}
+	tp.PluginInfo = cps.Body.PluginInfo
+	tp.PluginModel = cps.Body.PluginModel
+	tp.PluginName = cps.Body.PluginName
+	tp.ImageURL = cps.Body.ImageURL
+	tp.GitURL = cps.Body.GitURL
+	tp.BuildModel = cps.Body.BuildModel
+	err = db.GetManager().TenantEnvPluginDao().UpdateModel(tp)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("update plugin", err)
+	}
+	return nil
+}
+
+// UpdateSysPluginAct UpdateSysPluginAct
+func (p *PluginAction) UpdateSysPluginAct(pluginID string, cps *api_model.UpdateSysPluginStruct) *util.APIHandleError {
+	tp, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, "")
 	if err != nil {
 		return util.CreateAPIHandleErrorFromDBError("get old plugin info", err)
 	}
@@ -152,6 +187,11 @@ func (p *PluginAction) DeletePluginAct(pluginID, tenantEnvID string) *util.APIHa
 		return util.CreateAPIHandleErrorFromDBError("commit delete plugin transactions", err)
 	}
 	return nil
+}
+
+// DeleteSysPluginAct DeleteSysPluginAct
+func (p *PluginAction) DeleteSysPluginAct(pluginID string) *util.APIHandleError {
+	return p.DeletePluginAct(pluginID, "")
 }
 
 // GetPlugins get all plugins by tenantEnvID
@@ -276,6 +316,35 @@ func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbm
 	}
 }
 
+// BuildSysPluginManual BuildSysPluginManual
+func (p *PluginAction) BuildSysPluginManual(bps *api_model.BuildSysPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError) {
+	eventID := bps.Body.EventID
+	logger := event.GetManager().GetLogger(eventID)
+	defer event.CloseManager()
+	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(bps.PluginID, "")
+	if err != nil {
+		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", bps.PluginID), err)
+	}
+	switch plugin.BuildModel {
+	case "image", "dockerfile":
+		pbv, err := p.buildSysPlugin(bps, plugin)
+		if err != nil {
+			logrus.Errorf("build plugin from %s error: %s", plugin.BuildModel, err.Error())
+			logger.Error(fmt.Sprintf("从 %s 构建插件任务发送失败: %s", plugin.BuildModel, err.Error()), map[string]string{"step": "callback", "status": "failure"})
+			return nil, util.CreateAPIHandleError(500, fmt.Errorf("build plugin from %s error", plugin.BuildModel))
+		}
+		logger.Info(fmt.Sprintf("从 %s 构建插件任务发送成功", plugin.BuildModel), map[string]string{"step": "image-plugin", "status": "starting"})
+		plugin.ImageURL = bps.Body.BuildImage
+		err = db.GetManager().TenantEnvPluginDao().UpdateModel(plugin)
+		if err != nil {
+			logrus.Error("update tenant env plugin image url error ", err.Error())
+		}
+		return pbv, nil
+	default:
+		return nil, util.CreateAPIHandleError(400, fmt.Errorf("unexpect kind"))
+	}
+}
+
 func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.TenantEnvPlugin) error {
 	if plugin.ImageURL == "" && plugin.BuildModel == "image" {
 		return fmt.Errorf("need image url")
@@ -306,6 +375,13 @@ func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.Te
 		}
 	}
 	return nil
+}
+
+func (p *PluginAction) buildSysPlugin(b *api_model.BuildSysPluginStruct, plugin *dbmodel.TenantEnvPlugin) (*dbmodel.TenantEnvPluginBuildVersion, error) {
+	return p.buildPlugin(&api_model.BuildPluginStruct{
+		PluginID: b.PluginID,
+		Body:     b.Body,
+	}, plugin)
 }
 
 // buildPlugin buildPlugin

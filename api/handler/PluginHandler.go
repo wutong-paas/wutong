@@ -27,13 +27,17 @@ import (
 // PluginHandler plugin handler
 type PluginHandler interface {
 	CreatePluginAct(cps *api_model.CreatePluginStruct) *util.APIHandleError
+	CreateSysPluginAct(cps *api_model.CreateSysPluginStruct) *util.APIHandleError
 	UpdatePluginAct(pluginID, tenantEnvID string, cps *api_model.UpdatePluginStruct) *util.APIHandleError
+	UpdateSysPluginAct(pluginID string, cps *api_model.UpdateSysPluginStruct) *util.APIHandleError
 	DeletePluginAct(pluginID, tenantEnvID string) *util.APIHandleError
+	DeleteSysPluginAct(pluginID string) *util.APIHandleError
 	GetPlugins(tenantEnvID string) ([]*dbmodel.TenantEnvPlugin, *util.APIHandleError)
 	AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError
 	UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandleError
 	DeleteDefaultEnv(pluginID, versionID, envName string) *util.APIHandleError
 	BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
+	BuildSysPluginManual(bps *api_model.BuildSysPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
 	GetAllPluginBuildVersions(pluginID string) ([]*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
 	GetPluginBuildVersion(pluginID, versionID string) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError)
 	DeletePluginBuildVersion(pluginID, versionID string) *util.APIHandleError

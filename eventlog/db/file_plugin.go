@@ -29,6 +29,7 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -63,7 +64,10 @@ func (m *filePlugin) getStdFilePath(serviceID string) (string, error) {
 	return apath, nil
 }
 
-var fileCache = make(map[string]int64)
+// dp: 在 1.13.0 版本发现了并发写错误：concurrent map writes，使用 sync.Map 调整代码
+// 使用 alpha 版本测试，如果运行正常，则发布 v1.13.1 版本修复。
+// var fileCache = make(map[string]int64)
+var safeFileCache sync.Map
 
 func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 	if len(events) == 0 {
@@ -110,13 +114,20 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 		}
 	}
 	// 最后记录日志的时间，如果当前日志的时间小于等于这个时间，不再记录
-	lastLogTimeUnixNano, ok := fileCache[stdoutLogPath]
+	// lastLogTimeUnixNano, ok := fileCache[stdoutLogPath]
+	lastLogTimeUnixNanoVal, ok := safeFileCache.Load(stdoutLogPath)
+	var lastLogTimeUnixNano int64
 	if !ok {
 		lastLogTimeUnixNano = readLastLogTimeUnixNano(stdoutLogPath)
+		// if lastLogTimeUnixNano > 0 {
+		// 	fileCache[stdoutLogPath] = lastLogTimeUnixNano
 		if lastLogTimeUnixNano > 0 {
-			fileCache[stdoutLogPath] = lastLogTimeUnixNano
+			safeFileCache.Store(stdoutLogPath, lastLogTimeUnixNano)
 		}
+	} else {
+		lastLogTimeUnixNano = lastLogTimeUnixNanoVal.(int64)
 	}
+
 	if lastLogTimeUnixNano > 0 && events[len(events)-1].TimeUnixNano < lastLogTimeUnixNano {
 		return nil
 	}
@@ -161,7 +172,8 @@ func (m *filePlugin) SaveMessage(events []*EventLogMessage) error {
 	if err != nil {
 		return err
 	}
-	fileCache[stdoutLogPath] = events[len(events)-1].TimeUnixNano
+	// fileCache[stdoutLogPath] = events[len(events)-1].TimeUnixNano
+	safeFileCache.Store(stdoutLogPath, events[len(events)-1].TimeUnixNano)
 	return err
 }
 

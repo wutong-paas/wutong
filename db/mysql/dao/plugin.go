@@ -85,10 +85,11 @@ func (t *PluginDaoImpl) ListByIDs(ids []string) ([]*model.TenantEnvPlugin, error
 // DeletePluginByID DeletePluginByID
 func (t *PluginDaoImpl) DeletePluginByID(id, tenantEnvID string) error {
 	var plugin model.TenantEnvPlugin
-	if err := t.DB.Where("plugin_id=? and tenant_env_id=?", id, tenantEnvID).Delete(&plugin).Error; err != nil {
-		return err
+	if tenantEnvID == "" {
+		return t.DB.Where("plugin_id=?", id).Delete(&plugin).Error
+	} else {
+		return t.DB.Where("plugin_id=? and tenant_env_id=?", id, tenantEnvID).Delete(&plugin).Error
 	}
-	return nil
 }
 
 // GetPluginsByTenantEnvID GetPluginsByTenantEnvID

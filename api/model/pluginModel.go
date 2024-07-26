@@ -112,6 +112,41 @@ type CreatePluginStruct struct {
 	}
 }
 
+// CreateSysPluginStruct CreateSysPluginStruct
+//
+//swagger:parameters createSysPlugin
+type CreateSysPluginStruct struct {
+	// in: body
+	Body struct {
+		//插件id
+		//in: body
+		//required: true
+		PluginID string `json:"plugin_id" validate:"plugin_id|required"`
+		//in: body
+		//required: true
+		PluginName string `json:"plugin_name" validate:"plugin_name|required"`
+		//插件用途描述
+		//in: body
+		//required: false
+		PluginInfo string `json:"plugin_info" validate:"plugin_info"`
+		// 插件docker地址
+		// in:body
+		// required: false
+		ImageURL string `json:"image_url" validate:"image_url"`
+		//构建模式
+		//in: body
+		//required: false
+		BuildModel string `json:"build_model" validate:"build_model"`
+		//插件模式
+		//in: body
+		//required: false
+		PluginModel string `json:"plugin_model" validate:"plugin_model"`
+
+		//插件类型
+		PluginType string `json:"origin" validate:"origin"`
+	}
+}
+
 // UpdatePluginStruct UpdatePluginStruct
 //
 //swagger:parameters updatePlugin
@@ -153,6 +188,43 @@ type UpdatePluginStruct struct {
 	}
 }
 
+// UpdateSysPluginStruct UpdateSysPluginStruct
+//
+//swagger:parameters updateSysPlugin
+type UpdateSysPluginStruct struct {
+	// 插件id
+	// in: path
+	// required: true
+	PluginID string `json:"plugin_id" validate:"tenant_env_name|required"`
+	// in: body
+	Body struct {
+		//插件名称
+		//in: body
+		//required: false
+		PluginName string `json:"plugin_name" validate:"plugin_name"`
+		//插件用途描述
+		//in: body
+		//required: false
+		PluginInfo string `json:"plugin_info" validate:"plugin_info"`
+		//插件docker地址
+		//in: body
+		//required: false
+		ImageURL string `json:"image_url" validate:"image_url"`
+		//git地址
+		//in: body
+		//required: false
+		GitURL string `json:"git_url" validate:"git_url"`
+		//构建模式
+		//in: body
+		//required: false
+		BuildModel string `json:"build_model" validate:"build_model"`
+		//插件模式
+		//in: body
+		//required: false
+		PluginModel string `json:"plugin_model" validate:"plugin_model"`
+	}
+}
+
 // DeletePluginStruct deletePluginStruct
 //
 //swagger:parameters deletePlugin
@@ -160,6 +232,15 @@ type DeletePluginStruct struct {
 	// in: path
 	// required: true
 	TenantEnvName string `json:"tenant_env_name" validate:"tenant_env_name|required"`
+	// in: path
+	// required: true
+	PluginID string `json:"plugin_id" validate:"plugin_id|required"`
+}
+
+// DeleteSysPluginStruct DeleteSysPluginStruct
+//
+//swagger:parameters deleteSysPlugin
+type DeleteSysPluginStruct struct {
 	// in: path
 	// required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id|required"`
@@ -235,6 +316,69 @@ type PluginDefaultENV struct {
 	IsChange bool `json:"is_change" validate:"is_change|bool"`
 }
 
+type BuildPluginBody struct {
+	// the event id
+	// in: body
+	// required: false
+	EventID string `json:"event_id" validate:"event_id"`
+	// 插件CPU权重, 默认125
+	// in: body
+	// required: true
+	PluginCPU int `json:"plugin_cpu" validate:"plugin_cpu|required"`
+	// 插件最大内存, 默认50
+	// in: body
+	// required: true
+	PluginMemory int `json:"plugin_memory" validate:"plugin_memory|required"`
+	// 插件cmd, 默认50
+	// in: body
+	// required: false
+	PluginCMD string `json:"plugin_cmd" validate:"plugin_cmd"`
+	// 插件的版本号
+	// in: body
+	// required: true
+	BuildVersion string `json:"build_version" validate:"build_version|required"`
+	// 插件构建版本号
+	// in: body
+	// required: true
+	DeployVersion string `json:"deploy_version" validate:"deploy_version"`
+	// git地址分支信息，默认为master
+	// in: body
+	// required: false
+	RepoURL string `json:"repo_url" validate:"repo_url"`
+	// git username
+	// in: body
+	// required: false
+	Username string `json:"username"`
+	// git password
+	// in: body
+	// required: false
+	Password string `json:"password"`
+	// 版本信息, 协助选择插件版本
+	// in:body
+	// required: true
+	Info string `json:"info" validate:"info"`
+	// 操作人
+	// in: body
+	// required: false
+	Operator string `json:"operator" validate:"operator"`
+	//租户id
+	// in: body
+	// required: true
+	TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
+	// 镜像地址
+	// in: body
+	// required: false
+	BuildImage string `json:"build_image" validate:"build_image"`
+	//ImageInfo
+	ImageInfo struct {
+		HubURL      string `json:"hub_url"`
+		HubUser     string `json:"hub_user"`
+		HubPassword string `json:"hub_password"`
+		Namespace   string `json:"namespace"`
+		IsTrust     bool   `json:"is_trust,omitempty"`
+	} `json:"ImageInfo" validate:"ImageInfo"`
+}
+
 // BuildPluginStruct BuildPluginStruct
 //
 //swagger:parameters buildPlugin
@@ -246,68 +390,18 @@ type BuildPluginStruct struct {
 	// required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id"`
 	//in: body
-	Body struct {
-		// the event id
-		// in: body
-		// required: false
-		EventID string `json:"event_id" validate:"event_id"`
-		// 插件CPU权重, 默认125
-		// in: body
-		// required: true
-		PluginCPU int `json:"plugin_cpu" validate:"plugin_cpu|required"`
-		// 插件最大内存, 默认50
-		// in: body
-		// required: true
-		PluginMemory int `json:"plugin_memory" validate:"plugin_memory|required"`
-		// 插件cmd, 默认50
-		// in: body
-		// required: false
-		PluginCMD string `json:"plugin_cmd" validate:"plugin_cmd"`
-		// 插件的版本号
-		// in: body
-		// required: true
-		BuildVersion string `json:"build_version" validate:"build_version|required"`
-		// 插件构建版本号
-		// in: body
-		// required: true
-		DeployVersion string `json:"deploy_version" validate:"deploy_version"`
-		// git地址分支信息，默认为master
-		// in: body
-		// required: false
-		RepoURL string `json:"repo_url" validate:"repo_url"`
-		// git username
-		// in: body
-		// required: false
-		Username string `json:"username"`
-		// git password
-		// in: body
-		// required: false
-		Password string `json:"password"`
-		// 版本信息, 协助选择插件版本
-		// in:body
-		// required: true
-		Info string `json:"info" validate:"info"`
-		// 操作人
-		// in: body
-		// required: false
-		Operator string `json:"operator" validate:"operator"`
-		//租户id
-		// in: body
-		// required: true
-		TenantEnvID string `json:"tenant_env_id" validate:"tenant_env_id"`
-		// 镜像地址
-		// in: body
-		// required: false
-		BuildImage string `json:"build_image" validate:"build_image"`
-		//ImageInfo
-		ImageInfo struct {
-			HubURL      string `json:"hub_url"`
-			HubUser     string `json:"hub_user"`
-			HubPassword string `json:"hub_password"`
-			Namespace   string `json:"namespace"`
-			IsTrust     bool   `json:"is_trust,omitempty"`
-		} `json:"ImageInfo" validate:"ImageInfo"`
-	}
+	Body BuildPluginBody
+}
+
+// BuildSysPluginStruct BuildSysPluginStruct
+//
+//swagger:parameters buildSysPlugin
+type BuildSysPluginStruct struct {
+	// in: path
+	// required: true
+	PluginID string `json:"plugin_id" validate:"plugin_id"`
+	//in: body
+	Body BuildPluginBody
 }
 
 // BuildPluginReq -

@@ -204,8 +204,10 @@ type LogInterface interface {
 // PluginInterface plugin interface
 type PluginInterface interface {
 	PluginAction(w http.ResponseWriter, r *http.Request)
+	SysPluginAction(w http.ResponseWriter, r *http.Request)
 	PluginDefaultENV(w http.ResponseWriter, r *http.Request)
 	PluginBuild(w http.ResponseWriter, r *http.Request)
+	SysPluginBuild(w http.ResponseWriter, r *http.Request)
 	GetAllPluginBuildVersions(w http.ResponseWriter, r *http.Request)
 	GetPluginBuildVersion(w http.ResponseWriter, r *http.Request)
 	DeletePluginBuildVersion(w http.ResponseWriter, r *http.Request)

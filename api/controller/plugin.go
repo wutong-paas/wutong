@@ -19,6 +19,7 @@
 package controller
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/wutong-paas/wutong/api/handler/share"
@@ -32,6 +33,18 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
+// PluginSysAction plugin sys action
+func (t *TenantEnvStruct) SysPluginAction(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "PUT":
+		t.UpdateSysPlugin(w, r)
+	case "DELETE":
+		t.DeleteSysPlugin(w, r)
+	case "POST":
+		t.CreateSysPlugin(w, r)
+	}
+}
+
 // PluginAction plugin action
 func (t *TenantEnvStruct) PluginAction(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -44,6 +57,39 @@ func (t *TenantEnvStruct) PluginAction(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		t.GetPlugins(w, r)
 	}
+}
+
+// CreatePlugin add plugin
+func (t *TenantEnvStruct) CreateSysPlugin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation POST /v2/sys-plugin v2 createSysPlugin 创建系统插件
+	//
+	// 创建系统插件
+	//
+	// create sys plugin
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// - application/x-protobuf
+	//
+	// produces:
+	// - application/json
+	// - application/xml
+	//
+	// responses:
+	//   default:
+	//     schema:
+	//       "$ref": "#/responses/commandResponse"
+	//     description: 统一返回格式
+	var cps api_model.CreateSysPluginStruct
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &cps.Body, nil); !ok {
+		return
+	}
+	if err := handler.GetPluginManager().CreateSysPluginAct(&cps); err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
 }
 
 // CreatePlugin add plugin
@@ -83,6 +129,41 @@ func (t *TenantEnvStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
+// UpdateSysPlugin UpdateSysPlugin
+func (t *TenantEnvStruct) UpdateSysPlugin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation PUT /v2/sys-plugin v2 updateSysPlugin
+	//
+	// 插件更新 全量更新，但pluginID和所在租户不提供修改
+	//
+	// update plugin
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// - application/x-protobuf
+	//
+	// produces:
+	// - application/json
+	// - application/xml
+	//
+	// responses:
+	//   default:
+	//     schema:
+	//       "$ref": "#/responses/commandResponse"
+	//     description: 统一返回格式
+
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
+	var ups api_model.UpdateSysPluginStruct
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ups.Body, nil); !ok {
+		return
+	}
+	if err := handler.GetPluginManager().UpdateSysPluginAct(pluginID, &ups); err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
 // UpdatePlugin UpdatePlugin
 func (t *TenantEnvStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/plugin/{plugin_id} v2 updatePlugin
@@ -113,6 +194,36 @@ func (t *TenantEnvStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := handler.GetPluginManager().UpdatePluginAct(pluginID, tenantEnvID, &ups); err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// DeleteSysPlugin DeleteSysPlugin
+func (t *TenantEnvStruct) DeleteSysPlugin(w http.ResponseWriter, r *http.Request) {
+	// swagger:operation DELETE /v2/sys-plugin v2 deleteSysPlugin
+	//
+	// 插件系统删除
+	//
+	// delete sys plugin
+	//
+	// ---
+	// consumes:
+	// - application/json
+	// - application/x-protobuf
+	//
+	// produces:
+	// - application/json
+	// - application/xml
+	//
+	// responses:
+	//   default:
+	//     schema:
+	//       "$ref": "#/responses/commandResponse"
+	//     description: 统一返回格式
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
+	if err := handler.GetPluginManager().DeleteSysPluginAct(pluginID); err != nil {
 		err.Handle(r, w)
 		return
 	}
@@ -285,6 +396,48 @@ func (t *TenantEnvStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 	build.Body.TenantEnvID = tenantEnvID
 	pbv, err := handler.GetPluginManager().BuildPluginManual(&build)
 	if err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, pbv)
+}
+
+// SysPluginBuild SysPluginBuild
+// swagger:operation POST /v2/sys-plugin/{plugin_id}/build v2 buildSysPlugin
+//
+// 构建 sys plugin
+//
+// build sys plugin
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) SysPluginBuild(w http.ResponseWriter, r *http.Request) {
+	log.Println("debug 000")
+	var build api_model.BuildSysPluginStruct
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build.Body, nil)
+	if !ok {
+		log.Println("debug 111")
+		return
+	}
+	log.Println("debug 222")
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
+	build.PluginID = pluginID
+	pbv, err := handler.GetPluginManager().BuildSysPluginManual(&build)
+	if err != nil {
+		log.Println("debug 333")
 		err.Handle(r, w)
 		return
 	}

@@ -192,6 +192,32 @@ func InitPlugin(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+// InitSysPlugin 实现 sys plugin init中间件
+func InitSysPlugin(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		debugRequestBody(r)
+
+		pluginID := chi.URLParam(r, "plugin_id")
+		if pluginID == "" {
+			httputil.ReturnError(r, w, 404, "need plugin id")
+			return
+		}
+		_, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, "")
+		if err != nil {
+			if err.Error() == gorm.ErrRecordNotFound.Error() {
+				httputil.ReturnError(r, w, 404, "cant find sys plugin")
+				return
+			}
+			logrus.Errorf("get plugin error, %v", err)
+			httputil.ReturnError(r, w, 500, "get sys plugin error")
+			return
+		}
+		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("plugin_id"), pluginID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+	return http.HandlerFunc(fn)
+}
+
 // SetLog SetLog
 func SetLog(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
