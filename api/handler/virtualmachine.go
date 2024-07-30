@@ -488,7 +488,8 @@ func (s *ServiceAction) AddVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string, re
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
-				"wutong.io/vm-id": vmID,
+				"wutong.io/vm-id":     vmID,
+				"vm.kubevirt.io/name": vmID,
 			},
 			Ports: []corev1.ServicePort{
 				{
@@ -527,6 +528,10 @@ func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		svc.Labels["wutong.io/vm-port-enabled"] = "true"
+		svc.Spec.Selector = map[string]string{
+			"wutong.io/vm-id":     vmID,
+			"vm.kubevirt.io/name": vmID,
+		}
 		_, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{})
 		if err != nil {
 			latest, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
