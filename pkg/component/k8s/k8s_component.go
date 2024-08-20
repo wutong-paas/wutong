@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/config/configs"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+
 	wutongscheme "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -22,6 +23,7 @@ import (
 	// "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1beta1"
 	// gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1beta1"
 	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
+	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 )
 
@@ -81,6 +83,7 @@ func (k *Component) Start(ctx context.Context, cfg *configs.Config) error {
 	scheme := runtime.NewScheme()
 	clientgoscheme.AddToScheme(scheme)
 	wutongscheme.AddToScheme(scheme)
+	wutongv1alpha1.AddToScheme(scheme)
 	k.K8sClient, err = k8sclient.New(config, k8sclient.Options{
 		Scheme: scheme,
 	})

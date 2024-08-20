@@ -104,6 +104,7 @@ func (v2 *V2) eventsRouter() chi.Router {
 func (v2 *V2) clusterRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/", controller.GetManager().GetClusterInfo)
+	r.Put("/", controller.GetManager().SetClusterInfo)
 	r.Get("/storageclasses", controller.GetManager().ListStorageClasses)
 	r.Mount("/nodes", v2.nodeRouter())
 	r.Mount("/scheduling", v2.schedulingRouter())

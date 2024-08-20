@@ -25,6 +25,7 @@ import (
 // ClusterInterface -
 type ClusterInterface interface {
 	GetClusterInfo(w http.ResponseWriter, r *http.Request)
+	SetClusterInfo(w http.ResponseWriter, r *http.Request)
 	GetClusterEvents(w http.ResponseWriter, r *http.Request)
 	MavenSettingList(w http.ResponseWriter, r *http.Request)
 	MavenSettingAdd(w http.ResponseWriter, r *http.Request)

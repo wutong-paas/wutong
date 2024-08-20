@@ -1695,8 +1695,8 @@ github.com/wutong-paas/gorm-bulk-upsert v1.0.0 h1:Xl3wVHGvPjkz9ASLB0g4GdnAfakeIF
 github.com/wutong-paas/gorm-bulk-upsert v1.0.0/go.mod h1:/0dUoW982asTvHKfZpnOJW1nBMG2epY23aQyQLA/Iyc=
 github.com/wutong-paas/wutong-oam v1.4.2 h1:QOp+SlIiWPNhNGB5oJP0WufVyDwva1wAKWIRGkrddjU=
 github.com/wutong-paas/wutong-oam v1.4.2/go.mod h1:SBQkXp1F+VRxlTtIcHEefessO7qsgMywarVzlChESEU=
-github.com/wutong-paas/wutong-operator v1.8.0 h1:5rTgXaIJ4GzqJUgstIWwtI4U1ISScqNGZiXQK0+sK2s=
-github.com/wutong-paas/wutong-operator v1.8.0/go.mod h1:hJVeSlEQgo8Sujv7MmUhyILjnOIDXZ+Ruv7f4O+Tzo0=
+github.com/wutong-paas/wutong-operator v1.15.0 h1:rei1YwrSHVQsLXkQ3oyIjbDFdYZbWmxNMwW25+GW/yc=
+github.com/wutong-paas/wutong-operator v1.15.0/go.mod h1:hJVeSlEQgo8Sujv7MmUhyILjnOIDXZ+Ruv7f4O+Tzo0=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=

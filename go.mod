@@ -82,7 +82,7 @@ require (
 	github.com/vmware-tanzu/velero v1.12.0
 	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
 	github.com/wutong-paas/wutong-oam v1.4.2
-	github.com/wutong-paas/wutong-operator v1.8.0
+	github.com/wutong-paas/wutong-operator v1.15.0
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
 	golang.org/x/crypto v0.12.0
 	golang.org/x/net v0.14.0

@@ -13,23 +13,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/model"
 	apiutil "github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/pkg/kube"
 	"github.com/wutong-paas/wutong/util"
 
+	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // ClusterHandler -
 type ClusterHandler interface {
 	GetClusterInfo(ctx context.Context) (*model.ClusterResource, error)
+	SetClusterInfo(ctx context.Context, info *RegionInfo) error
 	GetClusterEvents(ctx context.Context) ([]model.ClusterEvent, error)
 	MavenSettingAdd(ctx context.Context, ms *MavenSetting) *apiutil.APIHandleError
 	MavenSettingList(ctx context.Context) (re []MavenSetting)
@@ -41,10 +47,11 @@ type ClusterHandler interface {
 }
 
 // NewClusterHandler -
-func NewClusterHandler(clientset kubernetes.Interface, WtNamespace, prometheusEndpoint string) ClusterHandler {
+func NewClusterHandler(clientset kubernetes.Interface, runtimeclient client.Client, WtNamespace, prometheusEndpoint string) ClusterHandler {
 	return &clusterAction{
 		namespace:          WtNamespace,
 		clientset:          clientset,
+		runtimeclient:      runtimeclient,
 		prometheusEndpoint: prometheusEndpoint,
 	}
 }
@@ -52,6 +59,7 @@ func NewClusterHandler(clientset kubernetes.Interface, WtNamespace, prometheusEn
 type clusterAction struct {
 	namespace          string
 	clientset          kubernetes.Interface
+	runtimeclient      client.Client
 	clusterInfoCache   *model.ClusterResource
 	cacheTime          time.Time
 	prometheusEndpoint string
@@ -159,6 +167,32 @@ func (c *clusterAction) GetClusterInfo(ctx context.Context) (*model.ClusterResou
 	c.clusterInfoCache = result
 	c.cacheTime = time.Now()
 	return result, nil
+}
+
+// SetClusterInfo set cluster spec regionID and regionCode
+func (c *clusterAction) SetClusterInfo(ctx context.Context, info *RegionInfo) error {
+	var cluster wutongv1alpha1.WutongCluster
+	if err := c.runtimeclient.Get(context.Background(), types.NamespacedName{Namespace: "wt-system", Name: "wutongcluster"}, &cluster); err != nil {
+		return errors.Wrap(err, "get configuration from wutong cluster")
+	}
+
+	if cluster.Spec.RegionID == info.RegionID && cluster.Spec.RegionCode == info.RegionCode {
+		return nil
+	}
+
+	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		cluster.Spec.RegionID = info.RegionID
+		cluster.Spec.RegionCode = info.RegionCode
+		if err := c.runtimeclient.Update(ctx, &cluster); err != nil {
+			c.runtimeclient.Get(context.Background(), types.NamespacedName{Namespace: "wt-system", Name: "wutongcluster"}, &cluster)
+			return err
+		}
+		return nil
+	}); err != nil {
+		return &apiutil.APIHandleError{Code: 400, Err: fmt.Errorf("update cluster info failure")}
+	}
+
+	return nil
 }
 
 func internalIPFromNode(node *corev1.Node) (string, bool) {
@@ -487,4 +521,9 @@ func (c *clusterAction) ListStorageClasses(ctx context.Context) []model.StorageC
 	})
 
 	return result
+}
+
+type RegionInfo struct {
+	RegionID   string `json:"region_id" validate:"required"`
+	RegionCode string `json:"region_code" validate:"required"`
 }

@@ -138,7 +138,7 @@ func InitHandle(conf option.Config) error {
 	batchOperationHandler = CreateBatchOperationHandler(mqClient, statusCli, operationHandler)
 	defaultAppRestoreHandler = NewAppRestoreHandler()
 	defPodHandler = NewPodHandler(statusCli)
-	defClusterHandler = NewClusterHandler(kubeClient, conf.WtNamespace, conf.PrometheusEndpoint)
+	defClusterHandler = NewClusterHandler(kubeClient, k8sClient, conf.WtNamespace, conf.PrometheusEndpoint)
 	defNodeHandler = NewNodeHandler(kubeClient, prometheusCli)
 	defSchedulingHandler = NewSchedulingHandler(kubeClient)
 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)

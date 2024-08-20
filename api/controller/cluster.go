@@ -44,6 +44,23 @@ func (t *ClusterController) GetClusterInfo(w http.ResponseWriter, r *http.Reques
 	httputil.ReturnSuccess(r, w, nodes)
 }
 
+// SetClusterInfo -
+func (t *ClusterController) SetClusterInfo(w http.ResponseWriter, r *http.Request) {
+	var info handler.RegionInfo
+
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &info, nil); !ok {
+		return
+	}
+
+	err := handler.GetClusterHandler().SetClusterInfo(r.Context(), &info)
+	if err != nil {
+		logrus.Errorf("set cluster info: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
 // GetClusterEvents
 func (t *ClusterController) GetClusterEvents(w http.ResponseWriter, r *http.Request) {
 	events, err := handler.GetClusterHandler().GetClusterEvents(r.Context())

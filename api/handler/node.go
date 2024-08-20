@@ -148,7 +148,6 @@ func (a *nodeAction) GetVMSchedulingLabels(nodeName string) ([]model.Label, erro
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return nil, fmt.Errorf("节点 %s 不存在", nodeName)
-
 		}
 	}
 
