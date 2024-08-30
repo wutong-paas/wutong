@@ -375,6 +375,7 @@ type DeleteNodeAnnotationRequest struct {
 }
 
 type StorageClass struct {
-	Name      string `json:"name"`
-	IsDefault bool   `json:"is_default"`
+	DisplayName string `json:"display_name"`
+	Name        string `json:"name"`
+	IsDefault   bool   `json:"is_default"`
 }

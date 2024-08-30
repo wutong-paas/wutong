@@ -457,6 +457,8 @@ func (v2 *V2) applicationRouter() chi.Router {
 	r.Put("/configgroups/{config_group_name}", controller.GetManager().UpdateConfigGroup)
 
 	r.Put("/ports", controller.GetManager().BatchUpdateComponentPorts)
+	r.Get("/status", controller.GetManager().GetAppStatus)
+	// Deprecated, use GET method
 	r.Put("/status", controller.GetManager().GetAppStatus)
 	// status
 	r.Post("/install", controller.GetManager().Install)

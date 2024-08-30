@@ -506,13 +506,23 @@ func (c *clusterAction) ListStorageClasses(ctx context.Context) []model.StorageC
 	}
 
 	for i := range ret {
-		if strings.HasPrefix(ret[i].Name, "wutong") {
+		if ret[i].Name == "wutongslsc" {
 			continue
 		}
-		result = append(result, model.StorageClass{
-			Name:      ret[i].Name,
-			IsDefault: ret[i].Annotations["storageclass.kubernetes.io/is-default-class"] == "true",
-		})
+
+		sc := model.StorageClass{
+			DisplayName: ret[i].Name,
+			Name:        ret[i].Name,
+			IsDefault:   ret[i].Annotations["storageclass.kubernetes.io/is-default-class"] == "true",
+		}
+
+		if sc.Name == "wutongsssc" {
+			// 置顶
+			sc.DisplayName = "共享存储（文件）"
+			result = append([]model.StorageClass{sc}, result...)
+		} else {
+			result = append(result, sc)
+		}
 	}
 
 	// 将默认的 storage class 排在前面

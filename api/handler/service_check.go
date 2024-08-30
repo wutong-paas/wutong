@@ -36,7 +36,10 @@ import (
 
 // ServiceCheck check service build source
 func (s *ServiceAction) ServiceCheck(scs *api_model.ServiceCheckStruct) (string, string, *util.APIHandleError) {
-	checkUUID := uuid.New().String()
+	checkUUID := scs.Body.CheckUUID
+	if checkUUID == "" {
+		checkUUID = uuid.New().String()
+	}
 	scs.Body.CheckUUID = checkUUID
 	if scs.Body.EventID == "" {
 		scs.Body.EventID = tutil.NewUUID()
