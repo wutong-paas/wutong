@@ -173,6 +173,8 @@ type ServiceInterface interface {
 	AddServiceSchedulingToleration(w http.ResponseWriter, r *http.Request)
 	UpdateServiceSchedulingToleration(w http.ResponseWriter, r *http.Request)
 	DeleteServiceSchedulingToleration(w http.ResponseWriter, r *http.Request)
+
+	ChangeServiceApp(w http.ResponseWriter, r *http.Request)
 }
 
 // TenantEnvInterfaceWithV1 funcs for both v2 and v1

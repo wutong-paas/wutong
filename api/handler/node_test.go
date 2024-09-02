@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/wutong-paas/wutong/api/model"
@@ -38,7 +40,7 @@ func TestCordonNode(t *testing.T) {
 		{
 			// 一个不存在的集群节点名称，错误测试
 			nodeName:  "kind-01-node-not-exist",
-			returnErr: errs.NodeNotExist,
+			returnErr: errors.New("nodes \"kind-01-node-not-exist\" not found"),
 		},
 	}
 
@@ -55,7 +57,7 @@ func TestCordonNode(t *testing.T) {
 
 		// 禁止节点调度成功，确认节点状态
 		if err == nil {
-			node, err := kube.Client().CoreV1().Nodes().Get(test.nodeName, metav1.GetOptions{})
+			node, err := kube.RegionClientset().CoreV1().Nodes().Get(context.Background(), test.nodeName, metav1.GetOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -81,7 +83,7 @@ func TestUncordonNode(t *testing.T) {
 		{
 			// 一个不存在的集群节点名称，错误测试
 			nodeName:  "kind-01-node-not-exist",
-			returnErr: errs.NodeNotExist,
+			returnErr: errors.New("nodes \"kind-01-node-not-exist\" not found"),
 		},
 	}
 
@@ -96,7 +98,7 @@ func TestUncordonNode(t *testing.T) {
 
 		// 允许节点调度成功，确认节点状态
 		if err == nil {
-			node, err := kube.Client().CoreV1().Nodes().Get(test.nodeName, metav1.GetOptions{})
+			node, err := kube.RegionClientset().CoreV1().Nodes().Get(context.Background(), test.nodeName, metav1.GetOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -394,6 +394,8 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Mount("/backup", v2.backupRouter())
 	r.Mount("/restore", v2.restoreRouter())
 
+	r.Put("/app", middleware.WrapEL(controller.GetManager().ChangeServiceApp, dbmodel.TargetTypeService, "change-service-app", dbmodel.SYNEVENTTYPE))
+
 	return r
 }
 

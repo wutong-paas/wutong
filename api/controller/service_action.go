@@ -1358,3 +1358,19 @@ func (t *TenantEnvStruct) RemoveBootDisk(w http.ResponseWriter, r *http.Request)
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
+
+func (t *TenantEnvStruct) ChangeServiceApp(w http.ResponseWriter, r *http.Request) {
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	var req api_model.ChangeServiceAppRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil)
+	if !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+	err := handler.GetServiceManager().ChangeServiceApp(serviceID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}

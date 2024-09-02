@@ -239,3 +239,7 @@ type AddVMVolumeRequest struct {
 	StorageClass string `json:"storageClass" validate:"storageClass|required"`
 	VolumeSize   int64  `json:"volumeSize" validate:"size|required"`
 }
+
+type ChangeServiceAppRequest struct {
+	NewAppID string `json:"newAppId" validate:"newAppId|required"`
+}

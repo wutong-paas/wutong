@@ -3268,3 +3268,30 @@ func TransStatus(eStatus string) string {
 	}
 	return ""
 }
+
+func (s *ServiceAction) ChangeServiceApp(serviceID string, req *api_model.ChangeServiceAppRequest) error {
+	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
+	if err != nil {
+		return err
+	}
+	if service == nil {
+		return fmt.Errorf("service not found")
+	}
+	if service.AppID == req.NewAppID {
+		return nil
+	}
+
+	app, err := db.GetManager().ApplicationDao().GetAppByID(req.NewAppID)
+	if err != nil {
+		return err
+	}
+
+	if app == nil {
+		return fmt.Errorf("app not found")
+	}
+	if app.TenantEnvID != service.TenantEnvID {
+		return fmt.Errorf("app and service not in the same tenant env")
+	}
+	service.AppID = req.NewAppID
+	return db.GetManager().TenantEnvServiceDao().UpdateModel(service)
+}

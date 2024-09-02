@@ -155,4 +155,6 @@ type ServiceHandler interface {
 	AddServiceSchedulingToleration(serviceID string, req *api_model.AddServiceSchedulingTolerationRequest) error
 	UpdateServiceSchedulingToleration(serviceID string, req *api_model.UpdateServiceSchedulingTolerationRequest) error
 	DeleteServiceSchedulingToleration(serviceID string, req *api_model.DeleteServiceSchedulingTolerationRequest) error
+
+	ChangeServiceApp(serviceID string, req *api_model.ChangeServiceAppRequest) error
 }
