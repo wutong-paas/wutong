@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"syscall"
 	"time"
@@ -125,6 +126,10 @@ func (e *execContext) Run() error {
 }
 
 func (e *execContext) RunLog() error {
+	exec, err := remotecommand.NewSPDYExecutor(e.config, "GET", e.kubeRequest.URL())
+	if err != nil {
+		return fmt.Errorf("create executor failure %s", err.Error())
+	}
 	errCh := make(chan error)
 
 	go func() {
@@ -132,16 +137,47 @@ func (e *execContext) RunLog() error {
 		t := out.SetTTY()
 		errCh <- t.Safe(func() error {
 			defer e.Close()
+			if err := exec.Stream(remotecommand.StreamOptions{
+				Stdin:             out.Stdin,
+				Stdout:            out.Stdout,
+				Stderr:            nil,
+				Tty:               true,
+				TerminalSizeQueue: e,
+			}); err != nil {
+				logrus.Errorf("executor stream failure %s", err.Error())
+				return err
+			}
+
 			rc, err := e.kubeRequest.Stream(context.Background())
 			if err != nil {
 				logrus.Errorf("stream failure %s", err.Error())
 				return err
 			}
 			defer rc.Close()
-			if _, err := io.Copy(out.Stdout, rc); err != nil {
-				logrus.Errorf("copy failure %s", err.Error())
-				return err
+			for {
+				buf := make([]byte, 2048)
+				cnt, err := rc.Read(buf)
+				if cnt == 0 {
+					continue
+				}
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					log.Printf("read error: %v", err)
+					break
+				}
+				_, err = out.Stdout.Write(buf[:cnt])
+				if err != nil {
+					log.Printf("write error: %v", err)
+					break
+				}
 			}
+
+			// if _, err := io.Copy(out.Stdout, rc); err != nil {
+			// 	logrus.Errorf("copy failure %s", err.Error())
+			// 	return err
+			// }
 			return nil
 		})
 	}()

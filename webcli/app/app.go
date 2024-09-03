@@ -20,9 +20,9 @@ package app
 
 import (
 	"context"
-	"crypto/md5"
+	"io"
+	"log"
 
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,7 +47,7 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/yudai/umutex"
-	api "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/dynamic"
@@ -167,6 +167,7 @@ func (app *App) Run() error {
 
 	wsHandler := http.HandlerFunc(app.handleWS)
 	wsLogHandler := http.HandlerFunc(app.handleWSLog)
+	wsPodContainerLogHandler := http.HandlerFunc(app.handlePodContainerLogWS)
 	nodeConsoleWSHandler := http.HandlerFunc(app.handleNodeConsoleWS)
 	virtctlConsoleChannelWSHandler := http.HandlerFunc(app.handleVirtctlConsoleChannelWS)
 	virtualMachineSSHChannelWSHandler := http.HandlerFunc(app.handleVirtualMachineSSHChannelWS)
@@ -184,7 +185,9 @@ func (app *App) Run() error {
 	wsMux := http.NewServeMux()
 	wsMux.Handle("/", siteHandler)
 	wsMux.Handle("/docker_console", wsHandler)
+	// Deprecated: It's not work always, use /container_log instead
 	wsMux.Handle("/docker_container_log", wsLogHandler)
+	wsMux.Handle("/container_log", wsPodContainerLogHandler)
 	wsMux.Handle("/docker_node_console", nodeConsoleWSHandler)
 	wsMux.Handle("/docker_virtctl_console", virtctlConsoleChannelWSHandler)
 	wsMux.Handle("/docker_vm_ssh", virtualMachineSSHChannelWSHandler)
@@ -311,6 +314,75 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 		conn.WriteMessage(websocket.TextMessage, []byte("run tty failure!"))
 		ExecuteCommandFailed++
 		return
+	}
+}
+
+func (app *App) handlePodContainerLogWS(w http.ResponseWriter, r *http.Request) {
+	logrus.Printf("New client connected: %s", r.RemoteAddr)
+
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	conn, err := app.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logrus.Print("Failed to upgrade connection: " + err.Error())
+		return
+	}
+
+	_, stream, err := conn.ReadMessage()
+	if err != nil {
+		logrus.Print("Failed to authenticate websocket connection " + err.Error())
+		conn.Close()
+		return
+	}
+
+	message := string(stream)
+	logrus.Print("message=", message)
+
+	var init InitMessage
+
+	json.Unmarshal(stream, &init)
+
+	//todo auth
+	if init.PodName == "" {
+		logrus.Print("Parameter is error, pod name is empty")
+		conn.WriteMessage(websocket.TextMessage, []byte("pod name can not be empty"))
+		conn.Close()
+		return
+	}
+
+	logReq := app.coreClient.CoreV1().Pods(init.Namespace).GetLogs(init.PodName, &corev1.PodLogOptions{
+		Container: init.ContainerName,
+		Follow:    true,
+		TailLines: &[]int64{10}[0],
+	})
+
+	rc, err := logReq.Stream(context.Background())
+	if err != nil {
+		log.Fatalf("stream error: %v", err)
+	}
+	defer rc.Close()
+
+	for {
+		buf := make([]byte, 2048)
+		cnt, err := rc.Read(buf)
+		if cnt == 0 {
+			continue
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Printf("read error: %v", err)
+			break
+		}
+		err = conn.WriteMessage(websocket.TextMessage, buf[:cnt])
+		if err != nil {
+			log.Printf("write error: %v", err)
+			break
+		}
 	}
 }
 
@@ -749,7 +821,7 @@ func (app *App) GetContainerArgs(namespace, podname, containerName string) (stri
 		return "", "", args, err
 	}
 
-	if pod.Status.Phase == api.PodSucceeded || pod.Status.Phase == api.PodFailed {
+	if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 		return "", "", args, fmt.Errorf("cannot exec into a container in a completed pod; current phase is %s", pod.Status.Phase)
 	}
 	for i, container := range pod.Spec.Containers {
@@ -771,7 +843,7 @@ func (app *App) GetNodeConsoleArgs(nodeName string) (string, string, []string, e
 	podName := fmt.Sprintf("wt-node-shell-%s", nodeName)
 
 	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
-	if err != nil || pod.Status.Phase != api.PodRunning {
+	if err != nil || pod.Status.Phase != corev1.PodRunning {
 		return podName, podName, args, fmt.Errorf("wt-node-shell is not ready")
 	}
 
@@ -792,7 +864,7 @@ func (app *App) GetVirtctlConsoleChannelArgs(vmNamespace, vmID string) (string, 
 	podName := fmt.Sprintf("wt-channel-%d", randPodNo)
 
 	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
-	if err != nil || pod.Status.Phase != api.PodRunning {
+	if err != nil || pod.Status.Phase != corev1.PodRunning {
 		return "wt-channel", podName, args, fmt.Errorf("wt-channel is not ready")
 	}
 
@@ -846,7 +918,7 @@ func (app *App) GetVirtualMachineSSHChannelArgs(vmNamespace, vmID, vmPort, vmUse
 	podName := fmt.Sprintf("wt-channel-%d", randPodNo)
 
 	pod, err := app.coreClient.CoreV1().Pods("wt-system").Get(context.Background(), podName, metav1.GetOptions{})
-	if err != nil || pod.Status.Phase != api.PodRunning {
+	if err != nil || pod.Status.Phase != corev1.PodRunning {
 		return "wt-channel", podName, args, fmt.Errorf("wt-channel is not ready")
 	}
 
@@ -907,9 +979,9 @@ func wrapHeaders(handler http.Handler) http.Handler {
 	})
 }
 
-func md5Func(str string) string {
-	h := md5.New()
-	h.Write([]byte(str))
-	cipherStr := h.Sum(nil)
-	return hex.EncodeToString(cipherStr)
-}
+// func md5Func(str string) string {
+// 	h := md5.New()
+// 	h.Write([]byte(str))
+// 	cipherStr := h.Sum(nil)
+// 	return hex.EncodeToString(cipherStr)
+// }

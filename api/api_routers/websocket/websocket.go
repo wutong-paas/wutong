@@ -28,7 +28,9 @@ import (
 func Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/docker_console", controller.GetDockerConsole().Get)
+	// Deprecated: It's not work always, use /container_log instead
 	r.Get("/docker_container_log", controller.GetDockerConsole().Get)
+	r.Get("/container_log", controller.GetDockerConsole().Get)
 	r.Get("/docker_node_console", controller.GetDockerConsole().Get)
 	r.Get("/docker_virtctl_console", controller.GetDockerConsole().Get)
 	r.Get("/docker_vm_ssh", controller.GetDockerConsole().Get)
