@@ -33,6 +33,7 @@ type VMProfile struct {
 	StatusMessage      string        `json:"statusMessage"`
 	Conditions         []VMCondition `json:"conditions"`
 	IP                 string        `json:"ip"`
+	InternalDomainName string        `json:"internalDomainName"`
 	OSInfo             VMOSInfo      `json:"osInfo"`
 	ScheduleNode       string        `json:"scheduleNode"`
 	CreatedAt          string        `json:"createdAt"`

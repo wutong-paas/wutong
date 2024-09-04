@@ -62,6 +62,7 @@ func initializeDynamicCachedResources(dynamicClient dynamic.Interface) *DynamicC
 
 	// shared informers
 	vmSharedInformer := vmInformer.Informer()
+	vmSharedInformer.AddEventHandlerWithResyncPeriod(vmEventHandler(), time.Minute)
 	vmiSharedInformer := vmiInformer.Informer()
 	vmiSharedInformer.AddEventHandlerWithResyncPeriod(vmiEventHandler(), time.Minute*30)
 
@@ -124,6 +125,20 @@ func UnDynamicObjectList[O runtime.Object](objs []runtime.Object) ([]O, error) {
 	return result, nil
 }
 
+func convertToVirtualMachine(obj interface{}) (*kubevirtcorev1.VirtualMachine, error) {
+	unstructuredObj, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return nil, fmt.Errorf("cannot cast obj as unstructured: %v", obj)
+	}
+
+	vm := &kubevirtcorev1.VirtualMachine{}
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructuredObj.Object, vm); err != nil {
+		return nil, fmt.Errorf("error converting to VirtualMachine: %v", err)
+	}
+
+	return vm, nil
+}
+
 func convertToVirtualMachineInstance(obj interface{}) (*kubevirtcorev1.VirtualMachineInstance, error) {
 	unstructuredObj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
@@ -136,6 +151,29 @@ func convertToVirtualMachineInstance(obj interface{}) (*kubevirtcorev1.VirtualMa
 	}
 
 	return vmi, nil
+}
+
+func vmEventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			vm, err := convertToVirtualMachine(obj)
+			if err == nil {
+				tryCreateInternalDomainService(vm)
+			}
+		},
+		UpdateFunc: func(_, obj interface{}) {
+			vm, err := convertToVirtualMachine(obj)
+			if err == nil {
+				tryCreateInternalDomainService(vm)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			vm, err := convertToVirtualMachine(obj)
+			if err == nil {
+				tryDeleteInternalDomainService(vm)
+			}
+		},
+	}
 }
 
 func vmiEventHandler() cache.ResourceEventHandlerFuncs {
@@ -158,6 +196,32 @@ func vmiEventHandler() cache.ResourceEventHandlerFuncs {
 				reclaimVirtVNC(vmi)
 			}
 		},
+	}
+}
+
+// tryCreateInternalDomainService 尝试创建虚拟机内部域名服务
+func tryCreateInternalDomainService(vm *kubevirtcorev1.VirtualMachine) {
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      vm.Name,
+			Namespace: vm.Namespace,
+			Labels:    vm.Labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"wutong.io/vm-id":     vm.Name,
+				"vm.kubevirt.io/name": vm.Name,
+			},
+			ClusterIP: corev1.ClusterIPNone,
+		},
+	}
+	RegionClientset().CoreV1().Services(vm.Namespace).Create(context.Background(), svc, metav1.CreateOptions{})
+}
+
+// tryDeleteInternalDomainService 尝试删除虚拟机内部域名服务
+func tryDeleteInternalDomainService(vm *kubevirtcorev1.VirtualMachine) {
+	if err := RegionClientset().CoreV1().Services(vm.Namespace).Delete(context.Background(), vm.Name, metav1.DeleteOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
+		logrus.Warningf("delete service %s failed: %v", vm.Name, err)
 	}
 }
 

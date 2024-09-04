@@ -1410,6 +1410,8 @@ func (s *ServiceAction) RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID strin
 	return nil
 }
 
+// -------------------------- 私有函数 ------------------------------------
+
 // buildVMBase 构建虚拟机基础结构实例
 func buildVMBase(req *api_model.CreateVMRequest, namespace string, labels map[string]string) *kubevirtcorev1.VirtualMachine {
 	var nodeSelector = map[string]string{
@@ -1714,6 +1716,7 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 			Version: vm.Annotations["wutong.io/vm-os-version"],
 			Arch:    vm.Spec.Template.Spec.Architecture,
 		},
+		InternalDomainName: vm.Name,
 	}
 
 	containsBootDisk := func(vm *kubevirtcorev1.VirtualMachine) bool {
