@@ -127,6 +127,9 @@ func VerifyLicense(licensePlaintextKey string, cert *x509.Certificate, sig []byt
 		return errors.New(msg)
 	}
 
+	// 打印证书过期时间
+	log.Printf("wutong-region license: cert is valid now, and will be expired at %v", cert.NotAfter.Format(time.RFC3339))
+
 	if err != nil {
 		log.Printf("wutong-region license: base64 decode error: %v", err)
 		return err
