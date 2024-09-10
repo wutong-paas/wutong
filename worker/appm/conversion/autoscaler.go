@@ -60,11 +60,6 @@ func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv1.Horizont
 
 	var hpas []*autoscalingv1.HorizontalPodAutoscaler
 	for _, rule := range xpaRules {
-		metrics, err := dbmanager.TenantEnvServceAutoscalerRuleMetricsDao().ListByRuleID(rule.RuleID)
-		if err != nil {
-			return nil, err
-		}
-
 		var kind, name string
 		if as.GetStatefulSet() != nil {
 			kind, name = "StatefulSet", as.GetStatefulSet().GetName()
@@ -77,7 +72,7 @@ func newHPAs(as *v1.AppService, dbmanager db.Manager) ([]*autoscalingv1.Horizont
 			"version": as.DeployVersion,
 		})
 
-		hpa := newHPA(as.GetNamespace(), kind, name, labels, rule, metrics)
+		hpa := newHPA(as.GetNamespace(), kind, name, labels, rule)
 
 		hpas = append(hpas, hpa)
 	}
@@ -115,7 +110,7 @@ func createResourceMetrics(metric *model.TenantEnvServiceAutoscalerRuleMetrics) 
 	return ms
 }
 
-func newHPA(namespace, kind, name string, labels map[string]string, rule *model.TenantEnvServiceAutoscalerRules, metrics []*model.TenantEnvServiceAutoscalerRuleMetrics) *autoscalingv1.HorizontalPodAutoscaler {
+func newHPA(namespace, kind, name string, labels map[string]string, rule *model.TenantEnvServiceAutoscalerRules) *autoscalingv1.HorizontalPodAutoscaler {
 	hpa := &autoscalingv1.HorizontalPodAutoscaler{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rule.RuleID,

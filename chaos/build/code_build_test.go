@@ -16,7 +16,6 @@ import (
 	jobc "github.com/wutong-paas/wutong/chaos/job"
 	"github.com/wutong-paas/wutong/chaos/parser/code"
 	"github.com/wutong-paas/wutong/chaos/sources"
-	"github.com/wutong-paas/wutong/cmd/chaos/option"
 	"github.com/wutong-paas/wutong/event"
 
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
@@ -25,18 +24,7 @@ import (
 )
 
 func TestCreateJob(t *testing.T) {
-	conf := option.Config{
-		EtcdEndPoints:       []string{"192.168.2.203:2379"},
-		MQAPI:               "192.168.2.203:6300",
-		EventLogServers:     []string{"192.168.2.203:6366"},
-		WtRepoName:          "wt-dns",
-		WtNamespace:         "wt-system",
-		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
-	}
-	event.NewManager(event.EventConfig{
-		EventLogServers: conf.EventLogServers,
-		// DiscoverArgs:    &etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints},
-	})
+	event.NewLoggerManager()
 	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/wutong/remote/192.168.2.206/admin.kubeconfig")
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +37,7 @@ func TestCreateJob(t *testing.T) {
 	// if err != nil {
 	// 	t.Fatal("new docker error: ", err.Error())
 	// }
-	logger := event.GetManager().GetLogger("0000")
+	logger := event.GetLogger("0000")
 	req := Request{
 		ServerType: "git",
 		// DockerClient:  dockerClient,

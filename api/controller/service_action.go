@@ -119,7 +119,8 @@ func (t *TenantEnvStruct) StopService(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
 	//save event
-	defer event.CloseManager()
+	// defer event.GetManager().Close()
+	defer event.CloseLogger(sEvent.EventID)
 	startStopStruct := &api_model.StartStopStruct{
 		TenantEnvID: tenantEnvID,
 		ServiceID:   serviceID,
@@ -159,7 +160,8 @@ func (t *TenantEnvStruct) RestartService(w http.ResponseWriter, r *http.Request)
 	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	sEvent := r.Context().Value(ctxutil.ContextKey("event")).(*dbmodel.ServiceEvent)
-	defer event.CloseManager()
+	// defer event.GetManager().Close()
+	event.CloseLogger(sEvent.EventID)
 	startStopStruct := &api_model.StartStopStruct{
 		TenantEnvID: tenantEnvID,
 		ServiceID:   serviceID,

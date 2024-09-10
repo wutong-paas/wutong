@@ -41,16 +41,12 @@ func Test_exectorManager_buildFromSourceCode(t *testing.T) {
 	conf := option.Config{
 		EtcdEndPoints:       []string{"192.168.2.203:2379"},
 		MQAPI:               "192.168.2.203:6300",
-		EventLogServers:     []string{"192.168.2.203:6366"},
 		WtRepoName:          "wt-dns",
 		WtNamespace:         "wt-system",
 		MysqlConnectionInfo: "EeM2oc:lee7OhQu@tcp(192.168.2.203:3306)/region",
 	}
 	// etcdArgs := etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints}
-	event.NewManager(event.EventConfig{
-		EventLogServers: conf.EventLogServers,
-		// DiscoverArgs:    &etcdArgs,
-	})
+	event.NewLoggerManager()
 	restConfig, err := k8sutil.NewRestConfig("/Users/fanyangyang/Documents/company/wutong/admin.kubeconfig")
 	if err != nil {
 		t.Fatal(err)

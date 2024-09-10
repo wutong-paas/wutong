@@ -67,7 +67,7 @@ func NewSlugShareItem(in []byte, etcdCli *clientv3.Client) (*SlugShareItem, erro
 		return nil, err
 	}
 	eventID := ssi.ShareInfo.EventID
-	ssi.Logger = event.GetManager().GetLogger(eventID)
+	ssi.Logger = event.GetLogger(eventID)
 	ssi.EtcdCli = etcdCli
 	return &ssi, nil
 }

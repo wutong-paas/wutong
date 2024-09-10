@@ -63,9 +63,7 @@ func Event() wutong.FuncComponent {
 		var err error
 		for tryTime < 4 {
 			tryTime++
-			if err = event.NewManager(event.EventConfig{
-				EventLogServers: cfg.APIConfig.EventLogServers,
-			}); err != nil {
+			if _, err = event.NewLoggerManager(); err != nil {
 				logrus.Errorf("get event manager failed, try time is %v,%s", tryTime, err.Error())
 				time.Sleep((5 + tryTime*10) * time.Second)
 			} else {

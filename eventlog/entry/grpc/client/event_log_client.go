@@ -23,12 +23,12 @@ import (
 
 	"github.com/wutong-paas/wutong/eventlog/entry/grpc/pb"
 
-	grpc1 "google.golang.org/grpc"
+	"google.golang.org/grpc"
 )
 
-//NewEventClient new a event client
+// NewEventClient new a event client
 func NewEventClient(ctx context.Context, server string) (pb.EventLogClient, error) {
-	conn, err := grpc1.DialContext(ctx, server, grpc1.WithInsecure())
+	conn, err := grpc.DialContext(ctx, server, grpc.WithInsecure())
 	if err != nil {
 		return nil, err
 	}

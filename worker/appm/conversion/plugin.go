@@ -28,7 +28,6 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api_model "github.com/wutong-paas/wutong/api/model"
@@ -61,9 +60,9 @@ func TenantEnvServicePlugin(as *typesv1.AppService, dbmanager db.Manager) error 
 	return fmt.Errorf("pod templete is nil before define plugin")
 }
 
-func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1.Container, []v1.Container, []v1.Container, error) {
-	var precontainers, postcontainers []v1.Container
-	var initContainers []v1.Container
+func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]corev1.Container, []corev1.Container, []corev1.Container, error) {
+	var precontainers, postcontainers []corev1.Container
+	var initContainers []corev1.Container
 	appPlugins, err := dbmanager.TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(as.ServiceID)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		return nil, nil, nil, fmt.Errorf("find plugins error. %v", err.Error())
@@ -73,7 +72,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 	}
 	netPlugin := false
 	var meshPluginID string
-	var mainContainer v1.Container
+	var mainContainer corev1.Container
 	if as.GetPodTemplate() != nil && len(as.GetPodTemplate().Spec.Containers) > 0 {
 		mainContainer = as.GetPodTemplate().Spec.Containers[0]
 	}
@@ -94,7 +93,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 			logrus.Warnf("Can't not get pod for plugin(plugin_id=%s)", pluginR.PluginID)
 			continue
 		}
-		envs, err := createPluginEnvs(pluginR.PluginID, as.GetNamespace(), as.ServiceAlias, mainContainer.Env, pluginR.VersionID, as.ServiceID, dbmanager)
+		envs, err := createPluginEnvs(pluginR.PluginID, as.GetNamespace(), as.ServiceAlias, mainContainer.Env, as.ServiceID, dbmanager)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -110,7 +109,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 			})
 		}
 
-		pc := v1.Container{
+		pc := corev1.Container{
 			Name:                   "plugin-" + pluginR.PluginID,
 			Image:                  versionInfo.BuildLocalImage,
 			Env:                    *envs,
@@ -196,7 +195,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 		meshPluginID = pluginID
 	}
 
-	bootSequence := createProbeMeshInitContainer(as, meshPluginID, as.ServiceAlias, mainContainer.Env)
+	bootSequence := createProbeMeshInitContainer(as, meshPluginID, mainContainer.Env)
 	if bootSeqDepServiceIds := as.ExtensionSet["boot_seq_dep_service_ids"]; as.NeedProxy && bootSeqDepServiceIds != "" {
 		initContainers = append(initContainers, bootSequence)
 	}
@@ -204,14 +203,14 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 	return initContainers, precontainers, postcontainers, nil
 }
 
-func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, envs []v1.EnvVar, pluginConfig *api_model.ResourceSpec) v1.Container {
-	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
+func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, envs []corev1.EnvVar, pluginConfig *api_model.ResourceSpec) corev1.Container {
+	envs = append(envs, corev1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
-	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
-	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
+	envs = append(envs, corev1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
+	envs = append(envs, corev1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 
-	container := v1.Container{
+	container := corev1.Container{
 		Name:      workerutil.KeepMaxLength("default-tcpmesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
 		Image:     chaos.TCPMESHIMAGENAME,
@@ -249,7 +248,7 @@ func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container,
 		}
 		con.Lifecycle = &corev1.Lifecycle{
 			PostStart: &corev1.LifecycleHandler{
-				Exec: &v1.ExecAction{
+				Exec: &corev1.ExecAction{
 					Command: []string{"/run/wutong-mesh-data-panel", "wait", strconv.Itoa(port)},
 				},
 			},
@@ -257,14 +256,14 @@ func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container,
 	}
 }
 
-func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias string, envs []v1.EnvVar) v1.Container {
-	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
+func createProbeMeshInitContainer(as *typesv1.AppService, pluginID string, envs []corev1.EnvVar) corev1.Container {
+	envs = append(envs, corev1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
-	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
-	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
+	envs = append(envs, corev1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
+	envs = append(envs, corev1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 
-	return v1.Container{
+	return corev1.Container{
 		Name:      workerutil.KeepMaxLength("probe-mesh-"+as.GetK8sWorkloadName(), 63),
 		Env:       envs,
 		Image:     chaos.PROBEMESHIMAGENAME,
@@ -298,7 +297,7 @@ func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.Tena
 				}
 			}
 		}
-		cm := &v1.ConfigMap{
+		cm := &corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("config-%s-%s", config.ServiceID, config.PluginID),
 				Labels: as.GetCommonLabels(map[string]string{
@@ -353,7 +352,7 @@ func applyDefaultMeshPluginConfig(as *typesv1.AppService, dbmanager db.Manager) 
 		return "", nil, err
 	}
 	pluginID := "def-mesh" + as.ServiceID
-	cm := &v1.ConfigMap{
+	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("config-%s-%s", as.ServiceID, pluginID),
 			Labels: as.GetCommonLabels(map[string]string{
@@ -395,35 +394,35 @@ func getXDSHostIPAndPort() (string, string, string) {
 }
 
 // container envs
-func createPluginEnvs(pluginID, tenantEnvID, serviceAlias string, mainEnvs []v1.EnvVar, versionID, serviceID string, dbmanager db.Manager) (*[]v1.EnvVar, error) {
+func createPluginEnvs(pluginID, tenantEnvID, serviceAlias string, mainEnvs []corev1.EnvVar, serviceID string, dbmanager db.Manager) (*[]corev1.EnvVar, error) {
 	versionEnvs, err := dbmanager.TenantEnvPluginVersionENVDao().GetVersionEnvByServiceID(serviceID, pluginID)
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		return nil, err
 	}
-	var envs []v1.EnvVar
+	var envs []corev1.EnvVar
 	//first set main service env
 	envs = append(envs, mainEnvs...)
 
 	for _, e := range versionEnvs {
-		envs = append(envs, v1.EnvVar{Name: e.EnvName, Value: e.EnvValue})
+		envs = append(envs, corev1.EnvVar{Name: e.EnvName, Value: e.EnvValue})
 	}
 	xdsHost, xdsHostPort, apiHostPort := getXDSHostIPAndPort()
 	envs = append(envs, xdsHostIPEnv(xdsHost))
-	envs = append(envs, v1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
-	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
+	envs = append(envs, corev1.EnvVar{Name: "API_HOST_PORT", Value: apiHostPort})
+	envs = append(envs, corev1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 	discoverURL := fmt.Sprintf(
 		"http://%s:6100/v1/resources/%s/%s/%s",
 		"${XDS_HOST_IP}",
 		tenantEnvID,
 		serviceAlias,
 		pluginID)
-	envs = append(envs, v1.EnvVar{Name: "DISCOVER_URL", Value: discoverURL})
-	envs = append(envs, v1.EnvVar{Name: "DISCOVER_URL_NOHOST", Value: fmt.Sprintf(
+	envs = append(envs, corev1.EnvVar{Name: "DISCOVER_URL", Value: discoverURL})
+	envs = append(envs, corev1.EnvVar{Name: "DISCOVER_URL_NOHOST", Value: fmt.Sprintf(
 		"/v1/resources/%s/%s/%s",
 		tenantEnvID,
 		serviceAlias,
 		pluginID)})
-	envs = append(envs, v1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
+	envs = append(envs, corev1.EnvVar{Name: "WT_PLUGIN_ID", Value: pluginID})
 	var config = make(map[string]string, len(envs))
 	for _, env := range envs {
 		config[env.Name] = env.Value
@@ -434,7 +433,7 @@ func createPluginEnvs(pluginID, tenantEnvID, serviceAlias string, mainEnvs []v1.
 	return &envs, nil
 }
 
-func createPluginResources(memory int, cpu int) v1.ResourceRequirements {
+func createPluginResources(memory int, cpu int) corev1.ResourceRequirements {
 	if memory == 0 {
 		memory = 256
 	}
@@ -444,7 +443,7 @@ func createPluginResources(memory int, cpu int) v1.ResourceRequirements {
 	return createResourcesBySetting(0, int64(memory), 0, int64(cpu), "", 0)
 }
 
-func createTCPUDPMeshRecources(as *typesv1.AppService) v1.ResourceRequirements {
+func createTCPUDPMeshRecources(as *typesv1.AppService) corev1.ResourceRequirements {
 	var limitMemory = 128
 	var limitCPU int64 = 120
 	if limit, ok := as.ExtensionSet["tcpudp_mesh_cpu"]; ok {
@@ -464,11 +463,11 @@ func createTCPUDPMeshRecources(as *typesv1.AppService) v1.ResourceRequirements {
 
 func xdsHostIPEnv(xdsHost string) corev1.EnvVar {
 	if xdsHost == "" {
-		return v1.EnvVar{Name: "XDS_HOST_IP", ValueFrom: &corev1.EnvVarSource{
+		return corev1.EnvVar{Name: "XDS_HOST_IP", ValueFrom: &corev1.EnvVarSource{
 			FieldRef: &corev1.ObjectFieldSelector{
 				FieldPath: "status.hostIP",
 			},
 		}}
 	}
-	return v1.EnvVar{Name: "XDS_HOST_IP", Value: xdsHost}
+	return corev1.EnvVar{Name: "XDS_HOST_IP", Value: xdsHost}
 }

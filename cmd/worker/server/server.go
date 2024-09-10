@@ -61,19 +61,11 @@ func Run(s *option.Worker) error {
 		return err
 	}
 	defer db.CloseManager()
-	// etcdClientArgs := &etcdutil.ClientArgs{
-	// 	Endpoints: s.Config.EtcdEndPoints,
-	// 	CaFile:    s.Config.EtcdCaFile,
-	// 	CertFile:  s.Config.EtcdCertFile,
-	// 	KeyFile:   s.Config.EtcdKeyFile,
-	// }
-	if err := event.NewManager(event.EventConfig{
-		EventLogServers: s.Config.EventLogServers,
-		// DiscoverArgs:    etcdClientArgs,
-	}); err != nil {
+	loggerManager, err := event.NewLoggerManager()
+	if err != nil {
 		return err
 	}
-	defer event.CloseManager()
+	defer loggerManager.Close()
 
 	//step 2 : create kube client and etcd client
 	restConfig, err := k8sutil.NewRestConfig(s.Config.KubeConfig)

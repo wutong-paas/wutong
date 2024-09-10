@@ -83,7 +83,7 @@ func CreateBackupHandle(MQClient mqclient.MQClient, statusCli *client.AppRuntime
 
 // NewBackup new backup task
 func (h *BackupHandle) NewBackup(b Backup) (*dbmodel.AppBackup, *util.APIHandleError) {
-	logger := event.GetManager().GetLogger(b.Body.EventID)
+	logger := event.GetLogger(b.Body.EventID)
 	var appBackup = dbmodel.AppBackup{
 		EventID:       b.Body.EventID,
 		BackupID:      core_util.NewUUID(),
@@ -413,7 +413,7 @@ type Info struct {
 // RestoreBackup restore a backup version
 // all app could be closed before restore
 func (h *BackupHandle) RestoreBackup(br BackupRestore) (*RestoreResult, *util.APIHandleError) {
-	logger := event.GetManager().GetLogger(br.Body.EventID)
+	logger := event.GetLogger(br.Body.EventID)
 	backup, Aerr := h.GetBackup(br.BackupID)
 	if Aerr != nil {
 		return nil, Aerr

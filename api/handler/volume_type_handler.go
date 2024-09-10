@@ -209,18 +209,18 @@ func (vta *VolumeTypeAction) SetVolumeType(vol *api_model.VolumeTypeStruct) erro
 	jsonCapacityValidationStr, _ := json.Marshal(vol.CapacityValidation)
 	jsonStorageClassDetailStr, _ := json.Marshal(vol.StorageClassDetail)
 	if vol.AccessMode == nil {
-		accessMode[1] = "RWO"
+		accessMode = []string{"RWO"}
 	} else {
 		accessMode = vol.AccessMode
 	}
 	if vol.SharePolicy == nil {
-		sharePolicy[1] = "exclusive"
+		sharePolicy = []string{"exclusive"}
 	} else {
 		sharePolicy = vol.SharePolicy
 	}
 
 	if vol.BackupPolicy == nil {
-		backupPolicy[1] = "exclusive"
+		backupPolicy = []string{"exclusive"}
 	} else {
 		backupPolicy = vol.BackupPolicy
 	}
@@ -251,18 +251,18 @@ func (vta *VolumeTypeAction) UpdateVolumeType(dbVolume *dbmodel.TenantEnvService
 	jsonCapacityValidationStr, _ := json.Marshal(vol.CapacityValidation)
 	jsonStorageClassDetailStr, _ := json.Marshal(vol.StorageClassDetail)
 	if vol.AccessMode == nil {
-		accessMode[1] = "RWO"
+		accessMode = []string{"RWO"}
 	} else {
 		accessMode = vol.AccessMode
 	}
 	if vol.SharePolicy == nil {
-		sharePolicy[1] = "exclusive"
+		sharePolicy = []string{"exclusive"}
 	} else {
 		sharePolicy = vol.SharePolicy
 	}
 
 	if vol.BackupPolicy == nil {
-		backupPolicy[1] = "exclusive"
+		backupPolicy = []string{"exclusive"}
 	} else {
 		backupPolicy = vol.BackupPolicy
 	}

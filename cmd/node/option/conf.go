@@ -76,9 +76,8 @@ type Conf struct {
 	NodeRole                        string //节点属性 compute manage storage
 	Service                         string //服务注册与发现
 	InitStatus                      string
-	NodePath                        string   //Wutong node model basic information storage path in etcd
-	EventLogServer                  []string //event server address list
-	ConfigStoragePath               string   //config storage path in etcd
+	NodePath                        string //Wutong node model basic information storage path in etcd
+	ConfigStoragePath               string //config storage path in etcd
 	LockPath                        string
 	TTL                             int64         // node heartbeat to master TTL
 	PodCIDR                         string        //pod cidr, when master not set cidr,this parameter can take effect
@@ -158,7 +157,6 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.HostID, "nodeid", "", "the unique ID for this node. Just specify, don't modify")
 	fs.StringVar(&a.HostIP, "hostIP", "", "the host ip you can define. default get ip from eth0")
 	fs.StringVar(&a.PodIP, "podIP", "", "The pod ip of node.")
-	// fs.StringSliceVar(&a.EventLogServer, "event-log-server", []string{"127.0.0.1:6366"}, "host:port slice of event log server")
 	fs.StringVar(&a.ConfigStoragePath, "config-path", "/wutong/acp_configs", "the path of config to store(new)")
 	fs.StringVar(&a.Service, "servicePath", "/traefik/backends", "the path of service info to store")
 	// fs.StringSliceVar(&a.EtcdEndpoints, "etcd", []string{"http://127.0.0.1:2379"}, "the path of node in etcd")
@@ -198,7 +196,6 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
 	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.DefaultDockerSock, "container runtime endpoint")
 	fs.BoolVar(&a.EnableDebugPprof, "enable-debug-pprof", false, "enable debug pprof")
-	fs.StringSliceVar(&a.EventLogServer, "event-log-server", []string{"wt-eventlog:6366"}, "host:port slice of event log server")
 	fs.StringSliceVar(&a.EtcdEndpoints, "etcd", []string{"http://wt-etcd:2379"}, "the path of node in etcd")
 	fs.StringVar(&a.PrometheusAPI, "prometheus", "http://wt-monitor:9999", "the prometheus server address")
 }

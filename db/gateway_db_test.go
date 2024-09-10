@@ -67,7 +67,7 @@ func TestGwRuleConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error listing configs: %v", err)
 	}
-	if list != nil && len(list) > 0 {
+	if len(list) > 0 {
 		t.Errorf("Expected empty for list, but returned %+v", list)
 	}
 }

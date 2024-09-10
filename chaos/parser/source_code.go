@@ -356,7 +356,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 			d.services = services
 		}
 
-		if wtfileConfig != nil && wtfileConfig.Services != nil && len(wtfileConfig.Services) > 0 {
+		if wtfileConfig != nil && len(wtfileConfig.Services) > 0 {
 			mm := make(map[string]*types.Service)
 			for i := range services {
 				mm[services[i].Name] = services[i]
@@ -536,7 +536,7 @@ func (d *SourceCodeParse) GetServiceInfo() []ServiceInfo {
 		OS:          runtime.GOOS,
 	}
 	var res []ServiceInfo
-	if d.isMulti && d.services != nil && len(d.services) > 0 {
+	if d.isMulti && len(d.services) > 0 {
 		for idx := range d.services {
 			svc := d.services[idx]
 			info := serviceInfo

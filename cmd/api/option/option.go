@@ -32,7 +32,6 @@ type Config struct {
 	APIHealthzAddr       string
 	APIAddrSSL           string
 	DBConnectionInfo     string
-	EventLogServers      []string
 	NodeAPI              []string
 	BuilderAPI           []string
 	V1API                string
@@ -104,7 +103,6 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.V1API, "v1-api", "127.0.0.1:8887", "the region v1 api")
 	// fs.StringSliceVar(&a.NodeAPI, "node-api", []string{"127.0.0.1:6100"}, "the node server api")
 	fs.StringSliceVar(&a.BuilderAPI, "builder-api", []string{"wt-chaos:3228"}, "the builder api")
-	// fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
 	// fs.StringVar(&a.MQAPI, "mq-api", "127.0.0.1:6300", "acp_mq api")
 	fs.BoolVar(&a.StartRegionAPI, "start", false, "Whether to start region old api")
 	// fs.StringSliceVar(&a.EtcdEndpoint, "etcd", []string{"http://127.0.0.1:2379"}, "etcd server or proxy address")
@@ -133,7 +131,6 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringSliceVar(&a.NodeAPI, "node-api", []string{"wt-node:6100"}, "the wt-node server api")
 	fs.StringVar(&a.MQAPI, "mq-api", "wt-mq:6300", "the wt-mq server api")
 	fs.StringVar(&a.WtWorker, "worker-api", "wt-worker:6535", "the wt-worker server api")
-	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"wt-eventlog:6366"}, "event log server address")
 	fs.StringSliceVar(&a.EventLogEndpoints, "event-log", []string{"local=>wt-eventlog:6363"}, "event log websocket address")
 	fs.StringSliceVar(&a.VirtVNCAPI, "virt-vnc-api", []string{"wt-virt-vnc"}, "the virt-vnc api")
 }

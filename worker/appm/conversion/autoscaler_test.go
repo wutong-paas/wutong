@@ -28,25 +28,12 @@ func TestNewHPA(t *testing.T) {
 		MinReplicas: 1,
 		MaxReplicas: 10,
 	}
-	metrics := []*model.TenantEnvServiceAutoscalerRuleMetrics{
-		{
-			MetricsType:       "resource_metrics",
-			MetricsName:       "cpu",
-			MetricTargetType:  "utilization",
-			MetricTargetValue: 50,
-		},
-		{
-			MetricsType:       "resource_metrics",
-			MetricsName:       "memory",
-			MetricTargetType:  "average_value",
-			MetricTargetValue: 60,
-		},
-	}
+
 	namespace := "bab18e6b1c8640979b91f8dfdd211226"
 	kind := "Deployment"
 	name := "45197f4936cf45efa2ac4831ce42025a-deployment-6d84f798b4-tmvfc"
 
-	hpa := newHPA(namespace, kind, name, nil, rule, metrics)
+	hpa := newHPA(namespace, kind, name, nil, rule)
 
 	clientset, err := k8sutil.NewClientset("/opt/wutong/etc/kubernetes/kubecfg/admin.kubeconfig")
 	if err != nil {

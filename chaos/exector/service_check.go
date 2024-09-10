@@ -88,8 +88,8 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 		logrus.Error("Unmarshal service check input data error.", err.Error())
 		return
 	}
-	logger := event.GetManager().GetLogger(input.EventID)
-	defer event.GetManager().ReleaseLogger(logger)
+	logger := event.GetLogger(input.EventID)
+	defer event.CloseLogger(input.EventID)
 	defer func() {
 		if r := recover(); r != nil {
 			logrus.Errorf("service check error: %v", r)

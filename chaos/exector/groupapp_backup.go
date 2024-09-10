@@ -83,7 +83,7 @@ func init() {
 // BackupAPPNewCreater create
 func BackupAPPNewCreater(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	backupNew := &BackupAPPNew{
 		Logger:      logger,
 		EventID:     eventID,

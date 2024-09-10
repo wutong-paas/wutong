@@ -557,7 +557,7 @@ func createUpstreamPluginMappingPort(
 
 func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.ContainerPort) {
 	ps, err := dbmanager.TenantEnvServicesPortDao().GetPortsByServiceID(as.ServiceID)
-	if err == nil && ps != nil && len(ps) > 0 {
+	if err == nil && len(ps) > 0 {
 		crt, err := checkUpstreamPluginRelation(as.ServiceID, dbmanager)
 		if err != nil {
 			logrus.Warningf("error getting service upstream plugin relation, %s", err.Error())
@@ -685,7 +685,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	osWindowsSelect := false
 	// enableGPU := as.ContainerGPUType != "" && as.ContainerGPU > 0
 	labels, err := dbmanager.TenantEnvServiceLabelDao().GetTenantEnvServiceAffinityLabel(as.ServiceID)
-	if err == nil && labels != nil && len(labels) > 0 {
+	if err == nil && len(labels) > 0 {
 		for _, l := range labels {
 			if l.LabelKey == dbmodel.LabelKeyNodeSelector {
 				if l.LabelValue == "windows" {

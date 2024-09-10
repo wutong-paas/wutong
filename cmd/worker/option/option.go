@@ -40,7 +40,6 @@ type Config struct {
 	MysqlConnectionInfo     string
 	DBType                  string
 	PrometheusMetricPath    string
-	EventLogServers         []string
 	KubeConfig              string
 	KubeAPIQPS              int
 	KubeAPIBurst            int
@@ -92,7 +91,6 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.Listen, "listen", ":6369", "prometheus listen host and port")
 	fs.StringVar(&a.DBType, "db-type", "mysql", "db type mysql or etcd")
 	fs.StringVar(&a.MysqlConnectionInfo, "mysql", "root:admin@tcp(127.0.0.1:3306)/region", "mysql db connection info")
-	// fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"127.0.0.1:6366"}, "event log server address. simple lb")
 	fs.StringVar(&a.KubeConfig, "kube-config", "", "kubernetes api server config file")
 	fs.IntVar(&a.KubeAPIQPS, "kube-api-qps", 50, "kube client qps")
 	fs.IntVar(&a.KubeAPIBurst, "kube-api-burst", 10, "kube clint burst")
@@ -110,7 +108,6 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.DefaultOTELServerHost, "otel-server-host", "obs-otel-biz-collector.wutong-obs", "The default OpenTelemetry server host.")
 	fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://wt-etcd:2379"}, "etcd v3 cluster endpoints.")
 	fs.StringVar(&a.MQAPI, "mq-api", "wt-mq:6300", "acp_mq api")
-	fs.StringSliceVar(&a.EventLogServers, "event-servers", []string{"wt-eventlog:6366"}, "event log server address. simple lb")
 
 	if a.Helm.DataDir == "" {
 		a.Helm.DataDir = "/wtdata/helm"

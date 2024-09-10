@@ -68,7 +68,7 @@ func NewImportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 		importApp.ServiceImage.HubPassword = chaos.REGISTRYPASS
 	}
 	logrus.Infof("load app image to hub %s", importApp.ServiceImage.HubURL)
-	importApp.Logger = event.GetManager().GetLogger(importApp.EventID)
+	importApp.Logger = event.GetLogger(importApp.EventID)
 	// importApp.ContainerdCli = m.ContainerdCli
 	importApp.ImageClient = m.imageClient
 	importApp.oldAPPPath = make(map[string]string)

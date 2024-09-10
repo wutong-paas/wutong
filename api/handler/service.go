@@ -114,8 +114,8 @@ func CreateManager(conf option.Config,
 // ServiceBuild service build
 func (s *ServiceAction) ServiceBuild(tenantEnvID, serviceID string, r *api_model.BuildServiceStruct) error {
 	eventID := r.Body.EventID
-	logger := event.GetManager().GetLogger(eventID)
-	defer event.CloseManager()
+	logger := event.GetLogger(eventID)
+	defer event.CloseLogger(eventID)
 	service, err := db.GetManager().TenantEnvServiceDao().GetServiceByID(serviceID)
 	db.GetManager().TenantEnvServiceDao().UpdateModel(service)
 	if err != nil {

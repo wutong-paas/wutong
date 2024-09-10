@@ -259,7 +259,7 @@ func (m *Manager) EventLogInstance(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-	if res.Kvs != nil && len(res.Kvs) > 0 {
+	if len(res.Kvs) > 0 {
 		result := `{"data":{"instance":[`
 		for _, kv := range res.Kvs {
 			result += string(kv.Value) + ","

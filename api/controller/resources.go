@@ -883,7 +883,7 @@ func (t *TenantEnvStruct) Label(w http.ResponseWriter, r *http.Request) {
 
 	// verify request
 	values := url.Values{}
-	if req.Labels == nil || len(req.Labels) == 0 {
+	if len(req.Labels) == 0 {
 		values["labels"] = []string{"The labels field should have someting"}
 	}
 	for _, label := range req.Labels {

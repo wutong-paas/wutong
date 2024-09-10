@@ -86,7 +86,7 @@ func init() {
 // BackupAPPRestoreCreater create
 func BackupAPPRestoreCreater(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	backupRestore := &BackupAPPRestore{
 		Logger:        logger,
 		EventID:       eventID,
@@ -204,14 +204,14 @@ func (b *BackupAPPRestore) restoreVersionAndData(backup *dbmodel.AppBackup, appS
 		b.Logger.Info(fmt.Sprintf("开始恢复应用(%s)运行环境", app.Service.ServiceAlias), map[string]string{"step": "restore_builder", "status": "starting"})
 		for _, version := range app.Versions {
 			if version.DeliveredType == "slug" && version.FinalStatus == "success" {
-				if err := b.downloadSlug(backup, app, version); err != nil {
+				if err := b.downloadSlug(app, version); err != nil {
 					logrus.Errorf("download app slug file error.%s", err.Error())
 					return err
 				}
 			}
 			if backup.WithImageData {
 				if version.DeliveredType == "image" && version.FinalStatus == "success" {
-					if err := b.downloadImage(backup, app, version); err != nil {
+					if err := b.downloadImage(app, version); err != nil {
 						logrus.Errorf("download app image error.%s", err.Error())
 						return err
 					}
@@ -365,7 +365,7 @@ func (b *BackupAPPRestore) getOldServiceID(new string) string {
 	}
 	return ""
 }
-func (b *BackupAPPRestore) downloadSlug(backup *dbmodel.AppBackup, app *RegionServiceSnapshot, version *dbmodel.VersionInfo) error {
+func (b *BackupAPPRestore) downloadSlug(app *RegionServiceSnapshot, version *dbmodel.VersionInfo) error {
 	dstDir := fmt.Sprintf("%s/app_%s/slug_%s.tgz", b.cacheDir, b.getOldServiceID(app.ServiceID), version.BuildVersion)
 	if err := sources.CopyFileWithProgress(dstDir, version.DeliveredPath, b.Logger); err != nil {
 		b.Logger.Error(util.Translation("down slug file from local dir error"), map[string]string{"step": "restore_builder", "status": "failure"})
@@ -375,7 +375,7 @@ func (b *BackupAPPRestore) downloadSlug(backup *dbmodel.AppBackup, app *RegionSe
 	return nil
 }
 
-func (b *BackupAPPRestore) downloadImage(backup *dbmodel.AppBackup, app *RegionServiceSnapshot, version *dbmodel.VersionInfo) error {
+func (b *BackupAPPRestore) downloadImage(app *RegionServiceSnapshot, version *dbmodel.VersionInfo) error {
 	dstDir := fmt.Sprintf("%s/app_%s/image_%s.tar", b.cacheDir, b.getOldServiceID(app.ServiceID), version.BuildVersion)
 	if err := b.ImageClient.ImageLoad(dstDir, b.Logger); err != nil {
 		b.Logger.Error(util.Translation("load image to local hub error"), map[string]string{"step": "restore_builder", "status": "failure"})

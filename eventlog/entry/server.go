@@ -26,7 +26,7 @@ import (
 	"github.com/thejerf/suture"
 )
 
-//Entry 数据入口
+// Entry 数据入口
 type Entry struct {
 	supervisor   *suture.Supervisor
 	log          *logrus.Entry
@@ -34,7 +34,7 @@ type Entry struct {
 	storeManager store.Manager
 }
 
-//NewEntry 创建
+// NewEntry 创建
 func NewEntry(conf conf.EntryConf, log *logrus.Entry, storeManager store.Manager) *Entry {
 	return &Entry{
 		log:          log,
@@ -43,7 +43,7 @@ func NewEntry(conf conf.EntryConf, log *logrus.Entry, storeManager store.Manager
 	}
 }
 
-//Start 启动
+// Start 启动
 func (e *Entry) Start() error {
 	supervisor := suture.New("Entry Server", suture.Spec{
 		Log: func(m string) {
@@ -76,7 +76,7 @@ func (e *Entry) Start() error {
 	return nil
 }
 
-//Stop 停止
+// Stop 停止
 func (e *Entry) Stop() {
 	if e.supervisor != nil {
 		e.supervisor.Stop()

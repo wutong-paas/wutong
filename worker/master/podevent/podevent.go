@@ -134,8 +134,8 @@ func recordUpdateEvent(clientset kubernetes.Interface, pod *corev1.Pod, f determ
 		}
 
 		msg := fmt.Sprintf("image: %s; container: %s; state: %s; mesage: %s", optType.image, optType.containerID, optType.eventType.String(), optType.message)
-		logger := event.GetManager().GetLogger(eventID)
-		defer event.GetManager().ReleaseLogger(logger)
+		logger := event.GetLogger(eventID)
+		defer event.CloseLogger(eventID)
 		logrus.Debugf("Service id: %s; %s.", serviceID, msg)
 		logger.Error(msg, event.GetLoggerOption("failure"))
 	} else if podstatus.Type == pb.PodStatus_RUNNING {
@@ -154,8 +154,8 @@ func recordUpdateEvent(clientset kubernetes.Interface, pod *corev1.Pod, f determ
 
 		// the container state of the pod in the PodStatus_Running must be running
 		msg := fmt.Sprintf("state: running; started at: %s", rtime.Format(time.RFC3339))
-		logger := event.GetManager().GetLogger(evt.EventID)
-		defer event.GetManager().ReleaseLogger(logger)
+		logger := event.GetLogger(evt.EventID)
+		defer event.CloseLogger(evt.EventID)
 		logrus.Debugf("Service id: %s; %s.", serviceID, msg)
 		loggerOpt := event.GetLoggerOption("failure")
 

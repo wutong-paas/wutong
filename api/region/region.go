@@ -274,7 +274,7 @@ func (r *resourcesTenantEnv) Get() (*model.TenantEnvResource, *util.APIHandleErr
 
 func handleAPIResult(code int, res utilhttp.ResponseBody) *util.APIHandleError {
 	if code >= 300 {
-		if res.ValidationError != nil && len(res.ValidationError) > 0 {
+		if len(res.ValidationError) > 0 {
 			return util.CreateAPIHandleErrorf(code, "msg:%s \napi validation_error: %+v", res.Msg, res.ValidationError)
 		}
 		return util.CreateAPIHandleErrorf(code, "msg:%s", res.Msg)

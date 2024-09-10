@@ -24,19 +24,16 @@ import (
 )
 
 func TestLogger(t *testing.T) {
-	err := NewManager(EventConfig{
-		EventLogServers: []string{"192.168.195.1:6366"},
-		// DiscoverArgs:    &etcdutil.ClientArgs{Endpoints: []string{"192.168.195.1:2379"}},
-	})
+	loggerManager, err := NewLoggerManager()
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer GetManager().Close()
+	defer loggerManager.Close()
 	time.Sleep(time.Second * 3)
 	for i := 0; i < 500; i++ {
-		GetManager().GetLogger("qwdawdasdasasfafa").Info("hello word", nil)
-		GetManager().GetLogger("asdasdasdasdads").Debug("hello word", nil)
-		GetManager().GetLogger("1234124124124").Error("hello word", nil)
+		GetLogger("qwdawdasdasasfafa").Info("hello word", nil)
+		GetLogger("asdasdasdasdads").Debug("hello word", nil)
+		GetLogger("1234124124124").Error("hello word", nil)
 		time.Sleep(time.Millisecond * 1)
 	}
 	select {}

@@ -56,7 +56,7 @@ func init() {
 // NewExportApp create
 func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	return &ExportApp{
 		Format:        gjson.GetBytes(in, "format").String(),
 		SourceDir:     gjson.GetBytes(in, "source_dir").String(),

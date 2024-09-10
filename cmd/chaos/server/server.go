@@ -62,13 +62,12 @@ func Run(s *option.Builder) error {
 		CertFile:  s.Config.EtcdCertFile,
 		KeyFile:   s.Config.EtcdKeyFile,
 	}
-	if err := event.NewManager(event.EventConfig{
-		EventLogServers: s.Config.EventLogServers,
-		// DiscoverArgs:    etcdClientArgs,
-	}); err != nil {
+	loggerManager, err := event.NewLoggerManager()
+	if err != nil {
 		return err
 	}
-	defer event.CloseManager()
+	defer loggerManager.Close()
+
 	// client, err := client.NewMqClient(etcdClientArgs, s.Config.MQAPI)
 	client, err := client.NewMqClient(s.Config.MQAPI)
 	if err != nil {

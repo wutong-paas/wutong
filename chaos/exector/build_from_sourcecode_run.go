@@ -87,7 +87,7 @@ type Commit struct {
 // NewSouceCodeBuildItem create
 func NewSouceCodeBuildItem(in []byte) *SourceCodeBuildItem {
 	eventID := gjson.GetBytes(in, "event_id").String()
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	csi := sources.CodeSourceInfo{
 		ServerType:    strings.Replace(gjson.GetBytes(in, "server_type").String(), " ", "", -1),
 		RepositoryURL: gjson.GetBytes(in, "repo_url").String(),
@@ -153,8 +153,8 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 			return err
 		}
 		if rs.Logs == nil || len(rs.Logs.CommitEntrys) < 1 {
-			logrus.Errorf("get code commit info error: %s", err.Error())
-			i.Logger.Error("读取代码版本信息失败，错误信息："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
+			logrus.Errorf("get code commit info error")
+			i.Logger.Error("读取代码版本信息失败：", map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.commit = Commit{

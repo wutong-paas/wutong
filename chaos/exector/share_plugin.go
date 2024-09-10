@@ -59,7 +59,7 @@ func init() {
 // SharePluginItemCreater create
 func SharePluginItemCreater(in []byte, m *exectorManager) (TaskWorker, error) {
 	eventID := gjson.GetBytes(in, "event_id").String()
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	pluginShare := &PluginShareItem{
 		Logger:      logger,
 		EventID:     eventID,

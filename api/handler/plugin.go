@@ -290,8 +290,8 @@ func (p *PluginAction) GetEnvsWhichCanBeSet(serviceID, pluginID string) (interfa
 // BuildPluginManual BuildPluginManual
 func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError) {
 	eventID := bps.Body.EventID
-	logger := event.GetManager().GetLogger(eventID)
-	defer event.CloseManager()
+	logger := event.GetLogger(eventID)
+	defer event.CloseLogger(eventID)
 	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(bps.PluginID, bps.Body.TenantEnvID)
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", bps.PluginID), err)
@@ -319,8 +319,8 @@ func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbm
 // BuildSysPluginManual BuildSysPluginManual
 func (p *PluginAction) BuildSysPluginManual(bps *api_model.BuildSysPluginStruct) (*dbmodel.TenantEnvPluginBuildVersion, *util.APIHandleError) {
 	eventID := bps.Body.EventID
-	logger := event.GetManager().GetLogger(eventID)
-	defer event.CloseManager()
+	logger := event.GetLogger(eventID)
+	defer event.CloseLogger(eventID)
 	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(bps.PluginID, "")
 	if err != nil {
 		return nil, util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", bps.PluginID), err)
@@ -491,7 +491,7 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 			}
 		}
 
-		logger := event.GetManager().GetLogger(buildReq.EventID)
+		logger := event.GetLogger(buildReq.EventID)
 		taskBody := &builder_model.BuildPluginTaskBody{
 			TenantEnvID:   buildReq.TenantEnvID,
 			PluginID:      buildReq.PluginID,
@@ -532,7 +532,7 @@ func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugi
 			logger.Info("构建插件任务发送成功 ", loggerInfo)
 		}
 		pluginBuildVersions = append(pluginBuildVersions, pluginBuildVersion)
-		event.CloseManager()
+		event.CloseLogger(buildReq.EventID)
 	}
 
 	if err := db.GetManager().TenantEnvPluginBuildVersionDao().CreateOrUpdatePluginBuildVersionsInBatch(pluginBuildVersions); err != nil {

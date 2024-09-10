@@ -45,7 +45,7 @@ func NewCmdTenantEnv() cli.Command {
 				Usage: "list all tenant env info",
 				Action: func(c *cli.Context) error {
 					Common(c)
-					return getAllTenantEnv(c)
+					return getAllTenantEnv()
 				},
 			},
 			{
@@ -148,7 +148,7 @@ func findTenantEnvResourceUsage(c *cli.Context) error {
 	return nil
 }
 
-func getAllTenantEnv(c *cli.Context) error {
+func getAllTenantEnv() error {
 	tenantEnvs, err := clients.RegionClient.TenantEnvs("").List()
 	handleErr(err)
 	tenantEnvsTable := termtables.CreateTable()

@@ -155,14 +155,14 @@ func (d *DiscoverAction) DiscoverClusters(
 	if resources == nil {
 		return cds, nil
 	}
-	if resources.BaseServices != nil && len(resources.BaseServices) > 0 {
+	if len(resources.BaseServices) > 0 {
 		clusters, err := d.upstreamClusters(serviceAlias, namespace, resources.BaseServices)
 		if err != nil {
 			return nil, err
 		}
 		cds.Clusters.Append(clusters)
 	}
-	if resources.BasePorts != nil && len(resources.BasePorts) > 0 {
+	if len(resources.BasePorts) > 0 {
 		clusters, err := d.downstreamClusters(serviceAlias, namespace, resources.BasePorts)
 		if err != nil {
 			return nil, err
@@ -240,7 +240,7 @@ func (d *DiscoverAction) downstreamClusters(serviceAlias, namespace string, port
 			Type:             "static",
 			ConnectTimeoutMs: 250,
 			LbType:           "round_robin",
-			Hosts:            []envoyv1.Host{envoyv1.Host{URL: localhost}},
+			Hosts:            []envoyv1.Host{{URL: localhost}},
 			CircuitBreaker:   envoyv1.CreateCircuitBreaker(port.Options),
 		}
 		cdsClusters = append(cdsClusters, pcds)
@@ -274,14 +274,14 @@ func (d *DiscoverAction) DiscoverListeners(
 	if resources == nil {
 		return lds, nil
 	}
-	if resources.BaseServices != nil && len(resources.BaseServices) > 0 {
+	if len(resources.BaseServices) > 0 {
 		listeners, err := d.upstreamListener(serviceAlias, namespace, resources.BaseServices, !defaultMesh)
 		if err != nil {
 			return nil, err
 		}
 		lds.Listeners.Append(listeners)
 	}
-	if resources.BasePorts != nil && len(resources.BasePorts) > 0 {
+	if len(resources.BasePorts) > 0 {
 		listeners, err := d.downstreamListener(serviceAlias, namespace, resources.BasePorts)
 		if err != nil {
 			return nil, err

@@ -389,7 +389,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 			service, _ := clients.K8SClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), serviceID, metav1.GetOptions{})
 			if service != nil {
 				var ports string
-				if service.Spec.Ports != nil && len(service.Spec.Ports) > 0 {
+				if len(service.Spec.Ports) > 0 {
 					for _, p := range service.Spec.Ports {
 						ports += fmt.Sprintf("(%s:%s)", p.Protocol, p.TargetPort.String())
 					}
@@ -403,7 +403,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	fmt.Println("------------Service------------")
 	fmt.Println(serviceTable.Render())
 	//show endpoints
-	if deployInfo.Endpoints != nil && len(deployInfo.Endpoints) > 0 {
+	if len(deployInfo.Endpoints) > 0 {
 		epTable := termtables.CreateTable()
 		epTable.AddHeaders("Name", "IP", "Port", "Protocol")
 		for epname := range deployInfo.Endpoints {

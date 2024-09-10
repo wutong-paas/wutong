@@ -56,10 +56,7 @@ func CreateNodeService(c *option.Conf, nodecluster *node.Cluster, kubecli kubeca
 	// 	KeyFile:     c.EtcdKeyFile,
 	// 	DialTimeout: c.EtcdDialTimeout,
 	// }
-	if err := event.NewManager(event.EventConfig{
-		EventLogServers: c.EventLogServer,
-		// DiscoverArgs:    etcdClientArgs,
-	}); err != nil {
+	if _, err := event.NewLoggerManager(); err != nil {
 		logrus.Errorf("create event manager faliure")
 	}
 	return &NodeService{
@@ -157,7 +154,7 @@ func (n *NodeService) AsynchronousInstall(node *client.HostNode, eventID string)
 	// start add node script
 	logrus.Infof("Begin install node %s", node.ID)
 	// write log to event log
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	option := ansibleUtil.NodeInstallOption{
 		HostRole:   node.Role.String(),
 		HostName:   node.HostName,

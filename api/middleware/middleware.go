@@ -223,7 +223,7 @@ func SetLog(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "event_id")
 		if eventID != "" {
-			logger := event.GetManager().GetLogger(eventID)
+			logger := event.GetLogger(eventID)
 			ctx := context.WithValue(r.Context(), ctxutil.ContextKey("logger"), logger)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		}

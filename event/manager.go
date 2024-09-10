@@ -1,17 +1,12 @@
 package event
 
 import (
-	"fmt"
-	"io"
 	"os"
-	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/wutong-paas/wutong/pkg/gogo"
 
-	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/discover/config"
 	eventclient "github.com/wutong-paas/wutong/eventlog/entry/grpc/client"
@@ -20,129 +15,112 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Manager 操作日志，客户端服务
+var eventLogServer = "wt-eventlog:6366"
+
+func init() {
+	if s := os.Getenv("EVENT_LOG_SERVER"); s != "" {
+		eventLogServer = s
+	}
+}
+
+// GetLogger 获取日志，使用完成后必须调用 CloseLogger 方法
+func GetLogger(eventID string) Logger {
+	return defaultLoggerManager.GetLogger(eventID)
+}
+
+// CloseLogger 关闭日志
+func CloseLogger(eventID string) {
+	if defaultLoggerManager != nil {
+		logger := defaultLoggerManager.GetLogger(eventID)
+		if logger != nil {
+			defaultLoggerManager.ReleaseLogger(logger)
+		}
+	}
+}
+
+// LoggerManager 操作日志，客户端服务
 // 客户端负载均衡
-type Manager interface {
+type LoggerManager interface {
 	GetLogger(eventID string) Logger
 	Start() error
-	Close() error
+	Close()
 	ReleaseLogger(Logger)
 }
 
-// EventConfig event config struct
-type EventConfig struct {
-	EventLogServers []string
-}
-type manager struct {
-	ctx            context.Context
-	cancel         context.CancelFunc
-	config         EventConfig
-	qos            int32
-	loggers        map[string]Logger
-	handles        map[string]handle
-	lock           sync.Mutex
-	eventServer    []string
-	abnormalServer map[string]string
+type loggerManager struct {
+	ctx     context.Context
+	cancel  context.CancelFunc
+	loggers map[string]Logger
+	handle  *handle
+	lock    sync.Mutex
 }
 
-var defaultManager Manager
+var defaultLoggerManager LoggerManager
 
 const buffersize = 1000
 
-// NewManager 创建manager
-func NewManager(conf EventConfig) error {
+// NewLoggerManager 创建 loggerManager
+func NewLoggerManager() (LoggerManager, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	defaultManager = &manager{
-		ctx:            ctx,
-		cancel:         cancel,
-		config:         conf,
-		loggers:        make(map[string]Logger, 1024),
-		handles:        make(map[string]handle),
-		eventServer:    conf.EventLogServers,
-		abnormalServer: make(map[string]string),
+	defaultLoggerManager = &loggerManager{
+		ctx:     ctx,
+		cancel:  cancel,
+		loggers: make(map[string]Logger, 1024),
 	}
-	return defaultManager.Start()
+	err := defaultLoggerManager.Start()
+
+	return defaultLoggerManager, err
 }
 
-// GetManager 获取日志服务
-func GetManager() Manager {
-	return defaultManager
-}
-
-// NewTestManager -
-func NewTestManager(m Manager) {
-	defaultManager = m
-}
-
-// CloseManager 关闭日志服务
-func CloseManager() {
-	if defaultManager != nil {
-		defaultManager.Close()
-	}
-}
-
-// Start -
-func (m *manager) Start() error {
+// Start 开始日志服务
+func (m *loggerManager) Start() error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	if len(m.eventServer) == 0 {
-		logrus.Errorf("event log server is empty , plase set it in config file.")
-		return nil
-	}
-	defaultServer := m.eventServer[0]
 
-	err := gogo.Go(func(ctx context.Context) error {
+	gogo.Go(func(ctx context.Context) error {
 		for {
-			h := handle{
+			h := &handle{
 				cacheChan: make(chan []byte, buffersize),
-				stop:      make(chan struct{}),
-				server:    defaultServer,
 				manager:   m,
 				ctx:       m.ctx,
 			}
-			m.handles[defaultServer] = h
+			m.handle = h
 			err := h.HandleLog()
 			if err != nil {
 				time.Sleep(time.Second * 10)
-				logrus.Warnf("event log server %s connect error: %v. auto retry after 10 seconds ", defaultServer, err)
+				logrus.Warnf("event log server connect error: %v. auto retry after 10 seconds ", err)
 				continue
 			}
 			return nil
 		}
 	})
 
-	if err != nil {
-		logrus.Errorf("event log server %s connect error, %v", defaultServer, err)
-		return err
-	}
-
 	go m.GC()
 	return nil
 }
 
 // UpdateEndpoints - 不需要去更新节点信息
-func (m *manager) UpdateEndpoints(endpoints ...*config.Endpoint) {
+func (m *loggerManager) UpdateEndpoints(endpoints ...*config.Endpoint) {}
+
+// Error 异常信息
+func (m *loggerManager) Error(err error) {}
+
+// Close 关闭日志服务
+func (m *loggerManager) Close() {
+	if m != nil {
+		logrus.Warn("event log manager ctx cancled.")
+		m.cancel()
+	}
 }
 
-// Error -
-func (m *manager) Error(err error) {
-
-}
-
-// Close -
-func (m *manager) Close() error {
-	m.cancel()
-	return nil
-}
-
-// GC -
-func (m *manager) GC() {
+// GC 主动调用，回收资源
+func (m *loggerManager) GC() {
 	util.IntermittentExec(m.ctx, func() {
 		m.lock.Lock()
 		defer m.lock.Unlock()
 		var needRelease []string
 		for k, l := range m.loggers {
-			//1min 未release ,自动gc
+			//1 min 未 release ,自动 GC
 			if l.CreateTime().Add(time.Minute).Before(time.Now()) {
 				needRelease = append(needRelease, k)
 			}
@@ -156,8 +134,8 @@ func (m *manager) GC() {
 	}, time.Second*20)
 }
 
-// GetLogger 使用完成后必须调用ReleaseLogger方法
-func (m *manager) GetLogger(eventID string) Logger {
+// GetLogger 使用完成后必须调用 ReleaseLogger 方法
+func (m *loggerManager) GetLogger(eventID string) Logger {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	if eventID == " " || len(eventID) == 0 {
@@ -166,13 +144,13 @@ func (m *manager) GetLogger(eventID string) Logger {
 	if l, ok := m.loggers[eventID]; ok {
 		return l
 	}
-	l := NewLogger(eventID, m.getLBChan())
+	l := NewLogger(eventID, m.getCacheChan())
 	m.loggers[eventID] = l
 	return l
 }
 
-// ReleaseLogger 释放logger
-func (m *manager) ReleaseLogger(l Logger) {
+// ReleaseLogger 释放 logger
+func (m *loggerManager) ReleaseLogger(l Logger) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	if l, ok := m.loggers[l.Event()]; ok {
@@ -180,304 +158,86 @@ func (m *manager) ReleaseLogger(l Logger) {
 	}
 }
 
-type handle struct {
-	server    string
-	stop      chan struct{}
-	cacheChan chan []byte
-	ctx       context.Context
-	manager   *manager
-}
-
-// DiscardedLoggerChan -
-func (m *manager) DiscardedLoggerChan(cacheChan chan []byte) {
+// SetNewHandleCacheChan 设置新的 handle cache chan
+func (m *loggerManager) SetNewHandleCacheChan(cacheChan chan []byte) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	for k, v := range m.handles {
-		if v.cacheChan == cacheChan {
-			logrus.Warnf("event server %s can not link, will ignore it.", k)
-			m.abnormalServer[k] = k
-		}
+	if m.handle != nil && m.handle.cacheChan == cacheChan {
+		logrus.Warnf("event log server can not link, will ignore it.")
 	}
+
 	for _, v := range m.loggers {
 		if v.GetChan() == cacheChan {
-			v.SetChan(m.getLBChan())
+			v.SetChan(m.getCacheChan())
 		}
 	}
 }
 
-func (m *manager) getLBChan() chan []byte {
-	for i := 0; i < len(m.eventServer); i++ {
-		index := m.qos % int32(len(m.eventServer))
-		m.qos = atomic.AddInt32(&(m.qos), 1)
-		server := m.eventServer[index]
-		if _, ok := m.abnormalServer[server]; ok {
-			logrus.Warnf("server[%s] is abnormal, skip it", server)
-			continue
-		}
-		if h, ok := m.handles[server]; ok {
-			return h.cacheChan
-		}
-		h := handle{
-			cacheChan: make(chan []byte, buffersize),
-			stop:      make(chan struct{}),
-			server:    server,
-			manager:   m,
-			ctx:       m.ctx,
-		}
-		m.handles[server] = h
-		go h.HandleLog()
-		return h.cacheChan
-	}
-	//not select, return first handle chan
-	for _, v := range m.handles {
-		return v.cacheChan
-	}
-	return nil
+type handle struct {
+	cacheChan chan []byte
+	ctx       context.Context
+	manager   *loggerManager
 }
 
-// RemoveHandle -
-func (m *manager) RemoveHandle(server string) {
+func (m *loggerManager) getCacheChan() chan []byte {
+	if m.handle != nil {
+		return m.handle.cacheChan
+	}
+
+	m.handle = &handle{
+		cacheChan: make(chan []byte, buffersize),
+		manager:   m,
+		ctx:       m.ctx,
+	}
+	go m.handle.HandleLog()
+	return m.handle.cacheChan
+}
+
+// RemoveHandle 移除当前 handle
+func (m *loggerManager) RemoveHandle() {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	// delete if server exist
-	delete(m.handles, server)
+	m.handle = nil
 }
 
 // HandleLog -
-func (m *handle) HandleLog() error {
-	defer m.manager.RemoveHandle(m.server)
-	return util.Exec(m.ctx, func() error {
-		ctx, cancel := context.WithCancel(m.ctx)
+func (h *handle) HandleLog() error {
+	defer h.manager.RemoveHandle()
+	return util.Exec(h.ctx, func() error {
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		client, err := eventclient.NewEventClient(ctx, m.server)
+		client, err := eventclient.NewEventClient(ctx, eventLogServer)
 		if err != nil {
-			logrus.Error("create event client error.", err.Error())
+			logrus.Error("create event client error: ", err.Error())
 			return err
 		}
-		logrus.Infof("start a event log handle core. connect server %s", m.server)
+		logrus.Infof("start a event log handle core.")
 		logClient, err := client.Log(ctx)
 		if err != nil {
-			logrus.Error("create event log client error.", err.Error())
-			//切换使用此chan的logger到其他chan
-			m.manager.DiscardedLoggerChan(m.cacheChan)
+			logrus.Error("create event log client error: ", err.Error())
+			// 切换使用此 chan 的 logger 到其他 chan
+			h.manager.SetNewHandleCacheChan(h.cacheChan)
 			return err
 		}
 		for {
 			select {
-			case <-m.ctx.Done():
+			case <-h.ctx.Done():
+				logrus.Warn("h ctx done")
 				logClient.CloseSend()
 				return nil
-			case <-m.stop:
-				logClient.CloseSend()
-				return nil
-			case me := <-m.cacheChan:
+			case me := <-h.cacheChan:
 				err := logClient.Send(&eventpb.LogMessage{Log: me})
 				if err != nil {
-					logrus.Error("send event log error.", err.Error())
+					logrus.Error("send event log error: ", err.Error())
 					logClient.CloseSend()
-					//切换使用此chan的logger到其他chan
-					m.manager.DiscardedLoggerChan(m.cacheChan)
+					// 切换使用此 chan 的 logger 到其他 chan
+					h.manager.SetNewHandleCacheChan(h.cacheChan)
 					return nil
+				} else {
+					logrus.Warnf("send event log: %s", string(me))
 				}
 			}
 		}
 	}, time.Second*3)
-}
-
-// Stop -
-func (m *handle) Stop() {
-	close(m.stop)
-}
-
-// Logger 日志发送器
-type Logger interface {
-	Info(string, map[string]string)
-	Error(string, map[string]string)
-	Debug(string, map[string]string)
-	Event() string
-	CreateTime() time.Time
-	GetChan() chan []byte
-	SetChan(chan []byte)
-	GetWriter(step, level string) LoggerWriter
-}
-
-// NewLogger creates a new Logger.
-func NewLogger(eventID string, sendCh chan []byte) Logger {
-	return &logger{
-		event:      eventID,
-		sendChan:   sendCh,
-		createTime: time.Now(),
-	}
-}
-
-type logger struct {
-	event      string
-	sendChan   chan []byte
-	createTime time.Time
-}
-
-// GetChan -
-func (l *logger) GetChan() chan []byte {
-	return l.sendChan
-}
-
-// SetChan -
-func (l *logger) SetChan(ch chan []byte) {
-	l.sendChan = ch
-}
-func (l *logger) Event() string {
-	return l.event
-}
-func (l *logger) CreateTime() time.Time {
-	return l.createTime
-}
-func (l *logger) Info(message string, info map[string]string) {
-	if info == nil {
-		info = make(map[string]string)
-	}
-	info["level"] = "info"
-	l.send(message, info)
-}
-func (l *logger) Error(message string, info map[string]string) {
-	if info == nil {
-		info = make(map[string]string)
-	}
-	info["level"] = "error"
-	l.send(message, info)
-}
-func (l *logger) Debug(message string, info map[string]string) {
-	if info == nil {
-		info = make(map[string]string)
-	}
-	info["level"] = "debug"
-	l.send(message, info)
-}
-func (l *logger) send(message string, info map[string]string) {
-	info["event_id"] = l.event
-	info["message"] = message
-	info["time"] = time.Now().Format(time.RFC3339)
-	log, err := ffjson.Marshal(info)
-	if err == nil && l.sendChan != nil {
-		util.SendNoBlocking(log, l.sendChan)
-	}
-}
-
-// LoggerWriter logger writer
-type LoggerWriter interface {
-	io.Writer
-	SetFormat(map[string]interface{})
-}
-
-func (l *logger) GetWriter(step, level string) LoggerWriter {
-	return &loggerWriter{
-		l:     l,
-		step:  step,
-		level: level,
-	}
-}
-
-type loggerWriter struct {
-	l           *logger
-	step        string
-	level       string
-	fmt         map[string]interface{}
-	tmp         []byte
-	lastMessage string
-}
-
-func (l *loggerWriter) SetFormat(f map[string]interface{}) {
-	l.fmt = f
-}
-func (l *loggerWriter) Write(b []byte) (n int, err error) {
-	if len(b) > 0 {
-		if !strings.HasSuffix(string(b), "\n") {
-			l.tmp = append(l.tmp, b...)
-			return len(b), nil
-		}
-		var message string
-		if len(l.tmp) > 0 {
-			message = string(append(l.tmp, b...))
-			l.tmp = l.tmp[:0]
-		} else {
-			message = string(b)
-		}
-
-		// if loggerWriter has format, and then use it format message
-		if len(l.fmt) > 0 {
-			newLineMap := make(map[string]interface{}, len(l.fmt))
-			for k, v := range l.fmt {
-				if v == "%s" {
-					newLineMap[k] = fmt.Sprintf(v.(string), message)
-				} else {
-					newLineMap[k] = v
-				}
-			}
-			messageb, _ := ffjson.Marshal(newLineMap)
-			message = string(messageb)
-		}
-		if l.step == "build-progress" {
-			if strings.HasPrefix(message, "Progress ") && strings.HasPrefix(l.lastMessage, "Progress ") {
-				l.lastMessage = message
-				return len(b), nil
-			}
-			// send last message
-			if !strings.HasPrefix(message, "Progress ") && strings.HasPrefix(l.lastMessage, "Progress ") {
-				l.l.send(message, map[string]string{"step": l.lastMessage, "level": l.level})
-			}
-		}
-		l.l.send(message, map[string]string{"step": l.step, "level": l.level})
-		l.lastMessage = message
-	}
-	return len(b), nil
-}
-
-// GetTestLogger GetTestLogger
-func GetTestLogger() Logger {
-	return &testLogger{}
-}
-
-type testLogger struct {
-}
-
-func (l *testLogger) GetChan() chan []byte {
-	return nil
-}
-
-func (l *testLogger) SetChan(ch chan []byte) {
-
-}
-
-func (l *testLogger) Event() string {
-	return "test"
-}
-
-func (l *testLogger) CreateTime() time.Time {
-	return time.Now()
-}
-
-func (l *testLogger) Info(message string, info map[string]string) {
-	fmt.Println("info:", message)
-}
-
-func (l *testLogger) Error(message string, info map[string]string) {
-	fmt.Println("error:", message)
-}
-
-func (l *testLogger) Debug(message string, info map[string]string) {
-	fmt.Println("debug:", message)
-}
-
-type testLoggerWriter struct {
-}
-
-func (l *testLoggerWriter) SetFormat(f map[string]interface{}) {
-
-}
-
-func (l *testLoggerWriter) Write(b []byte) (n int, err error) {
-	return os.Stdout.Write(b)
-}
-
-func (l *testLogger) GetWriter(step, level string) LoggerWriter {
-	return &testLoggerWriter{}
 }

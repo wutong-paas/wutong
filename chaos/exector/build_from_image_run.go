@@ -56,7 +56,7 @@ type ImageBuildItem struct {
 // NewImageBuildItem 创建实体
 func NewImageBuildItem(in []byte) *ImageBuildItem {
 	eventID := gjson.GetBytes(in, "event_id").String()
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	return &ImageBuildItem{
 		Namespace:     gjson.GetBytes(in, "namespace").String(),
 		TenantEnvName: gjson.GetBytes(in, "tenant_env_name").String(),

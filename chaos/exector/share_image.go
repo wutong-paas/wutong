@@ -70,7 +70,7 @@ func NewImageShareItem(in []byte, imageClient sources.ImageClient, EtcdCli *clie
 	isi.LocalImageUsername = chaos.REGISTRYUSER
 	isi.LocalImagePassword = chaos.REGISTRYPASS
 	eventID := isi.ShareInfo.EventID
-	isi.Logger = event.GetManager().GetLogger(eventID)
+	isi.Logger = event.GetLogger(eventID)
 	isi.ImageClient = imageClient
 	isi.EtcdCli = EtcdCli
 	return &isi, nil

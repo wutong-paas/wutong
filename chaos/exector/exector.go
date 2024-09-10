@@ -262,7 +262,7 @@ func (e *exectorManager) exec(task *pb.TaskMessage) error {
 		logrus.Errorf("create worker for builder error.%s", err)
 		return err
 	}
-	defer event.GetManager().ReleaseLogger(worker.GetLogger())
+	defer event.CloseLogger(worker.GetLogger().Event())
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println(r)
@@ -284,7 +284,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 	i := NewImageBuildItem(task.TaskBody)
 	i.ImageClient = e.imageClient
 	i.Logger.Info("开始构建应用组件（镜像源方式）...", map[string]string{"step": "builder-exector", "status": "starting"})
-	defer event.GetManager().ReleaseLogger(i.Logger)
+	defer event.CloseLogger(i.Logger.Event())
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println(r)
@@ -318,7 +318,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 				logrus.Errorf("Update app service deploy version failure %s, service %s do not auto upgrade", err.Error(), i.ServiceID)
 				break
 			}
-			err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, task.User, configs, i.Logger)
+			err = e.sendAction(i.TenantEnvID, i.ServiceID, i.DeployVersion, i.Action, task.User, configs)
 			if err != nil {
 				i.Logger.Error("应用组件构建失败，向消息队列发送更新操作事件错误："+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 			} else {
@@ -345,7 +345,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 	i.CachePath = e.cfg.CachePath
 	i.Logger.Info("开始构建应用组件（源代码方式）...", map[string]string{"step": "builder-exector", "status": "starting"})
 	start := time.Now()
-	defer event.GetManager().ReleaseLogger(i.Logger)
+	defer event.CloseLogger(i.Logger.Event())
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println(r)
@@ -382,7 +382,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 			logrus.Errorf("Update app service deploy version failure %s, service %s do not auto upgrade", err.Error(), i.ServiceID)
 			return
 		}
-		err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, task.User, configs, i.Logger)
+		err = e.sendAction(i.TenantEnvID, i.ServiceID, i.DeployVersion, i.Action, task.User, configs)
 		if err != nil {
 			i.Logger.Error("应用组件构建失败，向消息队列发送更新操作事件错误："+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 		} else {
@@ -401,7 +401,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 	i.Logger.Info("开始构建应用组件（应用程序包方式）...", map[string]string{"step": "builder-exector", "status": "starting"})
 	go func() {
 		start := time.Now()
-		defer event.GetManager().ReleaseLogger(i.Logger)
+		defer event.CloseLogger(i.Logger.Event())
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Println(r)
@@ -427,7 +427,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 					logrus.Errorf("Update app service deploy version failure %s, service %s do not auto upgrade", err.Error(), i.ServiceID)
 					break
 				}
-				err = e.sendAction(i.TenantEnvID, i.ServiceID, i.EventID, i.DeployVersion, i.Action, task.User, i.Configs, i.Logger)
+				err = e.sendAction(i.TenantEnvID, i.ServiceID, i.DeployVersion, i.Action, task.User, i.Configs)
 				if err != nil {
 					i.Logger.Error("应用组件构建失败，向消息队列发送更新操作事件错误："+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 				} else {
@@ -440,7 +440,7 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 
 }
 
-func (e *exectorManager) sendAction(tenantEnvID, serviceID, eventID, newVersion, actionType, operator string, configs map[string]string, logger event.Logger) error {
+func (e *exectorManager) sendAction(tenantEnvID, serviceID, newVersion, actionType, operator string, configs map[string]string) error {
 	// update build event complete status
 	switch actionType {
 	case "upgrade":
@@ -491,7 +491,7 @@ func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 	i.Logger.Info("开始分享应用...", map[string]string{"step": "builder-exector", "status": "starting"})
 	status := "success"
 	go func() {
-		defer event.GetManager().ReleaseLogger(i.Logger)
+		defer event.CloseLogger(i.Logger.Event())
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Println(r)
@@ -531,7 +531,7 @@ func (e *exectorManager) imageShare(task *pb.TaskMessage) {
 	}
 	i.Logger.Info("开始分享应用", map[string]string{"step": "builder-exector", "status": "starting"})
 	status := "success"
-	defer event.GetManager().ReleaseLogger(i.Logger)
+	defer event.CloseLogger(i.Logger.Event())
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()

@@ -496,7 +496,7 @@ func (s *k8sStore) ListVirtualService() (l7vs []*v1.VirtualService, l4vs []*v1.V
 		if ing, ok := item.(*networkingv1.Ingress); ok {
 			ingName = ing.Name
 			ingNamespace = ing.Namespace
-			if ing.Spec.DefaultBackend == nil && ing.Spec.Rules != nil && len(ing.Spec.Rules) > 0 {
+			if ing.Spec.DefaultBackend == nil && len(ing.Spec.Rules) > 0 {
 				paths := ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths
 				if len(paths) == 0 {
 					logrus.Info("[ListVirtualService] not ingress rule value")
@@ -512,7 +512,7 @@ func (s *k8sStore) ListVirtualService() (l7vs []*v1.VirtualService, l4vs []*v1.V
 				ingName = ing.Name
 				ingNamespace = ing.Namespace
 				isBetaIngress = true
-				if ing.Spec.Backend == nil && ing.Spec.Rules != nil && len(ing.Spec.Rules) > 0 {
+				if ing.Spec.Backend == nil && len(ing.Spec.Rules) > 0 {
 					paths := ing.Spec.Rules[0].IngressRuleValue.HTTP.Paths
 					if len(paths) == 0 {
 						logrus.Info("[ListVirtualService] not ingress rule value")
@@ -522,8 +522,8 @@ func (s *k8sStore) ListVirtualService() (l7vs []*v1.VirtualService, l4vs []*v1.V
 				} else {
 					ingServiceName = ing.Spec.Backend.ServiceName
 				}
+				anns = s.annotations.Extract(&ing.ObjectMeta)
 			}
-			anns = s.annotations.Extract(&ing.ObjectMeta)
 		}
 		if anns.L4.L4Enable && anns.L4.L4Port != 0 {
 			// region l4

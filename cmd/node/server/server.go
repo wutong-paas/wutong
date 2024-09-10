@@ -47,10 +47,6 @@ import (
 // Run start run
 func Run(cfg *option.Conf) error {
 	var stoped = make(chan struct{})
-	stopfunc := func() error {
-		close(stoped)
-		return nil
-	}
 	startfunc := func() error {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -86,15 +82,12 @@ func Run(cfg *option.Conf) error {
 			return err
 		}
 
-		err = eventLog.NewManager(eventLog.EventConfig{
-			EventLogServers: cfg.EventLogServer,
-			// DiscoverArgs:    etcdClientArgs,
-		})
+		loggerManager, err := eventLog.NewLoggerManager()
 		if err != nil {
 			logrus.Errorf("error creating eventlog manager")
 			return nil
 		}
-		defer eventLog.CloseManager()
+		defer loggerManager.Close()
 		logrus.Debug("create and start event log client success")
 
 		kubecli, err := kubecache.NewKubeClient(cfg, clientset)
@@ -181,7 +174,7 @@ func Run(cfg *option.Conf) error {
 		logrus.Info("See you next time!")
 		return nil
 	}
-	err := initService(cfg, startfunc, stopfunc)
+	err := initService(startfunc)
 	if err != nil {
 		return err
 	}

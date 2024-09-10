@@ -38,11 +38,11 @@ func (e *exectorManager) pluginImageBuild(task *pb.TaskMessage) {
 		return
 	}
 	eventID := tb.EventID
-	logger := event.GetManager().GetLogger(eventID)
+	logger := event.GetLogger(eventID)
 	logger.Info("从镜像构建插件任务开始执行", map[string]string{"step": "builder-exector", "status": "starting"})
 
 	logrus.Info("start exec build plugin from image worker")
-	defer event.GetManager().ReleaseLogger(logger)
+	defer event.CloseLogger(eventID)
 	for retry := 0; retry < 2; retry++ {
 		err := e.run(&tb, logger)
 		if err != nil {

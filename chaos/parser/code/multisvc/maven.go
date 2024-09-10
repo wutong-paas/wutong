@@ -186,11 +186,6 @@ func parsePom(pomPath string) (*pom, error) {
 	return &pom, nil
 }
 
-// checks if the pom has submodules.
-func (p *pom) hasSubmodules() bool {
-	return len(p.Modules) > 0
-}
-
 // TODO: read maven source code, learn how does maven get the final name
 func (p *pom) getExecuteFilename(finalName string) string {
 	// default finalName
@@ -200,7 +195,7 @@ func (p *pom) getExecuteFilename(finalName string) string {
 		if p.Build.FinalName != "" {
 			finalName = p.Build.FinalName
 		}
-		if p.Build.Plugins != nil && p.Build.Plugins.Plugin != nil && len(p.Build.Plugins.Plugin) > 0 {
+		if p.Build.Plugins != nil && len(p.Build.Plugins.Plugin) > 0 {
 			for _, plugin := range p.Build.Plugins.Plugin {
 				if plugin.ArtifactID == "spring-boot-maven-plugin" && plugin.GroupID == "org.springframework.boot" &&
 					plugin.FinalName != "" {

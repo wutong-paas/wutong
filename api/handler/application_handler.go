@@ -750,9 +750,6 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 		k8sApps[app.AppID] = app.K8sApp
 	}
 	for _, appStatus := range appStatuses.AppStatuses {
-		if err != nil {
-			return nil, err
-		}
 		diskUsage := a.getDiskUsage(appStatus.AppId)
 		var cpu *int64
 		if appStatus.SetCPU {

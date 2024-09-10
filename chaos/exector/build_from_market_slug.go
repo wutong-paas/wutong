@@ -64,7 +64,7 @@ func NewMarketSlugItem(in []byte) (*MarketSlugItem, error) {
 	if err := ffjson.Unmarshal(in, &msi); err != nil {
 		return nil, err
 	}
-	msi.Logger = event.GetManager().GetLogger(msi.EventID)
+	msi.Logger = event.GetLogger(msi.EventID)
 	msi.TGZPath = fmt.Sprintf("/wtdata/build/tenantEnv/%s/slug/%s/%s.tgz", msi.TenantEnvID, msi.ServiceID, msi.DeployVersion)
 	return &msi, nil
 }

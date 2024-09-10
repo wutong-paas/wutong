@@ -23,12 +23,12 @@ package server
 
 import (
 	"github.com/spf13/pflag"
-	"github.com/wutong-paas/wutong/cmd/node/option"
 )
 
-//InstallServiceFlags install service flag set
+// InstallServiceFlags install service flag set
 func InstallServiceFlags(flags *pflag.FlagSet) {
 }
-func initService(c *option.Conf, startfunc, stopfunc func() error) error {
+
+func initService(startfunc func() error) error {
 	return startfunc()
 }
