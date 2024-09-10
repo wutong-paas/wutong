@@ -318,7 +318,7 @@ func (a *ApplicationController) ChangeVolumes(w http.ResponseWriter, r *http.Req
 // GetApplicationKubeResources get kube resources for application
 func (t *TenantEnvStruct) GetApplicationKubeResources(w http.ResponseWriter, r *http.Request) {
 	var customSetting model.KubeResourceCustomSetting
-	customSetting.Namespace = strings.Trim(r.URL.Query().Get("namespace"), " ")
+	customSetting.Namespace = strings.TrimSpace(r.URL.Query().Get("namespace"))
 	if customSetting.Namespace == "" {
 		customSetting.Namespace = "default"
 	}
