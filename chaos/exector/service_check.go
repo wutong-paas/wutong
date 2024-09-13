@@ -97,8 +97,8 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 			logger.Error("后端服务开小差，请稍候重试", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
-	logger.Info("开始应用组件部署源码检查...", map[string]string{"step": "starting"})
-	logrus.Infof("start check service by type: %s ", input.SourceType)
+	logger.Info("开始应用组件构建源检查...", map[string]string{"step": "starting"})
+	logrus.Infof("start check service by type: %s", input.SourceType)
 	var pr parser.Parser
 	switch input.SourceType {
 	case "docker-run":

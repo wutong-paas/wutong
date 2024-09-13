@@ -234,8 +234,6 @@ func (h *handle) HandleLog() error {
 					// 切换使用此 chan 的 logger 到其他 chan
 					h.manager.SetNewHandleCacheChan(h.cacheChan)
 					return nil
-				} else {
-					logrus.Warnf("send event log: %s", string(me))
 				}
 			}
 		}

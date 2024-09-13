@@ -334,8 +334,12 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Delete("/volume", middleware.WrapEL(controller.GetManager().DeleteVolume, dbmodel.TargetTypeService, "delete-service-volume", dbmodel.SYNEVENTTYPE))
 	r.Delete("/volumes", middleware.WrapEL(controller.GetManager().DeleteAllVolumes, dbmodel.TargetTypeService, "delete-service-all-volumes", dbmodel.SYNEVENTTYPE))
 
-	//获取应用实例情况(source)
+	// Deprecate, use ../instances
+	// 获取应用实例情况(source)
 	r.Get("/pods", controller.GetManager().Pods)
+	r.Get("/instances", controller.GetManager().ListServiceInstances)
+	r.Get("/instances/{instance_id}/containers", controller.GetManager().ListServiceInstanceContainers)
+	r.Get("/instances/{instance_id}/events", controller.GetManager().ListServiceInstanceEvents)
 
 	//应用探针 增 删 改(surce)
 	r.Post("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "add-service-probe", dbmodel.SYNEVENTTYPE))
@@ -394,7 +398,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Mount("/backup", v2.backupRouter())
 	r.Mount("/restore", v2.restoreRouter())
 
-	r.Put("/app", middleware.WrapEL(controller.GetManager().ChangeServiceApp, dbmodel.TargetTypeService, "change-service-app", dbmodel.SYNEVENTTYPE))
+	r.Put("/app", middleware.WrapEL(controller.GetManager().ChangeServiceApp, dbmodel.TargetTypeService, "更改组件所属应用", dbmodel.SYNEVENTTYPE))
 
 	return r
 }

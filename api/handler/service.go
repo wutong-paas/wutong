@@ -50,6 +50,7 @@ import (
 	"github.com/wutong-paas/wutong/event"
 	gclient "github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
+	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
 	"github.com/wutong-paas/wutong/pkg/kube"
 	"github.com/wutong-paas/wutong/pkg/prometheus"
 	"github.com/wutong-paas/wutong/util"
@@ -63,10 +64,13 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/duration"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/util/flushwriter"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/reference"
 )
 
 // ErrServiceNotClosed -
@@ -2316,6 +2320,283 @@ func (s *ServiceAction) GetPods(serviceID string) (*K8sPodInfos, error) {
 		NewPods: newpods,
 		OldPods: oldpods,
 	}, nil
+}
+
+type ServiceInstances []*ServiceInstance
+
+type ServiceInstance struct {
+	InstanceName   string    `json:"instanceName"`
+	InstanceIP     string    `json:"instanceIP"`
+	Status         string    `json:"status"`
+	NodeName       string    `json:"nodeName"`
+	NodeIP         string    `json:"nodeIP"`
+	CreateTime     time.Time `json:"createTime"`
+	InitContainers []string  `json:"initContainers"`
+	Containers     []string  `json:"containers"`
+}
+
+// ListServiceInstances list service instances
+func (s *ServiceAction) ListServiceInstances(namespace, serviceID string) (ServiceInstances, error) {
+	pods, err := kube.GetCachedResources(s.kubeClient).PodLister.Pods(namespace).List(labels.SelectorFromSet(labels.Set{
+		"service_id": serviceID,
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	nodes, err := kube.GetCachedResources(s.kubeClient).NodeLister.List(labels.Everything())
+	if err != nil {
+		return nil, err
+	}
+
+	var nodeMap = make(map[string]string, len(nodes))
+	for _, node := range nodes {
+		nodeMap[node.Name] = nodeInternalIP(node)
+	}
+
+	var res ServiceInstances
+
+	for _, pod := range pods {
+		item := &ServiceInstance{
+			InstanceName: pod.Name,
+			InstanceIP:   pod.Status.PodIP,
+			Status:       readInstanceStatus(pod),
+			NodeName:     pod.Spec.NodeName,
+			NodeIP:       nodeMap[pod.Spec.NodeName],
+			CreateTime:   pod.CreationTimestamp.Time,
+		}
+		for _, container := range pod.Spec.InitContainers {
+			item.InitContainers = append(item.InitContainers, container.Name)
+		}
+
+		for _, container := range pod.Spec.Containers {
+			item.Containers = append(item.Containers, container.Name)
+		}
+		res = append(res, item)
+	}
+
+	return res, nil
+}
+
+var (
+	PodStatusPending      = "Pending"
+	PodStatusRunning      = "Running"
+	PodStatusSucceeded    = "Succeeded"
+	PodStatusFailed       = "Failed"
+	PodStatusUnknown      = "Unknown"
+	PodStatusSchduling    = "Scheduling"
+	PodStatusTerminating  = "Terminating"
+	PodStatusNotReady     = "NotReady"
+	PodStatusInitializing = "Initializing"
+)
+
+func readInstanceStatus(pod *corev1.Pod) string {
+	if pod.DeletionTimestamp != nil {
+		return PodStatusTerminating
+	}
+
+	for _, condition := range pod.Status.Conditions {
+		if condition.Status == corev1.ConditionFalse {
+			switch condition.Type {
+			case corev1.PodScheduled:
+				return PodStatusSchduling
+			case corev1.PodReady:
+				return PodStatusNotReady
+			case corev1.PodInitialized:
+				return PodStatusInitializing
+			case corev1.ContainersReady:
+				return PodStatusNotReady
+			}
+		}
+	}
+
+	return string(pod.Status.Phase)
+}
+
+type ServiceInstanceContainers []*ServiceInstanceContainer
+
+type ServiceInstanceContainer struct {
+	ContainerName   string    `json:"containerName"`
+	Image           string    `json:"image"`
+	RequestCPU      string    `json:"requestCPU"`
+	RequestMemory   string    `json:"requestMemory"`
+	LimitCPU        string    `json:"limitCPU"`
+	LimitMemory     string    `json:"limitMemory"`
+	StartTime       time.Time `json:"startTime"`
+	Status          string    `json:"status"`
+	Message         string    `json:"message"`
+	RestartCount    int32     `json:"restartCount"`
+	IsMainContainer bool      `json:"isMainContainer"`
+	IsInitContainer bool      `json:"isInitContainer"`
+}
+
+func (s *ServiceAction) ListServiceInstanceContainers(service *dbmodel.TenantEnvServices, namespace, instance string) (ServiceInstanceContainers, error) {
+	pod, err := kube.GetCachedResources(s.kubeClient).PodLister.Pods(namespace).Get(instance)
+	if err != nil {
+		return nil, err
+	}
+
+	if pod == nil {
+		return nil, fmt.Errorf("pod %s not found", instance)
+	}
+
+	var res ServiceInstanceContainers
+
+	var containerStatusM = make(map[string]corev1.ContainerStatus, len(pod.Status.ContainerStatuses))
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		containerStatusM[containerStatus.Name] = containerStatus
+	}
+
+	for _, container := range pod.Spec.InitContainers {
+		status := containerStatusM[container.Name]
+		item := readContainer(pod, container, status)
+		item.IsInitContainer = true
+		res = append(res, &item)
+	}
+
+	for _, container := range pod.Spec.Containers {
+		status := containerStatusM[container.Name]
+		item := readContainer(pod, container, status)
+		item.IsMainContainer = service.K8sComponentName == container.Name
+		res = append(res, &item)
+	}
+
+	return res, nil
+}
+
+func readContainer(pod *corev1.Pod, container corev1.Container, containerStatus corev1.ContainerStatus) ServiceInstanceContainer {
+	return ServiceInstanceContainer{
+		ContainerName: container.Name,
+		Image:         container.Image,
+		RequestCPU:    container.Resources.Requests.Cpu().String(),
+		RequestMemory: container.Resources.Requests.Memory().String(),
+		LimitCPU:      container.Resources.Limits.Cpu().String(),
+		LimitMemory:   container.Resources.Limits.Memory().String(),
+		StartTime:     readContainerStartTime(containerStatus.State),
+		Status:        readContainerStatus(pod, container.Name),
+		Message:       readContainerStatusMessage(containerStatus.State),
+		RestartCount:  containerStatus.RestartCount,
+	}
+}
+
+var (
+	ContainerStatusWaiting    = "Waiting"
+	ContainerStatusRunning    = "Running"
+	ContainerStatusTerminated = "Terminated"
+	ContainerStatusOOMKilled  = "OOMKilled"
+	ContainerStatusUnknown    = "Unknown"
+)
+
+func readContainerStatus(pod *corev1.Pod, containerName string) string {
+	containerStatusMap := make(map[string]corev1.ContainerStatus, len(pod.Spec.Containers)+len(pod.Spec.InitContainers))
+
+	for _, container := range pod.Status.InitContainerStatuses {
+		containerStatusMap[container.Name] = container
+	}
+
+	for _, container := range pod.Status.ContainerStatuses {
+		containerStatusMap[container.Name] = container
+	}
+
+	if containerStatus, ok := containerStatusMap[containerName]; ok {
+		if containerStatus.State.Waiting != nil {
+			return ContainerStatusWaiting
+
+		}
+		if !containerStatus.Ready && containerStatus.State.Terminated != nil {
+			if containerStatus.State.Terminated.Reason == "OOMKilled" {
+				return ContainerStatusOOMKilled
+			}
+			return ContainerStatusTerminated
+		}
+		if containerStatus.State.Running != nil {
+			return ContainerStatusRunning
+		}
+		if containerStatus.State.Terminated != nil {
+			return ContainerStatusTerminated
+		}
+	}
+
+	return ContainerStatusUnknown
+}
+
+func readContainerStartTime(containerState corev1.ContainerState) time.Time {
+	if containerState.Running != nil {
+		return containerState.Running.StartedAt.Time
+	}
+
+	if containerState.Terminated != nil {
+		return containerState.Terminated.StartedAt.Time
+	}
+
+	return time.Time{}
+}
+
+func readContainerStatusMessage(containerState corev1.ContainerState) string {
+	if containerState.Terminated != nil {
+		return containerState.Terminated.Reason
+	}
+
+	if containerState.Waiting != nil {
+		return containerState.Waiting.Reason
+	}
+
+	return ""
+}
+
+type ServiceInstanceEvents []*ServiceInstanceEvent
+
+type ServiceInstanceEvent struct {
+	Type    string `json:"type"`
+	Reason  string `json:"reason"`
+	Age     string `json:"age"`
+	Message string `json:"message"`
+}
+
+func (s *ServiceAction) ListServiceInstanceEvents(namespace, instance string) (ServiceInstanceEvents, error) {
+	pod, err := kube.GetCachedResources(s.kubeClient).PodLister.Pods(namespace).Get(instance)
+	if err != nil {
+		return nil, err
+	}
+
+	if pod == nil {
+		return nil, fmt.Errorf("pod %s not found", instance)
+	}
+
+	pod.Kind = "Pod"
+	ref, err := reference.GetReference(scheme.Scheme, pod)
+	if err != nil {
+		logrus.Errorf("get pod reference error: %v", err)
+		return nil, nil
+	}
+	ref.Kind = ""
+	if _, isMirrorPod := pod.Annotations[corev1.MirrorPodAnnotationKey]; isMirrorPod {
+		ref.UID = types.UID(pod.Annotations[corev1.MirrorPodAnnotationKey])
+	}
+
+	events, _ := s.kubeClient.CoreV1().Events(pod.GetNamespace()).Search(scheme.Scheme, ref)
+
+	return readContainerEvents(events), nil
+}
+
+func readContainerEvents(events *corev1.EventList) ServiceInstanceEvents {
+	if len(events.Items) == 0 {
+		return nil
+	}
+	var res ServiceInstanceEvents
+	for _, e := range events.Items {
+		age := " - "
+		if !e.FirstTimestamp.IsZero() {
+			age = duration.HumanDuration(time.Since(e.FirstTimestamp.Time))
+		}
+		res = append(res, &ServiceInstanceEvent{
+			Type:    e.Type,
+			Reason:  e.Reason,
+			Age:     age,
+			Message: strings.TrimSpace(e.Message),
+		})
+	}
+	return res
 }
 
 // GetMultiServicePods get pods

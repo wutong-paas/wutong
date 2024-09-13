@@ -1716,6 +1716,82 @@ func (t *TenantEnvStruct) Pods(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, pods)
 }
 
+// ListServiceInstances 获取组件实例列表
+// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/instances v2 ListServiceInstances
+//
+// 获取组件实例列表
+//
+// list instances
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) ListServiceInstances(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	pods, err := handler.GetServiceManager().ListServiceInstances(tenantEnv.Namespace, serviceID)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			logrus.Error("record not found:", err)
+			httputil.ReturnError(r, w, 404, fmt.Sprintf("get pods error, %v", err))
+			return
+		}
+		logrus.Error("get pods error:", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get pods error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, pods)
+}
+
+// ListServiceInstanceContainers 获取组件实例容器列表
+func (t *TenantEnvStruct) ListServiceInstanceContainers(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
+	instance := chi.URLParam(r, "instance_id")
+	pods, err := handler.GetServiceManager().ListServiceInstanceContainers(service, tenantEnv.Namespace, instance)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			logrus.Error("record not found:", err)
+			httputil.ReturnError(r, w, 404, fmt.Sprintf("get pods error, %v", err))
+			return
+		}
+		logrus.Error("get pods error:", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get pods error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, pods)
+}
+
+// ListServiceInstanceEvents 获取组件实例事件列表
+func (t *TenantEnvStruct) ListServiceInstanceEvents(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	instance := chi.URLParam(r, "instance_id")
+	pods, err := handler.GetServiceManager().ListServiceInstanceEvents(tenantEnv.Namespace, instance)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			logrus.Error("record not found:", err)
+			httputil.ReturnError(r, w, 404, fmt.Sprintf("get pods error, %v", err))
+			return
+		}
+		logrus.Error("get pods error:", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get pods error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, pods)
+}
+
 // Probe probe
 func (t *TenantEnvStruct) Probe(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
