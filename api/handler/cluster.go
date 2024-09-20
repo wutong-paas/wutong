@@ -378,6 +378,8 @@ func (c *clusterAction) MavenSettingDetail(ctx context.Context, name string) (*M
 // Features -
 func (c *clusterAction) Features(ctx context.Context) map[string]bool {
 	return map[string]bool{
+		// TODO: gpu
+		"gpu":      false,
 		"velero":   kube.IsVeleroInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()),
 		"kubevirt": kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()),
 	}

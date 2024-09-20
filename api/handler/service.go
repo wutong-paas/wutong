@@ -974,32 +974,34 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 	}
 	if sc["extend_method"] != nil {
 		extendMethod := sc["extend_method"].(string)
-		ts.ExtendMethod = extendMethod
-		// if component replicas is more than 1, so can't change service type to singleton
-		if ts.Replicas > 1 && ts.IsSingleton() {
-			err := fmt.Errorf("service[%s] replicas > 1, can't change service typ to stateless_singleton", ts.ServiceAlias)
-			return err
-		}
-		volumes, err := db.GetManager().TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(ts.ServiceID)
-		if err != nil {
-			return err
-		}
-		for _, vo := range volumes {
-			if vo.VolumeType == dbmodel.ShareFileVolumeType.String() || vo.VolumeType == dbmodel.MemoryFSVolumeType.String() {
-				continue
-			}
-			if vo.VolumeType == dbmodel.LocalVolumeType.String() && !ts.IsState() {
-				err := fmt.Errorf("service[%s] has local volume type, can't change type to stateless", ts.ServiceAlias)
+		if extendMethod != "" {
+			ts.ExtendMethod = extendMethod
+			// if component replicas is more than 1, so can't change service type to singleton
+			if ts.Replicas > 1 && ts.IsSingleton() {
+				err := fmt.Errorf("service[%s] replicas > 1, can't change service typ to stateless_singleton", ts.ServiceAlias)
 				return err
 			}
-			// if component use volume, what it accessMode is rwo, can't change volume type to stateless
-			if vo.AccessMode == "RWO" && !ts.IsState() {
-				err := fmt.Errorf("service[%s] volume[%s] access_mode is RWO, can't change type to stateless", ts.ServiceAlias, vo.VolumeName)
+			volumes, err := db.GetManager().TenantEnvServiceVolumeDao().GetTenantEnvServiceVolumesByServiceID(ts.ServiceID)
+			if err != nil {
 				return err
 			}
+			for _, vo := range volumes {
+				if vo.VolumeType == dbmodel.ShareFileVolumeType.String() || vo.VolumeType == dbmodel.MemoryFSVolumeType.String() {
+					continue
+				}
+				if vo.VolumeType == dbmodel.LocalVolumeType.String() && !ts.IsState() {
+					err := fmt.Errorf("service[%s] has local volume type, can't change type to stateless", ts.ServiceAlias)
+					return err
+				}
+				// if component use volume, what it accessMode is rwo, can't change volume type to stateless
+				if vo.AccessMode == "RWO" && !ts.IsState() {
+					err := fmt.Errorf("service[%s] volume[%s] access_mode is RWO, can't change type to stateless", ts.ServiceAlias, vo.VolumeName)
+					return err
+				}
+			}
+			ts.ExtendMethod = extendMethod
+			ts.ServiceType = extendMethod
 		}
-		ts.ExtendMethod = extendMethod
-		ts.ServiceType = extendMethod
 	}
 	//update component
 	if err := db.GetManager().TenantEnvServiceDao().UpdateModel(ts); err != nil {
