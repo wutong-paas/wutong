@@ -1309,10 +1309,7 @@ func (s *ServiceAction) EnvAttr(action string, at *dbmodel.TenantEnvServiceEnvVa
 			return err
 		}
 	case "delete_all_inner":
-		if at.Scope != "" {
-			return errors.New("scope is empty")
-		}
-		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentIDAndScope(at.ServiceID, at.Scope); err != nil {
+		if err := db.GetManager().TenantEnvServiceEnvVarDao().DeleteByComponentIDAndScope(at.ServiceID, "inner"); err != nil {
 			logrus.Errorf("delete envs error, %v", err)
 			return err
 		}

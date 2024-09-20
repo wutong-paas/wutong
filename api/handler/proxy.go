@@ -109,7 +109,11 @@ func GetFileBrowserProxy(serviceID string) proxy.Proxy {
 		if err != nil {
 			return proxy.CreateProxy("filebrowser", "http", nil)
 		}
-		k8sSvc := fmt.Sprintf("%s-6173.%s:6173", service.ServiceAlias, tenantEnv.Namespace)
+		port, err := db.GetManager().TenantEnvServicesPortDao().GetPort(serviceID, 6173)
+		if err != nil {
+			return proxy.CreateProxy("filebrowser", "http", nil)
+		}
+		k8sSvc := fmt.Sprintf("%s.%s:6173", port.K8sServiceName, tenantEnv.Namespace)
 		fbProxy = proxy.CreateProxy("filebrowser", "http", []string{k8sSvc})
 		filebrowserProxies[serviceID] = fbProxy
 	}
@@ -129,7 +133,11 @@ func GetDbgateProxy(serviceID string) proxy.Proxy {
 		if err != nil {
 			return proxy.CreateProxy("dbgate", "http", nil)
 		}
-		k8sSvc := fmt.Sprintf("%s-3000.%s:3000", service.ServiceAlias, tenantEnv.Namespace)
+		port, err := db.GetManager().TenantEnvServicesPortDao().GetPort(serviceID, 3000)
+		if err != nil {
+			return proxy.CreateProxy("dbgate", "http", nil)
+		}
+		k8sSvc := fmt.Sprintf("%s.%s:3000", port.K8sServiceName, tenantEnv.Namespace)
 		dbgateProxy = proxy.CreateProxy("dbgate", "http", []string{k8sSvc})
 		dbgateProxies[serviceID] = dbgateProxy
 	}
