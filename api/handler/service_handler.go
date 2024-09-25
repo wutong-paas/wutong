@@ -71,6 +71,7 @@ type ServiceHandler interface {
 	GetPods(serviceID string) (*K8sPodInfos, error)
 	ListServiceInstances(namespace, serviceID string) (ServiceInstances, error)
 	ListServiceInstanceContainers(service *dbmodel.TenantEnvServices, namespace, instance string) (ServiceInstanceContainers, error)
+	ListServiceInstanceContainerOptions(service *dbmodel.TenantEnvServices, namespace string) (ServiceInstanceContainerOptions, error)
 	ListServiceInstanceEvents(namespace, instance string) (ServiceInstanceEvents, error)
 	GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, error)
 	GetComponentPodNums(ctx context.Context, componentIDs []string) (map[string]int32, error)

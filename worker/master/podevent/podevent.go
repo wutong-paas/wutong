@@ -243,6 +243,7 @@ func createSystemEvent(tenantEnvID, serviceID, targetID, optType, status string)
 		Target:      model.TargetTypePod,
 		TargetID:    targetID,
 		UserName:    model.UsernameSystem,
+		StartTime:   time.Now().Format(time.RFC3339),
 		OptType:     optType,
 		Status:      status,
 		FinalStatus: model.EventFinalStatusEmpty.String(),

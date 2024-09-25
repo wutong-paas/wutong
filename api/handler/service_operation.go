@@ -20,7 +20,6 @@ package handler
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -91,7 +90,6 @@ func (o *OperationHandler) build(batchOpReq model.ComponentOpReq) error {
 		BuildVersion: buildReq.DeployVersion,
 		Cmd:          buildReq.ImageInfo.Cmd,
 		Author:       buildReq.Operator,
-		FinishTime:   time.Now(),
 		PlanVersion:  buildReq.PlanVersion,
 	}
 	if buildReq.CodeInfo.Cmd != "" {

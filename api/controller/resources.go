@@ -1745,11 +1745,11 @@ func (t *TenantEnvStruct) ListServiceInstances(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			logrus.Error("record not found:", err)
-			httputil.ReturnError(r, w, 404, fmt.Sprintf("get pods error, %v", err))
+			httputil.ReturnError(r, w, 404, fmt.Sprintf("list service instances error, %v", err))
 			return
 		}
-		logrus.Error("get pods error:", err)
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get pods error, %v", err))
+		logrus.Error("list service instances error:", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("list service instances error, %v", err))
 		return
 	}
 	httputil.ReturnSuccess(r, w, pods)
@@ -1764,11 +1764,29 @@ func (t *TenantEnvStruct) ListServiceInstanceContainers(w http.ResponseWriter, r
 	if err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			logrus.Error("record not found:", err)
-			httputil.ReturnError(r, w, 404, fmt.Sprintf("get pods error, %v", err))
+			httputil.ReturnError(r, w, 404, fmt.Sprintf("list service instance containers error, %v", err))
 			return
 		}
-		logrus.Error("get pods error:", err)
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get pods error, %v", err))
+		logrus.Error("list service instance containers error:", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("list service instance containers error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, pods)
+}
+
+// ListServiceInstanceContainerOptions 获取组件实例容器选项列表
+func (t *TenantEnvStruct) ListServiceInstanceContainerOptions(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantEnvServices)
+	pods, err := handler.GetServiceManager().ListServiceInstanceContainerOptions(service, tenantEnv.Namespace)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			logrus.Error("record not found:", err)
+			httputil.ReturnError(r, w, 404, fmt.Sprintf("get service instance containers tree error, %v", err))
+			return
+		}
+		logrus.Error("get service instance contianers tree error:", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("get service instance containers tree error, %v", err))
 		return
 	}
 	httputil.ReturnSuccess(r, w, pods)

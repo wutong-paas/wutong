@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -2343,6 +2344,13 @@ func (s *ServiceAction) ListServiceInstances(namespace, serviceID string) (Servi
 		return nil, err
 	}
 
+	slices.SortStableFunc(pods, func(i, j *corev1.Pod) int {
+		if i.CreationTimestamp.Time.After(j.CreationTimestamp.Time) {
+			return 1
+		}
+		return -1
+	})
+
 	nodes, err := kube.GetCachedResources(s.kubeClient).NodeLister.List(labels.Everything())
 	if err != nil {
 		return nil, err
@@ -2458,6 +2466,68 @@ func (s *ServiceAction) ListServiceInstanceContainers(service *dbmodel.TenantEnv
 		item := readContainer(pod, container, status)
 		item.IsMainContainer = service.K8sComponentName == container.Name
 		res = append(res, &item)
+	}
+
+	return res, nil
+}
+
+type ServiceInstanceContainerOption struct {
+	ContainerName   string `json:"containerName" dc:"容器名称"`
+	Status          string `json:"status" dc:"容器状态"`
+	IsInitContainer bool   `json:"isInitContainer" dc:"是否为初始化容器"`
+	IsMainContainer bool   `json:"isMainContainer" dc:"是否为主容器"`
+}
+
+type ServiceInstanceOption struct {
+	InstanceName string                            `json:"instanceName" dc:"实例名称"`
+	Containers   []*ServiceInstanceContainerOption `json:"containers" dc:"容器列表"`
+}
+
+type ServiceInstanceContainerOptions []*ServiceInstanceOption
+
+func (s *ServiceAction) ListServiceInstanceContainerOptions(service *dbmodel.TenantEnvServices, namespace string) (ServiceInstanceContainerOptions, error) {
+	pods, err := kube.GetCachedResources(s.kubeClient).PodLister.Pods(namespace).List(labels.SelectorFromSet(labels.Set{
+		"service_id": service.ServiceID,
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	slices.SortStableFunc(pods, func(i, j *corev1.Pod) int {
+		if i.CreationTimestamp.Time.After(j.CreationTimestamp.Time) {
+			return 1
+		}
+		return -1
+	})
+
+	var res ServiceInstanceContainerOptions
+
+	for _, pod := range pods {
+		instance := &ServiceInstanceOption{
+			InstanceName: pod.Name,
+		}
+
+		var containerStatusM = make(map[string]corev1.ContainerStatus, len(pod.Status.ContainerStatuses))
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			containerStatusM[containerStatus.Name] = containerStatus
+		}
+
+		for _, container := range pod.Spec.InitContainers {
+			instance.Containers = append(instance.Containers, &ServiceInstanceContainerOption{
+				ContainerName:   container.Name,
+				Status:          readContainerStatus(pod, container.Name),
+				IsInitContainer: true,
+			})
+		}
+
+		for _, container := range pod.Spec.Containers {
+			instance.Containers = append(instance.Containers, &ServiceInstanceContainerOption{
+				ContainerName:   container.Name,
+				Status:          readContainerStatus(pod, container.Name),
+				IsMainContainer: service.K8sComponentName == container.Name,
+			})
+		}
+		res = append(res, instance)
 	}
 
 	return res, nil
