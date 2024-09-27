@@ -20,6 +20,7 @@ package handler
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -90,6 +91,7 @@ func (o *OperationHandler) build(batchOpReq model.ComponentOpReq) error {
 		BuildVersion: buildReq.DeployVersion,
 		Cmd:          buildReq.ImageInfo.Cmd,
 		Author:       buildReq.Operator,
+		FinishTime:   time.Now().Add(time.Second), // 特意设置为当前时间并且添加 1s，避免耗时计算多数情况为 0
 		PlanVersion:  buildReq.PlanVersion,
 	}
 	if buildReq.CodeInfo.Cmd != "" {
