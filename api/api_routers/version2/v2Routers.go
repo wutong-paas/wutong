@@ -187,7 +187,7 @@ func (v2 *V2) tenantEnvNameRouter() chi.Router {
 	r.Get("/resources", controller.GetManager().SingleTenantEnvResources)
 	r.Get("/services", controller.GetManager().ServicesInfo)
 	//创建应用
-	r.Post("/services", middleware.WrapEL(controller.GetManager().CreateService, dbmodel.TargetTypeService, "create-service", dbmodel.SYNEVENTTYPE))
+	r.Post("/services", middleware.WrapEL(controller.GetManager().CreateService, dbmodel.TargetTypeService, "create-service", dbmodel.SyncEventType))
 	r.Post("/plugin", controller.GetManager().PluginAction)
 	r.Post("/plugins/{plugin_id}/share", controller.GetManager().SharePlugin)
 	r.Get("/plugins/{plugin_id}/share/{share_id}", controller.GetManager().SharePluginResult)
@@ -261,25 +261,25 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r := chi.NewRouter()
 	//初始化应用信息
 	r.Use(middleware.InitService)
-	r.Put("/", middleware.WrapEL(controller.GetManager().UpdateService, dbmodel.TargetTypeService, "update-service", dbmodel.SYNEVENTTYPE))
+	r.Put("/", middleware.WrapEL(controller.GetManager().UpdateService, dbmodel.TargetTypeService, "update-service", dbmodel.SyncEventType))
 	// component build
-	r.Post("/build", middleware.WrapEL(controller.GetManager().BuildService, dbmodel.TargetTypeService, "build-service", dbmodel.ASYNEVENTTYPE))
+	r.Post("/build", middleware.WrapEL(controller.GetManager().BuildService, dbmodel.TargetTypeService, "build-service", dbmodel.AsyncEventType))
 	// component start
-	r.Post("/start", middleware.WrapEL(controller.GetManager().StartService, dbmodel.TargetTypeService, "start-service", dbmodel.ASYNEVENTTYPE))
+	r.Post("/start", middleware.WrapEL(controller.GetManager().StartService, dbmodel.TargetTypeService, "start-service", dbmodel.AsyncEventType))
 	// component stop event set to synchronous event, not wait.
-	r.Post("/stop", middleware.WrapEL(controller.GetManager().StopService, dbmodel.TargetTypeService, "stop-service", dbmodel.SYNEVENTTYPE))
-	r.Post("/restart", middleware.WrapEL(controller.GetManager().RestartService, dbmodel.TargetTypeService, "restart-service", dbmodel.ASYNEVENTTYPE))
+	r.Post("/stop", middleware.WrapEL(controller.GetManager().StopService, dbmodel.TargetTypeService, "stop-service", dbmodel.SyncEventType))
+	r.Post("/restart", middleware.WrapEL(controller.GetManager().RestartService, dbmodel.TargetTypeService, "restart-service", dbmodel.AsyncEventType))
 	//应用伸缩
-	r.Put("/vertical", middleware.WrapEL(controller.GetManager().VerticalService, dbmodel.TargetTypeService, "vertical-service", dbmodel.ASYNEVENTTYPE))
-	r.Put("/horizontal", middleware.WrapEL(controller.GetManager().HorizontalService, dbmodel.TargetTypeService, "horizontal-service", dbmodel.ASYNEVENTTYPE))
+	r.Put("/vertical", middleware.WrapEL(controller.GetManager().VerticalService, dbmodel.TargetTypeService, "vertical-service", dbmodel.AsyncEventType))
+	r.Put("/horizontal", middleware.WrapEL(controller.GetManager().HorizontalService, dbmodel.TargetTypeService, "horizontal-service", dbmodel.AsyncEventType))
 
 	//设置应用语言(act)
-	r.Post("/language", middleware.WrapEL(controller.GetManager().SetLanguage, dbmodel.TargetTypeService, "set-language", dbmodel.SYNEVENTTYPE))
+	r.Post("/language", middleware.WrapEL(controller.GetManager().SetLanguage, dbmodel.TargetTypeService, "set-language", dbmodel.SyncEventType))
 	//应用信息获取修改与删除(source)
 	r.Get("/", controller.GetManager().SingleServiceInfo)
-	r.Delete("/", middleware.WrapEL(controller.GetManager().SingleServiceInfo, dbmodel.TargetTypeService, "delete-service", dbmodel.SYNEVENTTYPE))
+	r.Delete("/", middleware.WrapEL(controller.GetManager().SingleServiceInfo, dbmodel.TargetTypeService, "delete-service", dbmodel.SyncEventType))
 	//应用升级(act)
-	r.Post("/upgrade", middleware.WrapEL(controller.GetManager().UpgradeService, dbmodel.TargetTypeService, "upgrade-service", dbmodel.ASYNEVENTTYPE))
+	r.Post("/upgrade", middleware.WrapEL(controller.GetManager().UpgradeService, dbmodel.TargetTypeService, "upgrade-service", dbmodel.AsyncEventType))
 	//应用状态获取(act)
 	r.Get("/status", controller.GetManager().StatusService)
 	//构建版本列表
@@ -288,9 +288,9 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Get("/build-version/{build_version}", controller.GetManager().BuildVersionInfo)
 	r.Put("/build-version/{build_version}", controller.GetManager().BuildVersionInfo)
 	r.Get("/deployversion", controller.GetManager().GetDeployVersion)
-	r.Delete("/build-version/{build_version}", middleware.WrapEL(controller.GetManager().BuildVersionInfo, dbmodel.TargetTypeService, "delete-buildversion", dbmodel.SYNEVENTTYPE))
+	r.Delete("/build-version/{build_version}", middleware.WrapEL(controller.GetManager().BuildVersionInfo, dbmodel.TargetTypeService, "delete-buildversion", dbmodel.SyncEventType))
 	//应用分享
-	r.Post("/share", middleware.WrapEL(controller.GetManager().Share, dbmodel.TargetTypeService, "share-service", dbmodel.SYNEVENTTYPE))
+	r.Post("/share", middleware.WrapEL(controller.GetManager().Share, dbmodel.TargetTypeService, "share-service", dbmodel.SyncEventType))
 	r.Get("/share/{share_id}", controller.GetManager().ShareResult)
 	r.Get("/logs", controller.GetManager().HistoryLogs)
 	r.Get("/log-file", controller.GetManager().LogList)
@@ -298,41 +298,41 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Post("/event-log", controller.GetManager().LogByAction)
 
 	//应用依赖关系增加与删除(source)
-	r.Post("/dependency", middleware.WrapEL(controller.GetManager().Dependency, dbmodel.TargetTypeService, "add-service-dependency", dbmodel.SYNEVENTTYPE))
-	r.Delete("/dependency", middleware.WrapEL(controller.GetManager().Dependency, dbmodel.TargetTypeService, "delete-service-dependency", dbmodel.SYNEVENTTYPE))
-	r.Delete("/dependencies", middleware.WrapEL(controller.GetManager().DeleteDependencies, dbmodel.TargetTypeService, "delete-service-dependencies", dbmodel.SYNEVENTTYPE))
+	r.Post("/dependency", middleware.WrapEL(controller.GetManager().Dependency, dbmodel.TargetTypeService, "add-service-dependency", dbmodel.SyncEventType))
+	r.Delete("/dependency", middleware.WrapEL(controller.GetManager().Dependency, dbmodel.TargetTypeService, "delete-service-dependency", dbmodel.SyncEventType))
+	r.Delete("/dependencies", middleware.WrapEL(controller.GetManager().DeleteDependencies, dbmodel.TargetTypeService, "delete-service-dependencies", dbmodel.SyncEventType))
 	//环境变量增删改(source)
-	r.Post("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "add-service-env", dbmodel.SYNEVENTTYPE))
-	r.Put("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "update-service-env", dbmodel.SYNEVENTTYPE))
-	r.Delete("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "delete-service-env", dbmodel.SYNEVENTTYPE))
-	r.Delete("/envs/inner", middleware.WrapEL(controller.GetManager().DeleteAllInnerEnvs, dbmodel.TargetTypeService, "delete-service-all-inner-envs", dbmodel.SYNEVENTTYPE))
-	r.Delete("/envs", middleware.WrapEL(controller.GetManager().DeleteAllEnvs, dbmodel.TargetTypeService, "delete-service-all-envs", dbmodel.SYNEVENTTYPE))
+	r.Post("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "add-service-env", dbmodel.SyncEventType))
+	r.Put("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "update-service-env", dbmodel.SyncEventType))
+	r.Delete("/env", middleware.WrapEL(controller.GetManager().Env, dbmodel.TargetTypeService, "delete-service-env", dbmodel.SyncEventType))
+	r.Delete("/envs/inner", middleware.WrapEL(controller.GetManager().DeleteAllInnerEnvs, dbmodel.TargetTypeService, "delete-service-all-inner-envs", dbmodel.SyncEventType))
+	r.Delete("/envs", middleware.WrapEL(controller.GetManager().DeleteAllEnvs, dbmodel.TargetTypeService, "delete-service-all-envs", dbmodel.SyncEventType))
 	//端口变量增删改(source)
-	r.Post("/ports", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "add-service-port", dbmodel.SYNEVENTTYPE))
-	r.Put("/ports", middleware.WrapEL(controller.GetManager().PutPorts, dbmodel.TargetTypeService, "update-service-port-old", dbmodel.SYNEVENTTYPE))
-	r.Put("/ports/{port}", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "update-service-port", dbmodel.SYNEVENTTYPE))
-	r.Delete("/ports/{port}", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "delete-service-port", dbmodel.SYNEVENTTYPE))
-	r.Delete("/allports", middleware.WrapEL(controller.GetManager().DeleteAllPorts, dbmodel.TargetTypeService, "delete-service-all-ports", dbmodel.SYNEVENTTYPE))
-	r.Put("/ports/{port}/outer", middleware.WrapEL(controller.GetManager().PortOuterController, dbmodel.TargetTypeService, "handle-service-outerport", dbmodel.SYNEVENTTYPE))
-	r.Put("/ports/{port}/inner", middleware.WrapEL(controller.GetManager().PortInnerController, dbmodel.TargetTypeService, "handle-service-innerport", dbmodel.SYNEVENTTYPE))
+	r.Post("/ports", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "add-service-port", dbmodel.SyncEventType))
+	r.Put("/ports", middleware.WrapEL(controller.GetManager().PutPorts, dbmodel.TargetTypeService, "update-service-port-old", dbmodel.SyncEventType))
+	r.Put("/ports/{port}", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "update-service-port", dbmodel.SyncEventType))
+	r.Delete("/ports/{port}", middleware.WrapEL(controller.GetManager().Ports, dbmodel.TargetTypeService, "delete-service-port", dbmodel.SyncEventType))
+	r.Delete("/allports", middleware.WrapEL(controller.GetManager().DeleteAllPorts, dbmodel.TargetTypeService, "delete-service-all-ports", dbmodel.SyncEventType))
+	r.Put("/ports/{port}/outer", middleware.WrapEL(controller.GetManager().PortOuterController, dbmodel.TargetTypeService, "handle-service-outerport", dbmodel.SyncEventType))
+	r.Put("/ports/{port}/inner", middleware.WrapEL(controller.GetManager().PortInnerController, dbmodel.TargetTypeService, "handle-service-innerport", dbmodel.SyncEventType))
 
 	//应用版本回滚(act)
-	r.Post("/rollback", middleware.WrapEL(controller.GetManager().RollBack, dbmodel.TargetTypeService, "rollback-service", dbmodel.ASYNEVENTTYPE))
+	r.Post("/rollback", middleware.WrapEL(controller.GetManager().RollBack, dbmodel.TargetTypeService, "rollback-service", dbmodel.AsyncEventType))
 
 	//持久化信息API v2.1 支持多种持久化格式
-	r.Post("/volumes", middleware.WrapEL(controller.AddVolume, dbmodel.TargetTypeService, "add-service-volume", dbmodel.SYNEVENTTYPE))
-	r.Put("/volumes", middleware.WrapEL(controller.GetManager().UpdVolume, dbmodel.TargetTypeService, "update-service-volume", dbmodel.SYNEVENTTYPE))
+	r.Post("/volumes", middleware.WrapEL(controller.AddVolume, dbmodel.TargetTypeService, "add-service-volume", dbmodel.SyncEventType))
+	r.Put("/volumes", middleware.WrapEL(controller.GetManager().UpdVolume, dbmodel.TargetTypeService, "update-service-volume", dbmodel.SyncEventType))
 	r.Get("/volumes", controller.GetVolume)
-	r.Delete("/volumes/{volume_name}", middleware.WrapEL(controller.DeleteVolume, dbmodel.TargetTypeService, "delete-service-volume", dbmodel.SYNEVENTTYPE))
-	r.Post("/depvolumes", middleware.WrapEL(controller.AddVolumeDependency, dbmodel.TargetTypeService, "add-service-depvolume", dbmodel.SYNEVENTTYPE))
-	r.Delete("/depvolumes", middleware.WrapEL(controller.DeleteVolumeDependency, dbmodel.TargetTypeService, "delete-service-depvolume", dbmodel.SYNEVENTTYPE))
+	r.Delete("/volumes/{volume_name}", middleware.WrapEL(controller.DeleteVolume, dbmodel.TargetTypeService, "delete-service-volume", dbmodel.SyncEventType))
+	r.Post("/depvolumes", middleware.WrapEL(controller.AddVolumeDependency, dbmodel.TargetTypeService, "add-service-depvolume", dbmodel.SyncEventType))
+	r.Delete("/depvolumes", middleware.WrapEL(controller.DeleteVolumeDependency, dbmodel.TargetTypeService, "delete-service-depvolume", dbmodel.SyncEventType))
 	r.Get("/depvolumes", controller.GetDepVolume)
 	//持久化信息API v2
-	r.Post("/volume-dependency", middleware.WrapEL(controller.GetManager().VolumeDependency, dbmodel.TargetTypeService, "add-service-depvolume", dbmodel.SYNEVENTTYPE))
-	r.Delete("/volume-dependency", middleware.WrapEL(controller.GetManager().VolumeDependency, dbmodel.TargetTypeService, "delete-service-depvolume", dbmodel.SYNEVENTTYPE))
-	r.Post("/volume", middleware.WrapEL(controller.GetManager().AddVolume, dbmodel.TargetTypeService, "add-service-volume", dbmodel.SYNEVENTTYPE))
-	r.Delete("/volume", middleware.WrapEL(controller.GetManager().DeleteVolume, dbmodel.TargetTypeService, "delete-service-volume", dbmodel.SYNEVENTTYPE))
-	r.Delete("/volumes", middleware.WrapEL(controller.GetManager().DeleteAllVolumes, dbmodel.TargetTypeService, "delete-service-all-volumes", dbmodel.SYNEVENTTYPE))
+	r.Post("/volume-dependency", middleware.WrapEL(controller.GetManager().VolumeDependency, dbmodel.TargetTypeService, "add-service-depvolume", dbmodel.SyncEventType))
+	r.Delete("/volume-dependency", middleware.WrapEL(controller.GetManager().VolumeDependency, dbmodel.TargetTypeService, "delete-service-depvolume", dbmodel.SyncEventType))
+	r.Post("/volume", middleware.WrapEL(controller.GetManager().AddVolume, dbmodel.TargetTypeService, "add-service-volume", dbmodel.SyncEventType))
+	r.Delete("/volume", middleware.WrapEL(controller.GetManager().DeleteVolume, dbmodel.TargetTypeService, "delete-service-volume", dbmodel.SyncEventType))
+	r.Delete("/volumes", middleware.WrapEL(controller.GetManager().DeleteAllVolumes, dbmodel.TargetTypeService, "delete-service-all-volumes", dbmodel.SyncEventType))
 
 	// Deprecate, use ../instances
 	// 获取应用实例情况(source)
@@ -343,14 +343,14 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Get("/instances/{instance_id}/events", controller.GetManager().ListServiceInstanceEvents)
 
 	//应用探针 增 删 改(surce)
-	r.Post("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "add-service-probe", dbmodel.SYNEVENTTYPE))
-	r.Put("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "update-service-probe", dbmodel.SYNEVENTTYPE))
-	r.Delete("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "delete-service-probe", dbmodel.SYNEVENTTYPE))
+	r.Post("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "add-service-probe", dbmodel.SyncEventType))
+	r.Put("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "update-service-probe", dbmodel.SyncEventType))
+	r.Delete("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "delete-service-probe", dbmodel.SyncEventType))
 
 	r.Mount("/scheduling", v2.serviceSchedulingRouter())
-	r.Post("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "add-service-label", dbmodel.SYNEVENTTYPE))
-	r.Put("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "update-service-label", dbmodel.SYNEVENTTYPE))
-	r.Delete("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "delete-service-label", dbmodel.SYNEVENTTYPE))
+	r.Post("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "add-service-label", dbmodel.SyncEventType))
+	r.Put("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "update-service-label", dbmodel.SyncEventType))
+	r.Delete("/label", middleware.WrapEL(controller.GetManager().Label, dbmodel.TargetTypeService, "delete-service-label", dbmodel.SyncEventType))
 
 	//插件
 	r.Mount("/plugin", v2.serviceRelatePluginRouter())
@@ -360,36 +360,36 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Get("/deploy-info", controller.GetServiceDeployInfo)
 
 	// third-party service
-	r.Post("/endpoints", middleware.WrapEL(controller.GetManager().Endpoints, dbmodel.TargetTypeService, "add-thirdpart-service", dbmodel.SYNEVENTTYPE))
-	r.Put("/endpoints", middleware.WrapEL(controller.GetManager().Endpoints, dbmodel.TargetTypeService, "update-thirdpart-service", dbmodel.SYNEVENTTYPE))
-	r.Delete("/endpoints", middleware.WrapEL(controller.GetManager().Endpoints, dbmodel.TargetTypeService, "delete-thirdpart-service", dbmodel.SYNEVENTTYPE))
+	r.Post("/endpoints", middleware.WrapEL(controller.GetManager().Endpoints, dbmodel.TargetTypeService, "add-thirdpart-service", dbmodel.SyncEventType))
+	r.Put("/endpoints", middleware.WrapEL(controller.GetManager().Endpoints, dbmodel.TargetTypeService, "update-thirdpart-service", dbmodel.SyncEventType))
+	r.Delete("/endpoints", middleware.WrapEL(controller.GetManager().Endpoints, dbmodel.TargetTypeService, "delete-thirdpart-service", dbmodel.SyncEventType))
 	r.Get("/endpoints", controller.GetManager().Endpoints)
 
 	// gateway
-	r.Put("/rule-config", middleware.WrapEL(controller.GetManager().RuleConfig, dbmodel.TargetTypeService, "update-service-gateway-rule", dbmodel.SYNEVENTTYPE))
-	r.Put("/tcprule-config", middleware.WrapEL(controller.GetManager().TCPRuleConfig, dbmodel.TargetTypeService, "update-service-gateway-tcprule", dbmodel.SYNEVENTTYPE))
+	r.Put("/rule-config", middleware.WrapEL(controller.GetManager().RuleConfig, dbmodel.TargetTypeService, "update-service-gateway-rule", dbmodel.SyncEventType))
+	r.Put("/tcprule-config", middleware.WrapEL(controller.GetManager().TCPRuleConfig, dbmodel.TargetTypeService, "update-service-gateway-tcprule", dbmodel.SyncEventType))
 
 	// app restore
-	r.Post("/app-restore/envs", middleware.WrapEL(controller.GetManager().RestoreEnvs, dbmodel.TargetTypeService, "app-restore-envs", dbmodel.SYNEVENTTYPE))
-	r.Post("/app-restore/ports", middleware.WrapEL(controller.GetManager().RestorePorts, dbmodel.TargetTypeService, "app-restore-ports", dbmodel.SYNEVENTTYPE))
-	r.Post("/app-restore/volumes", middleware.WrapEL(controller.GetManager().RestoreVolumes, dbmodel.TargetTypeService, "app-restore-volumes", dbmodel.SYNEVENTTYPE))
-	r.Post("/app-restore/probe", middleware.WrapEL(controller.GetManager().RestoreProbe, dbmodel.TargetTypeService, "app-restore-probe", dbmodel.SYNEVENTTYPE))
-	r.Post("/app-restore/deps", middleware.WrapEL(controller.GetManager().RestoreDeps, dbmodel.TargetTypeService, "app-restore-deps", dbmodel.SYNEVENTTYPE))
-	r.Post("/app-restore/depvols", middleware.WrapEL(controller.GetManager().RestoreDepVols, dbmodel.TargetTypeService, "app-restore-depvols", dbmodel.SYNEVENTTYPE))
-	r.Post("/app-restore/plugins", middleware.WrapEL(controller.GetManager().RestorePlugins, dbmodel.TargetTypeService, "app-restore-plugins", dbmodel.SYNEVENTTYPE))
+	r.Post("/app-restore/envs", middleware.WrapEL(controller.GetManager().RestoreEnvs, dbmodel.TargetTypeService, "app-restore-envs", dbmodel.SyncEventType))
+	r.Post("/app-restore/ports", middleware.WrapEL(controller.GetManager().RestorePorts, dbmodel.TargetTypeService, "app-restore-ports", dbmodel.SyncEventType))
+	r.Post("/app-restore/volumes", middleware.WrapEL(controller.GetManager().RestoreVolumes, dbmodel.TargetTypeService, "app-restore-volumes", dbmodel.SyncEventType))
+	r.Post("/app-restore/probe", middleware.WrapEL(controller.GetManager().RestoreProbe, dbmodel.TargetTypeService, "app-restore-probe", dbmodel.SyncEventType))
+	r.Post("/app-restore/deps", middleware.WrapEL(controller.GetManager().RestoreDeps, dbmodel.TargetTypeService, "app-restore-deps", dbmodel.SyncEventType))
+	r.Post("/app-restore/depvols", middleware.WrapEL(controller.GetManager().RestoreDepVols, dbmodel.TargetTypeService, "app-restore-depvols", dbmodel.SyncEventType))
+	r.Post("/app-restore/plugins", middleware.WrapEL(controller.GetManager().RestorePlugins, dbmodel.TargetTypeService, "app-restore-plugins", dbmodel.SyncEventType))
 
 	r.Get("/pods/{pod_name}/detail", controller.GetManager().PodDetail)
 
 	// autoscaler
-	r.Post("/xparules", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "add-app-autoscaler-rule", dbmodel.SYNEVENTTYPE))
-	r.Put("/xparules", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "update-app-autoscaler-rule", dbmodel.SYNEVENTTYPE))
-	r.Delete("/xparules/{rule_id}", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "delete-app-autoscaler-rule", dbmodel.SYNEVENTTYPE))
+	r.Post("/xparules", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "add-app-autoscaler-rule", dbmodel.SyncEventType))
+	r.Put("/xparules", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "update-app-autoscaler-rule", dbmodel.SyncEventType))
+	r.Delete("/xparules/{rule_id}", middleware.WrapEL(controller.GetManager().AutoscalerRules, dbmodel.TargetTypeService, "delete-app-autoscaler-rule", dbmodel.SyncEventType))
 	r.Get("/xparecords", controller.GetManager().ScalingRecords)
 
 	//service monitor
-	r.Post("/service-monitors", middleware.WrapEL(controller.GetManager().AddServiceMonitors, dbmodel.TargetTypeService, "add-app-service-monitor", dbmodel.SYNEVENTTYPE))
-	r.Put("/service-monitors/{name}", middleware.WrapEL(controller.GetManager().UpdateServiceMonitors, dbmodel.TargetTypeService, "update-app-service-monitor", dbmodel.SYNEVENTTYPE))
-	r.Delete("/service-monitors/{name}", middleware.WrapEL(controller.GetManager().DeleteServiceMonitors, dbmodel.TargetTypeService, "delete-app-service-monitor", dbmodel.SYNEVENTTYPE))
+	r.Post("/service-monitors", middleware.WrapEL(controller.GetManager().AddServiceMonitors, dbmodel.TargetTypeService, "add-app-service-monitor", dbmodel.SyncEventType))
+	r.Put("/service-monitors/{name}", middleware.WrapEL(controller.GetManager().UpdateServiceMonitors, dbmodel.TargetTypeService, "update-app-service-monitor", dbmodel.SyncEventType))
+	r.Delete("/service-monitors/{name}", middleware.WrapEL(controller.GetManager().DeleteServiceMonitors, dbmodel.TargetTypeService, "delete-app-service-monitor", dbmodel.SyncEventType))
 
 	r.Get("/log", controller.GetManager().Log)
 
@@ -399,7 +399,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Mount("/backup", v2.backupRouter())
 	r.Mount("/restore", v2.restoreRouter())
 
-	r.Put("/app", middleware.WrapEL(controller.GetManager().ChangeServiceApp, dbmodel.TargetTypeService, "更改组件所属应用", dbmodel.SYNEVENTTYPE))
+	r.Put("/app", middleware.WrapEL(controller.GetManager().ChangeServiceApp, dbmodel.TargetTypeService, "更改组件所属应用", dbmodel.SyncEventType))
 
 	return r
 }
@@ -409,15 +409,15 @@ func (v2 *V2) serviceSchedulingRouter() chi.Router {
 
 	r.Get("/details", controller.GetManager().GetServiceSchedulingDetails)
 
-	r.Post("/labels", middleware.WrapEL(controller.GetManager().AddServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SYNEVENTTYPE))
-	r.Put("/labels", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SYNEVENTTYPE))
-	r.Delete("/labels", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingLabel, dbmodel.TargetTypeService, "删除调度标签", dbmodel.SYNEVENTTYPE))
+	r.Post("/labels", middleware.WrapEL(controller.GetManager().AddServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SyncEventType))
+	r.Put("/labels", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingLabel, dbmodel.TargetTypeService, "配置调度标签", dbmodel.SyncEventType))
+	r.Delete("/labels", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingLabel, dbmodel.TargetTypeService, "删除调度标签", dbmodel.SyncEventType))
 
-	r.Post("/nodes", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SYNEVENTTYPE))
+	r.Post("/nodes", middleware.WrapEL(controller.GetManager().SetServiceSchedulingNode, dbmodel.TargetTypeService, "配置调度节点", dbmodel.SyncEventType))
 
-	r.Post("/tolerations", middleware.WrapEL(controller.GetManager().AddServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
-	r.Put("/tolerations", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SYNEVENTTYPE))
-	r.Delete("/tolerations", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingToleration, dbmodel.TargetTypeService, "删除污点容忍", dbmodel.SYNEVENTTYPE))
+	r.Post("/tolerations", middleware.WrapEL(controller.GetManager().AddServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SyncEventType))
+	r.Put("/tolerations", middleware.WrapEL(controller.GetManager().UpdateServiceSchedulingToleration, dbmodel.TargetTypeService, "配置污点容忍", dbmodel.SyncEventType))
+	r.Delete("/tolerations", middleware.WrapEL(controller.GetManager().DeleteServiceSchedulingToleration, dbmodel.TargetTypeService, "删除污点容忍", dbmodel.SyncEventType))
 
 	return r
 }
@@ -486,7 +486,7 @@ func (v2 *V2) vmRouter() chi.Router {
 	r := chi.NewRouter()
 	// InitVM middleware
 	r.Use(middleware.InitVM)
-	r.Post("/", controller.GetManager().CreateVM)
+	r.Post("/", middleware.WrapEL(controller.GetManager().CreateVM, dbmodel.TargetTypeVM, "创建虚拟机", dbmodel.SyncEventType))
 	r.Get("/", controller.GetManager().ListVMs)
 	r.Mount("/{vm_id}", v2.vmIDRouter())
 	return r
@@ -496,25 +496,25 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r := chi.NewRouter()
 	// InitVMID middleware
 	r.Use(middleware.InitVMID)
-	r.Delete("/", controller.GetManager().DeleteVM)
-	r.Put("/", controller.GetManager().UpdateVM)
-	r.Post("/start", controller.GetManager().StartVM)
-	r.Post("/stop", controller.GetManager().StopVM)
-	r.Post("/restart", controller.GetManager().RestartVM)
-	r.Post("/ports", controller.GetManager().AddVMPort)
+	r.Delete("/", middleware.WrapEL(controller.GetManager().DeleteVM, dbmodel.TargetTypeVM, "删除虚拟机", dbmodel.SyncEventType))
+	r.Put("/", middleware.WrapEL(controller.GetManager().UpdateVM, dbmodel.TargetTypeVM, "更新虚拟机", dbmodel.SyncEventType))
+	r.Post("/start", middleware.WrapEL(controller.GetManager().StartVM, dbmodel.TargetTypeVM, "启动虚拟机", dbmodel.SyncEventType))
+	r.Post("/stop", middleware.WrapEL(controller.GetManager().StopVM, dbmodel.TargetTypeVM, "停止虚拟机", dbmodel.SyncEventType))
+	r.Post("/restart", middleware.WrapEL(controller.GetManager().RestartVM, dbmodel.TargetTypeVM, "重启虚拟机", dbmodel.SyncEventType))
+	r.Post("/ports", middleware.WrapEL(controller.GetManager().AddVMPort, dbmodel.TargetTypeVM, "添加虚拟机端口", dbmodel.SyncEventType))
 	r.Get("/ports", controller.GetManager().GetVMPorts)
-	r.Post("/ports/enable", controller.GetManager().EnableVMPort)
-	r.Post("/ports/disable", controller.GetManager().DisableVMPort)
-	r.Post("/gateways", controller.GetManager().CreateVMPortGateway)
-	r.Put("/gateways/{gateway_id}", controller.GetManager().UpdateVMPortGateway)
-	r.Delete("/gateways/{gateway_id}", controller.GetManager().DeleteVMPortGateway)
-	r.Delete("/ports", controller.GetManager().DeleteVMPort)
+	r.Post("/ports/enable", middleware.WrapEL(controller.GetManager().EnableVMPort, dbmodel.TargetTypeVM, "开启虚拟机端口", dbmodel.SyncEventType))
+	r.Post("/ports/disable", middleware.WrapEL(controller.GetManager().DisableVMPort, dbmodel.TargetTypeVM, "关闭虚拟机端口", dbmodel.SyncEventType))
+	r.Post("/gateways", middleware.WrapEL(controller.GetManager().CreateVMPortGateway, dbmodel.TargetTypeVM, "创建虚拟机端口网关", dbmodel.SyncEventType))
+	r.Put("/gateways/{gateway_id}", middleware.WrapEL(controller.GetManager().UpdateVMPortGateway, dbmodel.TargetTypeVM, "更新虚拟机端口网关", dbmodel.SyncEventType))
+	r.Delete("/gateways/{gateway_id}", middleware.WrapEL(controller.GetManager().DeleteVMPortGateway, dbmodel.TargetTypeVM, "删除虚拟机端口网关", dbmodel.SyncEventType))
+	r.Delete("/ports", middleware.WrapEL(controller.GetManager().DeleteVMPort, dbmodel.TargetTypeVM, "删除虚拟机端口", dbmodel.SyncEventType))
 	r.Get("/", controller.GetManager().GetVM)
 	r.Get("/conditions", controller.GetManager().GetVMConditions)
 	r.Get("/volumes", controller.GetManager().ListVMVolumes)
-	r.Post("/volumes", controller.GetManager().AddVMVolume)
-	r.Delete("/volumes/{volume_name}", controller.GetManager().DeleteVMVolume)
-	r.Delete("/disks/boot", controller.GetManager().RemoveBootDisk)
+	r.Post("/volumes", middleware.WrapEL(controller.GetManager().AddVMVolume, dbmodel.TargetTypeVM, "添加虚拟机存储", dbmodel.SyncEventType))
+	r.Delete("/volumes/{volume_name}", middleware.WrapEL(controller.GetManager().DeleteVMVolume, dbmodel.TargetTypeVM, "删除虚拟机存储", dbmodel.SyncEventType))
+	r.Delete("/disks/boot", middleware.WrapEL(controller.GetManager().RemoveBootDisk, dbmodel.TargetTypeVM, "删除虚拟机启动盘", dbmodel.SyncEventType))
 	return r
 }
 

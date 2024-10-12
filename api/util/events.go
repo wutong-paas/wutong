@@ -30,7 +30,7 @@ import (
 
 // CanDoEvent check can do event or not
 func CanDoEvent(optType string, synType int, target, targetID string, componentKind string) bool {
-	if synType == dbmodel.SYNEVENTTYPE || componentKind == "third_party" {
+	if synType == dbmodel.SyncEventType || componentKind == "third_party" {
 		return true
 	}
 	event, err := db.GetManager().ServiceEventDao().GetLastASyncEvent(target, targetID)
@@ -51,24 +51,30 @@ func CanDoEvent(optType string, synType int, target, targetID string, componentK
 }
 
 func checkTimeout(event *dbmodel.ServiceEvent) bool {
-	if event.SynType == dbmodel.ASYNEVENTTYPE {
+	if event.SynType == dbmodel.AsyncEventType {
 		if event.FinalStatus == "" {
 			startTime := event.StartTime
 			start, err := time.ParseInLocation(time.RFC3339, startTime, time.Local)
 			if err != nil {
 				return false
 			}
-			end := start.Add(3 * time.Minute)
-			if time.Now().After(end) {
-				event.FinalStatus = "timeout"
-				err = db.GetManager().ServiceEventDao().UpdateModel(event)
-				if err != nil {
-					logrus.Error("check event timeout error : ", err.Error())
-					return false
-				}
+			// end := start.Add(3 * time.Minute)
+			// if time.Now().After(end) {
+			// 	event.FinalStatus = dbmodel.EventFinalStatusTimeout.String()
+			// 	err = db.GetManager().ServiceEventDao().UpdateModel(event)
+			// 	if err != nil {
+			// 		logrus.Error("check event timeout error : ", err.Error())
+			// 		return false
+			// 	}
+			// 	return true
+			// }
+			// latest event is still processing on
+			// return false
+
+			// 改成 10s 后允许再次操作，但是不更新上一个事件的状态
+			if time.Now().After(start.Add(10 * time.Second)) {
 				return true
 			}
-			// latest event is still processing on
 			return false
 		}
 	}
@@ -106,12 +112,12 @@ func UpdateEvent(eventID string, statusCode int) {
 		logrus.Errorf("do not found event by eventID %s", eventID)
 		return
 	}
-	event.FinalStatus = "complete"
+	event.FinalStatus = dbmodel.EventFinalStatusComplete.String()
 	event.EndTime = time.Now().Format(time.RFC3339)
 	if statusCode < 400 { // status code 2XX/3XX all equal to success
-		event.Status = "success"
+		event.Status = dbmodel.EventStatusSuccess.String()
 	} else {
-		event.Status = "failure"
+		event.Status = dbmodel.EventStatusFailure.String()
 	}
 	err = db.GetManager().ServiceEventDao().UpdateModel(event)
 	if err != nil {

@@ -365,16 +365,14 @@ func (w *resWriter) WriteHeader(statusCode int) {
 	w.origWriter.WriteHeader(statusCode)
 }
 
+var targetKeyMap = map[string]string{
+	dbmodel.TargetTypeService: "service_id",
+	dbmodel.TargetTypeVM:      "vm_id",
+}
+
 // WrapEL wrap eventlog, handle event log before and after process
 func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var serviceKind string
-		serviceObj := r.Context().Value(ctxutil.ContextKey("service"))
-		if serviceObj != nil {
-			service := serviceObj.(*dbmodel.TenantEnvServices)
-			serviceKind = service.Kind
-		}
-
 		if r.Method != "GET" {
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
@@ -386,25 +384,40 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 			r.Body = io.NopCloser(bytes.NewBuffer(body))
 			var targetID string
 			var ok bool
-			if targetID, ok = r.Context().Value(ctxutil.ContextKey("service_id")).(string); !ok {
+
+			targetKey := targetKeyMap[target]
+			if targetKey == "" {
+				httputil.ReturnError(r, w, 400, "操作对象未指定")
+				return
+			}
+
+			if targetID, ok = r.Context().Value(ctxutil.ContextKey(targetKey)).(string); !ok {
 				var reqDataMap map[string]interface{}
 				if err = json.Unmarshal(body, &reqDataMap); err != nil {
 					httputil.ReturnError(r, w, 400, "操作对象未指定")
 					return
 				}
 
-				if targetID, ok = reqDataMap["service_id"].(string); !ok {
+				if targetID, ok = reqDataMap[targetKey].(string); !ok {
 					httputil.ReturnError(r, w, 400, "操作对象未指定")
 					return
 				}
-			}
-			//eventLog check the latest event
 
-			if !util.CanDoEvent(optType, synType, target, targetID, serviceKind) {
-				logrus.Errorf("operation too frequently. uri: %s; target: %s; target id: %s", r.RequestURI, target, targetID)
-				httputil.ReturnError(r, w, 409, "操作过于频繁，请稍后再试") // status code 409 conflict
-				return
+				// Post 创建虚拟机
+				if targetKey == dbmodel.TargetTypeVM && strings.HasSuffix(r.URL.Path, "/vms") {
+					if targetID, ok = reqDataMap["name"].(string); !ok {
+						httputil.ReturnError(r, w, 400, "操作对象未指定")
+						return
+					}
+				}
 			}
+
+			// eventLog check the latest event
+			// if !util.CanDoEvent(optType, synType, target, targetID, serviceKind) {
+			// 	logrus.Errorf("operation too frequently. uri: %s; target: %s; target id: %s", r.RequestURI, target, targetID)
+			// 	httputil.ReturnError(r, w, 409, "操作过于频繁，请稍后再试") // status code 409 conflict
+			// 	return
+			// }
 
 			// handle operator
 			var operator string
@@ -417,7 +430,6 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 
 			// tenantEnvID can not null
 			tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
-			var ctx context.Context
 
 			event, err := util.CreateEvent(target, optType, targetID, tenantEnvID, string(body), operator, synType)
 			if err != nil {
@@ -425,11 +437,12 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 				httputil.ReturnError(r, w, 500, "操作失败")
 				return
 			}
-			ctx = context.WithValue(r.Context(), ctxutil.ContextKey("event"), event)
+
+			var ctx = context.WithValue(r.Context(), ctxutil.ContextKey("event"), event)
 			ctx = context.WithValue(ctx, ctxutil.ContextKey("event_id"), event.EventID)
 			rw := &resWriter{origWriter: w}
 			f(rw, r.WithContext(ctx))
-			if synType == dbmodel.SYNEVENTTYPE || (synType == dbmodel.ASYNEVENTTYPE && rw.statusCode >= 400) { // status code 2XX/3XX all equal to success
+			if synType == dbmodel.SyncEventType || (synType == dbmodel.AsyncEventType && rw.statusCode >= 400) { // status code 2XX/3XX all equal to success
 				util.UpdateEvent(event.EventID, rw.statusCode)
 			}
 		}

@@ -254,7 +254,7 @@ func (e *EventLogStruct) Events(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			// set timeout status if event is not end and start time is more than 2 minutes
-			if list[i].Status == "" && list[i].FinalStatus == "" && time.Since(start) > time.Second*160 {
+			if list[i].Status == "" && list[i].FinalStatus == "" && time.Since(start) > time.Minute*2 {
 				list[i].FinalStatus = "timeout"
 			}
 		}

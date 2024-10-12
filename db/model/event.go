@@ -20,11 +20,11 @@ package model
 
 import "time"
 
-// ASYNEVENTTYPE asyn event type
-const ASYNEVENTTYPE = 0
+// AsyncEventType async event type
+const AsyncEventType = 0
 
-// SYNEVENTTYPE syn event type
-const SYNEVENTTYPE = 1
+// SyncEventType sync event type
+const SyncEventType = 1
 
 // TargetTypeService service target
 const TargetTypeService = "service"
@@ -34,6 +34,9 @@ const TargetTypePod = "pod"
 
 // TargetTypeTenantEnv tenant env target
 const TargetTypeTenantEnv = "tenant_env"
+
+// TargetTypeVM vm target
+const TargetTypeVM = "vm"
 
 // UsernameSystem -
 const UsernameSystem = "system"
@@ -50,16 +53,19 @@ func (e EventFinalStatus) String() string {
 var EventFinalStatusComplete EventFinalStatus = "complete"
 
 // EventFinalStatusFailure -
-var EventFinalStatusFailure EventFinalStatus = "failure"
+// var EventFinalStatusFailure EventFinalStatus = "failure"
 
 // EventFinalStatusRunning -
-var EventFinalStatusRunning EventFinalStatus = "running"
+// var EventFinalStatusRunning EventFinalStatus = "running"
 
 // EventFinalStatusEmpty -
 var EventFinalStatusEmpty EventFinalStatus = "empty"
 
 // EventFinalStatusEmptyComplete -
 var EventFinalStatusEmptyComplete EventFinalStatus = "emptycomplete"
+
+// EventFinalStatusTimeout -
+var EventFinalStatusTimeout EventFinalStatus = "timeout"
 
 // EventStatus -
 type EventStatus string

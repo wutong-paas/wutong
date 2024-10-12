@@ -442,6 +442,7 @@ type EventDao interface {
 	GetEventByEventIDs(eventIDs []string) ([]*model.ServiceEvent, error)
 	GetEventByServiceID(serviceID string) ([]*model.ServiceEvent, error)
 	DelEventByServiceID(serviceID string) error
+	DelEventByTargetAndTargetID(tenantEnvID, target, targetID string) error
 	ListByTargetID(targetID string) ([]*model.ServiceEvent, error)
 	GetEventsByTarget(target, targetID string, offset, liimt int) ([]*model.ServiceEvent, int, error)
 	GetEventsByTenantEnvID(tenantEnvID string, offset, limit int) ([]*model.ServiceEvent, int, error)

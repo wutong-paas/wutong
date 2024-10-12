@@ -146,6 +146,14 @@ func (c *EventDaoImpl) DelEventByServiceID(serviceID string) error {
 	return nil
 }
 
+func (c *EventDaoImpl) DelEventByTargetAndTargetID(tenantEnvID, target, targetID string) error {
+	var result []*model.ServiceEvent
+	if err := c.DB.Where("tenant_env_id=? and target=? and target_id=?", tenantEnvID, target, targetID).Delete(result).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 // ListByTargetID -
 func (c *EventDaoImpl) ListByTargetID(targetID string) ([]*model.ServiceEvent, error) {
 	var events []*model.ServiceEvent

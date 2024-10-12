@@ -454,7 +454,7 @@ func (e *exectorManager) sendAction(tenantEnvID, serviceID, newVersion, actionTy
 			Target:      "service",
 			TargetID:    serviceID,
 			UserName:    operator,
-			SynType:     dbmodel.ASYNEVENTTYPE,
+			SynType:     dbmodel.AsyncEventType,
 		}
 		if err := db.GetManager().ServiceEventDao().AddModel(event); err != nil {
 			logrus.Errorf("create upgrade event failure %s, service %s do not auto upgrade", err.Error(), serviceID)

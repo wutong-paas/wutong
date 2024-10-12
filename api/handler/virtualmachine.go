@@ -1178,6 +1178,11 @@ func (s *ServiceAction) DeleteVM(tenantEnv *dbmodel.TenantEnvs, vmID string) err
 		}
 	}
 
+	// 5、删除 EventLog
+	if err := db.GetManager().ServiceEventDao().DelEventByTargetAndTargetID(tenantEnv.UUID, dbmodel.TargetTypeVM, vmID); err != nil {
+		logrus.Warnf("delete event log failed, error: %s", err.Error())
+	}
+
 	return nil
 }
 

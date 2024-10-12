@@ -248,7 +248,7 @@ func (b *BatchOperationHandler) checkEvents(batchOpReqs model.BatchOpRequesters)
 	var batchOpResult model.BatchOpResult
 	for _, req := range batchOpReqs {
 		req := req
-		if apiutil.CanDoEvent("", dbmodel.SYNEVENTTYPE, "service", req.GetComponentID(), "") {
+		if apiutil.CanDoEvent("", dbmodel.SyncEventType, "service", req.GetComponentID(), "") {
 			validReqs = append(validReqs, req)
 			continue
 		}
@@ -278,7 +278,7 @@ func (b *BatchOperationHandler) createEvents(tenantEnvID, operator string, batch
 			TargetID:    req.GetComponentID(),
 			UserName:    operator,
 			StartTime:   time.Now().Format(time.RFC3339),
-			SynType:     dbmodel.ASYNEVENTTYPE,
+			SynType:     dbmodel.AsyncEventType,
 			OptType:     req.OpType(),
 		}
 		_, ok := bads[req.GetEventID()]
