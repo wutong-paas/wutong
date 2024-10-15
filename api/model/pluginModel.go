@@ -626,6 +626,59 @@ type SetVersionEnv struct {
 	}
 }
 
+// UpdateComponentPluginConfigRequest 更新组件插件配置
+type UpdateComponentPluginConfigRequest struct {
+	// in: path
+	// required: true
+	TenantEnvName string `json:"tenant_env_name"`
+	// in: path
+	// required: true
+	ServiceAlias string `json:"service_alias"`
+	//in: body
+	Body struct {
+		TenantEnvID string `json:"tenant_env_id"`
+		// plugin cpu size default 125
+		// in: body
+		// required: true
+		PluginID  string `json:"plugin_id"`
+		ServiceID string `json:"service_id"`
+		// plugin cpu size default 125
+		// in: body
+		// required: false
+		PluginCPU int `json:"plugin_cpu" validate:"plugin_cpu"`
+		// plugin memory size default 64
+		// in: body
+		// required: false
+		PluginMemory int `json:"plugin_memory" validate:"plugin_memory"`
+		// 环境变量
+		// in: body
+		// required: true
+		ConfigEnvs ConfigEnvs `json:"config_envs" validate:"config_envs"`
+	}
+}
+
+// ToggleComponentPluginRequest 启用/禁用组件插件
+type ToggleComponentPluginRequest struct {
+	//in: path
+	//required: true
+	TenantEnvName string `json:"tenant_env_name"`
+	//in: path
+	//required: true
+	ServiceAlias string `json:"service_alias"`
+	// in: body
+	Body struct {
+		ServiceID string `json:"service_id"`
+		//plugin id
+		//in: body
+		//required: true
+		PluginID string `json:"plugin_id" validate:"plugin_id"`
+		// plugin is uesd
+		//in: body
+		//required: false
+		Switch bool `json:"switch" validate:"switch|bool"`
+	}
+}
+
 // ConfigEnvs Config
 type ConfigEnvs struct {
 	NormalEnvs  []*VersionEnv `json:"normal_envs" validate:"normal_envs"`

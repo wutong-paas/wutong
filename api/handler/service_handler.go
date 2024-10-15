@@ -81,6 +81,8 @@ type ServiceHandler interface {
 	SetTenantEnvServicePluginRelation(tenantEnvID, serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError)
 	UpdateTenantEnvServicePluginRelation(serviceID string, pss *api_model.PluginSetStruct) (*dbmodel.TenantEnvServicePluginRelation, *util.APIHandleError)
 	UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.APIHandleError
+	UpdateComponentPluginConfig(req *api_model.UpdateComponentPluginConfigRequest) *util.APIHandleError
+	ToggleComponentPlugin(req *api_model.ToggleComponentPluginRequest) *util.APIHandleError
 	DeletePluginConfig(serviceID, pluginID string) *util.APIHandleError
 	ServiceCheck(*api_model.ServiceCheckStruct) (string, string, *util.APIHandleError)
 	GetServiceCheckInfo(uuid string) (*exector.ServiceCheckResult, *util.APIHandleError)

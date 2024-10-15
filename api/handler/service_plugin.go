@@ -246,7 +246,7 @@ func (s *ServiceAction) UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.API
 		}
 	}()
 	if len(uve.Body.ConfigEnvs.NormalEnvs) != 0 {
-		if err := s.upNormalEnvs(tx, uve); err != nil {
+		if err := s.upNormalEnvs(tx, uve.Body.ServiceID, uve.PluginID, uve.Body.ConfigEnvs.NormalEnvs); err != nil {
 			tx.Rollback()
 			return util.CreateAPIHandleErrorFromDBError("update version env", err)
 		}
@@ -277,10 +277,10 @@ func (s *ServiceAction) UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.API
 			return util.CreateAPIHandleError(500, fmt.Errorf("update complex error, %v", err))
 		}
 	}
-	if err := s.upNormalEnvs(tx, uve); err != nil {
-		tx.Rollback()
-		return util.CreateAPIHandleError(500, fmt.Errorf("update env config error, %v", err))
-	}
+	// if err := s.upNormalEnvs(tx, uve.Body.ServiceID, uve.PluginID, uve.Body.ConfigEnvs.NormalEnvs); err != nil {
+	// 	tx.Rollback()
+	// 	return util.CreateAPIHandleError(500, fmt.Errorf("update env config error, %v", err))
+	// }
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return util.CreateAPIHandleErrorFromDBError("commit set service plugin env", err)
@@ -288,14 +288,97 @@ func (s *ServiceAction) UpdateVersionEnv(uve *api_model.SetVersionEnv) *util.API
 	return nil
 }
 
-func (s *ServiceAction) upNormalEnvs(tx *gorm.DB, uve *api_model.SetVersionEnv) *util.APIHandleError {
-	err := db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).DeleteEnvByPluginID(uve.Body.ServiceID, uve.PluginID)
+// UpdateComponentPluginConfig 更新组件插件配置
+func (s *ServiceAction) UpdateComponentPluginConfig(req *api_model.UpdateComponentPluginConfigRequest) *util.APIHandleError {
+	plugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(req.Body.PluginID, req.Body.TenantEnvID)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("get plugin by plugin id", err)
+	}
+	relation, err := db.GetManager().TenantEnvServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(req.Body.ServiceID, req.Body.PluginID)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("get relation by serviceid and pluginid", err)
+	}
+
+	tx := db.GetManager().Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Errorf("Unexpected panic occurred, rollback transaction: %v", r)
+			tx.Rollback()
+		}
+	}()
+	if len(req.Body.ConfigEnvs.NormalEnvs) != 0 {
+		if err := s.upNormalEnvs(tx, req.Body.ServiceID, req.Body.PluginID, req.Body.ConfigEnvs.NormalEnvs); err != nil {
+			tx.Rollback()
+			return util.CreateAPIHandleErrorFromDBError("update version env", err)
+		}
+	}
+	if req.Body.ConfigEnvs.ComplexEnvs != nil {
+		if req.Body.ConfigEnvs.ComplexEnvs.BasePorts != nil && checkPluginHaveInbound(plugin.PluginModel) {
+			for _, p := range req.Body.ConfigEnvs.ComplexEnvs.BasePorts {
+				pluginPort, err := db.GetManager().TenantEnvServicesStreamPluginPortDaoTransactions(tx).SetPluginMappingPort(
+					req.Body.TenantEnvID,
+					req.Body.ServiceID,
+					dbmodel.InBoundNetPlugin,
+					p.Port,
+				)
+				if err != nil {
+					tx.Rollback()
+					logrus.Errorf(fmt.Sprintf("set upstream port %d error, %v", p.Port, err))
+					return util.CreateAPIHandleErrorFromDBError(
+						fmt.Sprintf("set upstream port %d error ", p.Port),
+						err,
+					)
+				}
+				logrus.Debugf("set plugin upstream port %d->%d", p.Port, pluginPort)
+				p.ListenPort = pluginPort
+			}
+		}
+		if err := s.SavePluginConfig(req.Body.ServiceID, req.Body.PluginID, req.Body.ConfigEnvs.ComplexEnvs); err != nil {
+			tx.Rollback()
+			return util.CreateAPIHandleError(500, fmt.Errorf("update complex error, %v", err))
+		}
+	}
+
+	if req.Body.PluginCPU >= 0 {
+		relation.ContainerCPU = req.Body.PluginCPU
+	}
+	if req.Body.PluginMemory >= 0 {
+		relation.ContainerMemory = req.Body.PluginMemory
+	}
+	err = db.GetManager().TenantEnvServicePluginRelationDao().UpdateModel(relation)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("update relation between plugin and service", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return util.CreateAPIHandleErrorFromDBError("commit set service plugin env", err)
+	}
+	return nil
+}
+
+// ToggleComponentPlugin 启用/停用组件插件
+func (s *ServiceAction) ToggleComponentPlugin(req *api_model.ToggleComponentPluginRequest) *util.APIHandleError {
+	relation, err := db.GetManager().TenantEnvServicePluginRelationDao().GetRelateionByServiceIDAndPluginID(req.Body.ServiceID, req.Body.PluginID)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("get relation by component id and plugin id", err)
+	}
+	relation.Switch = req.Body.Switch
+	err = db.GetManager().TenantEnvServicePluginRelationDao().UpdateModel(relation)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError("update relation between plugin and service", err)
+	}
+	return nil
+}
+
+func (s *ServiceAction) upNormalEnvs(tx *gorm.DB, componentId, pluginId string, normalEnvs []*api_model.VersionEnv) *util.APIHandleError {
+	err := db.GetManager().TenantEnvPluginVersionENVDaoTransactions(tx).DeleteEnvByPluginID(componentId, pluginId)
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
 			return util.CreateAPIHandleErrorFromDBError("delete version env", err)
 		}
 	}
-	if err := s.normalEnvs(tx, uve.Body.ServiceID, uve.PluginID, uve.Body.ConfigEnvs.NormalEnvs); err != nil {
+	if err := s.normalEnvs(tx, componentId, pluginId, normalEnvs); err != nil {
 		return util.CreateAPIHandleErrorFromDBError("update version env", err)
 	}
 	return nil

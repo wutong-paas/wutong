@@ -54,6 +54,8 @@ func (v2 *V2) serviceRelatePluginRouter() chi.Router {
 	// app plugin config supdate
 	r.Post("/{plugin_id}/setenv", middleware.WrapEL(controller.GetManager().UpdateVersionEnv, dbmodel.TargetTypeService, "update-service-plugin-config", dbmodel.SyncEventType))
 	r.Put("/{plugin_id}/upenv", middleware.WrapEL(controller.GetManager().UpdateVersionEnv, dbmodel.TargetTypeService, "update-service-plugin-config", dbmodel.SyncEventType))
+	r.Put("/config", middleware.WrapEL(controller.GetManager().UpdateComponentPluginConfig, dbmodel.TargetTypeService, "update-service-plugin-config", dbmodel.SyncEventType))
+	r.Put("/toggle", middleware.WrapEL(controller.GetManager().ToggleComponentPlugin, dbmodel.TargetTypeService, "启用/停用组件插件", dbmodel.SyncEventType))
 	//deprecated
 	r.Get("/{plugin_id}/envs", controller.GetManager().GePluginEnvWhichCanBeSet)
 	return r

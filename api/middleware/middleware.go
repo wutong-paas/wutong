@@ -398,17 +398,13 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 					return
 				}
 
+				if target == dbmodel.TargetTypeVM && strings.HasSuffix(r.URL.Path, "/vms") {
+					targetKey = "name"
+				}
+
 				if targetID, ok = reqDataMap[targetKey].(string); !ok {
 					httputil.ReturnError(r, w, 400, "操作对象未指定")
 					return
-				}
-
-				// Post 创建虚拟机
-				if targetKey == dbmodel.TargetTypeVM && strings.HasSuffix(r.URL.Path, "/vms") {
-					if targetID, ok = reqDataMap["name"].(string); !ok {
-						httputil.ReturnError(r, w, 400, "操作对象未指定")
-						return
-					}
 				}
 			}
 

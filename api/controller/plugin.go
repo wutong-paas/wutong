@@ -772,6 +772,84 @@ func (t *TenantEnvStruct) UpdateVersionEnv(w http.ResponseWriter, r *http.Reques
 	httputil.ReturnSuccess(r, w, nil)
 }
 
+// UpdateComponentPluginConfig 更新组件插件配置
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin/{plugin_id}/config v2 UpdateComponentPluginConfig
+//
+// modify the app plugin config info. it will Thermal effect
+//
+// update component plugin config
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) UpdateComponentPluginConfig(w http.ResponseWriter, r *http.Request) {
+	var req api_model.UpdateComponentPluginConfigRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req.Body, nil)
+	if !ok {
+		return
+	}
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
+	tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	req.Body.TenantEnvID = tenantEnvID
+	req.ServiceAlias = serviceAlias
+	req.Body.ServiceID = serviceID
+	if err := handler.GetServiceManager().UpdateComponentPluginConfig(&req); err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// ToggleComponentPlugin 启用/停用组件插件
+// swagger:operation PUT /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/plugin/toggle v2 ToggleComponentPlugin
+//
+// 更新插件设定
+//
+// toggle component plugin
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) ToggleComponentPlugin(w http.ResponseWriter, r *http.Request) {
+	var req api_model.ToggleComponentPluginRequest
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req.Body, nil)
+	if !ok {
+		return
+	}
+	req.Body.ServiceID = r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	err := handler.GetServiceManager().ToggleComponentPlugin(&req)
+	if err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
 // SharePlugin share tenantEnvs plugin
 func (t *TenantEnvStruct) SharePlugin(w http.ResponseWriter, r *http.Request) {
 	var sp share.PluginShare

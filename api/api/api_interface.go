@@ -223,6 +223,8 @@ type PluginInterface interface {
 	DeletePluginRelation(w http.ResponseWriter, r *http.Request)
 	GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.Request)
 	UpdateVersionEnv(w http.ResponseWriter, r *http.Request)
+	UpdateComponentPluginConfig(w http.ResponseWriter, r *http.Request)
+	ToggleComponentPlugin(w http.ResponseWriter, r *http.Request)
 	GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Request)
 	SharePlugin(w http.ResponseWriter, r *http.Request)
 	SharePluginResult(w http.ResponseWriter, r *http.Request)
