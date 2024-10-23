@@ -93,6 +93,10 @@ func (l *LogAction) GetLogFile(serviceAlias, fileName string) (string, string, e
 
 // GetLogInstance get log web socket instance
 func (l *LogAction) GetLogInstance(serviceID string) (string, error) {
+	if l.EtcdCli == nil {
+		return "", fmt.Errorf("etcd 客户端初始化失败！")
+	}
+
 	value, err := l.EtcdCli.Get(context.Background(), fmt.Sprintf("/event/dockerloginstacne/%s", serviceID))
 	if err != nil {
 		return "", err
@@ -111,6 +115,7 @@ func (l *LogAction) GetLevelLog(eventID string, level string) (*model.DataLog, e
 		logrus.Errorf("get event log error: %s", err.Error())
 		return nil, err
 	}
+
 	if re != nil {
 		messageList, ok := re.(eventdb.MessageDataList)
 		if ok {
