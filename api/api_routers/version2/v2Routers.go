@@ -299,6 +299,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 
 	//应用依赖关系增加与删除(source)
 	r.Post("/dependency", middleware.WrapEL(controller.GetManager().Dependency, dbmodel.TargetTypeService, "add-service-dependency", dbmodel.SyncEventType))
+	r.Post("/dependencies", middleware.WrapEL(controller.GetManager().AddDependencies, dbmodel.TargetTypeService, "add-service-dependencies", dbmodel.SyncEventType))
 	r.Delete("/dependency", middleware.WrapEL(controller.GetManager().Dependency, dbmodel.TargetTypeService, "delete-service-dependency", dbmodel.SyncEventType))
 	r.Delete("/dependencies", middleware.WrapEL(controller.GetManager().DeleteDependencies, dbmodel.TargetTypeService, "delete-service-dependencies", dbmodel.SyncEventType))
 	//环境变量增删改(source)

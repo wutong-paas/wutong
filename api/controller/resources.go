@@ -1042,7 +1042,35 @@ func (t *TenantEnvStruct) Dependency(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DeleteDependencies 删除组件依赖
+// AddDependencies 增加组件依赖（批量）
+func (t *TenantEnvStruct) AddDependencies(w http.ResponseWriter, r *http.Request) {
+	var req api_model.DependServices
+	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil) {
+		httputil.ReturnError(r, w, 500, "add dependencies error")
+		return
+	}
+	req.TenantEnvID = r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
+	req.ServiceID = r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+
+	var relations []*dbmodel.TenantEnvServiceRelation
+	for _, depService := range req.DependServices {
+		relations = append(relations, &dbmodel.TenantEnvServiceRelation{
+			TenantEnvID:       req.TenantEnvID,
+			ServiceID:         depService.ServiceID,
+			DependServiceID:   req.ServiceID,
+			DependServiceType: depService.ServiceType,
+			DependOrder:       1,
+		})
+	}
+	err := db.GetManager().TenantEnvServiceRelationDao().CreateOrUpdateRelationsInBatch(relations)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("add dependency error, %v", err))
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// DeleteDependencies 删除组件依赖（批量）
 func (t *TenantEnvStruct) DeleteDependencies(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("trans delete depend service")
 	ds := &api_model.DependService{

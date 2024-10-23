@@ -124,6 +124,7 @@ type ServiceInterface interface {
 	CreateService(w http.ResponseWriter, r *http.Request)
 	UpdateService(w http.ResponseWriter, r *http.Request)
 	Dependency(w http.ResponseWriter, r *http.Request)
+	AddDependencies(w http.ResponseWriter, r *http.Request)
 	DeleteDependencies(w http.ResponseWriter, r *http.Request)
 	Env(w http.ResponseWriter, r *http.Request)
 	DeleteAllEnvs(w http.ResponseWriter, r *http.Request)

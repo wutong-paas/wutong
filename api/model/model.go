@@ -446,6 +446,17 @@ type DependService struct {
 	Action         string `json:"action"`
 }
 
+type DependServiceItem struct {
+	ServiceID   string `json:"service_id"`
+	ServiceType string `json:"service_type"`
+}
+
+type DependServices struct {
+	TenantEnvID    string              `json:"tenant_env_id"`
+	ServiceID      string              `json:"service_id"`
+	DependServices []DependServiceItem `json:"depend_services"`
+}
+
 // Attr attr
 type Attr struct {
 	Action      string `json:"action"`
