@@ -158,12 +158,14 @@ func vmEventHandler() cache.ResourceEventHandlerFuncs {
 		AddFunc: func(obj interface{}) {
 			vm, err := convertToVirtualMachine(obj)
 			if err == nil {
+				keepVMStatements(vm)
 				tryCreateInternalDomainService(vm)
 			}
 		},
 		UpdateFunc: func(_, obj interface{}) {
 			vm, err := convertToVirtualMachine(obj)
 			if err == nil {
+				keepVMStatements(vm)
 				tryCreateInternalDomainService(vm)
 			}
 		},
@@ -199,6 +201,35 @@ func vmiEventHandler() cache.ResourceEventHandlerFuncs {
 	}
 }
 
+func keepVMStatements(vm *kubevirtcorev1.VirtualMachine) {
+	var changed bool
+	if vm.Labels["wutong.io/vm-id"] != vm.Name {
+		vm.Labels["wutong.io/vm-id"] = vm.Name
+
+		changed = true
+	}
+	if vm.Annotations["wutong.io/display-name"] == "" {
+		vm.Annotations["wutong.io/display-name"] = vm.Name
+
+		changed = true
+	}
+
+	if changed {
+		// convert to unstructured
+		unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(vm)
+		if err != nil {
+			logrus.Warningf("convert vm %s to unstructured failed: %v", vm.Name, err)
+			return
+		}
+
+		if _, err := RegionDynamicClient().Resource(vmres).Namespace(vm.Namespace).Update(context.Background(), &unstructured.Unstructured{
+			Object: unstructuredObj,
+		}, metav1.UpdateOptions{}); err != nil {
+			logrus.Warningf("update vm %s failed: %v", vm.Name, err)
+		}
+	}
+}
+
 // tryCreateInternalDomainService 尝试创建虚拟机内部域名服务
 func tryCreateInternalDomainService(vm *kubevirtcorev1.VirtualMachine) {
 	svc := &corev1.Service{
@@ -215,7 +246,9 @@ func tryCreateInternalDomainService(vm *kubevirtcorev1.VirtualMachine) {
 			ClusterIP: corev1.ClusterIPNone,
 		},
 	}
-	RegionClientset().CoreV1().Services(vm.Namespace).Create(context.Background(), svc, metav1.CreateOptions{})
+	if _, err := RegionClientset().CoreV1().Services(vm.Namespace).Create(context.Background(), svc, metav1.CreateOptions{}); err != nil {
+		logrus.Warningf("create vnc service %s failed: %v", vm.Name, err)
+	}
 }
 
 // tryDeleteInternalDomainService 尝试删除虚拟机内部域名服务
