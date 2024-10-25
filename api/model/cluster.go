@@ -72,14 +72,14 @@ func ClusterEventFrom(event *corev1.Event, clientset kubernetes.Interface) *Clus
 
 	switch event.InvolvedObject.Kind {
 	case "Pod":
-		return podEvent(event, clientset)
+		return podEvent(event)
 	case "Node":
-		return nodeEvent(event, clientset)
+		return nodeEvent(event)
 	}
 	return nil
 }
 
-func podEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
+func podEvent(event *corev1.Event) *ClusterEvent {
 	var message string
 	switch event.Reason {
 	case "FailedKillPod":
@@ -103,7 +103,7 @@ func podEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent
 	}
 }
 
-func nodeEvent(event *corev1.Event, clientset kubernetes.Interface) *ClusterEvent {
+func nodeEvent(event *corev1.Event) *ClusterEvent {
 	var message string
 	if strings.Contains(event.Reason, "bind: address already in use") {
 		reasonParts := strings.Split(event.Reason, ":")
