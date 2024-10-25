@@ -246,15 +246,19 @@ func tryCreateInternalDomainService(vm *kubevirtcorev1.VirtualMachine) {
 			ClusterIP: corev1.ClusterIPNone,
 		},
 	}
-	if _, err := RegionClientset().CoreV1().Services(vm.Namespace).Create(context.Background(), svc, metav1.CreateOptions{}); err != nil {
-		logrus.Warningf("create vnc service %s failed: %v", vm.Name, err)
+	if _, err := RegionClientset().CoreV1().Services(vm.Namespace).Get(context.Background(), vm.Name, metav1.GetOptions{}); err != nil && k8sErrors.IsNotFound(err) {
+		if _, err := RegionClientset().CoreV1().Services(vm.Namespace).Create(context.Background(), svc, metav1.CreateOptions{}); err != nil {
+			logrus.Warningf("create vnc service %s failed: %v", vm.Name, err)
+		}
 	}
 }
 
 // tryDeleteInternalDomainService 尝试删除虚拟机内部域名服务
 func tryDeleteInternalDomainService(vm *kubevirtcorev1.VirtualMachine) {
-	if err := RegionClientset().CoreV1().Services(vm.Namespace).Delete(context.Background(), vm.Name, metav1.DeleteOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
-		logrus.Warningf("delete service %s failed: %v", vm.Name, err)
+	if _, err := RegionClientset().CoreV1().Services(vm.Namespace).Get(context.Background(), vm.Name, metav1.GetOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
+		if err := RegionClientset().CoreV1().Services(vm.Namespace).Delete(context.Background(), vm.Name, metav1.DeleteOptions{}); err != nil && !k8sErrors.IsNotFound(err) {
+			logrus.Warningf("delete service %s failed: %v", vm.Name, err)
+		}
 	}
 }
 
