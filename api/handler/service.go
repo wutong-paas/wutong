@@ -116,6 +116,11 @@ func CreateManager(conf option.Config,
 	}
 }
 
+// KubeClient 返回 kubernetes 客户端
+func (s *ServiceAction) KubeClient() kubernetes.Interface {
+	return s.kubeClient
+}
+
 // ServiceBuild service build
 func (s *ServiceAction) ServiceBuild(tenantEnvID, serviceID string, r *api_model.BuildServiceStruct) error {
 	eventID := r.Body.EventID

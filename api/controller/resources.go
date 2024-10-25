@@ -19,6 +19,7 @@
 package controller
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,6 +32,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/wutong-paas/wutong/api/handler"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util/bcode"
@@ -45,6 +47,7 @@ import (
 	validator "github.com/wutong-paas/wutong/util/govalidator"
 	httputil "github.com/wutong-paas/wutong/util/http"
 	"github.com/wutong-paas/wutong/worker/client"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // V2Routes v2Routes
@@ -1800,6 +1803,84 @@ func (t *TenantEnvStruct) ListServiceInstanceContainers(w http.ResponseWriter, r
 		return
 	}
 	httputil.ReturnSuccess(r, w, pods)
+}
+
+// ListServiceInstanceLogs 获取组组件实例日志
+// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/instances/{instance_id}/logs v2 ListServiceInstanceLogs
+//
+// 获取组件实例日志
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) ListServiceInstanceLogs(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	instance := chi.URLParam(r, "instance_id")
+
+	req := api_model.ServiceInstanceLogReq{
+		Container:  r.URL.Query().Get("container"),
+		TailLines:  cast.ToInt64(r.URL.Query().Get("tailLines")),
+		Timestamps: cast.ToBool(r.URL.Query().Get("timestamps")),
+		Previous:   cast.ToBool(r.URL.Query().Get("previous")),
+	}
+
+	if req.TailLines <= 0 {
+		req.TailLines = 1024
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		httputil.ReturnError(r, w, 404, "Streaming unsupported!")
+		return
+	}
+
+	// 设置响应头，告知客户端这是一个 SSE 流
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	logreq := handler.GetServiceManager().KubeClient().CoreV1().Pods(tenantEnv.Namespace).GetLogs(instance, &corev1.PodLogOptions{
+		Container:  req.Container,
+		Follow:     true, // 持续获取日志
+		TailLines:  &req.TailLines,
+		Timestamps: req.Timestamps, // 显示时间戳
+		Previous:   req.Previous,
+	})
+
+	stream, err := logreq.Stream(r.Context())
+	if err != nil {
+		httputil.ReturnError(r, w, 404, "获取组件实例流式日志失败")
+		return
+	}
+	defer stream.Close()
+
+	scaner := bufio.NewScanner(stream)
+
+	for {
+		select {
+		case <-r.Context().Done():
+			// 客户端断开连接，停止发送日志
+			return
+		default:
+			if scaner.Scan() {
+				txt := scaner.Text()
+				fmt.Fprintf(w, "data: %s\n\n", txt) // [data: ] 是 SSE 的固定格式
+				flusher.Flush()
+			}
+		}
+	}
 }
 
 // ListServiceInstanceContainerOptions 获取组件实例容器选项列表

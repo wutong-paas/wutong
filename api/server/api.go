@@ -116,6 +116,10 @@ func (m *Manager) SetMiddleware() {
 			if strings.Contains(r.URL.Path, "/console/filebrowser") {
 				timeout = time.Minute * 10
 			}
+			// pod logs(sse)
+			if strings.Contains(r.URL.Path, "/instances") && strings.HasSuffix(r.URL.Path, "/logs") {
+				timeout = time.Minute * 30
+			}
 			ctx, cancel := context.WithTimeout(r.Context(), timeout)
 			defer func() {
 				cancel()

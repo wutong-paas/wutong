@@ -29,10 +29,13 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/worker/discover/model"
 	"github.com/wutong-paas/wutong/worker/server/pb"
+	"k8s.io/client-go/kubernetes"
 )
 
 // ServiceHandler service handler
 type ServiceHandler interface {
+	KubeClient() kubernetes.Interface
+
 	ServiceBuild(tenantEnvID, serviceID string, r *api_model.BuildServiceStruct) error
 	AddLabel(l *api_model.LabelsStruct, serviceID string) error
 	DeleteLabel(l *api_model.LabelsStruct, serviceID string) error

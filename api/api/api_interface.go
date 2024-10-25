@@ -142,6 +142,7 @@ type ServiceInterface interface {
 	Pods(w http.ResponseWriter, r *http.Request)
 	ListServiceInstances(w http.ResponseWriter, r *http.Request)
 	ListServiceInstanceContainers(w http.ResponseWriter, r *http.Request)
+	ListServiceInstanceLogs(w http.ResponseWriter, r *http.Request)
 	ListServiceInstanceContainerOptions(w http.ResponseWriter, r *http.Request)
 	ListServiceInstanceEvents(w http.ResponseWriter, r *http.Request)
 	VolumeDependency(w http.ResponseWriter, r *http.Request)

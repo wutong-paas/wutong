@@ -340,6 +340,7 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Get("/pods", controller.GetManager().Pods)
 	r.Get("/instances", controller.GetManager().ListServiceInstances)
 	r.Get("/instances/{instance_id}/containers", controller.GetManager().ListServiceInstanceContainers)
+	r.Get("/instances/{instance_id}/logs", controller.GetManager().ListServiceInstanceLogs)
 	r.Get("/instance/container/options", controller.GetManager().ListServiceInstanceContainerOptions)
 	r.Get("/instances/{instance_id}/events", controller.GetManager().ListServiceInstanceEvents)
 

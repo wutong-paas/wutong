@@ -2070,3 +2070,12 @@ type SyncAppConfigGroup struct {
 type AppStatusesReq struct {
 	AppIDs []string `json:"app_ids"`
 }
+
+// ServiceInstanceLogReq 组件容器日志请求(SSE 版本)
+type ServiceInstanceLogReq struct {
+	Container  string `json:"container"`  // 容器名称，如果为空，则返回所有容器日志
+	TailLines  int64  `json:"tailLines"`  // 返回日志行数，默认为 1024 行
+	Previous   bool   `json:"previous"`   // 返回先前终止的容器日志，默认不开启
+	Timestamps bool   `json:"timestamps"` // 是否显示时间戳
+	// Follow    bool   `json:"follow"`     // 是否跟随，如果开启，则返回日志流，否则返回当前日志内容，默认开启
+}
