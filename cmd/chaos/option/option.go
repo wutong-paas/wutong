@@ -111,7 +111,7 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 func (a *Builder) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
-		fmt.Println("set log level error." + err.Error())
+		logrus.Errorf("failed to parse log level: %s", err)
 		return
 	}
 	logrus.SetLevel(level)

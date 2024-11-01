@@ -19,8 +19,6 @@
 package option
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
@@ -73,7 +71,7 @@ func (a *MQServer) AddFlags(fs *pflag.FlagSet) {
 func (a *MQServer) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
-		fmt.Println("set log level error." + err.Error())
+		logrus.Errorf("failed to parse log level: %v", err)
 		return
 	}
 	logrus.SetLevel(level)

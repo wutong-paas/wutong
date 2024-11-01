@@ -38,11 +38,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/barnettZQG/gotty/server"
-	"github.com/barnettZQG/gotty/webtty"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/wutong-paas/gotty/server"
+	"github.com/wutong-paas/gotty/webtty"
 	"github.com/wutong-paas/wutong/util"
 	httputil "github.com/wutong-paas/wutong/util/http"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"

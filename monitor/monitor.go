@@ -22,7 +22,6 @@ import (
 	"context"
 	"time"
 
-	v3 "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"github.com/wutong-paas/wutong/cmd/monitor/option"
@@ -34,6 +33,7 @@ import (
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"github.com/wutong-paas/wutong/util/watch"
+	v3 "go.etcd.io/etcd/client/v3"
 )
 
 // Monitor monitor

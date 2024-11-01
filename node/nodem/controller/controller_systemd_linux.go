@@ -216,7 +216,7 @@ func (m *ControllerSystemd) InitStart(services []*service.Service) error {
 				//init service start before etcd ready. so it can not set
 				//content = m.manager.InjectConfig(content)
 				if err := os.WriteFile(fileName, []byte(content), 0644); err != nil {
-					fmt.Printf("Generate config file %s: %v", fileName, err)
+					logrus.Errorf("failed to write config file %s: %v", fileName, err)
 					return err
 				}
 			}

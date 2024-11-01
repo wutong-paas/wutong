@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	client "github.com/coreos/etcd/clientv3"
+	client "go.etcd.io/etcd/client/v3"
 
 	conf "github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/node/utils"

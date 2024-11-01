@@ -26,7 +26,7 @@ import (
 	"github.com/urfave/cli"
 	"github.com/wutong-paas/wutong/api/region"
 	"github.com/wutong-paas/wutong/chaos/sources"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	//"strings"
 )
 

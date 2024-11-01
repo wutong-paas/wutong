@@ -237,7 +237,7 @@ func (c *Config) CompleteConfig() {
 
 	level, err := logrus.ParseLevel(c.LogLevel)
 	if err != nil {
-		fmt.Println("ERROR set log level:", err)
+		logrus.Errorf("failed to parse log level: %s", err)
 		return
 	}
 	logrus.SetLevel(level)

@@ -33,6 +33,7 @@ import (
 	dis "github.com/wutong-paas/wutong/worker/master/controller/thirdcomponent/discover"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -200,7 +201,21 @@ func (r *Reconciler) applyEndpointService(ctx context.Context, log *logrus.Entry
 
 	svc.Annotations = ep.Annotations
 	if err := r.applyer.Apply(ctx, svc); err != nil {
+		if k8serrors.IsConflict(err) {
+			// retry to update service
+			err = r.Client.Get(ctx, types.NamespacedName{Namespace: svc.Namespace, Name: svc.Name}, svc)
+			if err != nil {
+				log.Errorf("apply service(%s) for updating annotation: %v", svc.Name, err)
+				return
+			}
+			svc.Annotations = ep.Annotations
+			if err = r.applyer.Apply(ctx, svc); err != nil {
+				log.Errorf("apply service(%s) for updating annotation: %v", svc.Name, err)
+				return
+			}
+		}
 		log.Errorf("apply service(%s) for updating annotation: %v", svc.Name, err)
+		return
 	}
 	log.Infof("apply endpoint for service %s success", svc.Name)
 }
@@ -366,7 +381,7 @@ func createEndpoint(component *v1alpha1.ThirdComponent, service *corev1.Service,
 }
 
 // UpdateStatus updates ThirdComponent's Status with retry.RetryOnConflict
-func (r *Reconciler) updateStatus(ctx context.Context, appd *v1alpha1.ThirdComponent, opts ...client.UpdateOption) error {
+func (r *Reconciler) updateStatus(ctx context.Context, appd *v1alpha1.ThirdComponent, opts ...client.SubResourceUpdateOption) error {
 	status := appd.DeepCopy().Status
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() (err error) {
 		if err = r.Client.Get(ctx, client.ObjectKey{Namespace: appd.Namespace, Name: appd.Name}, appd); err != nil {

@@ -25,13 +25,13 @@ import (
 	"time"
 
 	"github.com/wutong-paas/wutong/discover/config"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"golang.org/x/net/context"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 )
 
 // CallbackUpdate 每次返还变化

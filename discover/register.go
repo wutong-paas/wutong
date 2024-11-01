@@ -24,10 +24,10 @@ import (
 	"os"
 	"time"
 
-	client "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	client "go.etcd.io/etcd/client/v3"
 )
 
 // KeepAlive 服务注册

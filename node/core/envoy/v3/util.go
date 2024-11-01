@@ -1,5 +1,5 @@
-// WUTONG, Application Management Platform
 // Copyright (C) 2014-2017 Wutong Co., Ltd.
+// WUTONG, Application Management Platform
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-package v2
+package v3
 
 import (
 	"crypto/sha256"
@@ -25,25 +25,25 @@ import (
 	"strconv"
 	"strings"
 
+	configclusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
+	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/conversion"
+	rsrc "github.com/envoyproxy/go-control-plane/pkg/resource/v3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/any"
-	"github.com/golang/protobuf/ptypes/duration"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/sirupsen/logrus"
-
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	rsrc "github.com/envoyproxy/go-control-plane/pkg/resource/v2"
-	_struct "github.com/golang/protobuf/ptypes/struct"
-
 	v1 "github.com/wutong-paas/wutong/node/core/envoy/v1"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	any "google.golang.org/protobuf/types/known/anypb"
+	ptypes "google.golang.org/protobuf/types/known/durationpb"
+	_struct "google.golang.org/protobuf/types/known/structpb"
+	wrappers "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // MessageToStruct converts from proto message to proto Struct
-func MessageToStruct(msg proto.Message) *_struct.Struct {
+func MessageToStruct(msg protoreflect.ProtoMessage) *_struct.Struct {
 	s, err := conversion.MessageToStruct(msg)
 	if err != nil {
 		logrus.Error(err.Error())
@@ -53,8 +53,9 @@ func MessageToStruct(msg proto.Message) *_struct.Struct {
 }
 
 // Message2Any converts from proto message to proto any
-func Message2Any(msg proto.Message) *any.Any {
-	a, err := ptypes.MarshalAny(msg)
+func Message2Any(msg protoreflect.ProtoMessage) *any.Any {
+	a := &any.Any{}
+	err := a.MarshalFrom(msg)
 	if err != nil {
 		logrus.Error(err.Error())
 		return &any.Any{}
@@ -62,23 +63,23 @@ func Message2Any(msg proto.Message) *any.Any {
 	return a
 }
 
-//ConversionUInt32 conversion uint32 to wrappers uint32
+// ConversionUInt32 conversion uint32 to wrappers uint32
 func ConversionUInt32(value uint32) *wrappers.UInt32Value {
 	return &wrappers.UInt32Value{
 		Value: value,
 	}
 }
 
-//ConversionTypeUInt32 conversion uint32 to proto uint32
+// ConversionTypeUInt32 conversion uint32 to proto uint32
 func ConversionTypeUInt32(value uint32) *types.UInt32Value {
 	return &types.UInt32Value{
 		Value: value,
 	}
 }
 
-//ConverTimeDuration second
-func ConverTimeDuration(second int64) *duration.Duration {
-	return &duration.Duration{
+// ConverTimeDuration second
+func ConverTimeDuration(second int64) *ptypes.Duration {
+	return &ptypes.Duration{
 		Seconds: second,
 	}
 }
@@ -136,7 +137,7 @@ const (
 	KeyHealthCheckInterval string = "HealthCheckInterval"
 )
 
-//WutongPluginOptions wutong plugin config struct
+// WutongPluginOptions wutong plugin config struct
 type WutongPluginOptions struct {
 	Prefix                   string
 	MaxConnections           int
@@ -159,13 +160,13 @@ type WutongPluginOptions struct {
 	HealthCheckInterval      int64
 }
 
-//WutongInboundPluginOptions wutong inbound plugin options
+// WutongInboundPluginOptions wutong inbound plugin options
 type WutongInboundPluginOptions struct {
 	OpenLimit   bool
 	LimitDomain string
 }
 
-//RouteBasicHash get basic hash for weight
+// RouteBasicHash get basic hash for weight
 func (r WutongPluginOptions) RouteBasicHash() string {
 	key := sha256.New()
 	var header string
@@ -177,8 +178,8 @@ func (r WutongPluginOptions) RouteBasicHash() string {
 	return string(key.Sum(nil))
 }
 
-//GetOptionValues get value from options
-//if not exist,return default value
+// GetOptionValues get value from options
+// if not exist,return default value
 func GetOptionValues(sr map[string]interface{}) WutongPluginOptions {
 	rpo := WutongPluginOptions{
 		Prefix:                "/",
@@ -302,7 +303,7 @@ func GetOptionValues(sr map[string]interface{}) WutongPluginOptions {
 	return rpo
 }
 
-//GetWutongPluginOptions get wutong inbound plugin options
+// GetWutongPluginOptions get wutong inbound plugin options
 func GetWutongInboundPluginOptions(sr map[string]interface{}) (r WutongInboundPluginOptions) {
 	for k, v := range sr {
 		switch k {
@@ -317,72 +318,72 @@ func GetWutongInboundPluginOptions(sr map[string]interface{}) (r WutongInboundPl
 	return
 }
 
-//ParseLocalityLbEndpointsResource parse envoy xds server response ParseLocalityLbEndpointsResource
-func ParseLocalityLbEndpointsResource(resources []*any.Any) []v2.ClusterLoadAssignment {
-	var endpoints []v2.ClusterLoadAssignment
+// ParseLocalityLbEndpointsResource parse envoy xds server response ParseLocalityLbEndpointsResource
+func ParseLocalityLbEndpointsResource(resources []*any.Any) []*endpointv3.ClusterLoadAssignment {
+	var endpoints []*endpointv3.ClusterLoadAssignment
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
 		case rsrc.EndpointType:
-			var endpoint v2.ClusterLoadAssignment
+			var endpoint endpointv3.ClusterLoadAssignment
 			if err := proto.Unmarshal(resource.GetValue(), &endpoint); err != nil {
 				logrus.Errorf("unmarshal envoy endpoint resource failure %s", err.Error())
 			}
-			endpoints = append(endpoints, endpoint)
+			endpoints = append(endpoints, &endpoint)
 		}
 	}
 	return endpoints
 }
 
-//ParseClustersResource parse envoy xds server response ParseClustersResource
-func ParseClustersResource(resources []*any.Any) []v2.Cluster {
-	var clusters []v2.Cluster
+// ParseClustersResource parse envoy xds server response ParseClustersResource
+func ParseClustersResource(resources []*any.Any) []*configclusterv3.Cluster {
+	var clusters []*configclusterv3.Cluster
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
 		case rsrc.ClusterType:
-			var cluster v2.Cluster
+			var cluster configclusterv3.Cluster
 			if err := proto.Unmarshal(resource.GetValue(), &cluster); err != nil {
 				logrus.Errorf("unmarshal envoy cluster resource failure %s", err.Error())
 			}
-			clusters = append(clusters, cluster)
+			clusters = append(clusters, &cluster)
 		}
 	}
 	return clusters
 }
 
-//ParseListenerResource parse envoy xds server response ListenersResource
-func ParseListenerResource(resources []*any.Any) []v2.Listener {
-	var listeners []v2.Listener
+// ParseListenerResource parse envoy xds server response ListenersResource
+func ParseListenerResource(resources []*any.Any) []*listenerv3.Listener {
+	var listeners []*listenerv3.Listener
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
 		case rsrc.ListenerType:
-			var listener v2.Listener
+			var listener listenerv3.Listener
 			if err := proto.Unmarshal(resource.GetValue(), &listener); err != nil {
 				logrus.Errorf("unmarshal envoy listener resource failure %s", err.Error())
 			}
-			listeners = append(listeners, listener)
+			listeners = append(listeners, &listener)
 		}
 	}
 	return listeners
 }
 
-//ParseRouteConfigurationsResource parse envoy xds server response RouteConfigurationsResource
-func ParseRouteConfigurationsResource(resources []*any.Any) []v2.RouteConfiguration {
-	var routes []v2.RouteConfiguration
+// ParseRouteConfigurationsResource parse envoy xds server response RouteConfigurationsResource
+func ParseRouteConfigurationsResource(resources []*any.Any) []*routev3.RouteConfiguration {
+	var routes []*routev3.RouteConfiguration
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
 		case rsrc.RouteType:
-			var route v2.RouteConfiguration
+			var route routev3.RouteConfiguration
 			if err := proto.Unmarshal(resource.GetValue(), &route); err != nil {
 				logrus.Errorf("unmarshal envoy route resource failure %s", err.Error())
 			}
-			routes = append(routes, route)
+			routes = append(routes, &route)
 		}
 	}
 	return routes
 }
 
-//CheckWeightSum check all cluster weight sum
-func CheckWeightSum(clusters []*route.WeightedCluster_ClusterWeight, weight uint32) uint32 {
+// CheckWeightSum check all cluster weight sum
+func CheckWeightSum(clusters []*routev3.WeightedCluster_ClusterWeight, weight uint32) uint32 {
 	var sum uint32
 	for _, cluster := range clusters {
 		sum += cluster.Weight.GetValue()

@@ -26,16 +26,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wutong-paas/wutong/util/ansible"
-
 	"github.com/fatih/color"
-
 	"github.com/gosuri/uitable"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	coreutil "github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/ansible"
 	"github.com/wutong-paas/wutong/util/termtables"
 	"github.com/wutong-paas/wutong/wtctl/clients"
 )
@@ -43,20 +41,20 @@ import (
 func handleErr(err *util.APIHandleError) {
 	if err != nil {
 		if err.Err != nil {
-			fmt.Println(err.String())
+			logrus.Errorf(err.String())
 			os.Exit(1)
 		} else {
-			fmt.Printf("API return %d", err.Code)
+			logrus.Errorf("API return %d", err.Code)
 		}
 	}
 }
 func showError(m string) {
-	fmt.Printf("Error: %s\n", m)
+	logrus.Errorf("Error: %s\n", m)
 	os.Exit(1)
 }
 
 func showSuccessMsg(m string) {
-	fmt.Printf("Success: %s\n", m)
+	logrus.Errorf("Success: %s\n", m)
 	os.Exit(0)
 }
 
@@ -294,38 +292,6 @@ func NewCmdNode() cli.Command {
 					return nil
 				},
 			},
-			// {
-			// 	Name:  "up",
-			// 	Usage: "up hostID",
-			// 	Action: func(c *cli.Context) error {
-			// 		Common(c)
-			// 		id := c.Args().First()
-			// 		if id == "" {
-			// 			logrus.Errorf("need hostID")
-			// 			return nil
-			// 		}
-			// 		err := clients.RegionClient.Nodes().Up(id)
-			// 		handleErr(err)
-			// 		fmt.Printf("up node %s  success\n", id)
-			// 		return nil
-			// 	},
-			// },
-			// {
-			// 	Name:  "down",
-			// 	Usage: "down hostID",
-			// 	Action: func(c *cli.Context) error {
-			// 		Common(c)
-			// 		id := c.Args().First()
-			// 		if id == "" {
-			// 			logrus.Errorf("need hostID")
-			// 			return nil
-			// 		}
-			// 		err := clients.RegionClient.Nodes().Down(id)
-			// 		handleErr(err)
-			// 		fmt.Printf("down node %s  success\n", id)
-			// 		return nil
-			// 	},
-			// },
 			{
 				Name:  "cordon",
 				Usage: "Mark node as unschedulable",
@@ -344,7 +310,7 @@ func NewCmdNode() cli.Command {
 					}
 					err = clients.RegionClient.Nodes().UnSchedulable(id)
 					handleErr(err)
-					fmt.Printf("cordon node %s  success\n", id)
+					logrus.Infof("cordon node %s  success\n", id)
 					return nil
 				},
 			},
@@ -366,7 +332,7 @@ func NewCmdNode() cli.Command {
 					}
 					err = clients.RegionClient.Nodes().ReSchedulable(id)
 					handleErr(err)
-					fmt.Printf("uncordon node %s  success\n", id)
+					logrus.Infof("uncordon node %s  success\n", id)
 					return nil
 				},
 			},
@@ -382,7 +348,7 @@ func NewCmdNode() cli.Command {
 					}
 					err := clients.RegionClient.Nodes().Delete(id)
 					handleErr(err)
-					fmt.Printf("delete node %s  success\n", id)
+					logrus.Infof("delete node %s  success\n", id)
 					return nil
 				},
 			},
@@ -523,77 +489,6 @@ func NewCmdNode() cli.Command {
 					},
 				},
 			},
-			// {
-			// 	Name:  "add",
-			// 	Usage: "Add a node into the cluster",
-			// 	Flags: []cli.Flag{
-			// 		cli.StringFlag{
-			// 			Name:  "hostname,host",
-			// 			Usage: "The option is required",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "hosts-file-path",
-			// 			Usage: "hosts file path",
-			// 			Value: "/opt/wutong/wutong-ansible/inventory/hosts",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "config-file-path",
-			// 			Usage: "ansible global config file path",
-			// 			Value: "/opt/wutong/wutong-ansible/scripts/installer/global.sh",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "internal-ip,iip",
-			// 			Usage: "The option is required",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "external-ip,eip",
-			// 			Usage: "Publish the ip address for external connection",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "root-pass,p",
-			// 			Usage: "Specify the root password of the target host for login, this option conflicts with private-key",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "private-key,key",
-			// 			Usage: "Specify the private key file for login, this option conflicts with root-pass",
-			// 		},
-			// 		cli.StringSliceFlag{
-			// 			Name:  "role,r",
-			// 			Usage: "The option is required, the allowed values are: [manage|compute|gateway]",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "podCIDR,cidr",
-			// 			Usage: "Defines the IP assignment range for the specified node, which is automatically specified if not specified",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "id",
-			// 			Usage: "Specify node ID",
-			// 		},
-			// 		cli.BoolFlag{
-			// 			Name:  "install",
-			// 			Usage: "Automatic installation after addition",
-			// 		},
-			// 	},
-			// 	Action: addNodeCommand,
-			// },
-			// {
-
-			// 	Name:  "install",
-			// 	Usage: "Install a exist node into the cluster",
-			// 	Flags: []cli.Flag{
-			// 		cli.StringFlag{
-			// 			Name:  "hosts-file-path",
-			// 			Usage: "hosts file path",
-			// 			Value: "/opt/wutong/wutong-ansible/inventory/hosts",
-			// 		},
-			// 		cli.StringFlag{
-			// 			Name:  "config-file-path",
-			// 			Usage: "ansible global config file path",
-			// 			Value: "/opt/wutong/wutong-ansible/scripts/installer/global.sh",
-			// 		},
-			// 	},
-			// 	Action: installNodeCommand,
-			// },
 		},
 	}
 	return c
@@ -644,10 +539,9 @@ func installNode(node *client.HostNode) {
 	if _, err := clients.RegionClient.Nodes().UpdateNodeStatus(node.ID, client.InstallSuccess); err != nil {
 		logrus.Errorf("update node %s status failure %s", node.ID, err.Error())
 	}
-	fmt.Println("------------------------------------")
-	fmt.Printf("Install node %s successful \n", node.ID)
+	logrus.Infof("Install node %s successful \n", node.ID)
 	if node.Role.HasRole("compute") {
-		fmt.Printf("You can do 'wtctl node up %s' to get this compute node to join the cluster workload \n", node.ID)
+		logrus.Infof("You can do 'wtctl node up %s' to get this compute node to join the cluster workload \n", node.ID)
 	}
 }
 
@@ -694,7 +588,7 @@ func addNodeCommand(c *cli.Context) error {
 		WriteHostsFile(c.String("hosts-file-path"), c.String("config-file-path"), nodes)
 		installNode(renode)
 	} else {
-		fmt.Printf("success add %s node %s \n you install it by running: wtctl node install %s \n", renode.Role, renode.ID, renode.ID)
+		logrus.Infof("success add %s node %s \n you install it by running: wtctl node install %s \n", renode.Role, renode.ID, renode.ID)
 	}
 	return nil
 }

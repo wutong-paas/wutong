@@ -22,16 +22,14 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/sirupsen/logrus"
-
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	endpoint "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
+	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
-	envoyv2 "github.com/wutong-paas/wutong/node/core/envoy/v2"
+	"github.com/sirupsen/logrus"
+	envoyv3 "github.com/wutong-paas/wutong/node/core/envoy/v3"
 	corev1 "k8s.io/api/core/v1"
 )
 
-//OneNodeClusterLoadAssignment one envoy node endpoints
+// OneNodeClusterLoadAssignment one envoy node endpoints
 func OneNodeClusterLoadAssignment(serviceAlias, namespace string, endpoints []*corev1.Endpoints, services []*corev1.Service) (clusterLoadAssignment []types.Resource) {
 	for i := range services {
 		if domain, ok := services[i].Annotations["domain"]; ok && domain != "" {
@@ -47,7 +45,7 @@ func OneNodeClusterLoadAssignment(serviceAlias, namespace string, endpoints []*c
 		clusterName := fmt.Sprintf("%s_%s_%s_%d", namespace, serviceAlias, destServiceAlias, service.Spec.Ports[0].Port)
 		selectEndpoint := getEndpointsByServiceName(endpoints, service.Name)
 		logrus.Debugf("select endpoints %d for service %s", len(selectEndpoint), service.Name)
-		var lendpoints []*endpoint.LocalityLbEndpoints // localityLbEndpoints just support only one content
+		var lendpoints []*endpointv3.LocalityLbEndpoints // localityLbEndpoints just support only one content
 		for _, en := range selectEndpoint {
 			var notReadyAddress *corev1.EndpointAddress
 			var notReadyPort *corev1.EndpointPort
@@ -70,18 +68,18 @@ func OneNodeClusterLoadAssignment(serviceAlias, namespace string, endpoints []*c
 						notreadyToPort = toport
 						notReadyPort = &subset.Ports[i]
 					}
-					getHealty := func() *endpoint.Endpoint_HealthCheckConfig {
-						return &endpoint.Endpoint_HealthCheckConfig{
+					getHealty := func() *endpointv3.Endpoint_HealthCheckConfig {
+						return &endpointv3.Endpoint_HealthCheckConfig{
 							PortValue: uint32(toport),
 						}
 					}
 					if len(subset.Addresses) > 0 {
-						var lbe []*endpoint.LbEndpoint
+						var lbe []*endpointv3.LbEndpoint
 						for _, address := range subset.Addresses {
-							envoyAddress := envoyv2.CreateSocketAddress(protocol, address.IP, uint32(toport))
-							lbe = append(lbe, &endpoint.LbEndpoint{
-								HostIdentifier: &endpoint.LbEndpoint_Endpoint{
-									Endpoint: &endpoint.Endpoint{
+							envoyAddress := envoyv3.CreateSocketAddress(protocol, address.IP, uint32(toport))
+							lbe = append(lbe, &endpointv3.LbEndpoint{
+								HostIdentifier: &endpointv3.LbEndpoint_Endpoint{
+									Endpoint: &endpointv3.Endpoint{
 										Address:           envoyAddress,
 										HealthCheckConfig: getHealty(),
 									},
@@ -89,25 +87,25 @@ func OneNodeClusterLoadAssignment(serviceAlias, namespace string, endpoints []*c
 							})
 						}
 						if len(lbe) > 0 {
-							lendpoints = append(lendpoints, &endpoint.LocalityLbEndpoints{LbEndpoints: lbe})
+							lendpoints = append(lendpoints, &endpointv3.LocalityLbEndpoints{LbEndpoints: lbe})
 						}
 					}
 				}
 			}
 			if len(lendpoints) == 0 && notReadyAddress != nil && notReadyPort != nil {
-				var lbe []*endpoint.LbEndpoint
-				envoyAddress := envoyv2.CreateSocketAddress(string(notReadyPort.Protocol), notReadyAddress.IP, uint32(notreadyToPort))
-				lbe = append(lbe, &endpoint.LbEndpoint{
-					HostIdentifier: &endpoint.LbEndpoint_Endpoint{
-						Endpoint: &endpoint.Endpoint{
+				var lbe []*endpointv3.LbEndpoint
+				envoyAddress := envoyv3.CreateSocketAddress(string(notReadyPort.Protocol), notReadyAddress.IP, uint32(notreadyToPort))
+				lbe = append(lbe, &endpointv3.LbEndpoint{
+					HostIdentifier: &endpointv3.LbEndpoint_Endpoint{
+						Endpoint: &endpointv3.Endpoint{
 							Address: envoyAddress,
 						},
 					},
 				})
-				lendpoints = append(lendpoints, &endpoint.LocalityLbEndpoints{LbEndpoints: lbe})
+				lendpoints = append(lendpoints, &endpointv3.LocalityLbEndpoints{LbEndpoints: lbe})
 			}
 		}
-		cla := &v2.ClusterLoadAssignment{
+		cla := &endpointv3.ClusterLoadAssignment{
 			ClusterName: clusterName,
 			Endpoints:   lendpoints,
 		}

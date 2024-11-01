@@ -28,18 +28,12 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/version"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/node/api/model"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	"github.com/wutong-paas/wutong/node/utils"
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
-
-func init() {
-	prometheus.MustRegister(version.NewCollector("node_exporter"))
-}
 
 // InstallNode install a node
 func InstallNode(w http.ResponseWriter, r *http.Request) {
@@ -114,16 +108,6 @@ func GetNode(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, node)
 }
 
-func getKubeletMessage(v *client.HostNode) string {
-
-	for _, condiction := range v.NodeStatus.Conditions {
-		if condiction.Type == "kubelet" {
-			return condiction.Message
-		}
-	}
-	return ""
-}
-
 // GetRuleNodes 获取分角色节点
 func GetRuleNodes(w http.ResponseWriter, r *http.Request) {
 	rule := chi.URLParam(r, "rule")
@@ -188,26 +172,6 @@ func CheckNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httputil.ReturnSuccess(r, w, &final)
-}
-func dealSeq(tasks []*model.ExecedTask) {
-	var firsts []*model.ExecedTask
-	var keymap = make(map[string]*model.ExecedTask)
-	for _, v := range tasks {
-		keymap[v.ID] = v
-		if len(v.Depends) == 0 {
-			v.Seq = 0
-			firsts = append(firsts, v)
-		}
-	}
-	for _, v := range firsts {
-		dealLoopSeq(v, keymap)
-	}
-}
-func dealLoopSeq(task *model.ExecedTask, keymap map[string]*model.ExecedTask) {
-	for _, next := range task.Next {
-		keymap[next].Seq = task.Seq + 1
-		dealLoopSeq(keymap[next], keymap)
-	}
 }
 
 // DeleteWutongNode 节点删除
@@ -337,7 +301,7 @@ func DownNode(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err := utils.APIHandleError{
 			Code: 402,
-			Err:  errors.New("Can not get node by nodeID"),
+			Err:  errors.New("can not get node by nodeID"),
 		}
 		err.Handle(r, w)
 		return
@@ -354,7 +318,7 @@ func DownNode(w http.ResponseWriter, r *http.Request) {
 			if count < 2 {
 				err := utils.APIHandleError{
 					Code: 403,
-					Err:  errors.New("manage node less two, can not down it."),
+					Err:  errors.New("manage node less two, can not down it"),
 				}
 				err.Handle(r, w)
 				return
@@ -467,10 +431,6 @@ func Instances(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, pods)
 }
 
-// 临时存在
-func outJSON(w http.ResponseWriter, data interface{}) {
-	outJSONWithCode(w, http.StatusOK, data)
-}
 func outRespSuccess(w http.ResponseWriter, bean interface{}, data []interface{}) {
 	outRespDetails(w, 200, "success", "成功", bean, data)
 	//m:=model.ResponseBody{}
@@ -500,20 +460,6 @@ func outRespDetails(w http.ResponseWriter, code int, msg, msgcn string, bean int
 	}
 	fmt.Fprint(w, s)
 }
-func outJSONWithCode(w http.ResponseWriter, httpCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	s := ""
-	b, err := json.Marshal(data)
-	fmt.Println(string(b))
-	if err != nil {
-		s = `{"error":"json.Marshal error"}`
-		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		s = string(b)
-		w.WriteHeader(httpCode)
-	}
-	fmt.Fprint(w, s)
-}
 
 // GetAllNodeHealth get all node health
 func GetAllNodeHealth(w http.ResponseWriter, r *http.Request) {
@@ -529,7 +475,7 @@ func GetAllNodeHealth(w http.ResponseWriter, r *http.Request) {
 			status, ok := StatusMap[string(v.Type)]
 			if !ok {
 				StatusMap[string(v.Type)] = []map[string]string{
-					map[string]string{
+					{
 						"type":     string(v.Type),
 						"status":   string(v.Status),
 						"message":  string(v.Message),

@@ -26,7 +26,9 @@ import (
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/build"
-	"github.com/oam-dev/kubevela/pkg/cue/model"
+	"cuelang.org/go/cue/cuecontext"
+	"cuelang.org/go/cue/parser"
+	"github.com/kubevela/workflow/pkg/cue/model"
 	"github.com/pkg/errors"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -79,36 +81,47 @@ func NewTemplateContext(as *v1.AppService, template string, params interface{}) 
 
 func (c *TemplateContext) GenerateComponentManifests() ([]*unstructured.Unstructured, error) {
 	bi := build.NewContext().NewInstance("", nil)
-	if err := bi.AddFile("-", c.template); err != nil {
+	templateFile, err := parser.ParseFile("-", c.template)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "failed to parse cue template of component %s", c.componentID)
+	}
+	if err := bi.AddSyntax(templateFile); err != nil {
 		return nil, errors.WithMessagef(err, "invalid cue template of component %s", c.componentID)
 	}
-	var paramFile = "parameter: {}"
+	var param = "parameter: {}"
 	if c.params != nil {
 		bt, err := json.Marshal(c.params)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "marshal parameter of component %s", c.componentID)
 		}
 		if string(bt) != "null" {
-			paramFile = fmt.Sprintf("%s: %s", ParameterTag, string(bt))
+			param = fmt.Sprintf("%s: %s", ParameterTag, string(bt))
 		}
 	}
-	if err := bi.AddFile("parameter", paramFile); err != nil {
+	paramFile, err := parser.ParseFile("parameter", param)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "invalid cue parameter of component %s", c.componentID)
+	}
+	if err := bi.AddSyntax(paramFile); err != nil {
 		return nil, errors.WithMessagef(err, "invalid parameter of component %s", c.componentID)
 	}
 
-	if err := bi.AddFile("-", c.ExtendedContextFile()); err != nil {
-		return nil, err
-	}
-	var r cue.Runtime
-	inst, err := r.Build(bi)
+	context := c.ExtendedContextFile()
+	contextFile, err := parser.ParseFile("-", context)
 	if err != nil {
+		return nil, errors.WithMessagef(err, "failed to parse cue context of component %s", c.componentID)
+	}
+
+	if err := bi.AddSyntax(contextFile); err != nil {
 		return nil, err
 	}
-	if err := inst.Value().Validate(); err != nil {
+
+	cueValue := cuecontext.New().BuildInstance(bi)
+	if err := cueValue.Validate(); err != nil {
 		return nil, errors.WithMessagef(err, "invalid cue template of component %s after merge parameter and context", c.componentID)
 	}
 
-	output := inst.Lookup(OutputFieldName)
+	output := cueValue.LookupPath(cue.ParsePath(OutputFieldName))
 
 	base, err := model.NewBase(output)
 	if err != nil {
@@ -121,29 +134,30 @@ func (c *TemplateContext) GenerateComponentManifests() ([]*unstructured.Unstruct
 
 	manifests := []*unstructured.Unstructured{workload}
 
-	outputs := inst.Lookup(OutputsFieldName)
+	outputs := cueValue.LookupPath(cue.ParsePath(OutputsFieldName))
 	if !outputs.Exists() {
 		return manifests, nil
 	}
-	st, err := outputs.Struct()
+
+	fields, err := outputs.Value().Fields()
 	if err != nil {
 		return nil, errors.WithMessagef(err, "invalid outputs of workload %s", c.componentID)
 	}
-	for i := 0; i < st.Len(); i++ {
-		fieldInfo := st.Field(i)
-		if fieldInfo.IsDefinition || fieldInfo.IsHidden || fieldInfo.IsOptional {
+	for fields.Next() {
+		if fields.Selector().IsDefinition() || fields.Selector().PkgPath() != "" || fields.IsOptional() {
 			continue
 		}
-		other, err := model.NewOther(fieldInfo.Value)
+		other, err := model.NewOther(fields.Value())
 		if err != nil {
-			return nil, errors.WithMessagef(err, "invalid outputs(%s) of workload %s", fieldInfo.Name, c.componentID)
+			return nil, errors.WithMessagef(err, "invalid outputs of workload %s", c.componentID)
 		}
 		othermanifest, err := other.Unstructured()
 		if err != nil {
-			return nil, errors.WithMessagef(err, "invalid outputs(%s) of workload %s", fieldInfo.Name, c.componentID)
+			return nil, errors.WithMessagef(err, "invalid outputs of workload %s", c.componentID)
 		}
 		manifests = append(manifests, othermanifest)
 	}
+
 	return manifests, nil
 }
 
@@ -160,6 +174,7 @@ func (c *TemplateContext) ExtendedContextFile() string {
 	buff += fmt.Sprintf(ContextNamespace+": \"%s\"\n", c.namespace)
 	buff += fmt.Sprintf(ContextAppID+": \"%s\"\n", c.appID)
 	buff += fmt.Sprintf(ContextID+": \"%s\"\n", c.componentID)
+
 	return fmt.Sprintf("context: %s", structMarshal(buff))
 }
 

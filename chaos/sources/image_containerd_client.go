@@ -19,11 +19,11 @@ import (
 	"github.com/containerd/containerd/namespaces"
 	criconfig "github.com/containerd/containerd/pkg/cri/config"
 	"github.com/containerd/containerd/pkg/progress"
-	"github.com/containerd/containerd/platforms"
-	refdocker "github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/containerd/containerd/remotes/docker/config"
+	"github.com/containerd/platforms"
+	"github.com/distribution/reference"
 	dockercli "github.com/docker/docker/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pelletier/go-toml"
@@ -71,7 +71,7 @@ type containerdImageCliImpl struct {
 }
 
 func (c *containerdImageCliImpl) CheckIfImageExists(imageName string) (imageRef string, exists bool, err error) {
-	named, err := refdocker.ParseDockerRef(imageName)
+	named, err := reference.ParseDockerRef(imageName)
 	if err != nil {
 		return "", false, fmt.Errorf("parse image %s: %v", imageName, err)
 	}
@@ -103,12 +103,12 @@ func (c *containerdImageCliImpl) GetDockerClient() *dockercli.Client {
 
 func (c *containerdImageCliImpl) ImagePull(image string, username, password string, logger event.Logger, timeout int) (*ocispec.ImageConfig, error) {
 	printLog(logger, "info", fmt.Sprintf("开始拉取镜像：%s", image), map[string]string{"step": "pullimage"})
-	named, err := refdocker.ParseDockerRef(image)
+	named, err := reference.ParseDockerRef(image)
 	if err != nil {
 		return nil, err
 	}
-	reference := named.String()
-	ongoing := ctrcontent.NewJobs(reference)
+	ref := named.String()
+	ongoing := ctrcontent.NewJobs(ref)
 	ctx := namespaces.WithNamespace(context.Background(), Namespace)
 	pctx, stopProgress := context.WithCancel(ctx)
 	progress := make(chan struct{})
@@ -125,7 +125,7 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 		return nil, nil
 	})
 
-	registry := refdocker.Domain(named)
+	registry := reference.Domain(named)
 	registryInfo := getRegistryInfo(registry)
 
 	hostOpt := config.HostOptions{
@@ -167,13 +167,13 @@ func (c *containerdImageCliImpl) ImagePull(image string, username, password stri
 		containerd.WithResolver(docker.NewResolver(options)),
 	}
 	var img containerd.Image
-	img, err = c.client.Pull(pctx, reference, opts...)
+	img, err = c.client.Pull(pctx, ref, opts...)
 	stopProgress()
 	if err != nil {
 		return nil, err
 	}
 	<-progress
-	printLog(logger, "info", fmt.Sprintf("成功拉取镜像：%s", reference), map[string]string{"step": "pullimage"})
+	printLog(logger, "info", fmt.Sprintf("成功拉取镜像：%s", ref), map[string]string{"step": "pullimage"})
 	return getImageConfig(ctx, img)
 }
 
@@ -261,7 +261,7 @@ func getImageConfig(ctx context.Context, image containerd.Image) (*ocispec.Image
 
 func (c *containerdImageCliImpl) ImagePush(image, user, pass string, logger event.Logger, timeout int) error {
 	printLog(logger, "info", fmt.Sprintf("开始推送镜像：%s", image), map[string]string{"step": "pushimage"})
-	named, err := refdocker.ParseDockerRef(image)
+	named, err := reference.ParseDockerRef(image)
 	if err != nil {
 		return err
 	}
@@ -358,12 +358,12 @@ func (c *containerdImageCliImpl) ImagePush(image, user, pass string, logger even
 
 // ImageTag change docker image tag
 func (c *containerdImageCliImpl) ImageTag(source, target string, logger event.Logger, timeout int) error {
-	srcNamed, err := refdocker.ParseDockerRef(source)
+	srcNamed, err := reference.ParseDockerRef(source)
 	if err != nil {
 		return err
 	}
 	srcImage := srcNamed.String()
-	targetNamed, err := refdocker.ParseDockerRef(target)
+	targetNamed, err := reference.ParseDockerRef(target)
 	if err != nil {
 		return err
 	}
@@ -426,7 +426,7 @@ func (c *containerdImageCliImpl) ImagesPullAndPush(sourceImage, targetImage, use
 
 // ImageRemove remove image
 func (c *containerdImageCliImpl) ImageRemove(image string) error {
-	named, err := refdocker.ParseDockerRef(image)
+	named, err := reference.ParseDockerRef(image)
 	if err != nil {
 		return err
 	}
@@ -434,8 +434,9 @@ func (c *containerdImageCliImpl) ImageRemove(image string) error {
 	ctx := namespaces.WithNamespace(context.Background(), Namespace)
 	imageStore := c.client.ImageService()
 	err = imageStore.Delete(ctx, reference)
-	if err != nil {
-		logrus.Errorf("image remove ")
+	if err != nil && !errdefs.IsNotFound(err) {
+		logrus.Errorf("failed to remove image %s: %v", reference, err)
+		return nil
 	}
 	return err
 }
@@ -443,7 +444,7 @@ func (c *containerdImageCliImpl) ImageRemove(image string) error {
 // ImageSave save image to tar file
 // destination destination file name eg. /tmp/xxx.tar
 func (c *containerdImageCliImpl) ImageSave(image, destination string) error {
-	named, err := refdocker.ParseDockerRef(image)
+	named, err := reference.ParseDockerRef(image)
 	if err != nil {
 		return err
 	}

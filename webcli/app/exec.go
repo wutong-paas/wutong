@@ -28,9 +28,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/barnettZQG/gotty/server"
 	"github.com/kr/pty"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/gotty/server"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 )

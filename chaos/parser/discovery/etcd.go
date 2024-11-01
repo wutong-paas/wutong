@@ -25,8 +25,8 @@ import (
 	"strings"
 	"time"
 
-	c "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
+	c "go.etcd.io/etcd/client/v3"
 )
 
 // Etcd implements Discoverier

@@ -26,9 +26,9 @@ import (
 	url2 "net/url"
 	"strings"
 
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/wutong-paas/wutong/node/utils"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 	v1 "k8s.io/api/core/v1" //"github.com/sirupsen/logrus"
 )
 

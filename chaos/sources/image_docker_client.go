@@ -10,9 +10,10 @@ import (
 	"time"
 
 	"github.com/containerd/containerd"
-	"github.com/docker/distribution/reference"
-	dtypes "github.com/docker/docker/api/types"
+	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/filters"
+	dtypes "github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	dockercli "github.com/docker/docker/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
@@ -54,7 +55,7 @@ func (d *dockerImageCliImpl) CheckIfImageExists(imageName string) (imageRef stri
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	imageSummarys, err := d.client.ImageList(ctx, dtypes.ImageListOptions{
+	imageSummarys, err := d.client.ImageList(ctx, dtypes.ListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{Key: "reference", Value: imageFullName}),
 	})
 	if err != nil {
@@ -79,9 +80,9 @@ func (d *dockerImageCliImpl) GetDockerClient() *dockercli.Client {
 
 func (d *dockerImageCliImpl) ImagePull(image string, username, password string, logger event.Logger, timeout int) (*ocispec.ImageConfig, error) {
 	printLog(logger, "info", fmt.Sprintf("开始拉取镜像：%s", image), map[string]string{"step": "pullimage"})
-	var pullipo = dtypes.ImagePullOptions{}
+	var pullipo = dtypes.PullOptions{}
 	if username != "" && password != "" {
-		auth, err := EncodeAuthToBase64(dtypes.AuthConfig{Username: username, Password: password})
+		auth, err := EncodeAuthToBase64(registry.AuthConfig{Username: username, Password: password})
 		if err != nil {
 			logrus.Errorf("make auth base63 push image error: %s", err.Error())
 			printLog(logger, "error", "生成获取镜像的 Token 失败", map[string]string{"step": "builder-exector", "status": "failure"})
@@ -172,8 +173,8 @@ func (d *dockerImageCliImpl) ImagePush(image, user, pass string, logger event.Lo
 	if err != nil {
 		return err
 	}
-	var opts dtypes.ImagePushOptions
-	pushauth, err := EncodeAuthToBase64(dtypes.AuthConfig{
+	var opts dtypes.PushOptions
+	pushauth, err := EncodeAuthToBase64(registry.AuthConfig{
 		Username:      user,
 		Password:      pass,
 		ServerAddress: reference.Domain(ref),
@@ -268,7 +269,7 @@ func (d *dockerImageCliImpl) ImagesPullAndPush(sourceImage, targetImage, usernam
 func (d *dockerImageCliImpl) ImageRemove(image string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	_, err := d.client.ImageRemove(ctx, image, dtypes.ImageRemoveOptions{Force: true})
+	_, err := d.client.ImageRemove(ctx, image, dtypes.RemoveOptions{Force: true})
 	return err
 }
 

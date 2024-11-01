@@ -5,18 +5,16 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd"
 	containerdEventstypes "github.com/containerd/containerd/api/events"
 	"github.com/containerd/containerd/events"
-	"github.com/containerd/typeurl"
+	"github.com/containerd/typeurl/v2"
 	dockercli "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-
-	"time"
-
 	"github.com/wutong-paas/wutong/util/criutil"
+	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 

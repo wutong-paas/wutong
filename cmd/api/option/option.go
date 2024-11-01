@@ -19,8 +19,6 @@
 package option
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
@@ -139,7 +137,7 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 func (a *APIServer) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
-		fmt.Println("set log level error." + err.Error())
+		logrus.Errorf("failed to parse log level: %s", err)
 		return
 	}
 	logrus.Infof("Etcd Server : %+v", a.Config.EtcdEndpoint)

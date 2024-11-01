@@ -29,7 +29,7 @@ import (
 	"github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/node/api/model"
 	utilhttp "github.com/wutong-paas/wutong/util/http"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // MonitorInterface cluster api

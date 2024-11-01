@@ -21,11 +21,11 @@ package etcd
 import (
 	"context"
 
-	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 )
 
-//HandleEtcdError 处理etcd错误
+// HandleEtcdError 处理etcd错误
 func HandleEtcdError(err error) {
 	switch err {
 	case context.Canceled:

@@ -20,6 +20,12 @@ package sources
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/sha1"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -28,23 +34,13 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-
 	"github.com/sirupsen/logrus"
-
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha1"
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/pem"
-
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/util"
-	netssh "golang.org/x/crypto/ssh"
-	sshkey "golang.org/x/crypto/ssh"
+	stdssh "golang.org/x/crypto/ssh"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/client"
 	githttp "gopkg.in/src-d/go-git.v4/plumbing/transport/http"
@@ -151,7 +147,7 @@ Loop:
 			}
 			return nil, auerr
 		}
-		sshAuth.HostKeyCallbackHelper.HostKeyCallback = netssh.InsecureIgnoreHostKey()
+		sshAuth.HostKeyCallbackHelper.HostKeyCallback = stdssh.InsecureIgnoreHostKey()
 		opts.Auth = sshAuth
 		rs, err = git.PlainCloneContext(ctx, sourceDir, false, opts)
 	} else {
@@ -247,20 +243,6 @@ Loop:
 	}
 	return rs, err
 }
-func retryAuth(ep *transport.Endpoint, csi CodeSourceInfo) (transport.AuthMethod, error) {
-	switch ep.Protocol {
-	case "ssh":
-		home, _ := Home()
-		sshAuth, err := ssh.NewPublicKeysFromFile("git", path.Join(home, "/.ssh/id_rsa"), "")
-		if err != nil {
-			return nil, err
-		}
-		return sshAuth, nil
-	case "http", "https":
-		//return http.NewBasicAuth(csi.User, csi.Password), nil
-	}
-	return nil, nil
-}
 
 // GitPull git pull code
 func GitPull(csi CodeSourceInfo, sourceDir string, logger event.Logger, timeout int) (*git.Repository, error) {
@@ -298,7 +280,7 @@ Loop:
 			}
 			return nil, auerr
 		}
-		sshAuth.HostKeyCallbackHelper.HostKeyCallback = netssh.InsecureIgnoreHostKey()
+		sshAuth.HostKeyCallbackHelper.HostKeyCallback = stdssh.InsecureIgnoreHostKey()
 		opts.Auth = sshAuth
 	} else {
 		// only proxy github
@@ -460,18 +442,17 @@ func GetPublicKey(tenantEnvID string) string {
 	}
 	Private, Public, err := MakeSSHKeyPair()
 	if err != nil {
-		logrus.Error("MakeSSHKeyPairError:", err)
+		logrus.Errorf("failed to make ssh key pair: %s", err)
 	}
 	PrivateKeyFile, err := os.Create(path.Join(home, "/.ssh/"+PrivateKey))
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("failed to create private key file: %s", err)
 	} else {
 		PrivateKeyFile.WriteString(Private)
 	}
 	PublicKeyFile, err2 := os.Create(path.Join(home, "/.ssh/"+PublicKey))
-
 	if err2 != nil {
-		fmt.Println(err)
+		logrus.Errorf("failed to create public key file: %s", err2)
 	} else {
 		PublicKeyFile.WriteString(Public)
 	}
@@ -500,11 +481,11 @@ func EncodePrivateKey(private *rsa.PrivateKey) []byte {
 
 // EncodeSSHKey EncodeSSHKey
 func EncodeSSHKey(public *rsa.PublicKey) ([]byte, error) {
-	publicKey, err := sshkey.NewPublicKey(public)
+	publicKey, err := stdssh.NewPublicKey(public)
 	if err != nil {
 		return nil, err
 	}
-	return sshkey.MarshalAuthorizedKey(publicKey), nil
+	return stdssh.MarshalAuthorizedKey(publicKey), nil
 }
 
 // MakeSSHKeyPair make ssh key

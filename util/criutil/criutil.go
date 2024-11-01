@@ -8,8 +8,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/util"
+	"k8s.io/cri-client/pkg/util"
 )
 
 func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn, error) {
@@ -20,7 +21,8 @@ func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn,
 	var conn *grpc.ClientConn
 	for indx, endPoint := range endPoints {
 		logrus.Debugf("connect using endpoint '%s' with '%s' timeout", endPoint, timeout)
-		addr, dialer, err := util.GetAddressAndDialer(endPoint)
+
+		addr, d, err := util.GetAddressAndDialer(endPoint)
 		if err != nil {
 			if indx == endPointsLen-1 {
 				return nil, err
@@ -28,7 +30,10 @@ func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn,
 			logrus.Error(err)
 			continue
 		}
-		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(timeout), grpc.WithContextDialer(dialer))
+
+		conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		), grpc.WithContextDialer(d))
 		if err != nil {
 			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
 			if indx == endPointsLen-1 {
@@ -53,7 +58,7 @@ func GetRuntimeClient(ctx context.Context, endpoint string, timeout time.Duratio
 	return runtimeClient, conn, nil
 }
 
-func getRuntimeClientConnection(ctx context.Context, endpoint string, timeout time.Duration) (*grpc.ClientConn, error) {
+func getRuntimeClientConnection(_ context.Context, endpoint string, timeout time.Duration) (*grpc.ClientConn, error) {
 	return getConnection([]string{endpoint}, timeout)
 }
 

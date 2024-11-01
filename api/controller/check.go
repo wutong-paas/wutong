@@ -32,7 +32,7 @@ import (
 // Check service check
 // swagger:operation POST /v2/tenants/{tenant_name}/envs/{tenant_env_name}/servicecheck v2 serviceCheck
 //
-// 应用构建源检测，支持docker run ,docker compose, source code
+// 应用构建源检测，支持docker run, source code
 //
 // service check
 //

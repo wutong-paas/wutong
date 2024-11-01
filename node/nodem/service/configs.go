@@ -27,7 +27,7 @@ import (
 	"github.com/wutong-paas/wutong/util"
 
 	"github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // LoadServicesFromLocal load all service config from config file

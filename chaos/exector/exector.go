@@ -25,25 +25,22 @@ import (
 	"sync"
 	"time"
 
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
-
 	"github.com/wutong-paas/wutong/chaos/job"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/chaos/option"
 	"github.com/wutong-paas/wutong/db"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
-	"github.com/wutong-paas/wutong/util"
-
-	dbmodel "github.com/wutong-paas/wutong/db/model"
 	mqclient "github.com/wutong-paas/wutong/mq/client"
+	"github.com/wutong-paas/wutong/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	workermodel "github.com/wutong-paas/wutong/worker/discover/model"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // MetricTaskNum task number
@@ -265,7 +262,6 @@ func (e *exectorManager) exec(task *pb.TaskMessage) error {
 	defer event.CloseLogger(worker.GetLogger().Event())
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
 			debug.PrintStack()
 			worker.GetLogger().Error(util.Translation("Please try again or contact customer service"), map[string]string{"step": "callback", "status": "failure"})
 			worker.ErrorCallBack(fmt.Errorf("%s", r))
@@ -287,7 +283,6 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 	defer event.CloseLogger(i.Logger.Event())
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
 			debug.PrintStack()
 			i.Logger.Error("后端服务开小差，请稍候重试。", map[string]string{"step": "callback", "status": "failure"})
 		}
@@ -348,7 +343,6 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 	defer event.CloseLogger(i.Logger.Event())
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(r)
 			debug.PrintStack()
 			i.Logger.Error("后端服务开小差，请稍候重试。", map[string]string{"step": "callback", "status": "failure"})
 		}
@@ -404,7 +398,6 @@ func (e *exectorManager) buildFromMarketSlug(task *pb.TaskMessage) {
 		defer event.CloseLogger(i.Logger.Event())
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Println(r)
 				debug.PrintStack()
 				i.Logger.Error("后端服务开小差，请稍候重试。", map[string]string{"step": "callback", "status": "failure"})
 			}
@@ -494,7 +487,6 @@ func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 		defer event.CloseLogger(i.Logger.Event())
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Println(r)
 				debug.PrintStack()
 				i.Logger.Error("后端服务开小差，请稍候重试。", map[string]string{"step": "callback", "status": "failure"})
 			}

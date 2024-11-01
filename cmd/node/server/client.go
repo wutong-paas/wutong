@@ -25,19 +25,13 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/wutong-paas/wutong/util"
-
 	"github.com/sirupsen/logrus"
-
-	"github.com/wutong-paas/wutong/event"
-
-	"github.com/wutong-paas/wutong/chaos/parser"
-
-	"github.com/wutong-paas/wutong/node/nodem/service"
-
-	"github.com/wutong-paas/wutong/cmd"
-
 	"github.com/urfave/cli"
+	"github.com/wutong-paas/wutong/chaos/parser"
+	"github.com/wutong-paas/wutong/cmd"
+	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/node/nodem/service"
+	"github.com/wutong-paas/wutong/util"
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
 
@@ -46,7 +40,6 @@ import (
 // node reg : Register the daemon configuration for node
 // node run: daemon start node server
 func ParseClientCommnad(args []string) {
-
 	if len(args) > 1 {
 		switch args[1] {
 		case "version":
@@ -57,34 +50,34 @@ func ParseClientCommnad(args []string) {
 				switch args[2] {
 				case "start":
 					if len(args) < 4 {
-						fmt.Printf("Parameter error")
+						logrus.Error("Parameter error")
 					}
 					//enable a service
 					serviceName := args[3]
 					if err := controller.startService(serviceName); err != nil {
-						fmt.Printf("start service %s failure %s", serviceName, err.Error())
+						logrus.Errorf("start service %s failure %s", serviceName, err.Error())
 						os.Exit(1)
 					}
-					fmt.Printf("start service %s success", serviceName)
+					logrus.Infof("start service %s success", serviceName)
 					os.Exit(0)
 				case "stop":
 					if len(args) < 4 {
-						fmt.Printf("Parameter error")
+						logrus.Error("Parameter error")
 					}
 					//disable a service
 					serviceName := args[3]
 					if err := controller.stopService(serviceName); err != nil {
-						fmt.Printf("stop service %s failure %s", serviceName, err.Error())
+						logrus.Errorf("stop service %s failure %s", serviceName, err.Error())
 						os.Exit(1)
 					}
-					fmt.Printf("stop service %s success", serviceName)
+					logrus.Infof("stop service %s success", serviceName)
 					os.Exit(0)
 				case "update":
 					if err := controller.updateConfig(); err != nil {
-						fmt.Printf("update service config failure %s", err.Error())
+						logrus.Errorf("update service config failure %s", err.Error())
 						os.Exit(1)
 					}
-					fmt.Printf("update service config success")
+					logrus.Infof("update service config success")
 					os.Exit(0)
 				}
 			}

@@ -19,8 +19,6 @@
 package option
 
 import (
-	"fmt"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 )
@@ -71,7 +69,7 @@ func (a *WebCliServer) AddFlags(fs *pflag.FlagSet) {
 func (a *WebCliServer) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
-		fmt.Println("set log level error." + err.Error())
+		logrus.Errorf("failed to parse log level: %v", err)
 		return
 	}
 	logrus.SetLevel(level)

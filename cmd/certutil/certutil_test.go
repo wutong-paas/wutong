@@ -41,7 +41,7 @@ func Test_crt(t *testing.T) {
 	crtinfo.CrtName = "../../test/ssl/api_server.pem"
 	crtinfo.KeyName = "../../test/ssl/api_server.key"
 	crtinfo.Names = []pkix.AttributeTypeAndValue{
-		pkix.AttributeTypeAndValue{
+		{
 			Type:  asn1.ObjectIdentifier{2, 1, 3},
 			Value: "MAC_ADDR",
 		},

@@ -26,7 +26,6 @@ import (
 
 	"github.com/wutong-paas/wutong/gateway/cluster"
 
-	client "github.com/coreos/etcd/clientv3"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/cmd/gateway/option"
@@ -35,6 +34,7 @@ import (
 	"github.com/wutong-paas/wutong/gateway/store"
 	v1 "github.com/wutong-paas/wutong/gateway/v1"
 	"github.com/wutong-paas/wutong/util/ingress-nginx/task"
+	client "go.etcd.io/etcd/client/v3"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/flowcontrol"

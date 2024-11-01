@@ -21,13 +21,11 @@ package volume
 import (
 	"fmt"
 	"path"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/db"
-	"github.com/wutong-paas/wutong/db/model"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,13 +37,13 @@ import (
 type Volume interface {
 	CreateVolume(define *Define) error       // use serviceVolume
 	CreateDependVolume(define *Define) error // use serviceMountR
-	setBaseInfo(as *v1.AppService, serviceVolume *model.TenantEnvServiceVolume, serviceMountR *model.TenantEnvServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager)
+	setBaseInfo(as *v1.AppService, serviceVolume *dbmodel.TenantEnvServiceVolume, serviceMountR *dbmodel.TenantEnvServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager)
 }
 
 // NewVolumeManager create volume
 func NewVolumeManager(as *v1.AppService,
-	serviceVolume *model.TenantEnvServiceVolume,
-	serviceMountR *model.TenantEnvServiceMountRelation,
+	serviceVolume *dbmodel.TenantEnvServiceVolume,
+	serviceMountR *dbmodel.TenantEnvServiceMountRelation,
 	version *dbmodel.VersionInfo,
 	envs []corev1.EnvVar,
 	envVarSecrets []*corev1.Secret,
@@ -82,13 +80,13 @@ func NewVolumeManager(as *v1.AppService,
 // Base volume base
 type Base struct {
 	as        *v1.AppService
-	svm       *model.TenantEnvServiceVolume
-	smr       *model.TenantEnvServiceMountRelation
+	svm       *dbmodel.TenantEnvServiceVolume
+	smr       *dbmodel.TenantEnvServiceMountRelation
 	version   *dbmodel.VersionInfo
 	dbmanager db.Manager
 }
 
-func (b *Base) setBaseInfo(as *v1.AppService, serviceVolume *model.TenantEnvServiceVolume, serviceMountR *model.TenantEnvServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager) {
+func (b *Base) setBaseInfo(as *v1.AppService, serviceVolume *dbmodel.TenantEnvServiceVolume, serviceMountR *dbmodel.TenantEnvServiceMountRelation, version *dbmodel.VersionInfo, dbmanager db.Manager) {
 	b.as = as
 	b.svm = serviceVolume
 	b.smr = serviceMountR
@@ -96,11 +94,7 @@ func (b *Base) setBaseInfo(as *v1.AppService, serviceVolume *model.TenantEnvServ
 	b.dbmanager = dbmanager
 }
 
-func prepare() {
-	// TODO prepare volume info, create volume just create volume and return volumeMount, do not process anything else
-}
-
-func newVolumeClaim(name, volumePath, accessMode, storageClassName string, capacity int64, labels, annotations map[string]string) *corev1.PersistentVolumeClaim {
+func newVolumeClaim(name, _, accessMode, storageClassName string, capacity int64, labels, annotations map[string]string) *corev1.PersistentVolumeClaim {
 	logrus.Debugf("volume annotaion is %+v", annotations)
 	if capacity == 0 {
 		logrus.Warnf("claim[%s] capacity is 0, set 20G default", name)
@@ -117,7 +111,7 @@ func newVolumeClaim(name, volumePath, accessMode, storageClassName string, capac
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes:      []corev1.PersistentVolumeAccessMode{parseAccessMode(accessMode)},
 			StorageClassName: &storageClassName,
-			Resources: corev1.ResourceRequirements{
+			Resources: corev1.VolumeResourceRequirements{
 				Requests: map[corev1.ResourceName]resource.Quantity{
 					corev1.ResourceStorage: resourceStorage,
 				},
@@ -147,7 +141,6 @@ func parseAccessMode(accessMode string) corev1.PersistentVolumeAccessMode {
 
 // Define define volume
 type Define struct {
-	as           *v1.AppService
 	volumeMounts []corev1.VolumeMount
 	volumes      []corev1.Volume
 }
@@ -255,87 +248,6 @@ func (v *Define) SetVolumeCMap(cmap *corev1.ConfigMap, k, p string, isReadOnly b
 
 	v.volumeMounts = append(v.volumeMounts, vm)
 	v.volumes = append(v.volumes, vo)
-}
-
-func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmodel.TenantEnvServicesPort) (re []corev1.EnvVar) {
-	defDomain := fmt.Sprintf(".%s.%s.", as.ServiceAlias, as.TenantEnvName)
-	httpRules, _ := dbmanager.HTTPRuleDao().ListByServiceID(as.ServiceID)
-	portDomainEnv := make(map[int][]corev1.EnvVar)
-	portProtocolEnv := make(map[int][]corev1.EnvVar)
-	for i := range httpRules {
-		rule := httpRules[i]
-		portDomainEnv[rule.ContainerPort] = append(portDomainEnv[rule.ContainerPort], corev1.EnvVar{
-			Name:  fmt.Sprintf("DOMAIN_%d", rule.ContainerPort),
-			Value: rule.Domain,
-		})
-		portProtocolEnv[rule.ContainerPort] = append(portProtocolEnv[rule.ContainerPort], corev1.EnvVar{
-			Name: fmt.Sprintf("DOMAIN_PROTOCOL_%d", rule.ContainerPort),
-			Value: func() string {
-				if rule.CertificateID != "" {
-					return "https"
-				}
-				return "http"
-			}(),
-		})
-	}
-	var portInts []int
-	for _, port := range ports {
-		if *port.IsOuterService {
-			portInts = append(portInts, port.ContainerPort)
-		}
-	}
-	sort.Ints(portInts)
-	var gloalDomain, gloalDomainProcotol string
-	var firstDomain, firstDomainProcotol string
-	for _, p := range portInts {
-		if len(portDomainEnv[p]) == 0 {
-			continue
-		}
-		var portDomain, portDomainProcotol string
-		for i, renv := range portDomainEnv[p] {
-			//custom http rule
-			if !strings.Contains(renv.Value, defDomain) {
-				if gloalDomain == "" {
-					gloalDomain = renv.Value
-					gloalDomainProcotol = portProtocolEnv[p][i].Value
-				}
-				portDomain = renv.Value
-				portDomainProcotol = portProtocolEnv[p][i].Value
-				break
-			}
-			if firstDomain == "" {
-				firstDomain = renv.Value
-				firstDomainProcotol = portProtocolEnv[p][i].Value
-			}
-		}
-		if portDomain == "" {
-			portDomain = portDomainEnv[p][0].Value
-			portDomainProcotol = portProtocolEnv[p][0].Value
-		}
-		re = append(re, corev1.EnvVar{
-			Name:  fmt.Sprintf("DOMAIN_%d", p),
-			Value: portDomain,
-		})
-		re = append(re, corev1.EnvVar{
-			Name:  fmt.Sprintf("DOMAIN_PROTOCOL_%d", p),
-			Value: portDomainProcotol,
-		})
-	}
-	if gloalDomain == "" {
-		gloalDomain = firstDomain
-		gloalDomainProcotol = firstDomainProcotol
-	}
-	if gloalDomain != "" {
-		re = append(re, corev1.EnvVar{
-			Name:  "DOMAIN",
-			Value: gloalDomain,
-		})
-		re = append(re, corev1.EnvVar{
-			Name:  "DOMAIN_PROTOCOL",
-			Value: gloalDomainProcotol,
-		})
-	}
-	return
 }
 
 // RewriteHostPathInWindows rewrite host path

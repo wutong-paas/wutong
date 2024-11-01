@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/pkg/transport"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/config/configs"
 	"github.com/wutong-paas/wutong/pkg/gogo"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 )
 

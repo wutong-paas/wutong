@@ -43,6 +43,7 @@ type EventLogRPCServer struct {
 	messageChan  chan []byte
 	listenErr    chan error
 	lis          net.Listener
+	pb.UnimplementedEventLogServer
 }
 
 // NewServer server

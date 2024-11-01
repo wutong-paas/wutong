@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
+	kubevortclonev1alpha1 "kubevirt.io/api/clone/v1alpha1"
 	kubevirtcorev1 "kubevirt.io/api/core/v1"
 )
 
@@ -134,4 +135,24 @@ func DeleteKubeVirtVMI(dynamicClient dynamic.Interface, namespace, name string) 
 		return nil
 	}
 	return err
+}
+
+func CreateKubevirtVMClone(dynamicClient dynamic.Interface, vmclone *kubevortclonev1alpha1.VirtualMachineClone) (*kubevortclonev1alpha1.VirtualMachineClone, error) {
+	if vmclone == nil {
+		return vmclone, fmt.Errorf("vmclone is nil")
+	}
+	unstructuredVM, err := runtime.DefaultUnstructuredConverter.ToUnstructured(vmclone)
+	if err != nil {
+		return vmclone, err
+	}
+
+	unstructuredVMObj := &unstructured.Unstructured{Object: unstructuredVM}
+
+	createdObj, err := dynamicClient.Resource(vmres).Namespace(vmclone.Namespace).Create(context.Background(), unstructuredVMObj, metav1.CreateOptions{})
+	if err != nil {
+		return vmclone, err
+	}
+	createdVMClone := &kubevortclonev1alpha1.VirtualMachineClone{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(createdObj.Object, vmclone)
+	return createdVMClone, err
 }

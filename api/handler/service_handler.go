@@ -154,6 +154,7 @@ type ServiceHandler interface {
 	AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.AddVMVolumeRequest) error
 	DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volumeName string) error
 	RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID string) error
+	CloneVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CloneVMRequest) error
 
 	// Scheduling
 	GetServiceSchedulingDetails(serviceID string) (*api_model.GetServiceSchedulingDetailsResponse, error)

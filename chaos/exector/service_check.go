@@ -23,8 +23,6 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/ghodss/yaml"
-
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/parser"
@@ -41,7 +39,6 @@ type ServiceCheckInput struct {
 	// 检测来源定义，
 	// 代码： https://github.com/shurcooL/githubql.git master
 	// docker-run: docker run --name xxx nginx:latest nginx
-	// docker-compose: compose全文
 	SourceBody  string `json:"source_body"`
 	Username    string `json:"username"`
 	Password    string `json:"password"`
@@ -103,18 +100,6 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 	switch input.SourceType {
 	case "docker-run":
 		pr = parser.CreateDockerRunOrImageParse(input.Username, input.Password, input.SourceBody, e.imageClient, logger)
-	case "docker-compose":
-		var yamlbody = input.SourceBody
-		if input.SourceBody[0] == '{' {
-			yamlbyte, err := yaml.JSONToYAML([]byte(input.SourceBody))
-			if err != nil {
-				logrus.Errorf("json bytes format is error, %s", input.SourceBody)
-				logger.Error("检查失败：Docker Compose 文件格式错误", map[string]string{"step": "callback", "status": "failure"})
-				return
-			}
-			yamlbody = string(yamlbyte)
-		}
-		pr = parser.CreateDockerComposeParse(yamlbody, input.Username, input.Password, logger)
 	case "sourcecode":
 		pr = parser.CreateSourceCodeParse(input.SourceBody, logger)
 	case "third-party-service":

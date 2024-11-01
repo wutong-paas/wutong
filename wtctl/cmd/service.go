@@ -188,7 +188,7 @@ func GetEventLogf(eventID, server string) error {
 		time := gjson.GetBytes(message, "time").String()
 		m := gjson.GetBytes(message, "message").String()
 		level := gjson.GetBytes(message, "level").String()
-		fmt.Printf("[%s](%s) %s \n", strings.ToUpper(level), time, m)
+		logrus.Infof("[%s](%s) %s \n", strings.ToUpper(level), time, m)
 	}
 }
 func getEventLog(c *cli.Context) error {
@@ -219,7 +219,7 @@ func getEventLog(c *cli.Context) error {
 			time := gjson.GetBytes(message, "time").String()
 			m := gjson.GetBytes(message, "message").String()
 			level := gjson.GetBytes(message, "level").String()
-			fmt.Printf("[%s](%s) %s \n", strings.ToUpper(level), time, m)
+			logrus.Infof("[%s](%s) %s \n", strings.ToUpper(level), time, m)
 		}
 	} else {
 		logdb := &eventdb.EventFilePlugin{
@@ -241,7 +241,7 @@ func getEventLog(c *cli.Context) error {
 func stopTenantEnvService(c *cli.Context) error {
 	tenantEnvName := c.Args().First()
 	if tenantEnvName == "" {
-		fmt.Println("Please provide tenant env name")
+		logrus.Error("Please provide tenant env name")
 		os.Exit(1)
 	}
 	eventID := coreutil.NewUUID()
@@ -584,10 +584,10 @@ func showTenantEnvServices(ctx *cli.Context) error {
 				closedtable.AddRow(service.ServiceID, service.ServiceAlias, service.CurStatus, service.DeployVersion)
 			}
 		}
-		fmt.Println("运行中的应用：")
-		fmt.Println(runtable.Render())
-		fmt.Println("不在运行的应用：")
-		fmt.Println(closedtable.Render())
+		logrus.Info("运行中的应用：")
+		logrus.Info(runtable.Render())
+		logrus.Info("不在运行的应用：")
+		logrus.Info(closedtable.Render())
 	}
 	return nil
 }

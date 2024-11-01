@@ -19,7 +19,7 @@
 package annotations
 
 import (
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/gateway/annotations/cookie"
 	"github.com/wutong-paas/wutong/gateway/annotations/header"

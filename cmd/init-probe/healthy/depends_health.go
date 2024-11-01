@@ -25,13 +25,17 @@ import (
 	"strings"
 	"time"
 
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-	endpointapi "github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
+	configclusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	configendpointv3 "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
+	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
+	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	serviceendpointv3 "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
 	"github.com/sirupsen/logrus"
-	envoyv2 "github.com/wutong-paas/wutong/node/core/envoy/v2"
+	envoyv3 "github.com/wutong-paas/wutong/node/core/envoy/v3"
 	"github.com/wutong-paas/wutong/util"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // DependServiceHealthController Detect the health of the dependent service
@@ -40,15 +44,11 @@ import (
 // ------- cds: discover all dependent services
 // ------- sds: every service has at least one Ready instance
 type DependServiceHealthController struct {
-	listeners                       []v2.Listener
-	clusters                        []v2.Cluster
-	sdsHost                         []v2.ClusterLoadAssignment
+	clusters                        []*configclusterv3.Cluster
 	interval                        time.Duration
-	envoyDiscoverVersion            string //only support v2
 	checkFunc                       []func() bool
-	endpointClient                  v2.EndpointDiscoveryServiceClient
-	clusterClient                   v2.ClusterDiscoveryServiceClient
-	dependServiceCount              int
+	endpointClient                  serviceendpointv3.EndpointDiscoveryServiceClient
+	clusterClient                   clusterv3.ClusterDiscoveryServiceClient
 	clusterID                       string
 	dependServiceNames              []string
 	ignoreCheckEndpointsClusterName []string
@@ -72,12 +72,16 @@ func NewDependServiceHealthController() (*DependServiceHealthController, error) 
 	if xDSHostPort == "" {
 		xDSHostPort = "6101"
 	}
-	cli, err := grpc.Dial(fmt.Sprintf("%s:%s", xDSHost, xDSHostPort), grpc.WithInsecure())
+	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", xDSHost, xDSHostPort),
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
 	if err != nil {
 		return nil, err
 	}
-	dsc.endpointClient = v2.NewEndpointDiscoveryServiceClient(cli)
-	dsc.clusterClient = v2.NewClusterDiscoveryServiceClient(cli)
+	dsc.endpointClient = serviceendpointv3.NewEndpointDiscoveryServiceClient(conn)
+	dsc.clusterClient = clusterv3.NewClusterDiscoveryServiceClient(conn)
 	dsc.dependServiceNames = strings.Split(os.Getenv("STARTUP_SEQUENCE_DEPENDENCIES"), ",")
 	return &dsc, nil
 }
@@ -111,8 +115,8 @@ func (d *DependServiceHealthController) checkListener() bool {
 func (d *DependServiceHealthController) checkClusters() bool {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	res, err := d.clusterClient.FetchClusters(ctx, &v2.DiscoveryRequest{
-		Node: &core.Node{
+	res, err := d.clusterClient.FetchClusters(ctx, &discoveryv3.DiscoveryRequest{
+		Node: &v3.Node{
 			Cluster: d.clusterID,
 			Id:      d.clusterID,
 		},
@@ -121,10 +125,11 @@ func (d *DependServiceHealthController) checkClusters() bool {
 		logrus.Errorf("discover depend services cluster failure %s", err.Error())
 		return false
 	}
-	clusters := envoyv2.ParseClustersResource(res.Resources)
+
+	clusters := envoyv3.ParseClustersResource(res.Resources)
 	d.ignoreCheckEndpointsClusterName = nil
 	for _, cluster := range clusters {
-		if cluster.GetType() == v2.Cluster_LOGICAL_DNS {
+		if cluster.GetType() == configclusterv3.Cluster_LOGICAL_DNS {
 			d.ignoreCheckEndpointsClusterName = append(d.ignoreCheckEndpointsClusterName, cluster.Name)
 		}
 	}
@@ -141,8 +146,8 @@ func (d *DependServiceHealthController) checkEDS() bool {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	res, err := d.endpointClient.FetchEndpoints(ctx, &v2.DiscoveryRequest{
-		Node: &core.Node{
+	res, err := d.endpointClient.FetchEndpoints(ctx, &discoveryv3.DiscoveryRequest{
+		Node: &v3.Node{
 			Cluster: d.clusterID,
 			Id:      d.clusterID,
 		},
@@ -151,7 +156,7 @@ func (d *DependServiceHealthController) checkEDS() bool {
 		logrus.Errorf("discover depend services endpoint failure %s", err.Error())
 		return false
 	}
-	clusterLoadAssignments := envoyv2.ParseLocalityLbEndpointsResource(res.Resources)
+	clusterLoadAssignments := envoyv3.ParseLocalityLbEndpointsResource(res.Resources)
 	readyClusters := make(map[string]bool, len(clusterLoadAssignments))
 	for _, cla := range clusterLoadAssignments {
 		// clusterName := fmt.Sprintf("%s_%s_%s_%d", namespace, serviceAlias, destServiceAlias, service.Spec.Ports[0].Port)
@@ -173,7 +178,7 @@ func (d *DependServiceHealthController) checkEDS() bool {
 			}
 			if len(cla.Endpoints) > 0 && len(cla.Endpoints[0].LbEndpoints) > 0 {
 				// first LbEndpoints healthy is not nil. so endpoint is not notreadyaddress
-				if host, ok := cla.Endpoints[0].LbEndpoints[0].HostIdentifier.(*endpointapi.LbEndpoint_Endpoint); ok {
+				if host, ok := cla.Endpoints[0].LbEndpoints[0].HostIdentifier.(*configendpointv3.LbEndpoint_Endpoint); ok {
 					if host.Endpoint != nil && host.Endpoint.HealthCheckConfig != nil {
 						logrus.Infof("depend service (%s) start complete", cla.ClusterName)
 						return true

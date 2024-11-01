@@ -25,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	client "github.com/coreos/etcd/clientv3"
 	"github.com/go-chi/chi"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,6 +38,7 @@ import (
 	nodeclient "github.com/wutong-paas/wutong/node/nodem/client"
 	"github.com/wutong-paas/wutong/node/statsd"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	client "go.etcd.io/etcd/client/v3"
 
 	// pprof
 	_ "net/http/pprof"

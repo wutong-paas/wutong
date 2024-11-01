@@ -84,13 +84,13 @@ func (t *Manager) Start(errchan chan error) error {
 					//remove local image, However, it is important to note that the version image is stored in the image repository
 					err := t.imageClient.ImageRemove(imagePath)
 					if err != nil {
-						logrus.Error(err)
+						logrus.Errorf("failed to remove image %s: %s", imagePath, err.Error())
 					}
 					if err := db.GetManager().VersionInfoDao().DeleteVersionInfo(v); err != nil {
 						logrus.Error(err)
 						continue
 					}
-					logrus.Info("Image deletion successful:", imagePath)
+					logrus.Info("remove image successful:", imagePath)
 				}
 				if v.DeliveredType == "slug" {
 					filePath := v.DeliveredPath

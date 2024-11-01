@@ -133,7 +133,7 @@ func (g *GWServer) AddFlags(fs *pflag.FlagSet) {
 func (g *GWServer) SetLog() {
 	level, err := logrus.ParseLevel(g.LogLevel)
 	if err != nil {
-		fmt.Println("set log level error." + err.Error())
+		logrus.Errorf("failed to parse log level: %s", err)
 		return
 	}
 	logrus.SetLevel(level)

@@ -25,16 +25,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/wutong-paas/wutong/chaos/parser/code"
 	"github.com/wutong-paas/wutong/cmd/chaos/option"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
-
 	mqclient "github.com/wutong-paas/wutong/mq/client"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"k8s.io/client-go/kubernetes"
 )
 
 func Test_exectorManager_buildFromSourceCode(t *testing.T) {

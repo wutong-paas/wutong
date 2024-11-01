@@ -25,12 +25,12 @@ import (
 	"path"
 	"time"
 
-	client "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	client "go.etcd.io/etcd/client/v3"
 	criapis "k8s.io/cri-api/pkg/apis"
 
 	// Register grpc event types
@@ -204,7 +204,7 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 func (a *Conf) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
-		fmt.Println("set log level error." + err.Error())
+		logrus.Errorf("failed to parse log level: %s", err)
 		return
 	}
 	logrus.SetLevel(level)

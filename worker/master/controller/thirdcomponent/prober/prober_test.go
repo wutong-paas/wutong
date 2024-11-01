@@ -2,7 +2,6 @@ package prober
 
 import (
 	"net/http"
-	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -134,6 +133,6 @@ type fakeHTTPProber struct {
 	err    error
 }
 
-func (p fakeHTTPProber) Probe(url *url.URL, headers http.Header, timeout time.Duration) (probe.Result, string, error) {
+func (p fakeHTTPProber) Probe(req *http.Request, _ time.Duration) (probe.Result, string, error) {
 	return p.result, "", p.err
 }

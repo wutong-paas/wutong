@@ -21,7 +21,6 @@ package main
 import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"fmt"
 	"net"
 	"os"
 	"sort"
@@ -31,7 +30,7 @@ import (
 	version "github.com/wutong-paas/wutong/cmd"
 )
 
-//Config Config
+// Config Config
 type Config struct {
 	CrtName, KeyName  string
 	Address           []string
@@ -44,7 +43,7 @@ func main() {
 	App := cli.NewApp()
 	App.Version = version.GetVersion()
 	App.Commands = []cli.Command{
-		cli.Command{
+		{
 			Name: "create",
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -111,7 +110,7 @@ func create(ctx *cli.Context) error {
 		}
 	} else {
 		info.Names = []pkix.AttributeTypeAndValue{
-			pkix.AttributeTypeAndValue{
+			{
 				Type:  asn1.ObjectIdentifier{2, 1, 3},
 				Value: "MAC_ADDR",
 			},
@@ -125,11 +124,11 @@ func create(ctx *cli.Context) error {
 			logrus.Fatal("Create crt error,Error info:", err)
 		}
 	}
-	fmt.Println("create success")
+	logrus.Info("create success")
 	return nil
 }
 
-//CreateCertInformation CreateCertInformation
+// CreateCertInformation CreateCertInformation
 func (c *Config) CreateCertInformation() CertInformation {
 	baseinfo := CertInformation{
 		Country:            []string{"CN"},

@@ -23,15 +23,16 @@ import (
 	"fmt"
 	"testing"
 
-	yaml "gopkg.in/yaml.v2"
-
-	envoyv2 "github.com/wutong-paas/wutong/node/core/envoy/v2"
-
-	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-
+	configclusterv3 "github.com/envoyproxy/go-control-plane/envoy/config/cluster/v3"
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
+	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	serviceendpointv3 "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
+	servicelistenerv3 "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
+	envoyv3 "github.com/wutong-paas/wutong/node/core/envoy/v3"
 	"google.golang.org/grpc"
-
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	"google.golang.org/grpc/credentials/insecure"
+	"gopkg.in/yaml.v3"
 )
 
 var testClusterID = "8cd9214e6b3d4476942b600f41bfefea_tcpmeshd3d6a722b632b854b6c232e4895e0cc6_gr5e0cc6"
@@ -42,15 +43,17 @@ var testXDSHost = "39.104.66.227:6101"
 //var testXDSHost = "127.0.0.1:6101"
 
 func TestClientListener(t *testing.T) {
-	cli, err := grpc.Dial(testXDSHost, grpc.WithInsecure())
+	conn, err := grpc.NewClient(testXDSHost, grpc.WithTransportCredentials(
+		insecure.NewCredentials(),
+	))
 	if err != nil {
 		t.Fatal(err)
 	}
-	listenerDiscover := v2.NewListenerDiscoveryServiceClient(cli)
+	listenerDiscover := servicelistenerv3.NewListenerDiscoveryServiceClient(conn)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	res, err := listenerDiscover.FetchListeners(ctx, &v2.DiscoveryRequest{
-		Node: &core.Node{
+	res, err := listenerDiscover.FetchListeners(ctx, &discoveryv3.DiscoveryRequest{
+		Node: &corev3.Node{
 			Cluster: testClusterID,
 			Id:      testClusterID,
 		},
@@ -62,20 +65,22 @@ func TestClientListener(t *testing.T) {
 		t.Fatal("no listeners")
 	}
 	t.Logf("version %s", res.GetVersionInfo())
-	listeners := envoyv2.ParseListenerResource(res.Resources)
+	listeners := envoyv3.ParseListenerResource(res.Resources)
 	printYaml(t, listeners)
 }
 
 func TestClientCluster(t *testing.T) {
-	cli, err := grpc.Dial(testXDSHost, grpc.WithInsecure())
+	conn, err := grpc.NewClient(testXDSHost, grpc.WithTransportCredentials(
+		insecure.NewCredentials(),
+	))
 	if err != nil {
 		t.Fatal(err)
 	}
-	clusterDiscover := v2.NewClusterDiscoveryServiceClient(cli)
+	clusterDiscover := clusterv3.NewClusterDiscoveryServiceClient(conn)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	res, err := clusterDiscover.FetchClusters(ctx, &v2.DiscoveryRequest{
-		Node: &core.Node{
+	res, err := clusterDiscover.FetchClusters(ctx, &discoveryv3.DiscoveryRequest{
+		Node: &corev3.Node{
 			Cluster: testClusterID,
 			Id:      testClusterID,
 		},
@@ -87,9 +92,9 @@ func TestClientCluster(t *testing.T) {
 		t.Fatal("no clusters")
 	}
 	t.Logf("version %s", res.GetVersionInfo())
-	clusters := envoyv2.ParseClustersResource(res.Resources)
+	clusters := envoyv3.ParseClustersResource(res.Resources)
 	for _, cluster := range clusters {
-		if cluster.GetType() == v2.Cluster_LOGICAL_DNS {
+		if cluster.GetType() == configclusterv3.Cluster_LOGICAL_DNS {
 			fmt.Println(cluster.Name)
 		}
 		printYaml(t, cluster)
@@ -102,15 +107,15 @@ func printYaml(t *testing.T, data interface{}) {
 }
 
 func TestClientEndpoint(t *testing.T) {
-	cli, err := grpc.Dial(testXDSHost, grpc.WithInsecure())
+	conn, err := grpc.NewClient(testXDSHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
 	}
-	endpointDiscover := v2.NewEndpointDiscoveryServiceClient(cli)
+	endpointDiscover := serviceendpointv3.NewEndpointDiscoveryServiceClient(conn)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	res, err := endpointDiscover.FetchEndpoints(ctx, &v2.DiscoveryRequest{
-		Node: &core.Node{
+	res, err := endpointDiscover.FetchEndpoints(ctx, &discoveryv3.DiscoveryRequest{
+		Node: &corev3.Node{
 			Cluster: testClusterID,
 			Id:      testClusterID,
 		},
@@ -122,7 +127,7 @@ func TestClientEndpoint(t *testing.T) {
 		t.Fatal("no endpoints")
 	}
 	t.Logf("version %s", res.GetVersionInfo())
-	endpoints := envoyv2.ParseLocalityLbEndpointsResource(res.Resources)
+	endpoints := envoyv3.ParseLocalityLbEndpointsResource(res.Resources)
 	for _, e := range endpoints {
 		fmt.Println(e.GetClusterName())
 	}

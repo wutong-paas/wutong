@@ -26,18 +26,18 @@ import (
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/discover/config"
 	"github.com/wutong-paas/wutong/node/core/store"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 )
 
-//AppService app service
+// AppService app service
 type AppService struct {
 	Prefix string
 	c      *option.Conf
 }
 
-//CreateAppService create
+// CreateAppService create
 func CreateAppService(c *option.Conf) *AppService {
 	return &AppService{
 		c:      c,
@@ -45,7 +45,7 @@ func CreateAppService(c *option.Conf) *AppService {
 	}
 }
 
-//FindAppEndpoints 获取app endpoint
+// FindAppEndpoints 获取app endpoint
 func (a *AppService) FindAppEndpoints(appName string) []*config.Endpoint {
 	var ends = make(map[string]*config.Endpoint)
 	res, err := store.DefalutClient.Get(fmt.Sprintf("%s/backends/%s/servers", a.Prefix, appName), clientv3.WithPrefix())

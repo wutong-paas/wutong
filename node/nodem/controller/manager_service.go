@@ -26,7 +26,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/parser"
 	"github.com/wutong-paas/wutong/cmd/node/option"
@@ -34,6 +33,7 @@ import (
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	"github.com/wutong-paas/wutong/node/nodem/healthy"
 	"github.com/wutong-paas/wutong/node/nodem/service"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 var (

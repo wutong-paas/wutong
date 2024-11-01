@@ -33,7 +33,7 @@ import (
 	"github.com/wutong-paas/wutong/util/termtables"
 	"github.com/wutong-paas/wutong/wtctl/clients"
 	"github.com/wutong-paas/wutong/wtctl/cluster"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/types"
 )
 

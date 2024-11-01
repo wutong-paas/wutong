@@ -22,16 +22,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/context"
 )
 
-//ErrNoUpdateForLongTime no update for long time , can reobservation of synchronous data
+// ErrNoUpdateForLongTime no update for long time , can reobservation of synchronous data
 var ErrNoUpdateForLongTime = fmt.Errorf("not updated for a long time")
 
-//WaitPrefixEvents WaitPrefixEvents
+// WaitPrefixEvents WaitPrefixEvents
 func WaitPrefixEvents(c *clientv3.Client, prefix string, rev int64, evs []mvccpb.Event_EventType) (*clientv3.Event, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -48,7 +48,7 @@ func WaitPrefixEvents(c *clientv3.Client, prefix string, rev int64, evs []mvccpb
 	return nil, ErrNoUpdateForLongTime
 }
 
-//waitEvents this will return nil
+// waitEvents this will return nil
 func waitEvents(wc clientv3.WatchChan, evs []mvccpb.Event_EventType) *clientv3.Event {
 	i := 0
 	timer := time.NewTimer(time.Second * 30)

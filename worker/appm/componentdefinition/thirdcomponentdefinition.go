@@ -86,6 +86,11 @@ parameter: {
 		failureThreshold?: >0 & <=65533
 	}
 }
+
+context: {
+    componentID: string
+    namespace: string
+}
 `
 var thirdComponentDefineName = "core-thirdcomponent"
 var thirdComponentDefine = v1alpha1.ComponentDefinition{
@@ -97,7 +102,7 @@ var thirdComponentDefine = v1alpha1.ComponentDefinition{
 		Name: thirdComponentDefineName,
 		Annotations: map[string]string{
 			"definition.oam.dev/description": "Wutong built-in component type that defines third-party service components.",
-			"version":                        "0.2",
+			"version":                        "0.3",
 		},
 	},
 	Spec: v1alpha1.ComponentDefinitionSpec{

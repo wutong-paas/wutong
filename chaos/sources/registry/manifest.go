@@ -19,49 +19,49 @@
 package registry
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
-	manifestV1 "github.com/docker/distribution/manifest/schema1"
-	manifestV2 "github.com/docker/distribution/manifest/schema2"
+	// manifestV1 "github.com/docker/distribution/manifest/schema1"
+	// manifestV2 "github.com/docker/distribution/manifest/schema2"
+	manifestV2 "github.com/distribution/distribution/manifest/schema2"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // Manifest -
-func (registry *Registry) Manifest(repository, reference string) (*manifestV1.SignedManifest, error) {
-	url := registry.url("/v2/%s/manifests/%s", repository, reference)
-	registry.Logf("registry.manifest.get url=%s repository=%s reference=%s", url, repository, reference)
+// func (registry *Registry) Manifest(repository, reference string) (*manifestV1.SignedManifest, error) {
+// 	url := registry.url("/v2/%s/manifests/%s", repository, reference)
+// 	registry.Logf("registry.manifest.get url=%s repository=%s reference=%s", url, repository, reference)
 
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
+// 	req, err := http.NewRequest("GET", url, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	req.Header.Set("Accept", manifestV1.MediaTypeManifest)
-	resp, err := registry.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
+// 	req.Header.Set("Accept", manifestV1.MediaTypeManifest)
+// 	resp, err := registry.Client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+// 	defer resp.Body.Close()
+// 	body, err := io.ReadAll(resp.Body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	signedManifest := &manifestV1.SignedManifest{}
-	err = signedManifest.UnmarshalJSON(body)
-	if err != nil {
-		return nil, err
-	}
+// 	signedManifest := &manifestV1.SignedManifest{}
+// 	err = signedManifest.UnmarshalJSON(body)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return signedManifest, nil
-}
+// 	return signedManifest, nil
+// }
 
 // ManifestV2 -
 func (registry *Registry) ManifestV2(repository, reference string) (*manifestV2.DeserializedManifest, error) {
@@ -180,25 +180,25 @@ func (registry *Registry) DeleteManifest(repository string, digest digest.Digest
 }
 
 // PutManifest -
-func (registry *Registry) PutManifest(repository, reference string, signedManifest *manifestV1.SignedManifest) error {
-	url := registry.url("/v2/%s/manifests/%s", repository, reference)
-	registry.Logf("registry.manifest.put url=%s repository=%s reference=%s", url, repository, reference)
+// func (registry *Registry) PutManifest(repository, reference string, signedManifest *manifestV1.SignedManifest) error {
+// 	url := registry.url("/v2/%s/manifests/%s", repository, reference)
+// 	registry.Logf("registry.manifest.put url=%s repository=%s reference=%s", url, repository, reference)
 
-	body, err := signedManifest.MarshalJSON()
-	if err != nil {
-		return err
-	}
+// 	body, err := signedManifest.MarshalJSON()
+// 	if err != nil {
+// 		return err
+// 	}
 
-	buffer := bytes.NewBuffer(body)
-	req, err := http.NewRequest("PUT", url, buffer)
-	if err != nil {
-		return err
-	}
+// 	buffer := bytes.NewBuffer(body)
+// 	req, err := http.NewRequest("PUT", url, buffer)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	req.Header.Set("Content-Type", manifestV1.MediaTypeManifest)
-	resp, err := registry.Client.Do(req)
-	if resp != nil {
-		defer resp.Body.Close()
-	}
-	return err
-}
+// 	req.Header.Set("Content-Type", manifestV1.MediaTypeManifest)
+// 	resp, err := registry.Client.Do(req)
+// 	if resp != nil {
+// 		defer resp.Body.Close()
+// 	}
+// 	return err
+// }

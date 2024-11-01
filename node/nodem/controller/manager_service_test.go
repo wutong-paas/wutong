@@ -24,10 +24,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/node/nodem/client"
 	"github.com/wutong-paas/wutong/node/nodem/service"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestManagerService_SetEndpoints(t *testing.T) {

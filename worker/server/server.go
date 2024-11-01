@@ -67,6 +67,8 @@ type RuntimeServer struct {
 	keepalive *discover.KeepAlive
 	clientset kubernetes.Interface
 	updateCh  *channels.RingChannel
+
+	pb.UnimplementedAppRuntimeSyncServer
 }
 
 // CreaterRuntimeServer create a runtime grpc server

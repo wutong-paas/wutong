@@ -20,7 +20,7 @@ package common
 
 import (
 	oamcore "github.com/oam-dev/kubevela/apis/core.oam.dev"
-	oamstandard "github.com/oam-dev/kubevela/apis/standard.oam.dev/v1alpha1"
+	oamstandard "github.com/oam-dev/kubevela/apis/core.oam.dev/v1alpha1"
 	wutongv1alpha1 "github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"

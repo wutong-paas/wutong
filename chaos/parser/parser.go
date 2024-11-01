@@ -24,7 +24,7 @@ import (
 
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/parser/code"
 	"github.com/wutong-paas/wutong/chaos/parser/discovery"

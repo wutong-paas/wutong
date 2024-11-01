@@ -97,7 +97,6 @@ func (v2 *V2Routes) Health(w http.ResponseWriter, r *http.Request) {
 func (v2 *V2Routes) AlertManagerWebHook(w http.ResponseWriter, r *http.Request) {
 	_, err := io.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println(err)
 		httputil.ReturnError(r, w, 400, "")
 		return
 	}
@@ -1052,6 +1051,7 @@ func (t *TenantEnvStruct) AddDependencies(w http.ResponseWriter, r *http.Request
 		httputil.ReturnError(r, w, 500, "add dependencies error")
 		return
 	}
+
 	req.TenantEnvID = r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 	req.ServiceID = r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
@@ -1059,8 +1059,8 @@ func (t *TenantEnvStruct) AddDependencies(w http.ResponseWriter, r *http.Request
 	for _, depService := range req.DependServices {
 		relations = append(relations, &dbmodel.TenantEnvServiceRelation{
 			TenantEnvID:       req.TenantEnvID,
-			ServiceID:         depService.ServiceID,
-			DependServiceID:   req.ServiceID,
+			ServiceID:         req.ServiceID,
+			DependServiceID:   depService.ServiceID,
 			DependServiceType: depService.ServiceType,
 			DependOrder:       1,
 		})

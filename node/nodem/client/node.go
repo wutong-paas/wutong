@@ -23,13 +23,13 @@ import (
 	"strings"
 	"time"
 
-	client "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	conf "github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/node/core/store"
 	"github.com/wutong-paas/wutong/util"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	client "go.etcd.io/etcd/client/v3"
 	v1 "k8s.io/api/core/v1"
 )
 

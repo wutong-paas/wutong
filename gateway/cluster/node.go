@@ -24,18 +24,18 @@ import (
 	"net"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/cmd/gateway/option"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-//NodeManager node manager
+// NodeManager node manager
 type NodeManager struct {
 	config    option.Config
 	ipManager IPManager
 }
 
-//CreateNodeManager create node manager
+// CreateNodeManager create node manager
 func CreateNodeManager(ctx context.Context, config option.Config, etcdcli *clientv3.Client) (*NodeManager, error) {
 	nm := &NodeManager{
 		config: config,
@@ -75,7 +75,7 @@ func (n *NodeManager) checkGatewayPort() bool {
 	return n.CheckPortAvailable("tcp", ports...)
 }
 
-//CheckPortAvailable checks whether the specified port is available
+// CheckPortAvailable checks whether the specified port is available
 func (n *NodeManager) CheckPortAvailable(protocol string, ports ...uint32) bool {
 	if protocol == "" {
 		protocol = "tcp"
@@ -91,7 +91,7 @@ func (n *NodeManager) CheckPortAvailable(protocol string, ports ...uint32) bool 
 	return true
 }
 
-//IPManager ip manager
+// IPManager ip manager
 func (n *NodeManager) IPManager() IPManager {
 	return n.ipManager
 }

@@ -18,12 +18,12 @@
 
 package model
 
-//TableName 表名
+// TableName 表名
 func (t *RegionProcotols) TableName() string {
 	return "region_protocols"
 }
 
-//RegionProcotols RegionProcotol
+// RegionProcotols RegionProcotol
 type RegionProcotols struct {
 	Model
 	ProtocolGroup string `gorm:"column:protocol_group;size:32;" json:"protocol_group"`
@@ -32,20 +32,20 @@ type RegionProcotols struct {
 	IsSupport     bool   `gorm:"column:is_support;default:false" json:"is_support"`
 }
 
-//STREAMGROUP STREAMGROUP
+// STREAMGROUP STREAMGROUP
 var STREAMGROUP = "stream"
 
-//HTTPGROUP HTTPGROUP
+// HTTPGROUP HTTPGROUP
 var HTTPGROUP = "http"
 
-//MYSQLPROTOCOL MYSQLPROTOCOL
+// MYSQLPROTOCOL MYSQLPROTOCOL
 var MYSQLPROTOCOL = "mysql"
 
-//UDPPROTOCOL UDPPROTOCOL
+// UDPPROTOCOL UDPPROTOCOL
 var UDPPROTOCOL = "udp"
 
-//TCPPROTOCOL TCPPROTOCOL
+// TCPPROTOCOL TCPPROTOCOL
 var TCPPROTOCOL = "tcp"
 
-//V2VERSION region version
+// V2VERSION region version
 var V2VERSION = "v2"

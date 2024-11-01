@@ -26,9 +26,8 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
+	"go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
 )
 
 // MasterEventType Various event types for the events channel.

@@ -20,8 +20,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/docker/pkg/term"
-
+	"github.com/moby/term"
 	"github.com/wutong-paas/wutong/util/interrupt"
 )
 

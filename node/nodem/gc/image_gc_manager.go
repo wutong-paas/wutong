@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/sirupsen/logrus"
@@ -240,18 +240,18 @@ func (im *realImageGCManager) getImageRef(imageID string) (string, error) {
 	return inspect.ID, nil
 }
 
-func (im *realImageGCManager) listImages() ([]types.ImageSummary, error) {
+func (im *realImageGCManager) listImages() ([]image.Summary, error) {
 	ctx, cancel := getContextWithTimeout(3 * time.Second)
 	defer cancel()
 
-	return im.dockerClient.ImageList(ctx, types.ImageListOptions{})
+	return im.dockerClient.ImageList(ctx, image.ListOptions{})
 }
 
 func (im *realImageGCManager) removeImage(imageID string) error {
 	ctx, cancel := getContextWithTimeout(3 * time.Second)
 	defer cancel()
 
-	opts := types.ImageRemoveOptions{
+	opts := image.RemoveOptions{
 		Force: true,
 	}
 	items, err := im.dockerClient.ImageRemove(ctx, imageID, opts)

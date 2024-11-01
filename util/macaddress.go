@@ -8,7 +8,6 @@ import (
 
 func GenerateMACAddress() string {
 	nt := time.Now().UnixNano()
-	fmt.Printf("nt: %v\n", nt)
 	r := rand.New(rand.NewSource(nt))
 	buf := make([]byte, 6)
 	_, err := r.Read(buf)

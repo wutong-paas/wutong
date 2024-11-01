@@ -390,7 +390,7 @@ func (a *appRuntimeStore) checkReplicasetWhetherDelete(app *v1.AppService, rs *a
 	}
 }
 
-func (a *appRuntimeStore) OnAdd(obj interface{}) {
+func (a *appRuntimeStore) OnAdd(obj interface{}, isInInitialList bool) {
 	if thirdComponent, ok := obj.(*v1alpha1.ThirdComponent); ok {
 		serviceID := thirdComponent.Labels["service_id"]
 		createrID := thirdComponent.Labels["creater_id"]
@@ -578,7 +578,7 @@ func (a *appRuntimeStore) OnAdd(obj interface{}) {
 }
 
 // getAppService if  creator is true, will create new app service where not found in store
-func (a *appRuntimeStore) getAppService(serviceID, version, createrID string, creator bool) (*v1.AppService, error) {
+func (a *appRuntimeStore) getAppService(serviceID, _, createrID string, creator bool) (*v1.AppService, error) {
 	var appservice *v1.AppService
 	appservice = a.GetAppService(serviceID)
 	if appservice == nil && creator {
@@ -620,7 +620,7 @@ func (a *appRuntimeStore) OnUpdate(oldObj, newObj interface{}) {
 			}
 		}
 	}
-	a.OnAdd(newObj)
+	a.OnAdd(newObj, true)
 }
 func (a *appRuntimeStore) OnDelete(objs interface{}) {
 	a.OnDeletes(objs)

@@ -29,6 +29,7 @@ import (
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // AppRuntimeSyncClient grpc client
@@ -87,7 +88,10 @@ func NewClient(ctx context.Context, grpcServer string) (c *AppRuntimeSyncClient,
 	c = new(AppRuntimeSyncClient)
 	c.ctx = ctx
 	logrus.Infof("discover app runtime sync server address %s", grpcServer)
-	c.cc, err = grpc.Dial(grpcServer, grpc.WithInsecure())
+
+	c.cc, err = grpc.NewClient(grpcServer, grpc.WithTransportCredentials(
+		insecure.NewCredentials(),
+	))
 
 	if err != nil {
 		return nil, err

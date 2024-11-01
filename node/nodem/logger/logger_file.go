@@ -30,16 +30,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/pkg/pubsub"
-
-	"github.com/docker/docker/pkg/filenotify"
-	"github.com/docker/docker/pkg/pools"
-	"github.com/fsnotify/fsnotify"
-
 	"github.com/docker/docker/daemon/logger/jsonfilelog/jsonlog"
+	"github.com/docker/docker/pkg/pools"
 	"github.com/docker/docker/pkg/tailfile"
+	"github.com/fsnotify/fsnotify"
+	"github.com/moby/pubsub"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/pkg/filenotify"
 )
 
 const maxJSONDecodeRetry = 20000

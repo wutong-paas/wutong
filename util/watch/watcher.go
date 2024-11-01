@@ -25,9 +25,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/coreos/etcd/clientv3"
-	etcdrpc "github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
+	etcdrpc "go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
+	"go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/context"
 )
 

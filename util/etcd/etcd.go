@@ -23,8 +23,9 @@ import (
 	"strings"
 	"time"
 
-	v3 "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
+	v3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.etcd.io/etcd/client/v3/experimental/recipes"
 	"golang.org/x/net/context"
 )
 
@@ -55,7 +56,7 @@ func newUniqueKV(ctx context.Context, kv v3.KV, prefix string, val string) (*Rem
 		if err == nil {
 			return &RemoteKV{kv, newKey, rev, val}, nil
 		}
-		if err != ErrKeyExists {
+		if err != recipe.ErrKeyExists {
 			return nil, err
 		}
 	}
@@ -71,7 +72,7 @@ func putNewKV(ctx context.Context, kv v3.KV, key, val string, leaseID v3.LeaseID
 		return 0, err
 	}
 	if !txnresp.Succeeded {
-		return 0, ErrKeyExists
+		return 0, recipe.ErrKeyExists
 	}
 	return txnresp.Header.Revision, nil
 }
@@ -166,7 +167,7 @@ func newUniqueEphemeralKV(s *concurrency.Session, prefix, val string) (ek *Ephem
 	for {
 		newKey := fmt.Sprintf("%s/%v", prefix, time.Now().UnixNano())
 		ek, err = newEphemeralKV(s, newKey, val)
-		if err == nil || err != ErrKeyExists {
+		if err == nil || err != recipe.ErrKeyExists {
 			break
 		}
 	}

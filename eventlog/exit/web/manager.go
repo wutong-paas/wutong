@@ -33,8 +33,8 @@ import (
 	"github.com/wutong-paas/wutong/eventlog/store"
 	"github.com/wutong-paas/wutong/util"
 	httputil "github.com/wutong-paas/wutong/util/http"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/google/uuid"
@@ -557,13 +557,6 @@ func (s *SocketServer) receiveEventMessage(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(re)
 	return
 }
-
-// func (s *SocketServer) prometheus(r *chi.Mux) {
-// 	prometheus.MustRegister(version.NewCollector("event_log"))
-// 	exporter := monitor.NewExporter(s.storemanager, s.cluster)
-// 	prometheus.MustRegister(exporter)
-// 	r.Handle(s.conf.PrometheusMetricPath, promhttp.Handler())
-// }
 
 // ResponseType 返回内容
 type ResponseType struct {

@@ -23,8 +23,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	api_model "github.com/wutong-paas/wutong/api/model"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"testing"
 )

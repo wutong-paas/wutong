@@ -28,11 +28,12 @@ import (
 	"strings"
 
 	"github.com/gosuri/uitable"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	"github.com/wutong-paas/wutong/gateway/controller/openresty/model"
 )
 
-//NewCmdGateway gateway cmd
+// NewCmdGateway gateway cmd
 func NewCmdGateway() cli.Command {
 	c := cli.Command{
 		Name:  "gateway",
@@ -100,7 +101,7 @@ func tcpGetAndPrint(address string) error {
 func httpGetAndPrint(url string) error {
 	res, err := http.Get(url)
 	if err != nil {
-		fmt.Println(err.Error())
+		logrus.Errorf("failed to request %s: %s", url, err)
 		os.Exit(1)
 	}
 	if res.Body != nil {
@@ -114,7 +115,7 @@ func print(reader io.Reader) {
 	decoder := json.NewDecoder(reader)
 	var backends []*model.Backend
 	if err := decoder.Decode(&backends); err != nil {
-		fmt.Println(err.Error())
+		logrus.Errorf("failed to decode json: %s", err)
 		os.Exit(1)
 	}
 	table := uitable.New()

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/events"
 	dockercli "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -103,7 +104,7 @@ func NewContainerImageClient(containerRuntime, endpoint string, timeout time.Dur
 
 // ContainerEvent container event
 type ContainerEvent struct {
-	Action    string
+	Action    events.Action
 	Container *ContainerDesc
 }
 

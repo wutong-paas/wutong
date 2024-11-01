@@ -25,11 +25,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/event"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // SlugShareItem SlugShareItem

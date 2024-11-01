@@ -100,18 +100,18 @@ func (i *ImageBuildItem) Run(timeout time.Duration) error {
 		}
 		err = i.ImageClient.ImagePush(image, chaos.REGISTRYUSER, chaos.REGISTRYPASS, i.Logger, 30)
 		if err != nil {
-			logrus.Errorf("push image into registry error: %s", err.Error())
+			logrus.Errorf("failed to push image %s: %s", image, err.Error())
 			i.Logger.Error("推送镜像至镜像仓库失败："+err.Error(), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 
 		if err := i.ImageClient.ImageRemove(image); err != nil {
-			logrus.Errorf("remove image %s failure %s", image, err.Error())
+			logrus.Errorf("failed to remove image %s: %s", image, err.Error())
 		}
 
 		if os.Getenv("DISABLE_IMAGE_CACHE") == "true" {
 			if err := i.ImageClient.ImageRemove(i.Image); err != nil {
-				logrus.Errorf("remove image %s failure %s", i.Image, err.Error())
+				logrus.Errorf("failed to remove image %s: %s", i.Image, err.Error())
 			}
 		}
 	} else {

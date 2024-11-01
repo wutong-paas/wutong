@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"github.com/beorn7/perks/quantile"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	dto "github.com/prometheus/client_model/go"
 )
@@ -483,14 +483,16 @@ func (m *SummaryVec) GetMetricWith(labels Labels) (Observer, error) {
 // WithLabelValues works as GetMetricWithLabelValues, but panics where
 // GetMetricWithLabelValues would have returned an error. By not returning an
 // error, WithLabelValues allows shortcuts like
-//     myVec.WithLabelValues("404", "GET").Observe(42.21)
+//
+//	myVec.WithLabelValues("404", "GET").Observe(42.21)
 func (m *SummaryVec) WithLabelValues(lvs ...string) Observer {
 	return m.metricVec.withLabelValues(lvs...).(Observer)
 }
 
 // With works as GetMetricWith, but panics where GetMetricWithLabels would have
 // returned an error. By not returning an error, With allows shortcuts like
-//     myVec.With(Labels{"code": "404", "method": "GET"}).Observe(42.21)
+//
+//	myVec.With(Labels{"code": "404", "method": "GET"}).Observe(42.21)
 func (m *SummaryVec) With(labels Labels) Observer {
 	return m.metricVec.with(labels).(Observer)
 }
@@ -542,7 +544,8 @@ func (s *constSummary) Write(out *dto.Metric) error {
 //
 // quantiles maps ranks to quantile values. For example, a median latency of
 // 0.23s and a 99th percentile latency of 0.56s would be expressed as:
-//     map[float64]float64{0.5: 0.23, 0.99: 0.56}
+//
+//	map[float64]float64{0.5: 0.23, 0.99: 0.56}
 //
 // NewConstSummary returns an error if the length of labelValues is not
 // consistent with the variable labels in Desc.

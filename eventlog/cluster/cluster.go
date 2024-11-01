@@ -22,12 +22,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-
 	"github.com/wutong-paas/wutong/eventlog/cluster/connect"
 	"github.com/wutong-paas/wutong/eventlog/cluster/discover"
 	"github.com/wutong-paas/wutong/eventlog/conf"
 	"github.com/wutong-paas/wutong/eventlog/db"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"golang.org/x/net/context"
 

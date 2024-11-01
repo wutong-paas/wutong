@@ -24,14 +24,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
 	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/event"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // PluginShareItem PluginShareItem

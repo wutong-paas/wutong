@@ -341,14 +341,6 @@ type Logs struct {
 	CommitEntrys []Commit `xml:"logentry"`
 }
 
-type paths struct {
-	Path     string `xml:",innerxml"`
-	Action   string `xml:"action,attr"`
-	PropMods string `xml:"prop-mods,attr"`
-	TextMods string `xml:"text-mods,attr"`
-	Kind     string `xml:"kind,attr"`
-}
-
 // Info Info
 type Info struct {
 	XMLName       xml.Name `xml:"info"`

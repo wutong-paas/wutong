@@ -28,13 +28,17 @@ import (
 	"sync/atomic"
 	"time"
 
+	configcorev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	clusterv3 "github.com/envoyproxy/go-control-plane/envoy/service/cluster/v3"
+	discoveryv3 "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v3"
+	endpointv3 "github.com/envoyproxy/go-control-plane/envoy/service/endpoint/v3"
+	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/service/listener/v3"
+	routev3 "github.com/envoyproxy/go-control-plane/envoy/service/route/v3"
+	secretv3 "github.com/envoyproxy/go-control-plane/envoy/service/secret/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
-
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
-	discovery "github.com/envoyproxy/go-control-plane/envoy/service/discovery/v2"
-	"github.com/envoyproxy/go-control-plane/pkg/cache/v2"
-	"github.com/envoyproxy/go-control-plane/pkg/server/v2"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/resource/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/server/v3"
 	"github.com/sirupsen/logrus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/cmd/node/option"
@@ -48,7 +52,7 @@ import (
 	kcache "k8s.io/client-go/tools/cache"
 )
 
-//DiscoverServerManager envoy discover server
+// DiscoverServerManager envoy discover server
 type DiscoverServerManager struct {
 	server          server.Server
 	conf            option.Conf
@@ -71,14 +75,14 @@ type Hasher struct {
 }
 
 // ID function
-func (h Hasher) ID(node *envoy_api_v2_core.Node) string {
+func (h Hasher) ID(node *configcorev3.Node) string {
 	if node == nil {
 		return "unknown"
 	}
 	return node.Cluster
 }
 
-//NodeConfig envoy node config cache struct
+// NodeConfig envoy node config cache struct
 type NodeConfig struct {
 	nodeID                         string
 	namespace                      string
@@ -90,13 +94,13 @@ type NodeConfig struct {
 	listeners, clusters, endpoints []types.Resource
 }
 
-//GetID get envoy node config id
+// GetID get envoy node config id
 func (n *NodeConfig) GetID() string {
 	return n.nodeID
 }
 
-//TryUpdate try update resources, if don't care about,direct return false
-//if return true, snapshot need update
+// TryUpdate try update resources, if don't care about,direct return false
+// if return true, snapshot need update
 func (n *NodeConfig) TryUpdate(obj interface{}) (needUpdate bool) {
 	if service, ok := obj.(*corev1.Service); ok {
 		if v, ok := service.Labels["creator"]; !ok || v != "Wutong" {
@@ -117,13 +121,13 @@ func (n *NodeConfig) TryUpdate(obj interface{}) (needUpdate bool) {
 	return false
 }
 
-//VersionUpdate add version index
+// VersionUpdate add version index
 func (n *NodeConfig) VersionUpdate() {
 	newVersion := atomic.AddInt64(&n.version, 1)
 	n.version = newVersion
 }
 
-//GetVersion get version
+// GetVersion get version
 func (n *NodeConfig) GetVersion() string {
 	return fmt.Sprintf("version_%d", n.version)
 }
@@ -137,7 +141,7 @@ type cacheHandler struct {
 	handler  *ChainHandler
 }
 
-//GetServicesAndEndpoints get service and endpoint
+// GetServicesAndEndpoints get service and endpoint
 func (d *DiscoverServerManager) GetServicesAndEndpoints(namespace string, labelSelector labels.Selector) (ret []*corev1.Service, eret []*corev1.Endpoints) {
 	kcache.ListAllByNamespace(d.services.informer.GetIndexer(), namespace, labelSelector, func(s interface{}) {
 		ret = append(ret, s.(*corev1.Service))
@@ -148,7 +152,7 @@ func (d *DiscoverServerManager) GetServicesAndEndpoints(namespace string, labelS
 	return
 }
 
-//NewNodeConfig new NodeConfig
+// NewNodeConfig new NodeConfig
 func (d *DiscoverServerManager) NewNodeConfig(config *corev1.ConfigMap) (*NodeConfig, error) {
 	logrus.Debugf("cm name: %s; plugin-config: %s", config.GetName(), config.Data["plugin-config"])
 	servicaAlias := config.Labels["service_alias"]
@@ -169,7 +173,7 @@ func (d *DiscoverServerManager) NewNodeConfig(config *corev1.ConfigMap) (*NodeCo
 	return nc, nil
 }
 
-//UpdateNodeConfig update node config
+// UpdateNodeConfig update node config
 func (d *DiscoverServerManager) UpdateNodeConfig(nc *NodeConfig) error {
 	var services []*corev1.Service
 	var endpoint []*corev1.Endpoints
@@ -202,7 +206,7 @@ func (d *DiscoverServerManager) UpdateNodeConfig(nc *NodeConfig) error {
 			}
 		}
 	}
-	if nc.configModel.BasePorts != nil && len(nc.configModel.BasePorts) > 0 {
+	if len(nc.configModel.BasePorts) > 0 {
 		labelname := fmt.Sprintf("name=%sServiceOUT", nc.serviceAlias)
 		selector, err := labels.Parse(labelname)
 		if err != nil {
@@ -245,8 +249,17 @@ func (d *DiscoverServerManager) setSnapshot(nc *NodeConfig) error {
 		logrus.Warningf("node id: %s; node config cluster length is zero or listener length is zero,not set snapshot", nc.GetID())
 		return nil
 	}
-	snapshot := cache.NewSnapshot(nc.GetVersion(), nc.endpoints, nc.clusters, nil, nc.listeners, nil)
-	err := d.cacheManager.SetSnapshot(nc.nodeID, snapshot)
+	// snapshot := cache.NewSnapshot(nc.GetVersion(), nc.endpoints, nc.clusters, nil, nc.listeners, nil)
+	snapshot, err := cache.NewSnapshot(nc.GetVersion(), map[string][]types.Resource{
+		resource.EndpointType: nc.endpoints,
+		resource.ClusterType:  nc.clusters,
+		resource.ListenerType: nc.listeners,
+	})
+	if err != nil {
+		return err
+	}
+
+	err = d.cacheManager.SetSnapshot(context.Background(), nc.nodeID, snapshot)
 	if err != nil {
 		return err
 	}
@@ -254,7 +267,7 @@ func (d *DiscoverServerManager) setSnapshot(nc *NodeConfig) error {
 	return nil
 }
 
-//CreateDiscoverServerManager create discover server manager
+// CreateDiscoverServerManager create discover server manager
 func CreateDiscoverServerManager(clientset kubernetes.Interface, conf option.Conf) (*DiscoverServerManager, error) {
 	configcache := cache.NewSnapshotCache(false, Hasher{}, logrus.WithField("module", "config-cache"))
 	ctx, cancel := context.WithCancel(context.Background())
@@ -290,7 +303,7 @@ func CreateDiscoverServerManager(clientset kubernetes.Interface, conf option.Con
 
 const grpcMaxConcurrentStreams = 1000000
 
-//Start server start
+// Start server start
 func (d *DiscoverServerManager) Start(errch chan error) error {
 	go func() {
 		go d.queue.Run(d.ctx.Done())
@@ -310,12 +323,12 @@ func (d *DiscoverServerManager) Start(errch chan error) error {
 		grpcOptions = append(grpcOptions, grpc.MaxConcurrentStreams(grpcMaxConcurrentStreams))
 		d.grpcServer = grpc.NewServer(grpcOptions...)
 		// register services
-		discovery.RegisterAggregatedDiscoveryServiceServer(d.grpcServer, d.server)
-		v2.RegisterEndpointDiscoveryServiceServer(d.grpcServer, d.server)
-		v2.RegisterClusterDiscoveryServiceServer(d.grpcServer, d.server)
-		v2.RegisterRouteDiscoveryServiceServer(d.grpcServer, d.server)
-		v2.RegisterListenerDiscoveryServiceServer(d.grpcServer, d.server)
-		discovery.RegisterSecretDiscoveryServiceServer(d.grpcServer, d.server)
+		discoveryv3.RegisterAggregatedDiscoveryServiceServer(d.grpcServer, d.server)
+		endpointv3.RegisterEndpointDiscoveryServiceServer(d.grpcServer, d.server)
+		clusterv3.RegisterClusterDiscoveryServiceServer(d.grpcServer, d.server)
+		routev3.RegisterRouteDiscoveryServiceServer(d.grpcServer, d.server)
+		listenerv3.RegisterListenerDiscoveryServiceServer(d.grpcServer, d.server)
+		secretv3.RegisterSecretDiscoveryServiceServer(d.grpcServer, d.server)
 		logrus.Infof("envoy grpc management server listening %s", d.conf.GrpcAPIAddr)
 		lis, err := net.Listen("tcp", d.conf.GrpcAPIAddr)
 		if err != nil {
@@ -329,12 +342,12 @@ func (d *DiscoverServerManager) Start(errch chan error) error {
 	return nil
 }
 
-//Stop stop grpc server
+// Stop stop grpc server
 func (d *DiscoverServerManager) Stop() {
 	//d.grpcServer.GracefulStop()
 	d.cancel()
 }
-func (d *DiscoverServerManager) createCacheHandler(informer kcache.SharedIndexInformer, otype string) cacheHandler {
+func (d *DiscoverServerManager) createCacheHandler(informer kcache.SharedIndexInformer, _ string) cacheHandler {
 	handler := &ChainHandler{funcs: []Handler{}}
 
 	informer.AddEventHandler(
@@ -355,7 +368,7 @@ func (d *DiscoverServerManager) createCacheHandler(informer kcache.SharedIndexIn
 
 	return cacheHandler{informer: informer, handler: handler}
 }
-func (d *DiscoverServerManager) createEDSCacheHandler(informer kcache.SharedIndexInformer, otype string) cacheHandler {
+func (d *DiscoverServerManager) createEDSCacheHandler(informer kcache.SharedIndexInformer, _ string) cacheHandler {
 	handler := &ChainHandler{funcs: []Handler{}}
 
 	informer.AddEventHandler(
@@ -385,7 +398,7 @@ func (d *DiscoverServerManager) createEDSCacheHandler(informer kcache.SharedInde
 	return cacheHandler{informer: informer, handler: handler}
 }
 
-//AddNodeConfig add node config cache
+// AddNodeConfig add node config cache
 func (d *DiscoverServerManager) AddNodeConfig(nc *NodeConfig) {
 	var exist bool
 	for i, existNC := range d.cacheNodeConfig {
@@ -404,7 +417,7 @@ func (d *DiscoverServerManager) AddNodeConfig(nc *NodeConfig) {
 	}
 }
 
-//DeleteNodeConfig delete node config cache
+// DeleteNodeConfig delete node config cache
 func (d *DiscoverServerManager) DeleteNodeConfig(nodeID string) {
 	for i, existNC := range d.cacheNodeConfig {
 		if existNC.nodeID == nodeID {

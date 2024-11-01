@@ -24,13 +24,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	client "github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	grpcutil "github.com/wutong-paas/wutong/util/grpc"
-	"google.golang.org/grpc/naming"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	naming "go.etcd.io/etcd/client/v3/naming/endpoints"
 )
 
 // KeepAlive 服务注册
@@ -39,11 +38,11 @@ type KeepAlive struct {
 	EtcdClientArgs *etcdutil.ClientArgs
 	ServerName     string
 	HostName       string
-	Endpoint       string
+	Endpoint       naming.Endpoint
 	TTL            int64
 	LID            clientv3.LeaseID
 	Done           chan struct{}
-	etcdClient     *client.Client
+	etcdClient     *clientv3.Client
 	gRPCResolver   *grpcutil.GRPCResolver
 	once           sync.Once
 }
@@ -72,16 +71,22 @@ func CreateKeepAlive(etcdClientArgs *etcdutil.ClientArgs, ServerName string, Pro
 	k := &KeepAlive{
 		EtcdClientArgs: etcdClientArgs,
 		ServerName:     ServerName,
-		Endpoint:       fmt.Sprintf("%s:%d", HostIP, Port),
-		TTL:            5,
-		Done:           make(chan struct{}),
-		etcdClient:     etcdclient,
-		cancel:         cancel,
+		Endpoint: naming.Endpoint{
+			Addr: fmt.Sprintf("%s:%d", HostIP, Port),
+		},
+		TTL:        5,
+		Done:       make(chan struct{}),
+		etcdClient: etcdclient,
+		cancel:     cancel,
 	}
 	if Protocol == "" {
-		k.Endpoint = fmt.Sprintf("%s:%d", HostIP, Port)
+		k.Endpoint = naming.Endpoint{
+			Addr: fmt.Sprintf("%s:%d", HostIP, Port),
+		}
 	} else {
-		k.Endpoint = fmt.Sprintf("%s://%s:%d", Protocol, HostIP, Port)
+		k.Endpoint = naming.Endpoint{
+			Addr: fmt.Sprintf("%s://%s:%d", Protocol, HostIP, Port),
+		}
 	}
 	return k, nil
 }
@@ -139,7 +144,7 @@ func (k *KeepAlive) reg() error {
 	if err != nil {
 		return err
 	}
-	if err := k.gRPCResolver.Update(ctx, k.etcdKey(), naming.Update{Op: naming.Add, Addr: k.Endpoint}, clientv3.WithLease(resp.ID)); err != nil {
+	if err := k.gRPCResolver.Update(ctx, k.etcdKey(), naming.Update{Op: naming.Add, Endpoint: k.Endpoint}, clientv3.WithLease(resp.ID)); err != nil {
 		return err
 	}
 	logrus.Infof("Register a %s server endpoint %s to cluster", k.ServerName, k.Endpoint)
@@ -156,7 +161,7 @@ func (k *KeepAlive) Stop() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 		if k.gRPCResolver != nil {
-			if err := k.gRPCResolver.Update(ctx, k.etcdKey(), naming.Update{Op: naming.Delete, Addr: k.Endpoint}); err != nil {
+			if err := k.gRPCResolver.Update(ctx, k.etcdKey(), naming.Update{Op: naming.Delete, Endpoint: k.Endpoint}); err != nil {
 				logrus.Errorf("cancel %s server endpoint %s from etcd error %s", k.ServerName, k.Endpoint, err.Error())
 			} else {
 				logrus.Infof("cancel %s server endpoint %s from etcd", k.ServerName, k.Endpoint)

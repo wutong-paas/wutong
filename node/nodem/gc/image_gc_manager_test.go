@@ -10,11 +10,6 @@ import (
 
 var dockerTimeout = 10 * time.Second
 
-func defaultContext() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), dockerTimeout)
-	return ctx
-}
-
 func TestGetImageRef(t *testing.T) {
 	dockerCli, err := client.NewEnvClient()
 	if err != nil {
@@ -65,12 +60,14 @@ func TestRemoveImage(t *testing.T) {
 }
 
 func TestDockerRootDir(t *testing.T) {
-	dockerCli, err := client.NewEnvClient()
+	dockerCli, err := client.NewClientWithOpts()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	dockerInfo, err := dockerCli.Info(defaultContext())
+	ctx, cancel := context.WithTimeout(context.Background(), dockerTimeout)
+	defer cancel()
+	dockerInfo, err := dockerCli.Info(ctx)
 	if err != nil {
 		t.Errorf("docker info: %v", err)
 	}

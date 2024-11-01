@@ -62,7 +62,7 @@ func InitClient(kubeconfig string) error {
 	var config *rest.Config
 	_, err := os.Stat(kubeconfig)
 	if err != nil {
-		fmt.Printf("Please make sure the kube-config file(%s) exists\n", kubeconfig)
+		logrus.Errorf("kubeconfig file %s not exist", kubeconfig)
 		if config, err = rest.InClusterConfig(); err != nil {
 			logrus.Error("get cluster config error:", err)
 			return err
@@ -82,7 +82,12 @@ func InitClient(kubeconfig string) error {
 		logrus.Error("Create kubernetes client error.", err.Error())
 		return err
 	}
-	mapper, err := apiutil.NewDynamicRESTMapper(config, apiutil.WithLazyDiscovery)
+	httpClient, err := rest.HTTPClientFor(config)
+	if err != nil {
+		logrus.Error("Create http client error.", err.Error())
+		return err
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(config, httpClient)
 	if err != nil {
 		return fmt.Errorf("NewDynamicRESTMapper failure %+v", err)
 	}
@@ -95,7 +100,12 @@ func InitClient(kubeconfig string) error {
 }
 
 func K8SClientInitClient(k8sClient kubernetes.Interface, config *rest.Config) error {
-	mapper, err := apiutil.NewDynamicRESTMapper(config, apiutil.WithLazyDiscovery)
+	httpClient, err := rest.HTTPClientFor(config)
+	if err != nil {
+		logrus.Error("Create http client error.", err.Error())
+		return err
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(config, httpClient)
 	if err != nil {
 		return fmt.Errorf("NewDynamicRESTMapper failure %+v", err)
 	}

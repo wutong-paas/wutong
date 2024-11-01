@@ -19,7 +19,7 @@ limitations under the License.
 package v1alpha1
 
 import (
-	runtimev1alpha1 "github.com/crossplane/crossplane-runtime/apis/core/v1alpha1"
+	crossplaneruntimecommonv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -67,7 +67,7 @@ type Schematic struct {
 // ComponentDefinitionStatus is the status of ComponentDefinition
 type ComponentDefinitionStatus struct {
 	// ConditionedStatus reflects the observed status of a resource
-	runtimev1alpha1.ConditionedStatus `json:",inline"`
+	crossplaneruntimecommonv1.ConditionedStatus `json:",inline"`
 	// ConfigMapRef refer to a ConfigMap which contains OpenAPI V3 JSON schema of Component parameters.
 	ConfigMapRef string `json:"configMapRef,omitempty"`
 	// LatestRevision of the component definition
@@ -92,12 +92,12 @@ type ComponentDefinition struct {
 }
 
 // SetConditions set condition for ComponentDefinition
-func (cd *ComponentDefinition) SetConditions(c ...runtimev1alpha1.Condition) {
+func (cd *ComponentDefinition) SetConditions(c ...crossplaneruntimecommonv1.Condition) {
 	cd.Status.SetConditions(c...)
 }
 
 // GetCondition gets condition from ComponentDefinition
-func (cd *ComponentDefinition) GetCondition(conditionType runtimev1alpha1.ConditionType) runtimev1alpha1.Condition {
+func (cd *ComponentDefinition) GetCondition(conditionType crossplaneruntimecommonv1.ConditionType) crossplaneruntimecommonv1.Condition {
 	return cd.Status.GetCondition(conditionType)
 }
 

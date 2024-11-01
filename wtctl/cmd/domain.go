@@ -20,14 +20,14 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"os/exec"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
-//NewCmdDomain domain cmd
-//v5.2 need refactoring
+// NewCmdDomain domain cmd
+// v5.2 need refactoring
 func NewCmdDomain() cli.Command {
 	c := cli.Command{
 		Name: "domain",
@@ -45,7 +45,7 @@ func NewCmdDomain() cli.Command {
 		Action: func(c *cli.Context) error {
 			ip := c.String("ip")
 			if len(ip) == 0 {
-				fmt.Println("ip must not null")
+				logrus.Errorf("ip is required")
 				return nil
 			}
 			domain := c.String("domain")
@@ -54,7 +54,7 @@ func NewCmdDomain() cli.Command {
 			cmd.Stdout = outbuf
 			cmd.Run()
 			out := outbuf.String()
-			fmt.Println(out)
+			logrus.Info(out)
 			return nil
 		},
 	}

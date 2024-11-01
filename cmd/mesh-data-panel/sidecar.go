@@ -32,7 +32,7 @@ import (
 	"github.com/sirupsen/logrus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/cmd"
-	envoyv2 "github.com/wutong-paas/wutong/node/core/envoy/v2"
+	envoyv3 "github.com/wutong-paas/wutong/node/core/envoy/v3"
 	"github.com/wutong-paas/wutong/util"
 )
 
@@ -159,7 +159,7 @@ func discoverConfig() *api_model.ResourceSpec {
 func getHosts(configs *api_model.ResourceSpec) map[string]string {
 	hosts := make(map[string]string)
 	for _, service := range configs.BaseServices {
-		options := envoyv2.GetOptionValues(service.Options)
+		options := envoyv3.GetOptionValues(service.Options)
 		for _, domain := range options.Domains {
 			if domain != "" && domain != "*" {
 				if strings.Contains(domain, ":") {

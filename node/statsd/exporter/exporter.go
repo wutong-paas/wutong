@@ -32,7 +32,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/model"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/node/statsd/prometheus"
@@ -256,7 +255,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 	for {
 		events, ok := <-e
 		if !ok {
-			log.Debug("Channel is closed. Break out of Exporter.Listener.")
+			logrus.Debug("Channel is closed. Break out of Exporter.Listener.")
 			return
 		}
 		for _, event := range events {
@@ -289,7 +288,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 				// We don't accept negative values for counters. Incrementing the counter with a negative number
 				// will cause the exporter to panic. Instead we will warn and continue to the next event.
 				if event.Value() < 0.0 {
-					log.Debugf("Counter %q is: '%f' (counter must be non-negative value)", metricName, event.Value())
+					logrus.Debugf("Counter %q is: '%f' (counter must be non-negative value)", metricName, event.Value())
 					eventStats.WithLabelValues("illegal_negative_counter").Inc()
 					continue
 				}
@@ -304,7 +303,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 					counter.SetTimestamp(timestamp)
 					eventStats.WithLabelValues("counter").Inc()
 				} else {
-					log.Debugf(regErrF, metricName, err)
+					logrus.Debugf(regErrF, metricName, err)
 					conflictingEventStats.WithLabelValues("counter").Inc()
 				}
 
@@ -325,7 +324,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 					gauge.SetTimestamp(timestamp)
 					eventStats.WithLabelValues("gauge").Inc()
 				} else {
-					log.Debugf(regErrF, metricName, err)
+					logrus.Debugf(regErrF, metricName, err)
 					conflictingEventStats.WithLabelValues("gauge").Inc()
 				}
 
@@ -351,7 +350,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 						histogram.SetTimestamp(timestamp)
 						eventStats.WithLabelValues("timer").Inc()
 					} else {
-						log.Debugf(regErrF, metricName, err)
+						logrus.Debugf(regErrF, metricName, err)
 						conflictingEventStats.WithLabelValues("timer").Inc()
 					}
 
@@ -366,7 +365,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 						summary.SetTimestamp(timestamp)
 						eventStats.WithLabelValues("timer").Inc()
 					} else {
-						log.Debugf(regErrF, metricName, err)
+						logrus.Debugf(regErrF, metricName, err)
 						conflictingEventStats.WithLabelValues("timer").Inc()
 					}
 
@@ -375,7 +374,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 				}
 
 			default:
-				log.Debugln("Unsupported event type")
+				logrus.Debugln("Unsupported event type")
 				eventStats.WithLabelValues("illegal").Inc()
 			}
 		}
@@ -479,7 +478,7 @@ func parseDogStatsDTagsToLabels(component string) map[string]string {
 
 		if len(kv) < 2 || len(kv[1]) == 0 {
 			tagErrors.Inc()
-			log.Debugf("Malformed or empty DogStatsD tag %s in component %s", t, component)
+			logrus.Debugf("Malformed or empty DogStatsD tag %s in component %s", t, component)
 			continue
 		}
 
@@ -497,7 +496,7 @@ func lineToEvents(line string) Events {
 	elements := strings.SplitN(line, ":", 2)
 	if len(elements) < 2 || len(elements[0]) == 0 || !utf8.ValidString(line) {
 		sampleErrors.WithLabelValues("malformed_line").Inc()
-		log.Debugln("Bad line from StatsD:", line)
+		logrus.Debugln("Bad line from StatsD:", line)
 		return events
 	}
 	metric := elements[0]
@@ -514,7 +513,7 @@ samples:
 		components := strings.Split(sample, "|")
 		if len(components) < 2 || len(components) > 4 {
 			sampleErrors.WithLabelValues("malformed_component").Inc()
-			log.Debugln("Bad component on line:", line)
+			logrus.Debugln("Bad component on line:", line)
 			continue
 		}
 		valueStr, statType := components[0], components[1]
@@ -526,7 +525,7 @@ samples:
 
 		value, err := strconv.ParseFloat(valueStr, 64)
 		if err != nil {
-			log.Debugf("Bad value %s on line: %s", valueStr, line)
+			logrus.Debugf("Bad value %s on line: %s", valueStr, line)
 			sampleErrors.WithLabelValues("malformed_value").Inc()
 			continue
 		}
@@ -536,7 +535,7 @@ samples:
 		if len(components) >= 3 {
 			for _, component := range components[2:] {
 				if len(component) == 0 {
-					log.Debugln("Empty component on line: ", line)
+					logrus.Debugln("Empty component on line: ", line)
 					sampleErrors.WithLabelValues("malformed_component").Inc()
 					continue samples
 				}
@@ -546,13 +545,13 @@ samples:
 				switch component[0] {
 				case '@':
 					if statType != "c" && statType != "ms" {
-						log.Debugln("Illegal sampling factor for non-counter metric on line", line)
+						logrus.Debugln("Illegal sampling factor for non-counter metric on line", line)
 						sampleErrors.WithLabelValues("illegal_sample_factor").Inc()
 						continue
 					}
 					samplingFactor, err := strconv.ParseFloat(component[1:], 64)
 					if err != nil {
-						log.Debugf("Invalid sampling factor %s on line %s", component[1:], line)
+						logrus.Debugf("Invalid sampling factor %s on line %s", component[1:], line)
 						sampleErrors.WithLabelValues("invalid_sample_factor").Inc()
 					}
 					if samplingFactor == 0 {
@@ -567,7 +566,7 @@ samples:
 				case '#':
 					labels = parseDogStatsDTagsToLabels(component)
 				default:
-					log.Debugf("Invalid sampling factor or tag section %s on line %s", components[2], line)
+					logrus.Debugf("Invalid sampling factor or tag section %s on line %s", components[2], line)
 					sampleErrors.WithLabelValues("invalid_sample_factor").Inc()
 					continue
 				}
@@ -577,7 +576,7 @@ samples:
 		for i := 0; i < multiplyEvents; i++ {
 			event, err := buildEvent(statType, metric, value, relative, labels)
 			if err != nil {
-				log.Debugf("Error building event on line %s: %s", line, err)
+				logrus.Debugf("Error building event on line %s: %s", line, err)
 				sampleErrors.WithLabelValues("illegal_event").Inc()
 				continue
 			}
@@ -596,7 +595,7 @@ func (l *StatsDUDPListener) Listen(e chan<- Events) {
 	for {
 		n, _, err := l.Conn.ReadFromUDP(buf)
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 		l.handlePacket(buf[0:n], e)
 	}
@@ -622,7 +621,7 @@ func (l *StatsDTCPListener) Listen(e chan<- Events) {
 	for {
 		c, err := l.Conn.AcceptTCP()
 		if err != nil {
-			log.Fatalf("AcceptTCP failed: %v", err)
+			logrus.Fatalf("AcceptTCP failed: %v", err)
 		}
 		go l.handleConn(c, e)
 	}
@@ -639,13 +638,13 @@ func (l *StatsDTCPListener) handleConn(c *net.TCPConn, e chan<- Events) {
 		if err != nil {
 			if err != io.EOF {
 				tcpErrors.Inc()
-				log.Debugf("Read %s failed: %v", c.RemoteAddr(), err)
+				logrus.Debugf("Read %s failed: %v", c.RemoteAddr(), err)
 			}
 			break
 		}
 		if isPrefix {
 			tcpLineTooLong.Inc()
-			log.Debugf("Read %s failed: line too long", c.RemoteAddr())
+			logrus.Debugf("Read %s failed: line too long", c.RemoteAddr())
 			break
 		}
 		linesReceived.Inc()

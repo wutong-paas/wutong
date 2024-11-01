@@ -28,29 +28,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/version"
-	"github.com/wutong-paas/wutong/api/handler"
-	"github.com/wutong-paas/wutong/pkg/interceptors"
-
-	"github.com/wutong-paas/wutong/util"
-
-	"github.com/coreos/etcd/clientv3"
-	"github.com/wutong-paas/wutong/cmd/api/option"
-
-	"github.com/wutong-paas/wutong/api/api_routers/doc"
-	"github.com/wutong-paas/wutong/api/api_routers/license"
-	"github.com/wutong-paas/wutong/api/metric"
-
-	"github.com/wutong-paas/wutong/api/api_routers/version2"
-	"github.com/wutong-paas/wutong/api/api_routers/websocket"
-
-	apimiddleware "github.com/wutong-paas/wutong/api/middleware"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/api/api_routers/doc"
+	"github.com/wutong-paas/wutong/api/api_routers/license"
+	"github.com/wutong-paas/wutong/api/api_routers/version2"
+	"github.com/wutong-paas/wutong/api/api_routers/websocket"
+	"github.com/wutong-paas/wutong/api/handler"
+	"github.com/wutong-paas/wutong/api/metric"
+	apimiddleware "github.com/wutong-paas/wutong/api/middleware"
+	"github.com/wutong-paas/wutong/cmd/api/option"
+	"github.com/wutong-paas/wutong/pkg/interceptors"
+	"github.com/wutong-paas/wutong/util"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // Manager apiserver
@@ -283,7 +276,6 @@ func (m *Manager) PrometheusAPI(w http.ResponseWriter, r *http.Request) {
 
 // Metric prometheus metric
 func (m *Manager) Metric() {
-	prometheus.MustRegister(version.NewCollector("wt_api"))
 	exporter := metric.NewExporter()
 	m.exporter = exporter
 	prometheus.MustRegister(exporter)

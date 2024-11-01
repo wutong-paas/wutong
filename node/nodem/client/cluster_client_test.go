@@ -24,11 +24,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/node/core/store"
 	"github.com/wutong-paas/wutong/util"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestEtcdClusterClient_GetEndpoints(t *testing.T) {

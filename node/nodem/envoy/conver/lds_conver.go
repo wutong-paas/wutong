@@ -23,14 +23,13 @@ import (
 	"strconv"
 	"strings"
 
+	listenerv3 "github.com/envoyproxy/go-control-plane/envoy/config/listener/v3"
+	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-
-	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
-	route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
-	"github.com/envoyproxy/go-control-plane/pkg/cache/types"
 	api_model "github.com/wutong-paas/wutong/api/model"
-	envoyv2 "github.com/wutong-paas/wutong/node/core/envoy/v2"
+	envoyv3 "github.com/wutong-paas/wutong/node/core/envoy/v3"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -63,7 +62,7 @@ func OneNodeListerner(serviceAlias, namespace string, configs *corev1.ConfigMap,
 		}
 		return false
 	}()
-	if resources.BaseServices != nil && len(resources.BaseServices) > 0 {
+	if len(resources.BaseServices) > 0 {
 		for _, l := range upstreamListener(serviceAlias, namespace, resources.BaseServices, services, !notCreateCommonHTTPListener) {
 			if err := l.Validate(); err != nil {
 				logrus.Errorf("listener validate failure %s", err.Error())
@@ -73,7 +72,7 @@ func OneNodeListerner(serviceAlias, namespace string, configs *corev1.ConfigMap,
 			}
 		}
 	}
-	if resources.BasePorts != nil && len(resources.BasePorts) > 0 {
+	if len(resources.BasePorts) > 0 {
 		for _, l := range downstreamListener(serviceAlias, namespace, resources.BasePorts) {
 			if err := l.Validate(); err != nil {
 				logrus.Errorf("listener validate failure %s", err.Error())
@@ -91,7 +90,7 @@ func OneNodeListerner(serviceAlias, namespace string, configs *corev1.ConfigMap,
 
 // upstreamListener handle upstream app listener
 // handle kubernetes inner service
-func upstreamListener(serviceAlias, namespace string, dependsServices []*api_model.BaseService, services []*corev1.Service, createHTTPListen bool) (ldsL []*v2.Listener) {
+func upstreamListener(serviceAlias, namespace string, dependsServices []*api_model.BaseService, services []*corev1.Service, createHTTPListen bool) (ldsL []*listenerv3.Listener) {
 	var ListennerConfig = make(map[string]*api_model.BaseService, len(dependsServices))
 	for i, dService := range dependsServices {
 		protoccol := "tcp"
@@ -105,9 +104,9 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 		ListennerConfig[listennerName] = dependsServices[i]
 	}
 	var portMap = make(map[int32]int)
-	var uniqRoute = make(map[string]*route.Route, len(services))
-	var newVHL []*route.VirtualHost
-	var VHLDomainMap = make(map[string]*route.VirtualHost)
+	var uniqRoute = make(map[string]*routev3.Route, len(services))
+	var newVHL []*routev3.VirtualHost
+	var VHLDomainMap = make(map[string]*routev3.VirtualHost)
 	for _, service := range services {
 		inner, ok := service.Labels["service_type"]
 		if !ok || inner != "inner" {
@@ -127,9 +126,9 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 		listennerName := fmt.Sprintf("%s_%s_%s_%s_%d", namespace, serviceAlias, GetServiceAliasByService(service), strings.ToLower(string(protocol)), ListenPort)
 		destService := ListennerConfig[listennerName]
 		statPrefix := fmt.Sprintf("%s_%s", serviceAlias, GetServiceAliasByService(service))
-		var options envoyv2.WutongPluginOptions
+		var options envoyv3.WutongPluginOptions
 		if destService != nil {
-			options = envoyv2.GetOptionValues(destService.Options)
+			options = envoyv3.GetOptionValues(destService.Options)
 		} else {
 			logrus.Warningf("destService is nil for service %s listenner name %s", serviceAlias, listennerName)
 		}
@@ -137,27 +136,27 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 		if _, ok := portMap[ListenPort]; !ok {
 			//listener name depend listner port
 			listenerName := fmt.Sprintf("%s_%s_%d", namespace, serviceAlias, ListenPort)
-			var listener *v2.Listener
+			var listener *listenerv3.Listener
 			protocol := service.Labels["port_protocol"]
 			if domain, ok := service.Annotations["domain"]; ok && domain != "" && (protocol == "https" || protocol == "http" || protocol == "grpc") {
-				route := envoyv2.CreateRouteWithHostRewrite(domain, clusterName, "/", nil, 0)
+				route := envoyv3.CreateRouteWithHostRewrite(domain, clusterName, "/", nil, 0)
 				if route != nil {
-					pvh := envoyv2.CreateRouteVirtualHost(
+					pvh := envoyv3.CreateRouteVirtualHost(
 						fmt.Sprintf("%s_%s_%s_%d", namespace, serviceAlias, GetServiceAliasByService(service), port),
 						[]string{"*"},
 						nil,
 						route,
 					)
 					if pvh != nil {
-						listener = envoyv2.CreateHTTPListener(fmt.Sprintf("%s_%s_http_%d", namespace, serviceAlias, port), envoyv2.DefaultLocalhostListenerAddress, fmt.Sprintf("%s_%d", serviceAlias, port), uint32(port), nil, pvh)
+						listener = envoyv3.CreateHTTPListener(fmt.Sprintf("%s_%s_http_%d", namespace, serviceAlias, port), envoyv3.DefaultLocalhostListenerAddress, fmt.Sprintf("%s_%d", serviceAlias, port), uint32(port), nil, pvh)
 					} else {
 						logrus.Warnf("create route virtual host of domain listener %s failure", fmt.Sprintf("%s_%s_http_%d", namespace, serviceAlias, port))
 					}
 				}
 			} else if protocol == "udp" {
-				listener = envoyv2.CreateUDPListener(listenerName, clusterName, envoyv2.DefaultLocalhostListenerAddress, statPrefix, uint32(ListenPort))
+				listener = envoyv3.CreateUDPListener(listenerName, clusterName, envoyv3.DefaultLocalhostListenerAddress, statPrefix, uint32(ListenPort))
 			} else {
-				listener = envoyv2.CreateTCPListener(listenerName, clusterName, envoyv2.DefaultLocalhostListenerAddress, statPrefix, uint32(ListenPort), options.TCPIdleTimeout)
+				listener = envoyv3.CreateTCPListener(listenerName, clusterName, envoyv3.DefaultLocalhostListenerAddress, statPrefix, uint32(ListenPort), options.TCPIdleTimeout)
 			}
 			if listener != nil {
 				ldsL = append(ldsL, listener)
@@ -179,35 +178,35 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 			case "http", "https", "grpc":
 				hashKey := options.RouteBasicHash()
 				if oldroute, ok := uniqRoute[hashKey]; ok {
-					oldrr := oldroute.Action.(*route.Route_Route)
-					if oldrrwc, ok := oldrr.Route.ClusterSpecifier.(*route.RouteAction_WeightedClusters); ok {
-						weight := envoyv2.CheckWeightSum(oldrrwc.WeightedClusters.Clusters, options.Weight)
-						oldrrwc.WeightedClusters.Clusters = append(oldrrwc.WeightedClusters.Clusters, &route.WeightedCluster_ClusterWeight{
+					oldrr := oldroute.Action.(*routev3.Route_Route)
+					if oldrrwc, ok := oldrr.Route.ClusterSpecifier.(*routev3.RouteAction_WeightedClusters); ok {
+						weight := envoyv3.CheckWeightSum(oldrrwc.WeightedClusters.Clusters, options.Weight)
+						oldrrwc.WeightedClusters.Clusters = append(oldrrwc.WeightedClusters.Clusters, &routev3.WeightedCluster_ClusterWeight{
 							Name:   clusterName,
-							Weight: envoyv2.ConversionUInt32(weight),
+							Weight: envoyv3.ConversionUInt32(weight),
 						})
 					}
 				} else {
-					var headerMatchers []*route.HeaderMatcher
+					var headerMatchers []*routev3.HeaderMatcher
 					for _, header := range options.Headers {
-						headerMatcher := envoyv2.CreateHeaderMatcher(header)
+						headerMatcher := envoyv3.CreateHeaderMatcher(header)
 						if headerMatcher != nil {
 							headerMatchers = append(headerMatchers, headerMatcher)
 						}
 					}
-					var route *route.Route
+					var route *routev3.Route
 					if domain, ok := service.Annotations["domain"]; ok && domain != "" {
-						route = envoyv2.CreateRouteWithHostRewrite(domain, clusterName, options.Prefix, headerMatchers, options.Weight)
+						route = envoyv3.CreateRouteWithHostRewrite(domain, clusterName, options.Prefix, headerMatchers, options.Weight)
 					} else {
-						route = envoyv2.CreateRoute(clusterName, options.Prefix, headerMatchers, options.Weight)
+						route = envoyv3.CreateRoute(clusterName, options.Prefix, headerMatchers, options.Weight)
 					}
 
 					if route != nil {
 						if pvh := VHLDomainMap[strings.Join(options.Domains, "")]; pvh != nil {
 							pvh.Routes = append(pvh.Routes, route)
 						} else {
-							pvh := envoyv2.CreateRouteVirtualHost(fmt.Sprintf("%s_%s_%s_%d", namespace, serviceAlias,
-								GetServiceAliasByService(service), port), envoyv2.CheckDomain(options.Domains, portProtocol), nil, route)
+							pvh := envoyv3.CreateRouteVirtualHost(fmt.Sprintf("%s_%s_%s_%d", namespace, serviceAlias,
+								GetServiceAliasByService(service), port), envoyv3.CheckDomain(options.Domains, portProtocol), nil, route)
 							if pvh != nil {
 								newVHL = append(newVHL, pvh)
 								uniqRoute[hashKey] = route
@@ -224,14 +223,14 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 	// Sum of weights in the weighted_cluster should add up to 100
 	for _, vh := range newVHL {
 		for _, r := range vh.Routes {
-			oldrr := r.Action.(*route.Route_Route)
-			if oldrrwc, ok := oldrr.Route.ClusterSpecifier.(*route.RouteAction_WeightedClusters); ok {
+			oldrr := r.Action.(*routev3.Route_Route)
+			if oldrrwc, ok := oldrr.Route.ClusterSpecifier.(*routev3.RouteAction_WeightedClusters); ok {
 				var weightSum uint32 = 0
 				for _, cluster := range oldrrwc.WeightedClusters.Clusters {
 					weightSum += cluster.Weight.Value
 				}
 				if weightSum != 100 {
-					oldrrwc.WeightedClusters.Clusters[len(oldrrwc.WeightedClusters.Clusters)-1].Weight = envoyv2.ConversionUInt32(
+					oldrrwc.WeightedClusters.Clusters[len(oldrrwc.WeightedClusters.Clusters)-1].Weight = envoyv3.ConversionUInt32(
 						uint32(oldrrwc.WeightedClusters.Clusters[len(oldrrwc.WeightedClusters.Clusters)-1].Weight.Value) + uint32(100-weightSum))
 				}
 			}
@@ -240,15 +239,15 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 	logrus.Debugf("virtual host is : %v", newVHL)
 	// create common http listener
 	if len(newVHL) > 0 && createHTTPListen {
-		defaultListenPort := envoyv2.DefaultLocalhostListenerPort
+		defaultListenPort := envoyv3.DefaultLocalhostListenerPort
 		//remove 80 tcp listener is exist
 		if i, ok := portMap[int32(defaultListenPort)]; ok {
 			ldsL = append(ldsL[:i], ldsL[i+1:]...)
 		}
 		statsPrefix := fmt.Sprintf("%s_%d", serviceAlias, defaultListenPort)
-		plds := envoyv2.CreateHTTPListener(
+		plds := envoyv3.CreateHTTPListener(
 			fmt.Sprintf("%s_%s_http_%d", namespace, serviceAlias, defaultListenPort),
-			envoyv2.DefaultLocalhostListenerAddress, statsPrefix, defaultListenPort, nil, newVHL...)
+			envoyv3.DefaultLocalhostListenerAddress, statsPrefix, defaultListenPort, nil, newVHL...)
 		if plds != nil {
 			ldsL = append(ldsL, plds)
 		} else {
@@ -259,7 +258,7 @@ func upstreamListener(serviceAlias, namespace string, dependsServices []*api_mod
 }
 
 // downstreamListener handle app self port listener
-func downstreamListener(serviceAlias, namespace string, ports []*api_model.BasePort) (ls []*v2.Listener) {
+func downstreamListener(serviceAlias, namespace string, ports []*api_model.BasePort) (ls []*listenerv3.Listener) {
 	var portMap = make(map[int32]int, 0)
 	for i := range ports {
 		p := ports[i]
@@ -268,44 +267,44 @@ func downstreamListener(serviceAlias, namespace string, ports []*api_model.BaseP
 		listenerName := clusterName
 		statsPrefix := fmt.Sprintf("%s_%d", serviceAlias, port)
 		if _, ok := portMap[port]; !ok {
-			inboundConfig := envoyv2.GetWutongInboundPluginOptions(p.Options)
-			options := envoyv2.GetOptionValues(p.Options)
+			inboundConfig := envoyv3.GetWutongInboundPluginOptions(p.Options)
+			options := envoyv3.GetOptionValues(p.Options)
 			if p.Protocol == "http" || p.Protocol == "https" || p.Protocol == "grpc" {
-				var limit []*route.RateLimit
+				var limit []*routev3.RateLimit
 				if inboundConfig.OpenLimit {
-					limit = []*route.RateLimit{
+					limit = []*routev3.RateLimit{
 						{
-							Actions: []*route.RateLimit_Action{
+							Actions: []*routev3.RateLimit_Action{
 								{
-									ActionSpecifier: &route.RateLimit_Action_RemoteAddress_{
-										RemoteAddress: &route.RateLimit_Action_RemoteAddress{},
+									ActionSpecifier: &routev3.RateLimit_Action_RemoteAddress_{
+										RemoteAddress: &routev3.RateLimit_Action_RemoteAddress{},
 									},
 								},
 							},
 						},
 					}
 				}
-				route := envoyv2.CreateRoute(clusterName, "/", nil, 100)
+				route := envoyv3.CreateRoute(clusterName, "/", nil, 100)
 				if route == nil {
 					logrus.Warning("create route cirtual route failure")
 					continue
 				}
-				virtuals := envoyv2.CreateRouteVirtualHost(listenerName, []string{"*"}, limit, route)
+				virtuals := envoyv3.CreateRouteVirtualHost(listenerName, []string{"*"}, limit, route)
 				if virtuals == nil {
 					logrus.Warning("create route cirtual failure")
 					continue
 				}
-				listener := envoyv2.CreateHTTPListener(listenerName, "0.0.0.0", statsPrefix, uint32(p.ListenPort), &envoyv2.RateLimitOptions{
+				listener := envoyv3.CreateHTTPListener(listenerName, "0.0.0.0", statsPrefix, uint32(p.ListenPort), &envoyv3.RateLimitOptions{
 					Enable:                inboundConfig.OpenLimit,
 					Domain:                inboundConfig.LimitDomain,
-					RateServerClusterName: envoyv2.DefaultRateLimitServerClusterName,
+					RateServerClusterName: envoyv3.DefaultRateLimitServerClusterName,
 					Stage:                 0,
 				}, virtuals)
 				if listener != nil {
 					ls = append(ls, listener)
 				}
 			} else if p.Protocol == "udp" {
-				listener := envoyv2.CreateUDPListener(listenerName, clusterName, "0.0.0.0", statsPrefix, uint32(p.ListenPort))
+				listener := envoyv3.CreateUDPListener(listenerName, clusterName, "0.0.0.0", statsPrefix, uint32(p.ListenPort))
 				if listener != nil {
 					ls = append(ls, listener)
 				} else {
@@ -313,7 +312,7 @@ func downstreamListener(serviceAlias, namespace string, ports []*api_model.BaseP
 					continue
 				}
 			} else {
-				listener := envoyv2.CreateTCPListener(listenerName, clusterName, "0.0.0.0", statsPrefix, uint32(p.ListenPort), options.TCPIdleTimeout)
+				listener := envoyv3.CreateTCPListener(listenerName, clusterName, "0.0.0.0", statsPrefix, uint32(p.ListenPort), options.TCPIdleTimeout)
 				if listener != nil {
 					ls = append(ls, listener)
 				} else {

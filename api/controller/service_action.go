@@ -1376,3 +1376,21 @@ func (t *TenantEnvStruct) ChangeServiceApp(w http.ResponseWriter, r *http.Reques
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
+
+func (t *TenantEnvStruct) CloneVM(w http.ResponseWriter, r *http.Request) {
+	var req api_model.CloneVMRequest
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	err := handler.GetServiceManager().CloneVM(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}

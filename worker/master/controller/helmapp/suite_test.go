@@ -30,12 +30,11 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	"github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	"github.com/wutong-paas/wutong/pkg/generated/informers/externalversions"
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
@@ -46,12 +45,10 @@ var wutongClient versioned.Interface
 var testEnv *envtest.Environment
 var stopCh = make(chan struct{})
 
-func TestAPIs(t *testing.T) {
-	RegisterFailHandler(Fail)
+func TestControllers(t *testing.T) {
+	gomega.RegisterFailHandler(Fail)
 
-	RunSpecsWithDefaultAndCustomReporters(t,
-		"HelmApp Controller Suite",
-		[]Reporter{printer.NewlineReporter{}})
+	RunSpecs(t, "HelmApp Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -68,10 +65,10 @@ var _ = BeforeSuite(func() {
 	}
 
 	_, err := testEnv.Start()
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	restConfig, err := k8sutil.NewRestConfig(kubeconfig)
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	wutongClient = versioned.NewForConfigOrDie(restConfig)
 	kubeClient = clientset.NewForConfigOrDie(restConfig)
@@ -91,5 +88,5 @@ var _ = AfterSuite(func() {
 
 	By("tearing down the test environment")
 	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 })

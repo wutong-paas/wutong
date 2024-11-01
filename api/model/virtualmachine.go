@@ -244,3 +244,7 @@ type AddVMVolumeRequest struct {
 type ChangeServiceAppRequest struct {
 	NewAppID string `json:"newAppId" validate:"newAppId|required"`
 }
+
+type CloneVMRequest struct {
+	CloneName string `json:"cloneName" validate:"cloneName|required"`
+}

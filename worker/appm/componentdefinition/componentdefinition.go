@@ -66,12 +66,11 @@ func GetComponentDefinitionBuilder() *Builder {
 }
 
 // OnAdd -
-func (c *Builder) OnAdd(obj interface{}) {
+func (c *Builder) OnAdd(obj interface{}, isInInitialList bool) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	cd, ok := obj.(*v1alpha1.ComponentDefinition)
 	if ok {
-		logrus.Infof("load componentdefinition %s", cd.Name)
 		c.definitions[cd.Name] = cd
 	}
 }
@@ -82,7 +81,6 @@ func (c *Builder) OnUpdate(oldObj, newObj interface{}) {
 	defer c.lock.Unlock()
 	cd, ok := newObj.(*v1alpha1.ComponentDefinition)
 	if ok {
-		logrus.Infof("update componentdefinition %s", cd.Name)
 		c.definitions[cd.Name] = cd
 	}
 }
@@ -93,7 +91,6 @@ func (c *Builder) OnDelete(obj interface{}) {
 	defer c.lock.Unlock()
 	cd, ok := obj.(*v1alpha1.ComponentDefinition)
 	if ok {
-		logrus.Infof("delete componentdefinition %s", cd.Name)
 		delete(c.definitions, cd.Name)
 	}
 }
@@ -299,6 +296,6 @@ func (c *Builder) createHTTPGetAction(probe *dbmodel.TenantEnvServiceProbe) *v1a
 	return action
 }
 
-func (c *Builder) createTCPGetAction(probe *dbmodel.TenantEnvServiceProbe) *v1alpha1.TCPSocketAction {
+func (c *Builder) createTCPGetAction(_ *dbmodel.TenantEnvServiceProbe) *v1alpha1.TCPSocketAction {
 	return &v1alpha1.TCPSocketAction{}
 }

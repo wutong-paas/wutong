@@ -252,7 +252,6 @@ func CreateHostID() (string, error) {
 func getMacAddrs() (macAddrs []string) {
 	netInterfaces, err := net.Interfaces()
 	if err != nil {
-		fmt.Printf("fail to get net interfaces: %v", err)
 		return macAddrs
 	}
 

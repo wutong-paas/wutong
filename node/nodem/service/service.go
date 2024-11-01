@@ -23,7 +23,7 @@ import (
 
 	"github.com/wutong-paas/wutong/util"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 	Stat_death     string = "death"     //请求不通
 )
 
-//Service Service
+// Service Service
 type Service struct {
 	Name            string      `yaml:"name"`
 	Endpoints       []*Endpoint `yaml:"endpoints,omitempty"`
@@ -51,7 +51,7 @@ type Service struct {
 	RestartSec      string      `yaml:"restart_sec,omitempty"`
 }
 
-//Equal equal
+// Equal equal
 func (s *Service) Equal(e *Service) bool {
 	sb, err := yaml.Marshal(s)
 	if err != nil {
@@ -67,21 +67,21 @@ func (s *Service) Equal(e *Service) bool {
 	return false
 }
 
-//Services default config of all services
+// Services default config of all services
 type Services struct {
 	Version  string     `yaml:"version"`
 	Services []*Service `yaml:"services"`
 	FromFile string     `yaml:"-"`
 }
 
-//Endpoint endpoint
+// Endpoint endpoint
 type Endpoint struct {
 	Name     string `yaml:"name"`
 	Protocol string `yaml:"protocol"`
 	Port     string `yaml:"port"`
 }
 
-//Health ServiceHealth
+// Health ServiceHealth
 type Health struct {
 	Name         string `yaml:"name"`
 	Model        string `yaml:"model"`
@@ -90,7 +90,7 @@ type Health struct {
 	MaxErrorsNum int    `yaml:"max_errors_num"`
 }
 
-//HealthStatus health status
+// HealthStatus health status
 type HealthStatus struct {
 	Name           string
 	Status         string

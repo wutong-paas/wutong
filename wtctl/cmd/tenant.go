@@ -102,7 +102,7 @@ func NewCmdTenantEnv() cli.Command {
 func getTenantEnvInfo(c *cli.Context) error {
 	tenantEnvID := c.Args().First()
 	if tenantEnvID == "" {
-		fmt.Println("Please provide tenant env name")
+		logrus.Error("Please provide tenant env name")
 		os.Exit(1)
 	}
 	services, err := clients.RegionClient.TenantEnvs(tenantEnvID).Services("").List()
@@ -119,10 +119,10 @@ func getTenantEnvInfo(c *cli.Context) error {
 				closedtable.AddRow(service.TenantEnvID, service.ServiceID, service.ServiceAlias, service.CurStatus, service.DeployVersion)
 			}
 		}
-		fmt.Println("运行中的应用：")
-		fmt.Println(runtable.Render())
-		fmt.Println("不在运行的应用：")
-		fmt.Println(closedtable.Render())
+		logrus.Info("运行中的应用：")
+		logrus.Info(runtable.Render())
+		logrus.Info("不在运行的应用：")
+		logrus.Info(closedtable.Render())
 		return nil
 	}
 	return nil
@@ -130,7 +130,7 @@ func getTenantEnvInfo(c *cli.Context) error {
 func findTenantEnvResourceUsage(c *cli.Context) error {
 	tenantEnvName := c.Args().First()
 	if tenantEnvName == "" {
-		fmt.Println("Please provide tenant env name")
+		logrus.Error("Please provide tenant env name")
 		os.Exit(1)
 	}
 	resources, err := clients.RegionClient.Resources().TenantEnvs(tenantEnvName).Get()
@@ -156,7 +156,6 @@ func getAllTenantEnv() error {
 	for _, t := range tenantEnvs {
 		tenantEnvsTable.AddRow(t.Name, t.UUID, fmt.Sprintf("%d GB", t.LimitMemory))
 	}
-	fmt.Print(tenantEnvsTable.Render())
 	return nil
 }
 

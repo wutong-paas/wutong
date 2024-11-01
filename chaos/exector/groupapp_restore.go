@@ -28,7 +28,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/tidwall/gjson"
@@ -41,6 +40,7 @@ import (
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/event"
 	"github.com/wutong-paas/wutong/util"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // BackupAPPRestore restrore the  group app backup

@@ -23,7 +23,7 @@ import (
 
 	"github.com/wutong-paas/wutong/chaos/sources/registry"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/sirupsen/logrus"
 )
 

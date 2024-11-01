@@ -26,15 +26,14 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/wutong-paas/wutong/cmd/gateway/option"
 	"github.com/wutong-paas/wutong/util"
 )
 
-//IPManager ip manager
-//Gets all available IP addresses for synchronizing the current node
+// IPManager ip manager
+// Gets all available IP addresses for synchronizing the current node
 type IPManager interface {
 	//Whether the IP address belongs to the current node
 	IPInCurrentHost(net.IP) bool
@@ -56,7 +55,7 @@ type ipManager struct {
 	needUpdate chan util.IPEVENT
 }
 
-//CreateIPManager create ip manage
+// CreateIPManager create ip manage
 func CreateIPManager(ctx context.Context, config option.Config, etcdcli *clientv3.Client) (IPManager, error) {
 	newCtx, cancel := context.WithCancel(ctx)
 	IPPool := util.NewIPPool(config.IgnoreInterface)
@@ -75,7 +74,7 @@ func (i *ipManager) NeedUpdateGatewayPolicy() <-chan util.IPEVENT {
 	return i.needUpdate
 }
 
-//IPInCurrentHost Whether the IP address belongs to the current node
+// IPInCurrentHost Whether the IP address belongs to the current node
 func (i *ipManager) IPInCurrentHost(in net.IP) bool {
 	for _, exit := range i.IPPool.GetHostIPs() {
 		if exit.Equal(in) {

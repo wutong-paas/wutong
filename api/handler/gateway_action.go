@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -37,6 +36,7 @@ import (
 	"github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/util"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // GatewayAction -

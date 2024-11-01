@@ -38,17 +38,17 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-//ServiceMonitorController service monitor
+// ServiceMonitorController service monitor
 type ServiceMonitorController struct {
 	ctx         context.Context
 	Prometheus  *Manager
 	lastScrapes []*ScrapeConfig
 	smClient    *versioned.Clientset
 	smInf       cache.SharedIndexInformer
-	queue       workqueue.RateLimitingInterface
+	queue       workqueue.TypedRateLimitingInterface[any]
 }
 
-//NewServiceMonitorController new sm controller
+// NewServiceMonitorController new sm controller
 func NewServiceMonitorController(ctx context.Context, config *rest.Config, pm *Manager) (*ServiceMonitorController, error) {
 	var smc ServiceMonitorController
 	c, err := versioned.NewForConfig(config)
@@ -65,11 +65,11 @@ func NewServiceMonitorController(ctx context.Context, config *rest.Config, pm *M
 	informer.AddEventHandlerWithResyncPeriod(&smc, time.Second*30)
 	smc.smInf = informer
 	smc.Prometheus = pm
-	smc.queue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "sm-monitor")
+	smc.queue = workqueue.NewNamedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[any](), "sm-monitor")
 	return &smc, nil
 }
 
-//Run run controller
+// Run run controller
 func (s *ServiceMonitorController) Run(stopCh <-chan struct{}) {
 	go s.worker(s.ctx)
 	go func() {
@@ -80,17 +80,17 @@ func (s *ServiceMonitorController) Run(stopCh <-chan struct{}) {
 	logrus.Info("service monitor controller start success")
 }
 
-//OnAdd sm add
-func (s *ServiceMonitorController) OnAdd(obj interface{}) {
+// OnAdd sm add
+func (s *ServiceMonitorController) OnAdd(obj interface{}, isInInitialList bool) {
 	s.enqueue(obj)
 }
 
-//OnUpdate sm update
+// OnUpdate sm update
 func (s *ServiceMonitorController) OnUpdate(oldObj, newObj interface{}) {
 	s.enqueue(newObj)
 }
 
-//OnDelete sm delete
+// OnDelete sm delete
 func (s *ServiceMonitorController) OnDelete(obj interface{}) {
 	s.enqueue(obj)
 }
@@ -122,7 +122,7 @@ func (s *ServiceMonitorController) worker(ctx context.Context) {
 	for s.processNextWorkItem(ctx) {
 	}
 }
-func (s *ServiceMonitorController) processNextWorkItem(ctx context.Context) bool {
+func (s *ServiceMonitorController) processNextWorkItem(_ context.Context) bool {
 	key, quit := s.queue.Get()
 	if quit {
 		return false
@@ -174,13 +174,13 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 		JobName: fmt.Sprintf("%s/%s/%d", sm.Namespace, sm.Name, i),
 		ServiceDiscoveryConfig: ServiceDiscoveryConfig{
 			KubernetesSDConfigs: []*SDConfig{
-				&SDConfig{
+				{
 					Role: RoleEndpoint,
 					NamespaceDiscovery: NamespaceDiscovery{
 						Names: []string{sm.Namespace},
 					},
 					Selectors: []SelectorConfig{
-						SelectorConfig{
+						{
 							Role: RoleEndpoint,
 						},
 					},

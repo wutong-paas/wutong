@@ -10,20 +10,17 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/fsnotify/fsnotify"
-	"k8s.io/klog/v2"
-
+	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/kubernetes/pkg/kubelet/types"
-	"k8s.io/kubernetes/pkg/util/tail"
+	"k8s.io/cri-client/pkg/logs"
+	"k8s.io/klog/v2"
 )
 
 const (
 	// timeFormatIn is the format for parsing timestamps from other logs.
-	timeFormatIn = types.RFC3339NanoLenient
+	timeFormatIn = logs.RFC3339NanoLenient
 
 	// logForceCheckPeriod is the period to check for a new read
 	logForceCheckPeriod = 1 * time.Second
@@ -152,7 +149,7 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *ReadConfig, r
 	defer f.Close()
 
 	// Search start point based on tail line.
-	start, err := tail.FindTailLineStartIndex(f, int64(opts.Tail))
+	start, err := findTailLineStartIndex(f, int64(opts.Tail))
 	if err != nil {
 		return fmt.Errorf("failed to tail %d lines of log file %q: %v", opts.Tail, path, err)
 	}
@@ -258,6 +255,46 @@ func ReadLogs(ctx context.Context, path, containerID string, opts *ReadConfig, r
 			limitedNum--
 		}
 	}
+}
+
+// blockSize is the block size used in tail.
+const blockSize = 1024
+
+// findTailLineStartIndex returns the start of last nth line.
+// * If n < 0, return the beginning of the file.
+// * If n >= 0, return the beginning of last nth line.
+// Notice that if the last line is incomplete (no end-of-line), it will not be counted
+// as one line.
+func findTailLineStartIndex(f io.ReadSeeker, n int64) (int64, error) {
+	if n < 0 {
+		return 0, nil
+	}
+	size, err := f.Seek(0, io.SeekEnd)
+	if err != nil {
+		return 0, err
+	}
+	var left, cnt int64
+	buf := make([]byte, blockSize)
+	for right := size; right > 0 && cnt <= n; right -= blockSize {
+		left = right - blockSize
+		if left < 0 {
+			left = 0
+			buf = make([]byte, right)
+		}
+		if _, err := f.Seek(left, io.SeekStart); err != nil {
+			return 0, err
+		}
+		if _, err := f.Read(buf); err != nil {
+			return 0, err
+		}
+		cnt += int64(bytes.Count(buf, eol))
+	}
+	for ; cnt > n; cnt-- {
+		idx := bytes.Index(buf, eol) + 1
+		buf = buf[idx:]
+		left += int64(idx)
+	}
+	return left, nil
 }
 
 func isContainerRunning(id string, r runtimeapi.RuntimeServiceClient) (bool, error) {

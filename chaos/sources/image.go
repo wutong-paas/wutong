@@ -52,8 +52,10 @@ import (
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/util"
 
-	"github.com/docker/distribution/reference"
+	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
 	jobc "github.com/wutong-paas/wutong/chaos/job"
@@ -395,7 +397,7 @@ func CheckTrustedRepositories(image, user, pass string) error {
 }
 
 // EncodeAuthToBase64 serializes the auth configuration as JSON base64 payload
-func EncodeAuthToBase64(authConfig types.AuthConfig) (string, error) {
+func EncodeAuthToBase64(authConfig registry.AuthConfig) (string, error) {
 	buf, err := json.Marshal(authConfig)
 	if err != nil {
 		return "", err
@@ -548,7 +550,7 @@ func ImageLoad(dockerCli *client.Client, tarFile string, logger event.Logger) er
 
 // ImageImport save image to tar file
 // source source file name eg. /tmp/xxx.tar
-func ImageImport(dockerCli *client.Client, image, source string, logger event.Logger) error {
+func ImageImport(dockerCli *client.Client, imageName, source string, logger event.Logger) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -558,14 +560,14 @@ func ImageImport(dockerCli *client.Client, image, source string, logger event.Lo
 	}
 	defer file.Close()
 
-	isource := types.ImageImportSource{
+	isource := image.ImportSource{
 		Source:     file,
 		SourceName: "-",
 	}
 
-	options := types.ImageImportOptions{}
+	options := image.ImportOptions{}
 
-	readcloser, err := dockerCli.ImageImport(ctx, isource, image, options)
+	readcloser, err := dockerCli.ImageImport(ctx, isource, imageName, options)
 	if err != nil {
 		return err
 	}

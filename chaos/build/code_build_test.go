@@ -11,15 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	jobc "github.com/wutong-paas/wutong/chaos/job"
 	"github.com/wutong-paas/wutong/chaos/parser/code"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/event"
-
 	k8sutil "github.com/wutong-paas/wutong/util/k8s"
-
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -102,7 +100,7 @@ func TestDockerClient(t *testing.T) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	containers, err := dockerClient.ContainerList(ctx, types.ContainerListOptions{})
+	containers, err := dockerClient.ContainerList(ctx, container.ListOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

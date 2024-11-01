@@ -185,7 +185,6 @@ func (a *AppServiceBuild) Build() (*v1.K8sResources, error) {
 		services, _ = a.CreateUpstreamPluginMappingService(services, pp)
 	}
 
-	logrus.Infof("AppServiceBuild build ingresses %v", ingresses)
 	return &v1.K8sResources{
 		Services:  services,
 		Secrets:   secrets,
@@ -224,7 +223,7 @@ func (a AppServiceBuild) ApplyRules(serviceID string, containerPort, pluginConta
 	// create tcp ingresses
 	tcpRules, err := a.dbmanager.TCPRuleDao().GetTCPRuleByServiceIDAndContainerPort(serviceID, containerPort)
 	if err != nil {
-		logrus.Infof("Can't get TCPRule corresponding to ServiceID(%s): %v", serviceID, err)
+		logrus.Warnf("Can't get TCPRule corresponding to ServiceID(%s): %v", serviceID, err)
 	}
 	if len(tcpRules) > 0 {
 		for _, tcpRule := range tcpRules {
@@ -259,21 +258,17 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 	namespace := a.appService.GetNamespace()
 	serviceName := service.Name
 
-	logrus.Infof("applyHTTPRule serviceName %s", serviceName)
-
 	// certificate
 	sec, err = a.createSecret(rule, name, namespace, labels)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	logrus.Infof("applyHTTPRule createSecret %v:", sec)
 	// parse annotations
 	annotations, err := a.parseAnnotations(rule)
 	if err != nil {
 		return nil, nil, err
 	}
-	logrus.Infof("applyHTTPRule annotations %v:", annotations)
 
 	if k8s.IsHighVersion() {
 		ntwIngress := createNtwIngress(domain, path, name, namespace, serviceName, labels, pluginContainerPort)
@@ -286,7 +281,6 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 			}
 		}
 		ntwIngress.SetAnnotations(annotations)
-		logrus.Infof("applyHTTPRule ntwIngress: %v", ntwIngress)
 		return ntwIngress, sec, nil
 	}
 

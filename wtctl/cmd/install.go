@@ -6,13 +6,14 @@ import (
 	"os"
 	"path"
 
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	wutongv1alpha1 "github.com/wutong-paas/wutong-operator/api/v1alpha1"
 	"github.com/wutong-paas/wutong/api/region"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/wtctl/option"
 	"github.com/wutong-paas/wutong/wtctl/clients"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -55,7 +56,7 @@ func NewCmdInstall() cli.Command {
 		},
 		Usage: "wtctl install",
 		Action: func(c *cli.Context) error {
-			fmt.Println("Start install, please waiting!")
+			logrus.Info("Start install, please waiting!")
 			CommonWithoutRegion(c)
 			namespace := c.String("namespace")
 			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get(context.Background(), "wt-api-client-cert", metav1.GetOptions{})
@@ -82,7 +83,7 @@ func NewCmdInstall() cli.Command {
 			if err := writeConfig(regionAPIIP); err != nil {
 				showError(fmt.Sprintf("write wtctl config file failure %s", err.Error()))
 			}
-			fmt.Println("Install success!")
+			logrus.Info("Install success!")
 			return nil
 		},
 	}

@@ -19,6 +19,9 @@
 package controller
 
 import (
+	"bytes"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -30,7 +33,7 @@ import (
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	httputil "github.com/wutong-paas/wutong/util/http"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // VolumeDependency VolumeDependency
@@ -427,7 +430,14 @@ func correctConfigMapContent(content string) (bool, string) {
 	if strings.HasPrefix(content, "{") {
 		return false, content
 	}
-	err := yaml.UnmarshalStrict([]byte(content), &m)
+
+	decoder := yaml.NewDecoder(bytes.NewReader([]byte(content)))
+	decoder.KnownFields(true)
+	err := decoder.Decode(&m)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return false, content
+	}
+
 	return err == nil && len(m) > 0, content
 }
 

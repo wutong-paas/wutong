@@ -26,13 +26,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/eventlog/conf"
 	"github.com/wutong-paas/wutong/eventlog/util"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/context"
 )
 

@@ -217,7 +217,7 @@ func fileLastln(path string) ([]byte, error) {
 				if err == io.EOF {
 					break
 				}
-				fmt.Println(err)
+				logrus.Errorf("failed to read file %s: %v", path, err)
 			}
 		}
 		lastln, _, _ = r.ReadLine()

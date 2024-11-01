@@ -1039,13 +1039,12 @@ type ServiceCheckStruct struct {
 		//检测来源类型
 		// in: body
 		// required: true
-		SourceType string `json:"source_type" validate:"source_type|required|in:docker-run,docker-compose,sourcecode,third-party-service"`
+		SourceType string `json:"source_type" validate:"source_type|required|in:docker-run,sourcecode,third-party-service"`
 
 		CheckOS string `json:"check_os"`
 		// 检测来源定义，
 		// 代码： https://github.com/wutong-paas/wutong.git master
 		// docker-run: docker run --name xxx nginx:latest nginx
-		// docker-compose: compose全文
 		// in: body
 		// required: true
 		SourceBody  string `json:"source_body"`
@@ -1558,7 +1557,7 @@ type ExportAppStruct struct {
 		EventID       string `json:"event_id"`
 		GroupKey      string `json:"group_key"` // TODO 考虑去掉
 		Version       string `json:"version"`   // TODO 考虑去掉
-		Format        string `json:"format"`    // only wutong-app/docker-compose/slug/helm_chart/yaml
+		Format        string `json:"format"`    // only wutong-app/slug/helm_chart/yaml
 		GroupMetadata string `json:"group_metadata"`
 		WithImageData bool   `json:"with_image_data"`
 	}
@@ -1801,7 +1800,7 @@ type MQBody struct {
 	EventID       string `json:"event_id"`
 	GroupKey      string `json:"group_key"`
 	Version       string `json:"version"`
-	Format        string `json:"format"` // only wutong-app/docker-compose
+	Format        string `json:"format"` // only wutong-app
 	SourceDir     string `json:"source_dir"`
 	WithImageData bool   `json:"with_image_data"`
 }

@@ -30,11 +30,9 @@ import (
 	"github.com/wutong-paas/wutong/discover"
 	"github.com/wutong-paas/wutong/discover/config"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-
-	"github.com/prometheus/common/log"
 )
 
-//UDPServer udp server
+// UDPServer udp server
 type UDPServer struct {
 	ctx                 context.Context
 	ListenerHost        string
@@ -44,7 +42,7 @@ type UDPServer struct {
 	etcdClientArgs      *etcdutil.ClientArgs
 }
 
-//CreateUDPServer create udpserver
+// CreateUDPServer create udpserver
 func CreateUDPServer(ctx context.Context, lisHost string, lisPort int, etcdClientArgs *etcdutil.ClientArgs) *UDPServer {
 	return &UDPServer{
 		ctx:            ctx,
@@ -54,7 +52,7 @@ func CreateUDPServer(ctx context.Context, lisHost string, lisPort int, etcdClien
 	}
 }
 
-//Start start
+// Start start
 func (u *UDPServer) Start() error {
 	dis, err := discover.GetDiscover(config.DiscoverConfig{Ctx: u.ctx, EtcdClientArgs: u.etcdClientArgs})
 	if err != nil {
@@ -67,7 +65,7 @@ func (u *UDPServer) Start() error {
 	return nil
 }
 
-//UpdateEndpoints update event server address
+// UpdateEndpoints update event server address
 func (u *UDPServer) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	var eventServerEndpoint []string
 	for _, e := range endpoints {
@@ -99,19 +97,19 @@ func (u *UDPServer) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	}
 }
 
-//Error
+// Error
 func (u *UDPServer) Error(err error) {
 
 }
 
-//Server 服务
+// Server 服务
 func (u *UDPServer) server() error {
 	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(u.ListenerHost), Port: u.ListenerPort})
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	log.Infof("UDP Server Listener: %s", listener.LocalAddr().String())
+	logrus.Infof("UDP Server Listener: %s", listener.LocalAddr().String())
 	buf := make([]byte, 65535)
 	go func() {
 		defer listener.Close()

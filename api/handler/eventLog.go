@@ -24,13 +24,13 @@ import (
 	"os"
 	"path"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	eventdb "github.com/wutong-paas/wutong/eventlog/db"
 	"github.com/wutong-paas/wutong/util/constants"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 // LogAction  log action struct

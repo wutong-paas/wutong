@@ -40,7 +40,6 @@ import (
 	swagger "github.com/emicklei/go-restful-swagger12"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/version"
 	"github.com/sirupsen/logrus"
 	grpcserver "github.com/wutong-paas/wutong/mq/api/grpc/server"
 	httputil "github.com/wutong-paas/wutong/util/http"
@@ -94,7 +93,7 @@ func (h *grpcServer) Close() error {
 	return h.lis.Close()
 }
 
-//NewManager api manager
+// NewManager api manager
 func NewManager(c option.Config) (*Manager, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	actionMQ := mq.NewActionMQ(ctx, c)
@@ -139,7 +138,7 @@ func NewManager(c option.Config) (*Manager, error) {
 	return manager, nil
 }
 
-//Start 启动
+// Start 启动
 func (m *Manager) Start(errChan chan error) {
 	logrus.Infof("api server start listening on 0.0.0.0:%d", m.conf.APIPort)
 	err := m.actionMQ.Start()
@@ -173,7 +172,7 @@ func (m *Manager) doc() {
 
 }
 
-//Stop 停止
+// Stop 停止
 func (m *Manager) Stop() error {
 	logrus.Info("api server is stoping.")
 	m.cancel()
@@ -181,9 +180,8 @@ func (m *Manager) Stop() error {
 	return m.actionMQ.Stop()
 }
 
-//Prometheus prometheus init
+// Prometheus prometheus init
 func (m *Manager) Prometheus() {
-	prometheus.MustRegister(version.NewCollector("acp_mq"))
 	exporter := monitor.NewExporter(m.actionMQ)
 	prometheus.MustRegister(exporter)
 	http.Handle("/metrics", promhttp.Handler())

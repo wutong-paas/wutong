@@ -1,4 +1,4 @@
-FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-mesh-data-panel-base:stable
+FROM swr.cn-southwest-2.myhuaweicloud.com/wutong/wt-mesh-data-panel-base:stable-envoyv1.32.1
 
 ARG TARGETARCH
 

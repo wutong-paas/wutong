@@ -35,7 +35,7 @@ import (
 	"github.com/wutong-paas/wutong/cmd/monitor/option"
 	"github.com/wutong-paas/wutong/discover"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const (

@@ -25,7 +25,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/util"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // WutongFileConfig 云帮源码配置文件

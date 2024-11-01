@@ -78,7 +78,7 @@ func (d *netcoreBuild) Build(re *Request) (*Response, error) {
 	}
 	re.Logger.Info("push image to push local image registry success", map[string]string{"step": "builder-exector"})
 	if err := d.imageClient.ImageRemove(d.imageName); err != nil {
-		logrus.Errorf("remove image %s failure %s", d.imageName, err.Error())
+		logrus.Errorf("failed to remove image %s: %s", d.imageName, err.Error())
 	}
 	return d.createResponse(), nil
 }

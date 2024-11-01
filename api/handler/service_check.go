@@ -49,7 +49,7 @@ func (s *ServiceAction) ServiceCheck(scs *api_model.ServiceCheckStruct) (string,
 		if scs.Body.CheckOS == "windows" {
 			topic = client.WindowsBuilderTopic
 		}
-		if scs.Body.SourceType == "docker-run" || scs.Body.SourceType == "docker-compose" {
+		if scs.Body.SourceType == "docker-run" {
 			if maybeIsWindowsContainerImage(scs.Body.SourceBody) {
 				topic = client.WindowsBuilderTopic
 			}

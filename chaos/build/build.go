@@ -24,16 +24,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wutong-paas/wutong/db"
-
+	"github.com/docker/docker/api/types/registry"
 	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/chaos/parser/code"
 	"github.com/wutong-paas/wutong/chaos/sources"
+	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/event"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/docker/docker/api/types"
 )
 
 func init() {
@@ -153,8 +151,8 @@ func CreateImageName(serviceID, deployversion string) string {
 	return strings.ToLower(fmt.Sprintf("%s/%s:%s", chaos.REGISTRYDOMAIN, workloadName, deployversion))
 }
 
-func GetTenantEnvRegistryAuthSecrets(kcli kubernetes.Interface, ctx context.Context, tenantEnvID string) map[string]types.AuthConfig {
-	auths := make(map[string]types.AuthConfig)
+func GetTenantEnvRegistryAuthSecrets(kcli kubernetes.Interface, ctx context.Context, tenantEnvID string) map[string]registry.AuthConfig {
+	auths := make(map[string]registry.AuthConfig)
 	tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvByUUID(tenantEnvID)
 	if err != nil {
 		return auths
@@ -167,7 +165,7 @@ func GetTenantEnvRegistryAuthSecrets(kcli kubernetes.Interface, ctx context.Cont
 			d := string(secret.Data["Domain"])
 			u := string(secret.Data["Username"])
 			p := string(secret.Data["Password"])
-			auths[d] = types.AuthConfig{
+			auths[d] = registry.AuthConfig{
 				Username: u,
 				Password: p,
 				Auth:     base64.StdEncoding.EncodeToString([]byte(u + ":" + p)),

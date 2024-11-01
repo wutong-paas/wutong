@@ -10,8 +10,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wutong-paas/wutong/gateway/controller/openresty/model"
 	"github.com/gosuri/uitable"
+	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/gateway/controller/openresty/model"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	} else {
 		res, err := http.Get("http://127.0.0.1:18080/config/backends")
 		if err != nil {
-			fmt.Println(err.Error())
+			logrus.Errorf("failed to get backends: %v", err)
 			os.Exit(1)
 		}
 		if res.Body != nil {
@@ -43,7 +44,7 @@ func print(reader io.Reader) {
 	decoder := json.NewDecoder(reader)
 	var backends []*model.Backend
 	if err := decoder.Decode(&backends); err != nil {
-		fmt.Println(err.Error())
+		logrus.Errorf("failed to decode backends: %v", err)
 		os.Exit(1)
 	}
 	table := uitable.New()

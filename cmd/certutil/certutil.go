@@ -89,10 +89,10 @@ func CreateCRT(RootCa *x509.Certificate, RootKey *rsa.PrivateKey, info CertInfor
 // 编码写入文件
 func write(filename, Type string, p []byte) error {
 	File, err := os.Create(filename)
-	defer File.Close()
 	if err != nil {
 		return err
 	}
+	defer File.Close()
 	var b = &pem.Block{Bytes: p, Type: Type}
 	return pem.Encode(File, b)
 }

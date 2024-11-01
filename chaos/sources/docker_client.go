@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	dockercli "github.com/docker/docker/client"
@@ -17,9 +18,9 @@ import (
 
 var handleAction = []string{CONTAINER_ACTION_CREATE, CONTAINER_ACTION_START, CONTAINER_ACTION_STOP, CONTAINER_ACTION_DIE, CONTAINER_ACTION_DESTROY}
 
-func checkEventAction(action string) bool {
+func checkEventAction(action events.Action) bool {
 	for _, enable := range handleAction {
-		if enable == action {
+		if enable == string(action) {
 			return true
 		}
 	}
@@ -52,7 +53,7 @@ type dockerClientImpl struct {
 func (d *dockerClientImpl) ListContainers() ([]*runtimeapi.Container, error) {
 	lictctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
 	defer cancel()
-	containers, err := d.client.ContainerList(lictctx, types.ContainerListOptions{})
+	containers, err := d.client.ContainerList(lictctx, container.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

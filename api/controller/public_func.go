@@ -196,7 +196,6 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 func Display(i interface{}, j interface{}) {
 	fmt.Printf("Display %T\n", i)
 	display("", reflect.ValueOf(i), j)
-
 }
 
 func display(path string, v reflect.Value, j interface{}) {

@@ -47,6 +47,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
+	kubevirtclonev1alpha1 "kubevirt.io/api/clone/v1alpha1"
 	kubevirtcorev1 "kubevirt.io/api/core/v1"
 	cdicorev1beta1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 )
@@ -1276,7 +1277,7 @@ func (s *ServiceAction) AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, 
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				corev1.ReadWriteOnce,
 			},
-			Resources: corev1.ResourceRequirements{
+			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceStorage: resource.MustParse(fmt.Sprintf("%dGi", req.VolumeSize)),
 				},
@@ -1421,6 +1422,63 @@ func (s *ServiceAction) RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID strin
 	return nil
 }
 
+func (s *ServiceAction) CloneVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CloneVMRequest) error {
+	// 1、获取虚拟机信息
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	labels := labelsFromTenantEnv(tenantEnv)
+	labels["wutong.io/vm-clone-from"] = vm.Name
+
+	vmclone := kubevirtclonev1alpha1.VirtualMachineClone{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.CloneName,
+			Namespace: vm.Namespace,
+			Labels:    labels,
+		},
+		Spec: kubevirtclonev1alpha1.VirtualMachineCloneSpec{
+			Source: &corev1.TypedLocalObjectReference{
+				APIGroup: util.Ptr("kubevirt.io"),
+				Kind:     "VirtualMachine",
+				Name:     vm.Name,
+			},
+			Target: &corev1.TypedLocalObjectReference{
+				APIGroup: util.Ptr("kubevirt.io"),
+				Kind:     "VirtualMachine",
+				Name:     req.CloneName,
+			},
+			LabelFilters: []string{
+				"*", "!wutong.io/vm-id",
+			},
+			AnnotationFilters: []string{
+				"*", "!wutong.io/display-name",
+			},
+			Template: kubevirtclonev1alpha1.VirtualMachineCloneTemplateFilters{
+				LabelFilters: []string{
+					"*", "!wutong.io/vm-id",
+				},
+				AnnotationFilters: []string{"*"},
+			},
+			NewMacAddresses: map[string]string{
+				"interfaceName": util.GenerateMACAddress(),
+			},
+		},
+	}
+
+	if _, err := kube.CreateKubevirtVMClone(s.dynamicClient, &vmclone); err != nil {
+		logrus.Errorf("create vm clone failed, error: %s", err.Error())
+		return fmt.Errorf("克隆虚拟机 %s 失败！", vmID)
+	}
+
+	return nil
+}
+
 // -------------------------- 私有函数 ------------------------------------
 
 // buildVMBase 构建虚拟机基础结构实例
@@ -1531,7 +1589,7 @@ func createContainerDiskPVC(req *api_model.CreateVMRequest, tenantEnv *dbmodel.T
 			AccessModes: []corev1.PersistentVolumeAccessMode{
 				corev1.ReadWriteOnce,
 			},
-			Resources: corev1.ResourceRequirements{
+			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceStorage: *resource.NewQuantity(req.OSDiskSize*1024*1024*1024, resource.BinarySI),
 				},
@@ -1579,7 +1637,7 @@ func buildVMDataVolumeTemplates(name string, sourceFrom api_model.OSSourceFrom, 
 					AccessModes: []corev1.PersistentVolumeAccessMode{
 						corev1.ReadWriteOnce,
 					},
-					Resources: corev1.ResourceRequirements{
+					Resources: corev1.VolumeResourceRequirements{
 						Requests: corev1.ResourceList{
 							corev1.ResourceStorage: *resource.NewQuantity(size*1024*1024*1024, resource.BinarySI),
 						},

@@ -26,12 +26,12 @@ import (
 	"strings"
 	"time"
 
-	c "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/eapache/channels"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/db/model"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	c "go.etcd.io/etcd/client/v3"
 )
 
 type etcd struct {

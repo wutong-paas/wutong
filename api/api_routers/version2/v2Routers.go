@@ -517,6 +517,7 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r.Post("/volumes", middleware.WrapEL(controller.GetManager().AddVMVolume, dbmodel.TargetTypeVM, "添加虚拟机存储", dbmodel.SyncEventType))
 	r.Delete("/volumes/{volume_name}", middleware.WrapEL(controller.GetManager().DeleteVMVolume, dbmodel.TargetTypeVM, "删除虚拟机存储", dbmodel.SyncEventType))
 	r.Delete("/disks/boot", middleware.WrapEL(controller.GetManager().RemoveBootDisk, dbmodel.TargetTypeVM, "删除虚拟机启动盘", dbmodel.SyncEventType))
+	r.Post("/clone", middleware.WrapEL(controller.GetManager().CloneVM, dbmodel.TargetTypeVM, "克隆虚拟机", dbmodel.SyncEventType))
 	return r
 }
 

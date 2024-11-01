@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func TestWatch(t *testing.T) {

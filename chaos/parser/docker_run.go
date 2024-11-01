@@ -23,13 +23,14 @@ import (
 	"fmt"
 	"runtime"
 	"strconv"
-	"strings" //"github.com/docker/docker/client"
+	"strings"
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/images"
-	"github.com/docker/distribution/reference" //"github.com/docker/docker/api/types"
+	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/parser/types"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/db/model"
@@ -130,12 +131,12 @@ func (d *DockerRunOrImageParse) Parse() ParseErrorList {
 		for k := range imageInspect.ExposedPorts {
 			res := strings.Split(k, "/")
 			if len(res) > 2 {
-				fmt.Println("The exposedPorts format is incorrect")
+				logrus.Errorf("The exposedPorts format is incorrect")
 			}
 			proto := res[1]
 			port, err := strconv.Atoi(res[0])
 			if err != nil {
-				fmt.Println("port int error", err)
+				logrus.Errorf("failed to convert port to int: %s", err)
 				return nil
 			}
 			if proto != "udp" {
@@ -229,7 +230,6 @@ func (d *DockerRunOrImageParse) ParseDockerun(cmd string) {
 			continue
 		}
 	}
-
 }
 
 func (d *DockerRunOrImageParse) errappend(pe ParseError) {

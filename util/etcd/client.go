@@ -22,12 +22,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/coreos/etcd/pkg/transport"
 	"github.com/sirupsen/logrus"
-
-	"github.com/coreos/etcd/clientv3"
-	v3 "github.com/coreos/etcd/clientv3"
-	spb "github.com/coreos/etcd/mvcc/mvccpb"
+	spb "go.etcd.io/etcd/api/v3/mvccpb"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/net/context"
 )
 
@@ -45,9 +43,9 @@ var (
 )
 
 // deleteRevKey deletes a key by revision, returning false if key is missing
-func deleteRevKey(ctx context.Context, kv v3.KV, key string, rev int64) (bool, error) {
-	cmp := v3.Compare(v3.ModRevision(key), "=", rev)
-	req := v3.OpDelete(key)
+func deleteRevKey(ctx context.Context, kv clientv3.KV, key string, rev int64) (bool, error) {
+	cmp := clientv3.Compare(clientv3.ModRevision(key), "=", rev)
+	req := clientv3.OpDelete(key)
 	txnresp, err := kv.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return false, err
@@ -57,8 +55,8 @@ func deleteRevKey(ctx context.Context, kv v3.KV, key string, rev int64) (bool, e
 	return true, nil
 }
 
-//claimFirstKey 获取队列第一个key,并从队列删除
-func claimFirstKey(ctx context.Context, kv v3.KV, kvs []*spb.KeyValue) (*spb.KeyValue, error) {
+// claimFirstKey 获取队列第一个key,并从队列删除
+func claimFirstKey(ctx context.Context, kv clientv3.KV, kvs []*spb.KeyValue) (*spb.KeyValue, error) {
 	for _, k := range kvs {
 		ok, err := deleteRevKey(ctx, kv, string(k.Key), k.ModRevision)
 		if err != nil {
@@ -87,7 +85,7 @@ var (
 )
 
 // NewClient new etcd client v3 for all wutong module, attention: do not support v2
-func NewClient(ctx context.Context, clientArgs *ClientArgs) (*v3.Client, error) {
+func NewClient(ctx context.Context, clientArgs *ClientArgs) (*clientv3.Client, error) {
 	if clientArgs.DialTimeout <= 5 {
 		clientArgs.DialTimeout = defaultDialTimeout
 	}
@@ -117,7 +115,7 @@ func NewClient(ctx context.Context, clientArgs *ClientArgs) (*v3.Client, error) 
 		}
 		config.TLS = tlsConfig
 	}
-	var etcdClient *v3.Client
+	var etcdClient *clientv3.Client
 	var err error
 	for {
 		etcdClient, err = clientv3.New(config)

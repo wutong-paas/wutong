@@ -421,21 +421,20 @@ func (c *clusterAction) GetNodeStorageMetrics(metricName string) map[string]floa
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, nil)
-
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("failed to create request for node storage metrics: %v", err)
 		return nil
 	}
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("failed to get node storage metrics: %v", err)
 		return nil
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
+		logrus.Errorf("failed to read response body for node storage metrics: %v", err)
 		return nil
 	}
 	var metricsResp NodeStorageMetricsResponse

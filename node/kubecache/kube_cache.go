@@ -21,7 +21,6 @@ package kubecache
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -208,39 +207,6 @@ func (k *kubeClient) evictPod(pod v1.Pod, policyGroupVersion string) error {
 	return k.kubeclient.PolicyV1beta1().Evictions(eviction.Namespace).Evict(context.Background(), eviction)
 }
 
-// deleteOrEvictPods deletes or evicts the pods on the api server
-func (k *kubeClient) deleteOrEvictPods(pods []v1.Pod) error {
-	if len(pods) == 0 {
-		return nil
-	}
-	policyGroupVersion, err := k.SupportEviction()
-	if err != nil {
-		return err
-	}
-	getPodFn := func(namespace, name string) (*v1.Pod, error) {
-		return k.kubeclient.CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
-	}
-
-	return k.evictPods(pods, policyGroupVersion, getPodFn)
-}
-
-func (k *kubeClient) deletePods(pods []v1.Pod, getPodFn func(namespace, name string) (*v1.Pod, error)) error {
-	// 0 timeout means infinite, we use MaxInt64 to represent it.
-	var globalTimeout time.Duration
-	if conf.Config.ReqTimeout == 0 {
-		globalTimeout = time.Duration(math.MaxInt64)
-	} else {
-		globalTimeout = 1
-	}
-	for _, pod := range pods {
-		err := k.deletePod(pod)
-		if err != nil && !apierrors.IsNotFound(err) {
-			return err
-		}
-	}
-	_, err := waitForDelete(pods, time.Second*1, globalTimeout, false, getPodFn)
-	return err
-}
 func waitForDelete(pods []v1.Pod, interval, timeout time.Duration, usingEviction bool, getPodFn func(string, string) (*v1.Pod, error)) ([]v1.Pod, error) {
 	var verbStr string
 	if usingEviction {
@@ -281,63 +247,6 @@ func (k *kubeClient) deletePod(pod v1.Pod) error {
 	gracePeriodSeconds := int64(1)
 	deleteOptions.GracePeriodSeconds = &gracePeriodSeconds
 	return k.kubeclient.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, deleteOptions)
-}
-
-func (k *kubeClient) evictPods(pods []v1.Pod, policyGroupVersion string, getPodFn func(namespace, name string) (*v1.Pod, error)) error {
-	doneCh := make(chan bool, len(pods))
-	errCh := make(chan error, 1)
-
-	for _, pod := range pods {
-		go func(pod v1.Pod, doneCh chan bool, errCh chan error) {
-			var err error
-			for {
-				err = k.evictPod(pod, policyGroupVersion)
-				if err == nil {
-					break
-				} else if apierrors.IsNotFound(err) {
-					doneCh <- true
-					return
-				} else if apierrors.IsTooManyRequests(err) {
-					time.Sleep(5 * time.Second)
-				} else {
-					errCh <- fmt.Errorf("error when evicting pod %q: %v", pod.Name, err)
-					return
-				}
-			}
-			podArray := []v1.Pod{pod}
-			_, err = waitForDelete(podArray, time.Second*1, time.Duration(math.MaxInt64), true, getPodFn)
-			if err == nil {
-				doneCh <- true
-			} else {
-				errCh <- fmt.Errorf("error when waiting for pod %q terminating: %v", pod.Name, err)
-			}
-		}(pod, doneCh, errCh)
-	}
-
-	doneCount := 0
-	// 0 timeout means infinite, we use MaxInt64 to represent it.
-	globalTimeout := time.Duration(math.MaxInt64)
-	//if conf.Config.ReqTimeout == 0 {
-	//	//if Timeout == 0 {
-	//	globalTimeout = time.Duration(math.MaxInt64)
-	//} else {
-	//	//globalTimeout = Timeout
-	//	globalTimeout = 1000
-	//}
-	globalTimeoutC := time.After(globalTimeout)
-	for {
-		select {
-		case err := <-errCh:
-			return err
-		case <-doneCh:
-			doneCount++
-			if doneCount == len(pods) {
-				return nil
-			}
-		case <-globalTimeoutC:
-			return fmt.Errorf("drain did not complete within %v", globalTimeout)
-		}
-	}
 }
 
 // SupportEviction uses Discovery API to find out if the server support eviction subresource
@@ -446,9 +355,9 @@ func (k *kubeClient) UpK8sNode(wutongNode *client.HostNode) (*v1.Node, error) {
 			Capacity:    capacity,
 			Allocatable: capacity,
 			Addresses: []v1.NodeAddress{
-				v1.NodeAddress{Type: v1.NodeHostName, Address: wutongNode.HostName},
-				v1.NodeAddress{Type: v1.NodeInternalIP, Address: wutongNode.InternalIP},
-				v1.NodeAddress{Type: v1.NodeExternalIP, Address: wutongNode.ExternalIP},
+				{Type: v1.NodeHostName, Address: wutongNode.HostName},
+				{Type: v1.NodeInternalIP, Address: wutongNode.InternalIP},
+				{Type: v1.NodeExternalIP, Address: wutongNode.ExternalIP},
 			},
 		},
 	}

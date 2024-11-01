@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"github.com/pquerna/ffjson/ffjson"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/sirupsen/logrus"
 	api_model "github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/api/util"

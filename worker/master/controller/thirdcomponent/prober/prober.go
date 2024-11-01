@@ -3,7 +3,6 @@ package prober
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -81,12 +80,12 @@ func (pb *prober) runProbe(p *v1alpha1.Probe, thirdComponent *v1alpha1.ThirdComp
 	timeout := time.Duration(p.TimeoutSeconds) * time.Second
 
 	if p.HTTPGet != nil {
-		u, err := url.Parse(endpointStatus.Address.EnsureScheme())
+		request, err := http.NewRequest(http.MethodGet, endpointStatus.Address.EnsureScheme(), nil)
 		if err != nil {
 			return probe.Unknown, "", err
 		}
-		headers := buildHeader(p.HTTPGet.HTTPHeaders)
-		return pb.http.Probe(u, headers, timeout)
+		request.Header = buildHeader(p.HTTPGet.HTTPHeaders)
+		return pb.http.Probe(request, timeout)
 	}
 
 	if p.TCPSocket != nil {

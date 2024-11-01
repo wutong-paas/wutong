@@ -21,21 +21,18 @@ package server
 import (
 	"fmt"
 
-	"github.com/wutong-paas/wutong/util"
-
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 	"github.com/wutong-paas/wutong/mq/api/mq"
-
-	"github.com/sirupsen/logrus"
-
+	"github.com/wutong-paas/wutong/util"
 	context "golang.org/x/net/context"
-
-	proto "github.com/golang/protobuf/proto"
 	grpc1 "google.golang.org/grpc"
+	proto "google.golang.org/protobuf/proto"
 )
 
 type mqServer struct {
 	actionMQ mq.ActionMQ
+	pb.UnimplementedTaskQueueServer
 }
 
 func (s *mqServer) Enqueue(ctx context.Context, in *pb.EnqueueRequest) (*pb.TaskReply, error) {
@@ -86,7 +83,9 @@ func (s *mqServer) Dequeue(ctx context.Context, in *pb.DequeueRequest) (*pb.Task
 	return &task, nil
 }
 
-//RegisterServer 注册服务
+// RegisterServer 注册服务
 func RegisterServer(server *grpc1.Server, actionMQ mq.ActionMQ) {
-	pb.RegisterTaskQueueServer(server, &mqServer{actionMQ})
+	pb.RegisterTaskQueueServer(server, &mqServer{
+		actionMQ: actionMQ,
+	})
 }

@@ -29,9 +29,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/duration"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 const (
@@ -162,18 +160,14 @@ var (
 var ListenersALPNProtocols = []string{"h2", "http/1.1"}
 
 // convertDuration converts to golang duration and logs errors
-func convertDuration(d *duration.Duration) time.Duration {
+func convertDuration(d *durationpb.Duration) time.Duration {
 	if d == nil {
 		return 0
 	}
-	dur, err := ptypes.Duration(d)
-	if err != nil {
-		logrus.Warnf("error converting duration %#v, using 0: %v", d, err)
-	}
-	return dur
+	return d.AsDuration()
 }
 
-func protoDurationToMS(dur *duration.Duration) int64 {
+func protoDurationToMS(dur *durationpb.Duration) int64 {
 	return int64(convertDuration(dur) / time.Millisecond)
 }
 
@@ -331,7 +325,7 @@ func (route *HTTPRoute) CatchAll() bool {
 	return len(route.Headers) == 0 && route.Path == "" && route.Prefix == "/"
 }
 
-//BasicHash returns hash string by route path\prefix\header
+// BasicHash returns hash string by route path\prefix\header
 func (route *HTTPRoute) BasicHash() string {
 	key := sha256.New()
 	var header string
@@ -428,9 +422,9 @@ func (host *VirtualHost) clusters() Clusters {
 	return out
 }
 
-//UniqVirtualHost according to the rules of VirtualHost in http route
-//merge the VirtualHost that have same domain
-//if have same domain, prifix, path and header,support weight
+// UniqVirtualHost according to the rules of VirtualHost in http route
+// merge the VirtualHost that have same domain
+// if have same domain, prifix, path and header,support weight
 func UniqVirtualHost(vhs []*VirtualHost) (revhs []*VirtualHost) {
 	var domains = make(map[string]*VirtualHost, 0)
 	for _, vh := range vhs {
@@ -785,13 +779,13 @@ type Listener struct {
 // Listeners is a collection of listeners
 type Listeners []*Listener
 
-//Append append some listeners
+// Append append some listeners
 func (l *Listeners) Append(new Listeners) {
 	*l = append(*l, new...)
 }
 
-//CreateHTTPCommonListener create simple http common listener
-//listen port 80
+// CreateHTTPCommonListener create simple http common listener
+// listen port 80
 func CreateHTTPCommonListener(name string, vh ...*VirtualHost) *Listener {
 	rcg := &HTTPRouteConfig{
 		VirtualHosts: vh,
@@ -820,9 +814,9 @@ func CreateHTTPCommonListener(name string, vh ...*VirtualHost) *Listener {
 	return plds
 }
 
-//CreateTCPCommonListener create tcp simple common listener
-//listen the specified port
-//associate the specified cluster.
+// CreateTCPCommonListener create tcp simple common listener
+// listen the specified port
+// associate the specified cluster.
 func CreateTCPCommonListener(listenerName, clusterName string, address string) *Listener {
 	ptr := &TCPRoute{
 		Cluster: clusterName,
@@ -950,7 +944,7 @@ type OutlierDetection struct {
 // Clusters is a collection of clusters
 type Clusters []*Cluster
 
-//Append append some clusters
+// Append append some clusters
 func (c *Clusters) Append(new Clusters) {
 	*c = append(*c, new...)
 }
@@ -1058,10 +1052,10 @@ type Tags struct {
 	Weight int `json:"load_balancing_weight,omitempty"`
 }
 
-//DiscoverHosts  is a collection of DiscoverHost
+// DiscoverHosts  is a collection of DiscoverHost
 type DiscoverHosts []*DiscoverHost
 
-//SDSHost is result struct for sds api
+// SDSHost is result struct for sds api
 type SDSHost struct {
 	Hosts DiscoverHosts `json:"hosts"`
 }
@@ -1095,7 +1089,6 @@ type ClusterManager struct {
 // Going forwards all mixerclient configuration should represeted by
 // istio.io/api/mixer/v1/config/client/mixer_filter_config.proto and
 // encoded in the `V2` field below.
-//
 type FilterMixerConfig struct {
 	// DEPRECATED: MixerAttributes specifies the static list of attributes that are sent with
 	// each request to Mixer.

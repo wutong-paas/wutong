@@ -25,7 +25,7 @@ import (
 	"time"
 
 	mv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/util/workqueue"
 )
