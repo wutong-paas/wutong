@@ -30,14 +30,19 @@ import (
 	"github.com/wutong-paas/wutong/worker/server/pb"
 )
 
-//GetServicePods get service pods list
+// GetServicePods get service pods list
 func (a *AppRuntimeSyncClient) GetServicePods(serviceID string) (*pb.ServiceAppPodList, error) {
 	ctx, cancel := context.WithTimeout(a.ctx, time.Second*5)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetAppPods(ctx, &pb.ServiceRequest{ServiceId: serviceID})
+	res, err := a.GrpcClient.GetAppPods(ctx, &pb.ServiceRequest{ServiceId: serviceID})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }
 
-//GetMultiServicePods get multi service pods list
+// GetMultiServicePods get multi service pods list
 func (a *AppRuntimeSyncClient) GetMultiServicePods(serviceIDs []string) (*pb.MultiServiceAppPodList, error) {
 	if logrus.IsLevelEnabled(logrus.DebugLevel) {
 		defer util.Elapsed(fmt.Sprintf("[AppRuntimeSyncClient] [GetMultiServicePods] component nums: %d", len(serviceIDs)))()
@@ -45,7 +50,12 @@ func (a *AppRuntimeSyncClient) GetMultiServicePods(serviceIDs []string) (*pb.Mul
 
 	ctx, cancel := context.WithTimeout(a.ctx, time.Second*5)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetMultiAppPods(ctx, &pb.ServicesRequest{ServiceIds: strings.Join(serviceIDs, ",")})
+	res, err := a.GrpcClient.GetMultiAppPods(ctx, &pb.ServicesRequest{ServiceIds: strings.Join(serviceIDs, ",")})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetComponentPodNums -
@@ -54,8 +64,9 @@ func (a *AppRuntimeSyncClient) GetComponentPodNums(ctx context.Context, componen
 		defer util.Elapsed(fmt.Sprintf("[AppRuntimeSyncClient] get component pod nums: %d", len(componentIDs)))()
 	}
 
-	res, err := a.AppRuntimeSyncClient.GetComponentPodNums(ctx, &pb.ServicesRequest{ServiceIds: strings.Join(componentIDs, ",")})
+	res, err := a.GrpcClient.GetComponentPodNums(ctx, &pb.ServicesRequest{ServiceIds: strings.Join(componentIDs, ",")})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		return nil, errors.Wrap(err, "get component pod nums")
 	}
 
@@ -66,8 +77,13 @@ func (a *AppRuntimeSyncClient) GetComponentPodNums(ctx context.Context, componen
 func (a *AppRuntimeSyncClient) GetPodDetail(sid, name string) (*pb.PodDetail, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetPodDetail(ctx, &pb.GetPodDetailReq{
+	res, err := a.GrpcClient.GetPodDetail(ctx, &pb.GetPodDetailReq{
 		Sid:     sid,
 		PodName: name,
 	})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }

@@ -433,10 +433,11 @@ func (a *ApplicationAction) GetStatus(ctx context.Context, app *dbmodel.Applicat
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	status, err := a.statusCli.GetAppStatus(ctx, &pb.AppStatusReq{
+	status, err := a.statusCli.GrpcClient.GetAppStatus(ctx, &pb.AppStatusReq{
 		AppId: app.AppID,
 	})
 	if err != nil {
+		a.statusCli.TryResetGrpcClient(err)
 		return nil, errors.Wrap(err, "get app status")
 	}
 
@@ -509,8 +510,9 @@ func (a *ApplicationAction) ListServices(ctx context.Context, app *dbmodel.Appli
 	nctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	appServices, err := a.statusCli.ListAppServices(nctx, &pb.AppReq{AppId: app.AppID})
+	appServices, err := a.statusCli.GrpcClient.ListAppServices(nctx, &pb.AppReq{AppId: app.AppID})
 	if err != nil {
+		a.statusCli.TryResetGrpcClient(err)
 		return nil, err
 	}
 
@@ -579,10 +581,11 @@ func (a *ApplicationAction) ListHelmAppReleases(ctx context.Context, app *dbmode
 	nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	releases, err := a.statusCli.ListHelmAppRelease(nctx, &pb.AppReq{
+	releases, err := a.statusCli.GrpcClient.ListHelmAppRelease(nctx, &pb.AppReq{
 		AppId: app.AppID,
 	})
 	if err != nil {
+		a.statusCli.TryResetGrpcClient(err)
 		return nil, err
 	}
 
@@ -735,10 +738,11 @@ func (a *ApplicationAction) ListAppStatuses(ctx context.Context, appIDs []string
 	var resp []*model.AppStatus
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	appStatuses, err := a.statusCli.ListAppStatuses(ctx, &pb.AppStatusesReq{
+	appStatuses, err := a.statusCli.GrpcClient.ListAppStatuses(ctx, &pb.AppStatusesReq{
 		AppIds: appIDs,
 	})
 	if err != nil {
+		a.statusCli.TryResetGrpcClient(err)
 		return nil, err
 	}
 	apps, err := db.GetManager().ApplicationDao().ListByAppIDs(appIDs)

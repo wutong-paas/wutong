@@ -29,74 +29,58 @@ import (
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 // AppRuntimeSyncClient grpc client
 type AppRuntimeSyncClient struct {
-	pb.AppRuntimeSyncClient
-	// AppRuntimeSyncClientConf
-	cc  *grpc.ClientConn
-	ctx context.Context
+	target     string
+	GrpcClient pb.AppRuntimeSyncClient
+	conn       *grpc.ClientConn
+	ctx        context.Context
 }
 
-// AppRuntimeSyncClientConf client conf
-// type AppRuntimeSyncClientConf struct {
-// 	NonBlock             bool
-// 	EtcdEndpoints        []string
-// 	EtcdCaFile           string
-// 	EtcdCertFile         string
-// 	EtcdKeyFile          string
-// 	DefaultServerAddress []string
-// }
+func initGrpcConn(target string) (*grpc.ClientConn, error) {
+	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(
+		insecure.NewCredentials(),
+	), grpc.WithDefaultCallOptions(grpc.WaitForReady(true)))
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
 
-// NewClient new client
-// ctx must be cancel where client not used
-// func NewClient(ctx context.Context, conf AppRuntimeSyncClientConf) (*AppRuntimeSyncClient, error) {
-// 	var arsc AppRuntimeSyncClient
-// 	arsc.AppRuntimeSyncClientConf = conf
-// 	arsc.ctx = ctx
-// 	etcdClientArgs := &etcdutil.ClientArgs{
-// 		Endpoints: conf.EtcdEndpoints,
-// 		CaFile:    conf.EtcdCaFile,
-// 		CertFile:  conf.EtcdCertFile,
-// 		KeyFile:   conf.EtcdKeyFile,
-// 	}
-// 	c, err := etcdutil.NewClient(ctx, etcdClientArgs)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	r := &grpcutil.GRPCResolver{Client: c}
-// 	b := grpc.RoundRobin(r)
-// 	dialOpts := []grpc.DialOption{
-// 		grpc.WithBalancer(b),
-// 		grpc.WithInsecure(),
-// 	}
-// 	if !conf.NonBlock {
-// 		dialOpts = append(dialOpts, grpc.WithBlock())
-// 	}
-// 	arsc.cc, err = grpc.DialContext(ctx, "/wutong/discover/app_sync_runtime_server", dialOpts...)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	arsc.AppRuntimeSyncClient = pb.NewAppRuntimeSyncClient(arsc.cc)
-// 	return &arsc, nil
-// }
+func (a *AppRuntimeSyncClient) TryResetGrpcClient(err error) {
+	if status, ok := status.FromError(err); ok {
+		if status.Code() == codes.DeadlineExceeded || status.Code() == codes.Unavailable {
+			logrus.Infof("reset grpc client connection on error: %v", err)
+			conn, err := initGrpcConn(a.target)
+			if err != nil {
+				logrus.Errorf("reconnect grpc client failure %s", err)
+				return
+			}
+			a.conn = conn
+			a.GrpcClient = pb.NewAppRuntimeSyncClient(conn)
+		}
+	}
+}
 
 // NewClient new client (tx must be cancel where client not used)
 func NewClient(ctx context.Context, grpcServer string) (c *AppRuntimeSyncClient, err error) {
-	c = new(AppRuntimeSyncClient)
-	c.ctx = ctx
+	c = &AppRuntimeSyncClient{
+		target: grpcServer,
+		ctx:    ctx,
+	}
 	logrus.Infof("discover app runtime sync server address %s", grpcServer)
 
-	c.cc, err = grpc.NewClient(grpcServer, grpc.WithTransportCredentials(
-		insecure.NewCredentials(),
-	))
+	c.conn, err = initGrpcConn(grpcServer)
 
 	if err != nil {
 		return nil, err
 	}
-	c.AppRuntimeSyncClient = pb.NewAppRuntimeSyncClient(c.cc)
+	c.GrpcClient = pb.NewAppRuntimeSyncClient(c.conn)
 
 	return c, nil
 }
@@ -110,10 +94,11 @@ func (a *AppRuntimeSyncClient) Error(err error) {
 func (a *AppRuntimeSyncClient) GetStatus(serviceID string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	status, err := a.AppRuntimeSyncClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
+	status, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
 		ServiceIds: serviceID,
 	})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		return v1.UNKNOW
 	}
 	return status.Status[serviceID]
@@ -123,10 +108,11 @@ func (a *AppRuntimeSyncClient) GetStatus(serviceID string) string {
 func (a *AppRuntimeSyncClient) GetStatuss(serviceIDs string) map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	status, err := a.AppRuntimeSyncClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
+	status, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
 		ServiceIds: serviceIDs,
 	})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		logrus.Errorf("get service status failure %s", err.Error())
 		re := make(map[string]string, len(serviceIDs))
 		for _, id := range strings.Split(serviceIDs, ",") {
@@ -141,10 +127,11 @@ func (a *AppRuntimeSyncClient) GetStatuss(serviceIDs string) map[string]string {
 func (a *AppRuntimeSyncClient) GetAllStatus() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	status, err := a.AppRuntimeSyncClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
+	status, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
 		ServiceIds: "",
 	})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		return nil
 	}
 	return status.Status
@@ -154,8 +141,9 @@ func (a *AppRuntimeSyncClient) GetAllStatus() map[string]string {
 func (a *AppRuntimeSyncClient) GetNeedBillingStatus() (map[string]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	re, err := a.AppRuntimeSyncClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{})
+	re, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		return nil, err
 	}
 	var res = make(map[string]string)
@@ -171,10 +159,11 @@ func (a *AppRuntimeSyncClient) GetNeedBillingStatus() (map[string]string, error)
 func (a *AppRuntimeSyncClient) GetServiceDeployInfo(serviceID string) (*pb.DeployInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	re, err := a.AppRuntimeSyncClient.GetDeployInfo(ctx, &pb.ServiceRequest{
+	re, err := a.GrpcClient.GetDeployInfo(ctx, &pb.ServiceRequest{
 		ServiceId: serviceID,
 	})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		return nil, err
 	}
 	return re, nil
@@ -193,24 +182,31 @@ func (a *AppRuntimeSyncClient) GetTenantEnvResource(tenantEnvID string) (*pb.Ten
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetTenantEnvResource(ctx, &pb.TenantEnvRequest{TenantEnvId: tenantEnvID})
+
+	res, err := a.GrpcClient.GetTenantEnvResource(ctx, &pb.TenantEnvRequest{TenantEnvId: tenantEnvID})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetAllTenantEnvResource get all tenant env resource
 func (a *AppRuntimeSyncClient) GetAllTenantEnvResource() (*pb.TenantEnvResourceList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetTenantEnvResources(ctx, &pb.Empty{})
+	return a.GrpcClient.GetTenantEnvResources(ctx, &pb.Empty{})
 }
 
 // ListThirdPartyEndpoints -
 func (a *AppRuntimeSyncClient) ListThirdPartyEndpoints(sid string) (*pb.ThirdPartyEndpoints, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	resp, err := a.AppRuntimeSyncClient.ListThirdPartyEndpoints(ctx, &pb.ServiceRequest{
+	resp, err := a.GrpcClient.ListThirdPartyEndpoints(ctx, &pb.ServiceRequest{
 		ServiceId: sid,
 	})
 	if err != nil {
+		a.TryResetGrpcClient(err)
 		return nil, err
 	}
 	return resp, nil
@@ -220,50 +216,66 @@ func (a *AppRuntimeSyncClient) ListThirdPartyEndpoints(sid string) (*pb.ThirdPar
 func (a *AppRuntimeSyncClient) AddThirdPartyEndpoint(req *model.Endpoint) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	_, _ = a.AppRuntimeSyncClient.AddThirdPartyEndpoint(ctx, &pb.AddThirdPartyEndpointsReq{
+	if _, err := a.GrpcClient.AddThirdPartyEndpoint(ctx, &pb.AddThirdPartyEndpointsReq{
 		Uuid: req.UUID,
 		Sid:  req.ServiceID,
 		Ip:   req.IP,
 		Port: int32(req.Port),
-	})
+	}); err != nil {
+		a.TryResetGrpcClient(err)
+	}
 }
 
 // UpdThirdPartyEndpoint -
 func (a *AppRuntimeSyncClient) UpdThirdPartyEndpoint(req *model.Endpoint) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	_, _ = a.AppRuntimeSyncClient.UpdThirdPartyEndpoint(ctx, &pb.UpdThirdPartyEndpointsReq{
+	if _, err := a.GrpcClient.UpdThirdPartyEndpoint(ctx, &pb.UpdThirdPartyEndpointsReq{
 		Uuid: req.UUID,
 		Sid:  req.ServiceID,
 		Ip:   req.IP,
 		Port: int32(req.Port),
-	})
+	}); err != nil {
+		a.TryResetGrpcClient(err)
+	}
 }
 
 // DelThirdPartyEndpoint -
 func (a *AppRuntimeSyncClient) DelThirdPartyEndpoint(req *model.Endpoint) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	_, _ = a.AppRuntimeSyncClient.DelThirdPartyEndpoint(ctx, &pb.DelThirdPartyEndpointsReq{
+	if _, err := a.GrpcClient.DelThirdPartyEndpoint(ctx, &pb.DelThirdPartyEndpointsReq{
 		Uuid: req.UUID,
 		Sid:  req.ServiceID,
 		Ip:   req.IP,
 		Port: int32(req.Port),
-	})
+	}); err != nil {
+		a.TryResetGrpcClient(err)
+	}
 }
 
 // GetStorageClasses client GetStorageClasses
 func (a *AppRuntimeSyncClient) GetStorageClasses() (storageclasses *pb.StorageClasses, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetStorageClasses(ctx, &pb.Empty{})
+	res, err := a.GrpcClient.GetStorageClasses(ctx, &pb.Empty{})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetAppVolumeStatus get app volume status
 func (a *AppRuntimeSyncClient) GetAppVolumeStatus(serviceID string) (*pb.ServiceVolumeStatusMessage, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
-	return a.AppRuntimeSyncClient.GetAppVolumeStatus(ctx, &pb.ServiceRequest{ServiceId: serviceID})
+	res, err := a.GrpcClient.GetAppVolumeStatus(ctx, &pb.ServiceRequest{ServiceId: serviceID})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }
 
 // GetAppResources -
@@ -271,5 +283,10 @@ func (a *AppRuntimeSyncClient) GetAppResources(appID string) (*pb.AppStatus, err
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	return a.AppRuntimeSyncClient.GetAppStatus(ctx, &pb.AppStatusReq{AppId: appID})
+	res, err := a.GrpcClient.GetAppStatus(ctx, &pb.AppStatusReq{AppId: appID})
+	if err != nil {
+		a.TryResetGrpcClient(err)
+		return nil, err
+	}
+	return res, nil
 }

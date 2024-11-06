@@ -2272,7 +2272,7 @@ func (s *ServiceAction) GetPods(serviceID string) (*K8sPodInfos, error) {
 	pods, err := s.statusCli.GetServicePods(serviceID)
 	if err != nil && !strings.Contains(err.Error(), server.ErrAppServiceNotFound.Error()) &&
 		!strings.Contains(err.Error(), server.ErrPodNotFound.Error()) {
-		logrus.Error("GetPodByService Error:", err)
+		logrus.Errorf("failed to get pods: %v", err)
 		return nil, err
 	}
 	if pods == nil {
@@ -2677,7 +2677,7 @@ func (s *ServiceAction) GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, 
 	mpods, err := s.statusCli.GetMultiServicePods(serviceIDs)
 	if err != nil && !strings.Contains(err.Error(), server.ErrAppServiceNotFound.Error()) &&
 		!strings.Contains(err.Error(), server.ErrPodNotFound.Error()) {
-		logrus.Error("GetPodByService Error:", err)
+		logrus.Errorf("failed to get multi service pods: %v", err)
 		return nil, err
 	}
 	if mpods == nil {
