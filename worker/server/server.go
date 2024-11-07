@@ -112,8 +112,8 @@ func (r *RuntimeServer) Start(errchan chan error) {
 	logrus.Infof("runtime server start success")
 }
 
-// GetAppStatusDeprecated get app service status
-func (r *RuntimeServer) GetAppStatusDeprecated(ctx context.Context, re *pb.ServicesRequest) (*pb.StatusMessage, error) {
+// GetServiceStatuses get service statuses
+func (r *RuntimeServer) GetServiceStatuses(ctx context.Context, re *pb.ServicesRequest) (*pb.StatusMessage, error) {
 	var servicdIDs []string
 	if re.ServiceIds != "" {
 		servicdIDs = strings.Split(re.ServiceIds, ",")

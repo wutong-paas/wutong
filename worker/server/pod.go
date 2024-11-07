@@ -11,7 +11,6 @@ import (
 	"github.com/wutong-paas/wutong/worker/server/pb"
 	"github.com/wutong-paas/wutong/worker/util"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/reference"
@@ -103,28 +102,6 @@ func (r *RuntimeServer) listPodEventsByPod(pod *corev1.Pod) []*pb.PodEvent {
 	events, _ := r.clientset.CoreV1().Events(pod.GetNamespace()).Search(scheme.Scheme, ref)
 	podEvents := DescribeEvents(events)
 	return podEvents
-}
-
-// GetPodEventsByName -
-func (r RuntimeServer) listPodEventsByName(name, namespace string) []*pb.PodEvent {
-	eventsInterface := r.clientset.CoreV1().Events(namespace)
-	selector := eventsInterface.GetFieldSelector(&name, &namespace, nil, nil)
-	options := metav1.ListOptions{FieldSelector: selector.String()}
-	events, err := eventsInterface.List(context.Background(), options)
-	if err == nil && len(events.Items) > 0 {
-		podEvents := DescribeEvents(events)
-		return podEvents
-	}
-	if err != nil {
-		// custome event
-		event := &pb.PodEvent{
-			Type:    "Warning", // TODO: use k8s enum
-			Reason:  "error getting pod events.",
-			Message: err.Error(),
-		}
-		return []*pb.PodEvent{event}
-	}
-	return nil
 }
 
 func describeContainers(containers []corev1.Container, containerStatuses []corev1.ContainerStatus, podContainers *[]*pb.PodContainer) {

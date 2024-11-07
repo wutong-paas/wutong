@@ -94,7 +94,7 @@ func (a *AppRuntimeSyncClient) Error(err error) {
 func (a *AppRuntimeSyncClient) GetStatus(serviceID string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	status, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
+	status, err := a.GrpcClient.GetServiceStatuses(ctx, &pb.ServicesRequest{
 		ServiceIds: serviceID,
 	})
 	if err != nil {
@@ -108,7 +108,7 @@ func (a *AppRuntimeSyncClient) GetStatus(serviceID string) string {
 func (a *AppRuntimeSyncClient) GetStatuss(serviceIDs string) map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	status, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
+	status, err := a.GrpcClient.GetServiceStatuses(ctx, &pb.ServicesRequest{
 		ServiceIds: serviceIDs,
 	})
 	if err != nil {
@@ -127,7 +127,7 @@ func (a *AppRuntimeSyncClient) GetStatuss(serviceIDs string) map[string]string {
 func (a *AppRuntimeSyncClient) GetAllStatus() map[string]string {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	status, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{
+	status, err := a.GrpcClient.GetServiceStatuses(ctx, &pb.ServicesRequest{
 		ServiceIds: "",
 	})
 	if err != nil {
@@ -141,7 +141,7 @@ func (a *AppRuntimeSyncClient) GetAllStatus() map[string]string {
 func (a *AppRuntimeSyncClient) GetNeedBillingStatus() (map[string]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
 	defer cancel()
-	re, err := a.GrpcClient.GetAppStatusDeprecated(ctx, &pb.ServicesRequest{})
+	re, err := a.GrpcClient.GetServiceStatuses(ctx, &pb.ServicesRequest{})
 	if err != nil {
 		a.TryResetGrpcClient(err)
 		return nil, err

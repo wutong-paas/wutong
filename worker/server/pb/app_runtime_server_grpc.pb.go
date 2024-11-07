@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AppRuntimeSync_GetAppStatusDeprecated_FullMethodName  = "/AppRuntimeSync/GetAppStatusDeprecated"
+	AppRuntimeSync_GetServiceStatuses_FullMethodName      = "/AppRuntimeSync/GetServiceStatuses"
 	AppRuntimeSync_GetAppStatus_FullMethodName            = "/AppRuntimeSync/GetAppStatus"
 	AppRuntimeSync_GetAppPods_FullMethodName              = "/AppRuntimeSync/GetAppPods"
 	AppRuntimeSync_GetMultiAppPods_FullMethodName         = "/AppRuntimeSync/GetMultiAppPods"
@@ -43,8 +43,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AppRuntimeSyncClient interface {
-	// Deprecated: -
-	GetAppStatusDeprecated(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*StatusMessage, error)
+	GetServiceStatuses(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*StatusMessage, error)
 	GetAppStatus(ctx context.Context, in *AppStatusReq, opts ...grpc.CallOption) (*AppStatus, error)
 	GetAppPods(ctx context.Context, in *ServiceRequest, opts ...grpc.CallOption) (*ServiceAppPodList, error)
 	GetMultiAppPods(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*MultiServiceAppPodList, error)
@@ -72,10 +71,10 @@ func NewAppRuntimeSyncClient(cc grpc.ClientConnInterface) AppRuntimeSyncClient {
 	return &appRuntimeSyncClient{cc}
 }
 
-func (c *appRuntimeSyncClient) GetAppStatusDeprecated(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*StatusMessage, error) {
+func (c *appRuntimeSyncClient) GetServiceStatuses(ctx context.Context, in *ServicesRequest, opts ...grpc.CallOption) (*StatusMessage, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StatusMessage)
-	err := c.cc.Invoke(ctx, AppRuntimeSync_GetAppStatusDeprecated_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, AppRuntimeSync_GetServiceStatuses_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -256,8 +255,7 @@ func (c *appRuntimeSyncClient) ListAppStatuses(ctx context.Context, in *AppStatu
 // All implementations must embed UnimplementedAppRuntimeSyncServer
 // for forward compatibility.
 type AppRuntimeSyncServer interface {
-	// Deprecated: -
-	GetAppStatusDeprecated(context.Context, *ServicesRequest) (*StatusMessage, error)
+	GetServiceStatuses(context.Context, *ServicesRequest) (*StatusMessage, error)
 	GetAppStatus(context.Context, *AppStatusReq) (*AppStatus, error)
 	GetAppPods(context.Context, *ServiceRequest) (*ServiceAppPodList, error)
 	GetMultiAppPods(context.Context, *ServicesRequest) (*MultiServiceAppPodList, error)
@@ -285,8 +283,8 @@ type AppRuntimeSyncServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAppRuntimeSyncServer struct{}
 
-func (UnimplementedAppRuntimeSyncServer) GetAppStatusDeprecated(context.Context, *ServicesRequest) (*StatusMessage, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAppStatusDeprecated not implemented")
+func (UnimplementedAppRuntimeSyncServer) GetServiceStatuses(context.Context, *ServicesRequest) (*StatusMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetServiceStatuses not implemented")
 }
 func (UnimplementedAppRuntimeSyncServer) GetAppStatus(context.Context, *AppStatusReq) (*AppStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAppStatus not implemented")
@@ -360,20 +358,20 @@ func RegisterAppRuntimeSyncServer(s grpc.ServiceRegistrar, srv AppRuntimeSyncSer
 	s.RegisterService(&AppRuntimeSync_ServiceDesc, srv)
 }
 
-func _AppRuntimeSync_GetAppStatusDeprecated_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _AppRuntimeSync_GetServiceStatuses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ServicesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AppRuntimeSyncServer).GetAppStatusDeprecated(ctx, in)
+		return srv.(AppRuntimeSyncServer).GetServiceStatuses(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AppRuntimeSync_GetAppStatusDeprecated_FullMethodName,
+		FullMethod: AppRuntimeSync_GetServiceStatuses_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AppRuntimeSyncServer).GetAppStatusDeprecated(ctx, req.(*ServicesRequest))
+		return srv.(AppRuntimeSyncServer).GetServiceStatuses(ctx, req.(*ServicesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -692,8 +690,8 @@ var AppRuntimeSync_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AppRuntimeSyncServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetAppStatusDeprecated",
-			Handler:    _AppRuntimeSync_GetAppStatusDeprecated_Handler,
+			MethodName: "GetServiceStatuses",
+			Handler:    _AppRuntimeSync_GetServiceStatuses_Handler,
 		},
 		{
 			MethodName: "GetAppStatus",
