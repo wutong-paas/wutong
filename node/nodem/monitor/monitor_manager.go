@@ -22,7 +22,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-kit/kit/log"
+	kingpin "github.com/alecthomas/kingpin/v2"
+	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/node_exporter/collector"
@@ -33,10 +34,9 @@ import (
 	"github.com/wutong-paas/wutong/node/statsd"
 	innerprometheus "github.com/wutong-paas/wutong/node/statsd/prometheus"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
-//Manager Manager
+// Manager Manager
 type Manager interface {
 	Start(errchan chan error) error
 	Stop() error
@@ -72,7 +72,7 @@ func createNodeExporterRestry() (*prometheus.Registry, error) {
 	return registry, nil
 }
 
-//CreateManager CreateManager
+// CreateManager CreateManager
 func CreateManager(ctx context.Context, c *option.Conf) (Manager, error) {
 	//statsd exporter
 	statsdRegistry := innerprometheus.NewRegistry()
@@ -113,7 +113,7 @@ func (m *manager) Stop() error {
 	return nil
 }
 
-//ReloadStatsdMappConfig ReloadStatsdMappConfig
+// ReloadStatsdMappConfig ReloadStatsdMappConfig
 func (m *manager) ReloadStatsdMappConfig(w http.ResponseWriter, r *http.Request) {
 	if err := m.statsdExporter.ReloadConfig(); err != nil {
 		w.Write([]byte(err.Error()))
@@ -124,7 +124,7 @@ func (m *manager) ReloadStatsdMappConfig(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-//HandleStatsd statsd handle
+// HandleStatsd statsd handle
 func (m *manager) HandleStatsd(w http.ResponseWriter, r *http.Request) {
 	gatherers := prometheus.Gatherers{
 		prometheus.DefaultGatherer,
@@ -139,7 +139,7 @@ func (m *manager) HandleStatsd(w http.ResponseWriter, r *http.Request) {
 	h.ServeHTTP(w, r)
 }
 
-//NodeExporter node exporter
+// NodeExporter node exporter
 func (m *manager) NodeExporter(w http.ResponseWriter, r *http.Request) {
 	gatherers := prometheus.Gatherers{
 		prometheus.DefaultGatherer,
@@ -154,7 +154,7 @@ func (m *manager) NodeExporter(w http.ResponseWriter, r *http.Request) {
 	h.ServeHTTP(w, r)
 }
 
-//SetAPIRoute set api route rule
+// SetAPIRoute set api route rule
 func (m *manager) SetAPIRoute(apim *api.Manager) error {
 	apim.GetRouter().Get("/app/metrics", m.HandleStatsd)
 	apim.GetRouter().Get("/-/statsdreload", m.ReloadStatsdMappConfig)

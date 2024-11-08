@@ -1,7 +1,7 @@
 package kube
 
 import (
-	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	wutongversioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	wutongscheme "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -19,7 +19,6 @@ var (
 	regionClientset       kubernetes.Interface
 	regionAPIExtClientset apiext.Interface
 	regionWutongClientset wutongversioned.Interface
-	regionVeleroClientset veleroversioned.Interface
 	regionDynamicClient   dynamic.Interface
 	regionRuntimeClient   runtimeclient.Client
 )
@@ -56,14 +55,6 @@ func RegionWutongClientset() wutongversioned.Interface {
 	return regionWutongClientset
 }
 
-func RegionVeleroClientset() veleroversioned.Interface {
-	if regionVeleroClientset == nil {
-		regionVeleroClientset = veleroversioned.NewForConfigOrDie(RegionRESTConfig())
-	}
-
-	return regionVeleroClientset
-}
-
 func RegionDynamicClient() dynamic.Interface {
 	if regionDynamicClient == nil {
 		regionDynamicClient = dynamic.NewForConfigOrDie(RegionRESTConfig())
@@ -72,12 +63,13 @@ func RegionDynamicClient() dynamic.Interface {
 	return regionDynamicClient
 }
 
-func RegionRuntimeClient() runtimeclient.Client {
+func RuntimeClient() runtimeclient.Client {
 	if regionRuntimeClient == nil {
 		// k8s runtime client
 		scheme := runtime.NewScheme()
 		clientgoscheme.AddToScheme(scheme)
 		wutongscheme.AddToScheme(scheme)
+		velerov1.AddToScheme(scheme)
 		var err error
 		regionRuntimeClient, err = runtimeclient.New(RegionRESTConfig(), runtimeclient.Options{
 			Scheme: scheme,

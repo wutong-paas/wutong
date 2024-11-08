@@ -5,38 +5,18 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"sync"
-	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
-	informers "github.com/vmware-tanzu/velero/pkg/generated/informers/externalversions"
-	velerov1 "github.com/vmware-tanzu/velero/pkg/generated/listers/velero/v1"
+	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	"github.com/wutong-paas/wutong/util"
 	"gopkg.in/ini.v1"
 	apiextclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/cache"
 )
 
 var isVeleroInstalled *bool
 var veleroStatus *VeleroStatus
-var veleroCachedResources *VeleroCachedResources
-
-type VeleroCachedResources struct {
-	BackupLister                velerov1.BackupLister
-	BackupRepositoryLister      velerov1.BackupRepositoryLister
-	BackupStorageLocationLister velerov1.BackupStorageLocationLister
-	RestoreLister               velerov1.RestoreLister
-	PodVolumeBackupLister       velerov1.PodVolumeBackupLister
-	PodVolumeRestoreLister      velerov1.PodVolumeRestoreLister
-	DeleteBackupRequestLister   velerov1.DeleteBackupRequestLister
-	ScheduleLister              velerov1.ScheduleLister
-	DownloadRequestLister       velerov1.DownloadRequestLister
-}
 
 type VeleroStatus struct {
 	S3Url             string
@@ -49,88 +29,16 @@ type VeleroStatus struct {
 	ResticPassword    string
 }
 
-func GetVeleroStatus(kubeClient kubernetes.Interface, veleroClient versioned.Interface, apiextClient apiextclient.Interface) *VeleroStatus {
+func GetVeleroStatus(kubeClient kubernetes.Interface) *VeleroStatus {
 	if veleroStatus == nil {
-		veleroStatus = initializeVeleroStatus(kubeClient, veleroClient, apiextClient)
+		veleroStatus = initializeVeleroStatus(kubeClient)
 	}
 	return veleroStatus
 }
 
-func GetVeleroCachedResources(kubeClient kubernetes.Interface, veleroClient versioned.Interface, apiextClientset apiextclient.Interface) *VeleroCachedResources {
-	if veleroCachedResources == nil {
-		if IsVeleroInstalled(kubeClient, apiextClientset) {
-			veleroCachedResources = initializeVeleroCachedResources(veleroClient)
-		}
-	}
-	return veleroCachedResources
-}
-
-func initializeVeleroCachedResources(clientset versioned.Interface) *VeleroCachedResources {
-	clientset.Discovery().ServerGroupsAndResources()
-	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Hour*8)
-
-	// informer
-	backupInfromer := sharedInformers.Velero().V1().Backups()
-	backupRepositoryInformer := sharedInformers.Velero().V1().BackupRepositories()
-	backupStorageInformer := sharedInformers.Velero().V1().BackupStorageLocations()
-	restoreInformer := sharedInformers.Velero().V1().Restores()
-	podVolumeBackupInformer := sharedInformers.Velero().V1().PodVolumeBackups()
-	podVolumeRestoreInformer := sharedInformers.Velero().V1().PodVolumeRestores()
-	deleteBackupRequestInformer := sharedInformers.Velero().V1().DeleteBackupRequests()
-	scheduleInformer := sharedInformers.Velero().V1().Schedules()
-	downloadRequestInformer := sharedInformers.Velero().V1().DownloadRequests()
-
-	// shared informers
-	backupSharedInformer := backupInfromer.Informer()
-	backupRepositorySharedInformer := backupRepositoryInformer.Informer()
-	backupStorageSharedInformer := backupStorageInformer.Informer()
-	restoreSharedInformer := restoreInformer.Informer()
-	podVolumeBackupSharedInformer := podVolumeBackupInformer.Informer()
-	podVolumeRestoreSharedInformer := podVolumeRestoreInformer.Informer()
-	deleteBackupRequestSharedInformer := deleteBackupRequestInformer.Informer()
-	scheduleSharedInformer := scheduleInformer.Informer()
-	downloadRequestSharedInformer := downloadRequestInformer.Informer()
-
-	informers := map[string]cache.SharedInformer{
-		"backupSharedInformer":              backupSharedInformer,
-		"backupRepositorySharedInformer":    backupRepositorySharedInformer,
-		"backupStorageSharedInformer":       backupStorageSharedInformer,
-		"restoreSharedInformer":             restoreSharedInformer,
-		"podVolumeBackupSharedInformer":     podVolumeBackupSharedInformer,
-		"podVolumeRestoreSharedInformer":    podVolumeRestoreSharedInformer,
-		"deleteBackupRequestSharedInformer": deleteBackupRequestSharedInformer,
-		"scheduleSharedInformer":            scheduleSharedInformer,
-		"downloadRequestSharedInformer":     downloadRequestSharedInformer,
-	}
-	var wg sync.WaitGroup
-	wg.Add(len(informers))
-	for k, v := range informers {
-		go func(name string, informer cache.SharedInformer) {
-			if !cache.WaitForCacheSync(wait.NeverStop, informer.HasSynced) {
-				logrus.Warningln("wait for cached synced failed:", name)
-			}
-			wg.Done()
-		}(k, v)
-	}
-
-	sharedInformers.Start(wait.NeverStop)
-	sharedInformers.WaitForCacheSync(wait.NeverStop)
-	return &VeleroCachedResources{
-		BackupLister:                backupInfromer.Lister(),
-		BackupRepositoryLister:      backupRepositoryInformer.Lister(),
-		BackupStorageLocationLister: backupStorageInformer.Lister(),
-		RestoreLister:               restoreInformer.Lister(),
-		PodVolumeBackupLister:       podVolumeBackupInformer.Lister(),
-		PodVolumeRestoreLister:      podVolumeRestoreInformer.Lister(),
-		DeleteBackupRequestLister:   deleteBackupRequestInformer.Lister(),
-		ScheduleLister:              scheduleInformer.Lister(),
-		DownloadRequestLister:       downloadRequestInformer.Lister(),
-	}
-}
-
-func initializeVeleroStatus(kubeClient kubernetes.Interface, veleroClient versioned.Interface, apiextClient apiextclient.Interface) *VeleroStatus {
-	bsl, err := GetVeleroCachedResources(kubeClient, veleroClient, apiextClient).BackupStorageLocationLister.BackupStorageLocations("velero").Get("default")
-	if err != nil {
+func initializeVeleroStatus(kubeClient kubernetes.Interface) *VeleroStatus {
+	var bsl velerov1.BackupStorageLocation
+	if err := RuntimeClient().Get(context.Background(), types.NamespacedName{Name: "default", Namespace: "velero"}, &bsl); err != nil {
 		return nil
 	}
 

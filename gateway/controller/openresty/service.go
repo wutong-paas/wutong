@@ -32,12 +32,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/wutong-paas/wutong/gateway/controller/openresty/nginxcmd"
-
-	"github.com/golang/glog"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/cmd/gateway/option"
 	"github.com/wutong-paas/wutong/gateway/controller/openresty/model"
+	"github.com/wutong-paas/wutong/gateway/controller/openresty/nginxcmd"
 	"github.com/wutong-paas/wutong/gateway/controller/openresty/template"
 	v1 "github.com/wutong-paas/wutong/gateway/v1"
 	"github.com/wutong-paas/wutong/util"
@@ -46,13 +44,9 @@ import (
 // OrService handles the business logic of OpenrestyService
 type OrService struct {
 	IsShuttingDown *bool
-	// stopLock is used to enforce that only a single call to Stop send at
-	// a given time. We allow stopping through an HTTP endpoint and
-	// allowing concurrent stoppers leads to stack traces.
-	stopLock      *sync.Mutex
-	ocfg          *option.Config
-	nginxProgress *os.Process
-	configManage  *template.NginxConfigFileTemplete
+	ocfg           *option.Config
+	nginxProgress  *os.Process
+	configManage   *template.NginxConfigFileTemplete
 }
 
 // CreateOpenrestyService create openresty service
@@ -323,7 +317,7 @@ func post(url string, data interface{}) error {
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			glog.Warningf("Error while closing response body:\n%v", err)
+			logrus.Warningf("Error while closing response body:\n%v", err)
 		}
 	}()
 

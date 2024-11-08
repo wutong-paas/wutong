@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientset "k8s.io/client-go/kubernetes"
@@ -43,7 +43,7 @@ func ParseNameNS(input string) (string, string, error) {
 func GetNodeIPOrName(kubeClient clientset.Interface, name string, useInternalIP bool) string {
 	node, err := kubeClient.CoreV1().Nodes().Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
-		glog.Errorf("Error getting node %v: %v", name, err)
+		logrus.Errorf("Error getting node %v: %v", name, err)
 		return ""
 	}
 
@@ -109,7 +109,7 @@ func GetPodDetails(kubeClient clientset.Interface) (*PodInfo, error) {
 func MetaNamespaceKey(obj interface{}) string {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
-		glog.Warning(err)
+		logrus.Warning(err)
 	}
 
 	return key

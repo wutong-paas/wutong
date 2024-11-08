@@ -85,7 +85,7 @@ func createServiceMonitor(as *v1.AppService, dbmanager db.Manager) []*mv1.Servic
 				{
 					Port:     service.Spec.Ports[0].Name,
 					Path:     tsm.Path,
-					Interval: tsm.Interval,
+					Interval: mv1.Duration(tsm.Interval),
 				},
 			},
 			TargetLabels: []string{"service_id", "tenant_env_id", "app_id"},

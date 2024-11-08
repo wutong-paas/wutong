@@ -938,22 +938,6 @@ func (t *TenantEnvStruct) DeleteBackupSchedule(w http.ResponseWriter, r *http.Re
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-// DownloadBackup download backup for service resource and data
-// func (t *TenantEnvStruct) DownloadBackup(w http.ResponseWriter, r *http.Request) {
-// 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-// 	backupID := chi.URLParam(r, "backup_id")
-// 	bytes, err := handler.GetServiceManager().DownloadBackup(serviceID, backupID)
-// 	if err != nil {
-// 		httputil.ReturnError(r, w, 500, err.Error())
-// 		return
-// 	}
-
-// 	w.Header().Set("Content-Type", "application/gzip")
-// 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", backupID))
-// 	w.Header().Set("Content-Length", strconv.Itoa(len(bytes)))
-// 	w.Write(bytes)
-// }
-
 func (t *TenantEnvStruct) DownloadBackup(w http.ResponseWriter, r *http.Request) {
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	backupID := chi.URLParam(r, "backup_id")

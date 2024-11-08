@@ -21,19 +21,15 @@ package connect
 import (
 	"errors"
 	"fmt"
-
-	"github.com/wutong-paas/wutong/eventlog/conf"
-	"github.com/wutong-paas/wutong/eventlog/db"
-	"github.com/wutong-paas/wutong/eventlog/store"
-
-	"golang.org/x/net/context"
-
 	"sync"
-
-	"github.com/wutong-paas/wutong/eventlog/cluster/discover"
 
 	"github.com/pebbe/zmq4"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/eventlog/cluster/discover"
+	"github.com/wutong-paas/wutong/eventlog/conf"
+	"github.com/wutong-paas/wutong/eventlog/db"
+	"github.com/wutong-paas/wutong/eventlog/store"
+	"golang.org/x/net/context"
 )
 
 type Pub struct {

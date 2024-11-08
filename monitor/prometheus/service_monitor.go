@@ -190,10 +190,10 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 	}
 
 	if ep.Interval != "" {
-		sc.ScrapeInterval = parseDuration(ep.Interval, time.Second*15)
+		sc.ScrapeInterval = parseDuration(string(ep.Interval), time.Second*15)
 	}
 	if ep.ScrapeTimeout != "" {
-		sc.ScrapeTimeout = parseDuration(ep.ScrapeTimeout, time.Second*10)
+		sc.ScrapeTimeout = parseDuration(string(ep.ScrapeTimeout), time.Second*10)
 	}
 	if ep.Path != "" {
 		sc.MetricsPath = ep.Path

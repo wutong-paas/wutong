@@ -24,7 +24,6 @@ import (
 	"strings"
 	text_template "text/template"
 
-	"github.com/golang/glog"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/gateway/controller/openresty/model"
 	v1 "github.com/wutong-paas/wutong/gateway/v1"
@@ -53,7 +52,7 @@ var (
 func buildLuaHeaderRouter(input interface{}) string {
 	loc, ok := input.(*model.Location)
 	if !ok {
-		glog.Errorf("expected an '*model.Location' type but %T was returned", input)
+		logrus.Errorf("expected an '*model.Location' type but %T was returned", input)
 		return ""
 	}
 	_ = loc

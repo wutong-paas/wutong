@@ -36,7 +36,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	veleroversioned "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
+
 	api_model "github.com/wutong-paas/wutong/api/model"
 	apiutil "github.com/wutong-paas/wutong/api/util"
 	"github.com/wutong-paas/wutong/api/util/bcode"
@@ -87,7 +87,6 @@ type ServiceAction struct {
 	kubeClient    kubernetes.Interface
 	dynamicClient dynamic.Interface
 	apiextClient  apiextclient.Interface
-	veleroClient  veleroversioned.Interface
 }
 
 // CreateManager create Manger
@@ -99,8 +98,7 @@ func CreateManager(conf option.Config,
 	wutongClient versioned.Interface,
 	kubeClient kubernetes.Interface,
 	dynamicClient dynamic.Interface,
-	apiextClient apiextclient.Interface,
-	veleroClient veleroversioned.Interface) *ServiceAction {
+	apiextClient apiextclient.Interface) *ServiceAction {
 	return &ServiceAction{
 		MQClient:      mqClient,
 		EtcdCli:       etcdCli,
@@ -111,7 +109,6 @@ func CreateManager(conf option.Config,
 		kubeClient:    kubeClient,
 		dynamicClient: dynamicClient,
 		apiextClient:  apiextClient,
-		veleroClient:  veleroClient,
 	}
 }
 

@@ -89,23 +89,6 @@ import (
 
 // InitHandle 初始化handle
 func InitHandle(conf option.Config) error {
-	// mq := api_db.MQManager{
-	// 	EtcdClientArgs: etcdClientArgs,
-	// 	DefaultServer:  conf.MQAPI,
-	// }
-	// mqClient, errMQ := mq.NewMQManager()
-	// if errMQ != nil {
-	// 	logrus.Errorf("new MQ manager failed, %v", errMQ)
-	// 	return errMQ
-	// }
-	// prometheusCli, err := prometheus.NewPrometheus(&prometheus.Options{
-	// 	Endpoint: conf.PrometheusEndpoint,
-	// })
-	// if err != nil {
-	// 	logrus.Errorf("new prometheus client failure, %v", err)
-	// 	return err
-	// }
-
 	etcdcli := etcd.Default().EtcdClient
 	statusCli := grpc.Default().StatusClient
 	kubeClient := k8s.Default().Clientset
@@ -113,17 +96,12 @@ func InitHandle(conf option.Config) error {
 	k8sClient := k8s.Default().K8sClient
 	restconfig := k8s.Default().RestConfig
 	dynamicClient := k8s.Default().DynamicClient
-	// gatewayClient := k8s.Default().GatewayClient
-	// kubevirtCli := k8s.Default().KubevirtCli
 	apiextClient := k8s.Default().ApiExtClient
-	veleroClient := k8s.Default().VeleroClient
-	// mapper := k8s.Default().Mapper
-	// registryCli := cr.Default().RegistryCli
 	mqClient := mq.Default().MqClient
 	prometheusCli := prom.Default().PrometheusCli
 
 	dbmanager := db.GetManager()
-	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, dynamicClient, apiextClient, veleroClient)
+	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, wutongClient, kubeClient, dynamicClient, apiextClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
 	defaultTenantEnvHandler = CreateTenantEnvManager(mqClient, statusCli, &conf, restconfig, kubeClient, prometheusCli, k8sClient)
