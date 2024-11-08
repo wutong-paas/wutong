@@ -113,6 +113,12 @@ type TenantEnvInterface interface {
 	DeleteVMVolume(w http.ResponseWriter, r *http.Request)
 	RemoveBootDisk(w http.ResponseWriter, r *http.Request)
 	CloneVM(w http.ResponseWriter, r *http.Request)
+	CreateVMSnapshot(w http.ResponseWriter, r *http.Request)
+	ListVMSnapshots(w http.ResponseWriter, r *http.Request)
+	DeleteVMSnapshot(w http.ResponseWriter, r *http.Request)
+	CreateVMRestore(w http.ResponseWriter, r *http.Request)
+	ListVMRestores(w http.ResponseWriter, r *http.Request)
+	DeleteVMRestore(w http.ResponseWriter, r *http.Request)
 }
 
 // ServiceInterface ServiceInterface

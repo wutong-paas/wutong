@@ -26,12 +26,10 @@ type Component struct {
 	RestConfig    *rest.Config
 	Clientset     *kubernetes.Clientset
 	DynamicClient dynamic.Interface
-
-	WutongClient versioned.Interface
-	K8sClient    k8sclient.Client
-
-	Mapper       meta.RESTMapper
-	ApiExtClient apiextclient.Interface
+	WutongClient  versioned.Interface
+	K8sClient     k8sclient.Client
+	Mapper        meta.RESTMapper
+	ApiExtClient  apiextclient.Interface
 }
 
 var defaultK8sComponent *Component

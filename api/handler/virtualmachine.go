@@ -49,6 +49,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	kubevirtclonev1alpha1 "kubevirt.io/api/clone/v1alpha1"
 	kubevirtcorev1 "kubevirt.io/api/core/v1"
+	kubevirtsnaphostv1betav1 "kubevirt.io/api/snapshot/v1beta1"
 	cdicorev1beta1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 )
 
@@ -1422,6 +1423,7 @@ func (s *ServiceAction) RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID strin
 	return nil
 }
 
+// CloneVM 克隆虚拟机
 func (s *ServiceAction) CloneVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CloneVMRequest) error {
 	// 1、获取虚拟机信息
 	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
@@ -1444,13 +1446,13 @@ func (s *ServiceAction) CloneVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req 
 		},
 		Spec: kubevirtclonev1alpha1.VirtualMachineCloneSpec{
 			Source: &corev1.TypedLocalObjectReference{
-				APIGroup: util.Ptr("kubevirt.io"),
-				Kind:     "VirtualMachine",
+				APIGroup: &kubevirtcorev1.KubeVirtGroupVersionKind.Group,
+				Kind:     kubevirtcorev1.KubeVirtGroupVersionKind.Kind,
 				Name:     vm.Name,
 			},
 			Target: &corev1.TypedLocalObjectReference{
-				APIGroup: util.Ptr("kubevirt.io"),
-				Kind:     "VirtualMachine",
+				APIGroup: &kubevirtcorev1.KubeVirtGroupVersionKind.Group,
+				Kind:     kubevirtcorev1.KubeVirtGroupVersionKind.Kind,
 				Name:     req.CloneName,
 			},
 			LabelFilters: []string{
@@ -1476,6 +1478,96 @@ func (s *ServiceAction) CloneVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req 
 		return fmt.Errorf("克隆虚拟机 %s 失败！", vmID)
 	}
 
+	return nil
+}
+
+// CreateVMSnapshot 创建虚拟机快照
+func (s *ServiceAction) CreateVMSnapshot(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMSnapshotRequest) error {
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	if snapshot, err := kube.KubeVirtClient().VirtualMachineSnapshot(vm.Namespace).Get(context.Background(), req.SnapshotName, metav1.GetOptions{}); err == nil && snapshot != nil {
+		return fmt.Errorf("快照名称 %s 已存在！", req.SnapshotName)
+	}
+
+	snapshot := kubevirtsnaphostv1betav1.VirtualMachineSnapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      req.SnapshotName,
+			Namespace: vm.Namespace,
+			Labels: labels.Merge(labelsFromTenantEnv(tenantEnv), map[string]string{
+				"wutong.io/vm-id": vmID,
+			}),
+			Annotations: labels.Merge(vm.Annotations, map[string]string{
+				"wutong.io/vm-snapshot-desc":     req.Description,
+				"wutong.io/vm-snapshot-operator": req.Operator,
+			}),
+		},
+		Spec: kubevirtsnaphostv1betav1.VirtualMachineSnapshotSpec{
+			Source: corev1.TypedLocalObjectReference{
+				APIGroup: &kubevirtcorev1.KubeVirtGroupVersionKind.Group,
+				Kind:     kubevirtcorev1.KubeVirtGroupVersionKind.Kind,
+				Name:     vm.Name,
+			},
+		},
+	}
+
+	_, err = kube.KubeVirtClient().VirtualMachineSnapshot(snapshot.Namespace).Create(context.Background(), &snapshot, metav1.CreateOptions{})
+	if err != nil {
+		logrus.Errorf("create vm snapshot failed, error: %s", err.Error())
+		return fmt.Errorf("创建虚拟机 %s 快照失败！", vmID)
+	}
+
+	return nil
+}
+
+// ListVMSnapshots 获取虚拟机快照列表
+func (s *ServiceAction) ListVMSnapshots(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMSnapshotsResponse, error) {
+	snapshots, err := kube.KubeVirtClient().VirtualMachineSnapshot(tenantEnv.Namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: labels.SelectorFromSet(labels.Set{
+			"wutong.io/vm-id": vmID,
+		}).String(),
+	})
+	if err != nil {
+		logrus.Errorf("failed to list vm snapshots, error: %s", err.Error())
+		return nil, fmt.Errorf("获取虚拟机 %s 快照列表失败！", vmID)
+	}
+
+	return &api_model.ListVMSnapshotsResponse{
+		Snapshots: snapshotsFromList(snapshots),
+	}, nil
+}
+
+// DeleteVMSnapshot 删除虚拟机快照
+func (s *ServiceAction) DeleteVMSnapshot(tenantEnv *dbmodel.TenantEnvs, vmID, snapshotName string) error {
+	if err := kube.KubeVirtClient().VirtualMachineSnapshot(tenantEnv.Namespace).Delete(context.Background(), snapshotName, metav1.DeleteOptions{}); err != nil {
+		logrus.Errorf("failed to delete vm snapshot, error: %s", err.Error())
+		return fmt.Errorf("删除虚拟机 %s 快照 %s 失败！", vmID, snapshotName)
+	}
+
+	return nil
+}
+
+// CreateVMRestore 创建虚拟机还原记录（从快照还原）
+func (s *ServiceAction) CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, snapshotID string) error {
+	// TODO
+	return nil
+}
+
+// ListVMRestores 获取虚拟机还原记录列表
+func (s *ServiceAction) ListVMRestores(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMRestoresResponse, error) {
+	// TODO
+	return nil, nil
+}
+
+// DeleteVMRestore 删除虚拟机还原记录
+func (s *ServiceAction) DeleteVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, restoreID string) error {
+	// TODO
 	return nil
 }
 
@@ -1955,4 +2047,31 @@ func timeString(t time.Time) string {
 		return ""
 	}
 	return t.Local().Format("2006-01-02 15:04:05")
+}
+
+func snapshotsFromList(list *kubevirtsnaphostv1betav1.VirtualMachineSnapshotList) []api_model.VMSnapshot {
+	if list == nil || len(list.Items) == 0 {
+		return nil
+	}
+
+	var result []api_model.VMSnapshot
+	for _, item := range list.Items {
+		result = append(result, api_model.VMSnapshot{
+			SnapshotName: item.Name,
+			Description:  item.Annotations["wutong.io/vm-snapshot-desc"],
+			Creator:      item.Annotations["wutong.io/vm-snapshot-operator"],
+			Status:       snapshotStatusMap[item.Status.Phase],
+			CreateTime:   timeString(item.CreationTimestamp.Time),
+		})
+	}
+	return result
+}
+
+var snapshotStatusMap = map[kubevirtsnaphostv1betav1.VirtualMachineSnapshotPhase]string{
+	kubevirtsnaphostv1betav1.InProgress: "进行中",
+	kubevirtsnaphostv1betav1.Succeeded:  "成功",
+	kubevirtsnaphostv1betav1.Deleting:   "删除中",
+	kubevirtsnaphostv1betav1.Failed:     "失败",
+	kubevirtsnaphostv1betav1.Unknown:    "未知",
+	kubevirtsnaphostv1betav1.PhaseUnset: "",
 }

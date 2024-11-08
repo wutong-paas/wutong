@@ -248,3 +248,38 @@ type ChangeServiceAppRequest struct {
 type CloneVMRequest struct {
 	CloneName string `json:"cloneName" validate:"cloneName|required"`
 }
+
+type CreateVMSnapshotRequest struct {
+	SnapshotName string `json:"snapshotName" validate:"snapshotName|required"`
+	Description  string `json:"description"`
+	Operator     string `json:"operator"`
+}
+
+type VMSnapshot struct {
+	SnapshotName string `json:"snapshotName"`
+	Description  string `json:"description"`
+	Status       string `json:"status"`
+	CreateTime   string `json:"createTime"`
+	Creator      string `json:"creator"`
+}
+
+type ListVMSnapshotsResponse struct {
+	Snapshots []VMSnapshot `json:"snapshots"`
+}
+
+type CreateVMRestoreRequest struct {
+	SnapshotName string `json:"snapshotName" validate:"snapshotName|required"`
+	Operator     string `json:"operator"`
+}
+type VMRestore struct {
+	RestoreName  string `json:"restoreName"`
+	SnapshotName string `json:"snapshotName"`
+	Description  string `json:"description"`
+	Status       string `json:"status"`
+	CreateTime   string `json:"createTime"`
+	Creator      string `json:"creator"`
+}
+
+type ListVMRestoresResponse struct {
+	Restores []VMRestore `json:"restores"`
+}

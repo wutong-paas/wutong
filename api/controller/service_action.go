@@ -1378,3 +1378,95 @@ func (t *TenantEnvStruct) CloneVM(w http.ResponseWriter, r *http.Request) {
 	}
 	httputil.ReturnSuccess(r, w, nil)
 }
+
+func (t *TenantEnvStruct) CreateVMSnapshot(w http.ResponseWriter, r *http.Request) {
+	var req api_model.CreateVMSnapshotRequest
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	err := handler.GetServiceManager().CreateVMSnapshot(tenantEnv, vmID, &req)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) ListVMSnapshots(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().ListVMSnapshots(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) DeleteVMSnapshot(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	snapshotID := chi.URLParam(r, "snapshot_id")
+	if snapshotID == "" {
+		httputil.ReturnError(r, w, 400, "snapshot id is required")
+		return
+	}
+	err := handler.GetServiceManager().DeleteVMSnapshot(tenantEnv, vmID, snapshotID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) CreateVMRestore(w http.ResponseWriter, r *http.Request) {
+	var req api_model.CreateVMRestoreRequest
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
+		logrus.Errorf("start operation validate request body failure")
+		return
+	}
+
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	err := handler.GetServiceManager().CreateVMRestore(tenantEnv, vmID, req.SnapshotName)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) ListVMRestores(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	resp, err := handler.GetServiceManager().ListVMRestores(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, resp)
+}
+
+func (t *TenantEnvStruct) DeleteVMRestore(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	restoreID := chi.URLParam(r, "restore_id")
+	if restoreID == "" {
+		httputil.ReturnError(r, w, 400, "restore id is required")
+		return
+	}
+	err := handler.GetServiceManager().DeleteVMRestore(tenantEnv, vmID, restoreID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}

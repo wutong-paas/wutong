@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	kubevirtclient "kubevirt.io/client-go/kubecli"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -19,6 +20,7 @@ var (
 	regionClientset       kubernetes.Interface
 	regionAPIExtClientset apiext.Interface
 	regionWutongClientset wutongversioned.Interface
+	kubevirtClient        kubevirtclient.KubevirtClient
 	regionDynamicClient   dynamic.Interface
 	regionRuntimeClient   runtimeclient.Client
 )
@@ -53,6 +55,13 @@ func RegionWutongClientset() wutongversioned.Interface {
 	}
 
 	return regionWutongClientset
+}
+
+func KubeVirtClient() kubevirtclient.KubevirtClient {
+	if kubevirtClient == nil {
+		kubevirtclient.GetKubevirtClientFromRESTConfig(RegionRESTConfig())
+	}
+	return kubevirtClient
 }
 
 func RegionDynamicClient() dynamic.Interface {
