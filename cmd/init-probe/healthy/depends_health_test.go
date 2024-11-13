@@ -36,14 +36,10 @@ import (
 )
 
 var testClusterID = "8cd9214e6b3d4476942b600f41bfefea_tcpmeshd3d6a722b632b854b6c232e4895e0cc6_gr5e0cc6"
-
 var testXDSHost = "39.104.66.227:6101"
 
-// var testClusterID = "2bf54c5a0b5a48a890e2dda8635cb507_tcpmeshed6827c0afdda50599b4108105c9e8e3_grc9e8e3"
-//var testXDSHost = "127.0.0.1:6101"
-
 func TestClientListener(t *testing.T) {
-	conn, err := grpc.Dial(testXDSHost, grpc.WithTransportCredentials(
+	conn, err := grpc.NewClient(testXDSHost, grpc.WithTransportCredentials(
 		insecure.NewCredentials(),
 	))
 	if err != nil {
@@ -70,7 +66,7 @@ func TestClientListener(t *testing.T) {
 }
 
 func TestClientCluster(t *testing.T) {
-	conn, err := grpc.Dial(testXDSHost, grpc.WithTransportCredentials(
+	conn, err := grpc.NewClient(testXDSHost, grpc.WithTransportCredentials(
 		insecure.NewCredentials(),
 	))
 	if err != nil {
@@ -107,7 +103,7 @@ func printYaml(t *testing.T, data interface{}) {
 }
 
 func TestClientEndpoint(t *testing.T) {
-	conn, err := grpc.Dial(testXDSHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(testXDSHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
 	}

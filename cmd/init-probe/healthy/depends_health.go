@@ -73,12 +73,7 @@ func NewDependServiceHealthController() (*DependServiceHealthController, error) 
 		xDSHostPort = "6101"
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", xDSHost, xDSHostPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", xDSHost, xDSHostPort),
-	// 	grpc.WithTransportCredentials(
-	// 		insecure.NewCredentials(),
-	// 	),
-	// )
+	conn, err := grpc.NewClient(fmt.Sprintf("%s:%s", xDSHost, xDSHostPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}

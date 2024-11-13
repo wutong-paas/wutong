@@ -29,7 +29,6 @@ func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn,
 			logrus.Error(err)
 			continue
 		}
-		// conn, err = grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(), grpc.WithTimeout(timeout), grpc.WithContextDialer(dialer))
 		conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(
 			insecure.NewCredentials(),
 		), grpc.WithContextDialer(dialer))

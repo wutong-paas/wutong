@@ -11,6 +11,7 @@ import (
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var defaultEtcdComponent *Component
@@ -69,7 +70,7 @@ func (e *Component) Start(ctx context.Context, cfg *configs.Config) error {
 		}
 		config.TLS = tlsConfig
 	} else {
-		config.DialOptions = []grpc.DialOption{grpc.WithInsecure()}
+		config.DialOptions = []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	}
 	gogo.Go(func(ctx context.Context) error {
 		var err error

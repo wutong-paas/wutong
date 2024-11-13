@@ -43,10 +43,7 @@ type AppRuntimeSyncClient struct {
 }
 
 func initGrpcConn(target string) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(
-	// 	insecure.NewCredentials(),
-	// ), grpc.WithDefaultCallOptions(grpc.WaitForReady(true)))
+	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
