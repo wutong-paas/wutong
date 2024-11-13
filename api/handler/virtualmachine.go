@@ -1554,20 +1554,81 @@ func (s *ServiceAction) DeleteVMSnapshot(tenantEnv *dbmodel.TenantEnvs, vmID, sn
 }
 
 // CreateVMRestore 创建虚拟机还原记录（从快照还原）
-func (s *ServiceAction) CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, snapshotID string) error {
-	// TODO
+func (s *ServiceAction) CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMRestoreRequest) error {
+	// 如果当前虚拟机正在运行，需要提示用户先关闭虚拟机
+	vm, err := kube.GetKubeVirtVM(s.dynamicClient, tenantEnv.Namespace, vmID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("get vm failed, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	if vm.Spec.Running != nil && *vm.Spec.Running {
+		return fmt.Errorf("虚拟机 %s 正在运行，请先关闭虚拟机！", vmID)
+	}
+
+	snapshot, err := kube.KubeVirtClient().VirtualMachineSnapshot(tenantEnv.Namespace).Get(context.Background(), req.SnapshotName, metav1.GetOptions{})
+	if err != nil {
+		logrus.Errorf("get snapshot failed, error: %s", err.Error())
+		return fmt.Errorf("获取快照 %s 失败！", req.SnapshotName)
+	}
+
+	restore := kubevirtsnaphostv1betav1.VirtualMachineRestore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%d", util.NewUUID()[:5], time.Now().UnixMilli()),
+			Namespace: vm.Namespace,
+			Labels: labels.Merge(labelsFromTenantEnv(tenantEnv), map[string]string{
+				"wutong.io/vm-id":           vmID,
+				"wutong.io/vm-restore-from": req.SnapshotName,
+			}),
+			Annotations: labels.Merge(vm.Annotations, map[string]string{
+				"wutong.io/vm-restore-desc":     snapshot.Annotations["wutong.io/vm-snapshot-desc"],
+				"wutong.io/vm-restore-operator": req.Operator,
+			}),
+		},
+		Spec: kubevirtsnaphostv1betav1.VirtualMachineRestoreSpec{
+			Target: corev1.TypedLocalObjectReference{
+				APIGroup: &kubevirtcorev1.KubeVirtGroupVersionKind.Group,
+				Kind:     kubevirtcorev1.KubeVirtGroupVersionKind.Kind,
+				Name:     vm.Name,
+			},
+			VirtualMachineSnapshotName: req.SnapshotName,
+		},
+	}
+
+	if _, err := kube.KubeVirtClient().VirtualMachineRestore(tenantEnv.Namespace).Create(context.Background(), &restore, metav1.CreateOptions{}); err != nil {
+		logrus.Errorf("failed to create vm restore, error: %s", err.Error())
+		return fmt.Errorf("创建虚拟机 %s 还原记录失败！", vmID)
+	}
 	return nil
 }
 
 // ListVMRestores 获取虚拟机还原记录列表
 func (s *ServiceAction) ListVMRestores(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMRestoresResponse, error) {
-	// TODO
-	return nil, nil
+	restores, err := kube.KubeVirtClient().VirtualMachineRestore(tenantEnv.Namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: labels.SelectorFromSet(labels.Set{
+			"wutong.io/vm-id": vmID,
+		}).String(),
+	})
+	if err != nil {
+		logrus.Errorf("failed to list vm restores, error: %s", err.Error())
+		return nil, fmt.Errorf("获取虚拟机 %s 还原列表失败！", vmID)
+	}
+
+	return &api_model.ListVMRestoresResponse{
+		Restores: restoresFromList(restores),
+	}, nil
 }
 
 // DeleteVMRestore 删除虚拟机还原记录
-func (s *ServiceAction) DeleteVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, restoreID string) error {
-	// TODO
+func (s *ServiceAction) DeleteVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, restoreName string) error {
+	if err := kube.KubeVirtClient().VirtualMachineRestore(tenantEnv.Namespace).Delete(context.Background(), restoreName, metav1.DeleteOptions{}); err != nil {
+		logrus.Errorf("failed to delete vm restore, error: %s", err.Error())
+		return fmt.Errorf("删除虚拟机 %s 还原 %s 失败！", vmID, restoreName)
+	}
+
 	return nil
 }
 
@@ -2074,4 +2135,22 @@ var snapshotStatusMap = map[kubevirtsnaphostv1betav1.VirtualMachineSnapshotPhase
 	kubevirtsnaphostv1betav1.Failed:     "失败",
 	kubevirtsnaphostv1betav1.Unknown:    "未知",
 	kubevirtsnaphostv1betav1.PhaseUnset: "",
+}
+
+func restoresFromList(list *kubevirtsnaphostv1betav1.VirtualMachineRestoreList) []api_model.VMRestore {
+	if list == nil || len(list.Items) == 0 {
+		return nil
+	}
+
+	var result []api_model.VMRestore
+	for _, item := range list.Items {
+		result = append(result, api_model.VMRestore{
+			SnapshotName: item.Name,
+			Description:  item.Annotations["wutong.io/vm-restore-desc"],
+			Creator:      item.Annotations["wutong.io/vm-restore-operator"],
+			Status:       util.If(item.Status != nil && item.Status.Complete != nil && *item.Status.Complete, "成功", "失败"),
+			CreateTime:   timeString(item.CreationTimestamp.Time),
+		})
+	}
+	return result
 }

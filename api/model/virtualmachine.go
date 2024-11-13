@@ -271,6 +271,7 @@ type CreateVMRestoreRequest struct {
 	SnapshotName string `json:"snapshotName" validate:"snapshotName|required"`
 	Operator     string `json:"operator"`
 }
+
 type VMRestore struct {
 	RestoreName  string `json:"restoreName"`
 	SnapshotName string `json:"snapshotName"`

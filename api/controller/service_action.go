@@ -1435,7 +1435,7 @@ func (t *TenantEnvStruct) CreateVMRestore(w http.ResponseWriter, r *http.Request
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
 
-	err := handler.GetServiceManager().CreateVMRestore(tenantEnv, vmID, req.SnapshotName)
+	err := handler.GetServiceManager().CreateVMRestore(tenantEnv, vmID, &req)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return

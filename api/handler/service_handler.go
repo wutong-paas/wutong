@@ -158,7 +158,7 @@ type ServiceHandler interface {
 	CreateVMSnapshot(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMSnapshotRequest) error
 	ListVMSnapshots(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMSnapshotsResponse, error)
 	DeleteVMSnapshot(tenantEnv *dbmodel.TenantEnvs, vmID, snapshotID string) error
-	CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, snapshotID string) error
+	CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMRestoreRequest) error
 	ListVMRestores(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMRestoresResponse, error)
 	DeleteVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, restoreID string) error
 
