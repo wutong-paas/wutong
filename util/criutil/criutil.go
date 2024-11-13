@@ -21,8 +21,7 @@ func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn,
 	var conn *grpc.ClientConn
 	for indx, endPoint := range endPoints {
 		logrus.Debugf("connect using endpoint '%s' with '%s' timeout", endPoint, timeout)
-
-		addr, d, err := util.GetAddressAndDialer(endPoint)
+		addr, dialer, err := util.GetAddressAndDialer(endPoint)
 		if err != nil {
 			if indx == endPointsLen-1 {
 				return nil, err
@@ -30,10 +29,10 @@ func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn,
 			logrus.Error(err)
 			continue
 		}
-
+		// conn, err = grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(), grpc.WithTimeout(timeout), grpc.WithContextDialer(dialer))
 		conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(
 			insecure.NewCredentials(),
-		), grpc.WithContextDialer(d))
+		), grpc.WithContextDialer(dialer))
 		if err != nil {
 			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
 			if indx == endPointsLen-1 {

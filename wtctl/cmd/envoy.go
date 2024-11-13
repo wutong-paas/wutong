@@ -67,7 +67,8 @@ func listEnvoyEndpoint(c *cli.Context) error {
 	if c.GlobalString("node") == "" {
 		showError("node name can not be empty,please define by --node")
 	}
-	cli, err := grpc.NewClient(c.GlobalString("address"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	cli, err := grpc.Dial(c.GlobalString("address"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// cli, err := grpc.NewClient(c.GlobalString("address"), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		showError(err.Error())
 	}

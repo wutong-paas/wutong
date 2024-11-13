@@ -1,6 +1,6 @@
 module github.com/wutong-paas/wutong
 
-go 1.23.2
+go 1.23.3
 
 require (
 	cuelang.org/go v0.10.1
@@ -356,10 +356,11 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 )
 
-// Pinned to kubernetes-1.20.0
 replace (
 	github.com/wutong-paas/wutong-oam => ../wutong-oam
 	github.com/wutong-paas/wutong-operator => ../wutong-operator
 
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f
+	// k8s 包升级到 v0.32.0 后，可以删除下面的替换
+	sigs.k8s.io/structured-merge-diff/v4 => sigs.k8s.io/structured-merge-diff/v4 v4.4.1
 )

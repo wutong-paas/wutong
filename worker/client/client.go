@@ -43,9 +43,10 @@ type AppRuntimeSyncClient struct {
 }
 
 func initGrpcConn(target string) (*grpc.ClientConn, error) {
-	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(
-		insecure.NewCredentials(),
-	), grpc.WithDefaultCallOptions(grpc.WaitForReady(true)))
+	conn, err := grpc.Dial(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(
+	// 	insecure.NewCredentials(),
+	// ), grpc.WithDefaultCallOptions(grpc.WaitForReady(true)))
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +68,7 @@ func (a *AppRuntimeSyncClient) TryResetGrpcClient(err error) {
 	}
 }
 
-// NewClient new client (tx must be cancel where client not used)
+// NewClient new client (ctx must be cancel where client not used)
 func NewClient(ctx context.Context, grpcServer string) (c *AppRuntimeSyncClient, err error) {
 	c = &AppRuntimeSyncClient{
 		target: grpcServer,
@@ -76,7 +77,6 @@ func NewClient(ctx context.Context, grpcServer string) (c *AppRuntimeSyncClient,
 	logrus.Infof("discover app runtime sync server address %s", grpcServer)
 
 	c.conn, err = initGrpcConn(grpcServer)
-
 	if err != nil {
 		return nil, err
 	}
