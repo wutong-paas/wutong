@@ -87,11 +87,11 @@ require (
 	github.com/wutong-paas/wutong-oam v0.0.0
 	github.com/wutong-paas/wutong-operator v0.0.0
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
-	go.etcd.io/etcd/api/v3 v3.5.16
-	go.etcd.io/etcd/client/pkg/v3 v3.5.16
-	go.etcd.io/etcd/client/v3 v3.5.16
+	go.etcd.io/etcd/api/v3 v3.5.17
+	go.etcd.io/etcd/client/pkg/v3 v3.5.17
+	go.etcd.io/etcd/client/v3 v3.5.17
 	golang.org/x/crypto v0.29.0
-	golang.org/x/net v0.30.0
+	golang.org/x/net v0.31.0
 	golang.org/x/sync v0.9.0
 	golang.org/x/sys v0.27.0
 	golang.org/x/time v0.8.0
