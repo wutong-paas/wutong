@@ -16,7 +16,7 @@ require (
 	github.com/containerd/containerd/api v1.8.0
 	github.com/containerd/platforms v0.2.1
 	github.com/containerd/typeurl/v2 v2.2.3
-	github.com/crossplane/crossplane-runtime v1.17.0
+	github.com/crossplane/crossplane-runtime v1.18.0
 	github.com/distribution/distribution v2.8.3+incompatible
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v27.3.1+incompatible
@@ -64,11 +64,11 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.7
 	github.com/pquerna/ffjson v0.0.0-20190930134022-aa0246cd15f7
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.68.0
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.78.1
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.78.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/prometheus/client_model v0.6.1
-	github.com/prometheus/common v0.55.0
+	github.com/prometheus/common v0.60.1
 	github.com/prometheus/node_exporter v1.8.2
 	github.com/prometheus/procfs v0.15.1
 	github.com/shirou/gopsutil v3.21.3+incompatible
@@ -96,7 +96,7 @@ require (
 	golang.org/x/sys v0.27.0
 	golang.org/x/time v0.8.0
 	google.golang.org/grpc v1.68.0
-	google.golang.org/protobuf v1.35.1
+	google.golang.org/protobuf v1.35.2
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -114,8 +114,8 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubernetes v1.31.2
 	k8s.io/utils v0.0.0-20240921022957-49e7df575cb6
-	kubevirt.io/api v1.3.1
-	kubevirt.io/client-go v1.4.0-rc.0
+	kubevirt.io/api v1.4.0
+	kubevirt.io/client-go v1.4.0
 	kubevirt.io/containerized-data-importer-api v1.60.3
 	sigs.k8s.io/controller-runtime v0.19.1
 	sigs.k8s.io/yaml v1.4.0
@@ -173,7 +173,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/elazarl/go-bindata-assetfs v1.0.1 // indirect
 	github.com/ema/qdisc v1.0.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.12.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
 	github.com/evanphx/json-patch v5.9.0+incompatible // indirect
@@ -191,7 +191,7 @@ require (
 	github.com/go-logr/zapr v1.3.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
-	github.com/go-openapi/jsonreference v0.20.2 // indirect
+	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect

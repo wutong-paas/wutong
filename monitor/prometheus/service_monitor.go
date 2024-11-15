@@ -32,6 +32,7 @@ import (
 	"github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	"github.com/prometheus/common/model"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -291,16 +292,16 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 
 			SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_endpoint_address_target_kind"), model.LabelName("__meta_kubernetes_endpoint_address_target_name")},
 			Regex:        MustNewRegexp("Node;(.*)"),
-			Replacement:  "${1}",
+			Replacement:  util.Ptr("${1}"),
 			TargetLabel:  "node",
-			Separator:    ";",
+			Separator:    util.Ptr(";"),
 		},
 		{ // Relabel pod labels for >=v2.3 meta labels
 			SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_endpoint_address_target_kind"), model.LabelName("__meta_kubernetes_endpoint_address_target_name")},
 			Regex:        MustNewRegexp("Pod;(.*)"),
-			Replacement:  "${1}",
+			Replacement:  util.Ptr("${1}"),
 			TargetLabel:  "pod",
-			Separator:    ";",
+			Separator:    util.Ptr(";"),
 		},
 		{
 			SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_namespace")},
@@ -325,7 +326,7 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 			SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_service_label_" + sanitizeLabelName(l))},
 			TargetLabel:  sanitizeLabelName(l),
 			Regex:        MustNewRegexp("(.+)"),
-			Replacement:  "${1}",
+			Replacement:  util.Ptr("${1}"),
 		})
 	}
 
@@ -334,7 +335,7 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 			SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_pod_label_" + sanitizeLabelName(l))},
 			TargetLabel:  sanitizeLabelName(l),
 			Regex:        MustNewRegexp("(.+)"),
-			Replacement:  "${1}",
+			Replacement:  util.Ptr("${1}"),
 		})
 	}
 
@@ -347,13 +348,13 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 	sc.RelabelConfigs = append(sc.RelabelConfigs, &RelabelConfig{
 		SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_service_name")},
 		TargetLabel:  "job",
-		Replacement:  "${1}",
+		Replacement:  util.Ptr("${1}"),
 	})
 	if sm.Spec.JobLabel != "" {
 		sc.RelabelConfigs = append(sc.RelabelConfigs, &RelabelConfig{
 			SourceLabels: model.LabelNames{model.LabelName("__meta_kubernetes_service_label_" + sanitizeLabelName(sm.Spec.JobLabel))},
 			TargetLabel:  "job",
-			Replacement:  "${1}",
+			Replacement:  util.Ptr("${1}"),
 			Regex:        MustNewRegexp("(.+)"),
 		})
 	}
@@ -361,12 +362,12 @@ func (s *ServiceMonitorController) createScrapeBySM(sm *mv1.ServiceMonitor, ep m
 	if ep.Port != "" {
 		sc.RelabelConfigs = append(sc.RelabelConfigs, &RelabelConfig{
 			TargetLabel: "endpoint",
-			Replacement: ep.Port,
+			Replacement: &ep.Port,
 		})
 	} else if ep.TargetPort != nil && ep.TargetPort.String() != "" {
 		sc.RelabelConfigs = append(sc.RelabelConfigs, &RelabelConfig{
 			TargetLabel: "endpoint",
-			Replacement: ep.TargetPort.String(),
+			Replacement: util.Ptr(ep.TargetPort.String()),
 		})
 	}
 

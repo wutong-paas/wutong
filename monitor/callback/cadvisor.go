@@ -44,7 +44,7 @@ type Cadvisor struct {
 	endpoints []*config.Endpoint
 }
 
-//UpdateEndpoints update endpoint
+// UpdateEndpoints update endpoint
 func (c *Cadvisor) UpdateEndpoints(endpoints ...*config.Endpoint) {
 	newArr := utils.TrimAndSort(endpoints)
 
@@ -63,7 +63,7 @@ func (c *Cadvisor) Error(err error) {
 	logrus.Error(err)
 }
 
-//Name name
+// Name name
 func (c *Cadvisor) Name() string {
 	return "cadvisor"
 }
@@ -94,7 +94,7 @@ func (c *Cadvisor) toScrape() *prometheus.ScrapeConfig {
 		RelabelConfigs: []*prometheus.RelabelConfig{
 			{
 				TargetLabel: "__address__",
-				Replacement: apiServerHost + ":" + apiServerPort,
+				Replacement: util.Ptr(apiServerHost + ":" + apiServerPort),
 			},
 			{
 				SourceLabels: []model.LabelName{
@@ -102,7 +102,7 @@ func (c *Cadvisor) toScrape() *prometheus.ScrapeConfig {
 				},
 				Regex:       prometheus.MustNewRegexp("(.+)"),
 				TargetLabel: "__metrics_path__",
-				Replacement: "/api/v1/nodes/${1}/proxy/metrics/cadvisor",
+				Replacement: util.Ptr("/api/v1/nodes/${1}/proxy/metrics/cadvisor"),
 			},
 			{
 				Action: prometheus.RelabelAction("labelmap"),
@@ -114,26 +114,26 @@ func (c *Cadvisor) toScrape() *prometheus.ScrapeConfig {
 				SourceLabels: []model.LabelName{"name"},
 				Regex:        prometheus.MustNewRegexp("k8s_(.*)_(.*)_(.*)_(.*)_(.*)"),
 				TargetLabel:  "service_id",
-				Replacement:  "${1}",
+				Replacement:  util.Ptr("${1}"),
 			},
 			{
 				SourceLabels: []model.LabelName{"name"},
 				//k8s_POD_709dfaa8d9b9498a827fd5c503e0d1a1-deployment-8679ff667-j8fj8_5201d8a00fa743c18eb6553778f77c84_d6670db0-00a7-4d2c-a92e-18a19541268d_0
 				Regex:       prometheus.MustNewRegexp("k8s_POD_(.*)-deployment-(.*)"),
 				TargetLabel: "service_id",
-				Replacement: "${1}",
+				Replacement: util.Ptr("${1}"),
 			},
 		},
 	}
 }
 
-//AddEndpoint add endpoint
+// AddEndpoint add endpoint
 func (c *Cadvisor) AddEndpoint(end *config.Endpoint) {
 	c.endpoints = append(c.endpoints, end)
 	c.UpdateEndpoints(c.endpoints...)
 }
 
-//Add add
+// Add add
 func (c *Cadvisor) Add(event *watch.Event) {
 	url := fmt.Sprintf("%s:%d", gjson.Get(event.GetValueString(), "internal_ip").String(), c.ListenPort)
 	end := &config.Endpoint{
@@ -143,7 +143,7 @@ func (c *Cadvisor) Add(event *watch.Event) {
 	c.AddEndpoint(end)
 }
 
-//Modify update
+// Modify update
 func (c *Cadvisor) Modify(event *watch.Event) {
 	var update bool
 	url := fmt.Sprintf("%s:%d", gjson.Get(event.GetValueString(), "internal_ip").String(), c.ListenPort)
@@ -163,7 +163,7 @@ func (c *Cadvisor) Modify(event *watch.Event) {
 	}
 }
 
-//Delete delete
+// Delete delete
 func (c *Cadvisor) Delete(event *watch.Event) {
 	for i, end := range c.endpoints {
 		if end.Name == event.GetKey() {

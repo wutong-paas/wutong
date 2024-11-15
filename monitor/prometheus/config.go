@@ -164,7 +164,7 @@ type RelabelConfig struct {
 	// with the configured separator in order.
 	SourceLabels model.LabelNames `yaml:"source_labels,flow,omitempty"`
 	// Separator is the string between concatenated values from the source labels.
-	Separator string `yaml:"separator,omitempty"`
+	Separator *string `yaml:"separator,omitempty"`
 	// Regex against which the concatenation is matched.
 	Regex Regexp `yaml:"regex,omitempty"`
 	// Modulus to take of the hash of concatenated values from the source labels.
@@ -173,7 +173,7 @@ type RelabelConfig struct {
 	// Regexp interpolation is allowed for the replace action.
 	TargetLabel string `yaml:"target_label,omitempty"`
 	// Replacement is the regex replacement pattern to be used.
-	Replacement string `yaml:"replacement,omitempty"`
+	Replacement *string `yaml:"replacement,omitempty"`
 	// Action is the action to be performed for the relabeling.
 	Action RelabelAction `yaml:"action,omitempty"`
 }
@@ -186,7 +186,7 @@ type ServiceDiscoveryConfig struct {
 	KubernetesSDConfigs []*SDConfig `yaml:"kubernetes_sd_configs,omitempty"`
 }
 
-//Group group
+// Group group
 type Group struct {
 	// Targets is a list of targets identified by a label set. Each target is
 	// uniquely identifiable in the group by its address label.
@@ -205,7 +205,7 @@ type SDConfig struct {
 	Selectors          []SelectorConfig   `yaml:"selectors,omitempty"`
 }
 
-//SelectorConfig selector config
+// SelectorConfig selector config
 type SelectorConfig struct {
 	Role  Role   `yaml:"role,omitempty"`
 	Label string `yaml:"label,omitempty"`
