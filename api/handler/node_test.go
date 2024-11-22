@@ -12,7 +12,7 @@ import (
 )
 
 func TestListNodes(t *testing.T) {
-	clientset := kube.RegionClientset()
+	clientset := kube.KubeClient()
 	nodeAction := NewNodeHandler(clientset, nil)
 	nodes, err := nodeAction.ListNodes("")
 	if err != nil {
@@ -45,7 +45,7 @@ func TestCordonNode(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		clientset := kube.RegionClientset()
+		clientset := kube.KubeClient()
 		nodeAction := NewNodeHandler(clientset, nil)
 		// 禁止节点调度
 		err := nodeAction.CordonNode(test.nodeName, &model.CordonNodeRequest{
@@ -57,7 +57,7 @@ func TestCordonNode(t *testing.T) {
 
 		// 禁止节点调度成功，确认节点状态
 		if err == nil {
-			node, err := kube.RegionClientset().CoreV1().Nodes().Get(context.Background(), test.nodeName, metav1.GetOptions{})
+			node, err := kube.KubeClient().CoreV1().Nodes().Get(context.Background(), test.nodeName, metav1.GetOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -88,7 +88,7 @@ func TestUncordonNode(t *testing.T) {
 	}
 
 	for _, test := range testdata {
-		clientset := kube.RegionClientset()
+		clientset := kube.KubeClient()
 		nodeAction := NewNodeHandler(clientset, nil)
 		// 允许节点调度
 		err := nodeAction.UncordonNode(test.nodeName)
@@ -98,7 +98,7 @@ func TestUncordonNode(t *testing.T) {
 
 		// 允许节点调度成功，确认节点状态
 		if err == nil {
-			node, err := kube.RegionClientset().CoreV1().Nodes().Get(context.Background(), test.nodeName, metav1.GetOptions{})
+			node, err := kube.KubeClient().CoreV1().Nodes().Get(context.Background(), test.nodeName, metav1.GetOptions{})
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -84,8 +84,8 @@ require (
 	github.com/vmware-tanzu/velero v1.15.0
 	github.com/wutong-paas/gorm-bulk-upsert v1.0.0
 	github.com/wutong-paas/gotty v1.0.0
-	github.com/wutong-paas/wutong-oam v0.0.0
-	github.com/wutong-paas/wutong-operator v0.0.0
+	github.com/wutong-paas/wutong-oam v1.4.3
+	github.com/wutong-paas/wutong-operator v1.16.0
 	github.com/yudai/umutex v0.0.0-20150817080136-18216d265c6b
 	go.etcd.io/etcd/api/v3 v3.5.17
 	go.etcd.io/etcd/client/pkg/v3 v3.5.17
@@ -357,9 +357,6 @@ require (
 )
 
 replace (
-	github.com/wutong-paas/wutong-oam => ../wutong-oam
-	github.com/wutong-paas/wutong-operator => ../wutong-operator
-
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20241105132330-32ad38e42d3f
 	// k8s 包升级到 v0.32.0 后，可以删除下面的替换
 	sigs.k8s.io/structured-merge-diff/v4 => sigs.k8s.io/structured-merge-diff/v4 v4.4.1

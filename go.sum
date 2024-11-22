@@ -944,6 +944,10 @@ github.com/wutong-paas/gorm-bulk-upsert v1.0.0 h1:Xl3wVHGvPjkz9ASLB0g4GdnAfakeIF
 github.com/wutong-paas/gorm-bulk-upsert v1.0.0/go.mod h1:/0dUoW982asTvHKfZpnOJW1nBMG2epY23aQyQLA/Iyc=
 github.com/wutong-paas/gotty v1.0.0 h1:UB2R9OAFICL3pejZPLL2nSdGADw8HdLd3YqoH3+KD6w=
 github.com/wutong-paas/gotty v1.0.0/go.mod h1:HtGG/OWuuUV2Sidpft4DFJtXi2i2kLCWnttLv79992Y=
+github.com/wutong-paas/wutong-oam v1.4.3 h1:ED7y8hNrZFcoeTnqFdsSyuZkRYUUfIxQJFO5v4EuOu8=
+github.com/wutong-paas/wutong-oam v1.4.3/go.mod h1:Jms/SYZvBc3h9kYrjCJPg55fgIUaOC0Po5eo4/hJbsc=
+github.com/wutong-paas/wutong-operator v1.16.0 h1:PTyGsN9P1BIqUpZ3G01Qiq/2roHl47TlZx3ds1B2/qk=
+github.com/wutong-paas/wutong-operator v1.16.0/go.mod h1:hPo2vM0qfY7BQbI1TMegDzhKX6LBI2haqEshedetHjc=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=

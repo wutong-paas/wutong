@@ -380,8 +380,8 @@ func (c *clusterAction) Features(ctx context.Context) map[string]bool {
 	return map[string]bool{
 		// TODO: gpu
 		"gpu":      false,
-		"velero":   kube.IsVeleroInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()),
-		"kubevirt": kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()),
+		"velero":   kube.IsVeleroInstalled(kube.KubeClient(), kube.APIExtClient()),
+		"kubevirt": kube.IsKubevirtInstalled(kube.KubeClient(), kube.APIExtClient()),
 	}
 }
 

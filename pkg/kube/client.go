@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"github.com/sirupsen/logrus"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	wutongversioned "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned"
 	wutongscheme "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
@@ -16,71 +17,75 @@ import (
 )
 
 var (
-	regionRESTConfig      *rest.Config
-	regionClientset       kubernetes.Interface
-	regionAPIExtClientset apiext.Interface
-	regionWutongClientset wutongversioned.Interface
-	kubevirtClient        kubevirtclient.KubevirtClient
-	regionDynamicClient   dynamic.Interface
-	regionRuntimeClient   runtimeclient.Client
+	restConfig     *rest.Config
+	kubeClient     kubernetes.Interface
+	apiExtClient   apiext.Interface
+	wutongClient   wutongversioned.Interface
+	kubevirtClient kubevirtclient.KubevirtClient
+	dynamicClient  dynamic.Interface
+	runtimeClient  runtimeclient.Client
 )
 
-func RegionRESTConfig() *rest.Config {
-	if regionRESTConfig == nil {
-		regionRESTConfig = controllerruntime.GetConfigOrDie()
+func RESTConfig() *rest.Config {
+	if restConfig == nil {
+		restConfig = controllerruntime.GetConfigOrDie()
 	}
 
-	return regionRESTConfig
+	return restConfig
 }
 
-func RegionClientset() kubernetes.Interface {
-	if regionClientset == nil {
-		regionClientset = kubernetes.NewForConfigOrDie(RegionRESTConfig())
+func KubeClient() kubernetes.Interface {
+	if kubeClient == nil {
+		kubeClient = kubernetes.NewForConfigOrDie(RESTConfig())
 	}
 
-	return regionClientset
+	return kubeClient
 }
 
-func RegionAPIExtClientset() apiext.Interface {
-	if regionAPIExtClientset == nil {
-		regionAPIExtClientset = apiext.NewForConfigOrDie(RegionRESTConfig())
+func APIExtClient() apiext.Interface {
+	if apiExtClient == nil {
+		apiExtClient = apiext.NewForConfigOrDie(RESTConfig())
 	}
 
-	return regionAPIExtClientset
+	return apiExtClient
 }
 
-func RegionWutongClientset() wutongversioned.Interface {
-	if regionWutongClientset == nil {
-		regionWutongClientset = wutongversioned.NewForConfigOrDie(RegionRESTConfig())
+func WutongClient() wutongversioned.Interface {
+	if wutongClient == nil {
+		wutongClient = wutongversioned.NewForConfigOrDie(RESTConfig())
 	}
 
-	return regionWutongClientset
+	return wutongClient
 }
 
-func KubeVirtClient() kubevirtclient.KubevirtClient {
+func KubevirtClient() kubevirtclient.KubevirtClient {
 	if kubevirtClient == nil {
-		kubevirtclient.GetKubevirtClientFromRESTConfig(RegionRESTConfig())
+		var err error
+		kubevirtClient, err = kubevirtclient.GetKubevirtClientFromRESTConfig(RESTConfig())
+		if err != nil {
+			logrus.Errorf("failed to create kubevirt client: %v", err)
+		}
 	}
 	return kubevirtClient
 }
 
-func RegionDynamicClient() dynamic.Interface {
-	if regionDynamicClient == nil {
-		regionDynamicClient = dynamic.NewForConfigOrDie(RegionRESTConfig())
+func DynamicClient() dynamic.Interface {
+	if dynamicClient == nil {
+		dynamicClient = dynamic.NewForConfigOrDie(RESTConfig())
 	}
 
-	return regionDynamicClient
+	return dynamicClient
 }
 
 func RuntimeClient() runtimeclient.Client {
-	if regionRuntimeClient == nil {
+	if runtimeClient == nil {
 		// k8s runtime client
 		scheme := runtime.NewScheme()
 		clientgoscheme.AddToScheme(scheme)
 		wutongscheme.AddToScheme(scheme)
 		velerov1.AddToScheme(scheme)
 		var err error
-		regionRuntimeClient, err = runtimeclient.New(RegionRESTConfig(), runtimeclient.Options{
+		runtimeClient, err = runtimeclient.New(RESTConfig(), runtimeclient.Options{
 			Scheme: scheme,
 		})
 		if err != nil {
@@ -88,5 +93,5 @@ func RuntimeClient() runtimeclient.Client {
 		}
 	}
 
-	return regionRuntimeClient
+	return runtimeClient
 }

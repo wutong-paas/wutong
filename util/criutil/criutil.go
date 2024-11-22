@@ -8,7 +8,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/util"
 )
@@ -29,9 +28,10 @@ func getConnection(endPoints []string, timeout time.Duration) (*grpc.ClientConn,
 			logrus.Error(err)
 			continue
 		}
-		conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(
-			insecure.NewCredentials(),
-		), grpc.WithContextDialer(dialer))
+		// conn, err = grpc.NewClient(addr, grpc.WithTransportCredentials(
+		// 	insecure.NewCredentials(),
+		// ), grpc.WithContextDialer(dialer))
+		conn, err = grpc.Dial(addr, grpc.WithInsecure(), grpc.WithContextDialer(dialer))
 		if err != nil {
 			errMsg := errors.Wrapf(err, "connect endpoint '%s', make sure you are running as root and the endpoint has been started", endPoint)
 			if indx == endPointsLen-1 {

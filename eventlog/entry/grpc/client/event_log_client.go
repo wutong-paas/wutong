@@ -27,8 +27,9 @@ import (
 )
 
 // NewEventClient new a event client
-func NewEventClient(_ context.Context, server string) (pb.EventLogClient, error) {
-	conn, err := grpc.NewClient(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewEventClient(ctx context.Context, server string) (pb.EventLogClient, error) {
+	// conn, err := grpc.NewClient(server, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, server, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}

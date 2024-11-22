@@ -1,21 +1,17 @@
 package kube
 
 import (
+	"context"
 	"testing"
 
 	"github.com/wutong-paas/wutong/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
 	kubevirtcorev1 "kubevirt.io/api/core/v1"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 )
 
 func TestCreateKubevirtVM(t *testing.T) {
-	restConfig := controllerruntime.GetConfigOrDie()
-	dynamicClient := dynamic.NewForConfigOrDie(restConfig)
-
 	vm := &kubevirtcorev1.VirtualMachine{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "VirtualMachine",
@@ -98,7 +94,7 @@ func TestCreateKubevirtVM(t *testing.T) {
 			},
 		},
 	}
-	created, err := CreateKubevirtVM(dynamicClient, vm)
+	created, err := KubevirtClient().VirtualMachine(vm.Namespace).Create(context.Background(), vm, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("create vm failed: %v", err)
 	}
@@ -106,14 +102,11 @@ func TestCreateKubevirtVM(t *testing.T) {
 }
 
 func TestListKubeVirtVMs(t *testing.T) {
-	restConfig := controllerruntime.GetConfigOrDie()
-	dynamicClient := dynamic.NewForConfigOrDie(restConfig)
-
-	vms, err := ListKubeVirtVMs(dynamicClient, metav1.NamespaceDefault)
+	vms, err := KubevirtClient().VirtualMachine(metav1.NamespaceDefault).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		t.Fatalf("list vm failed: %v", err)
 	}
-	for _, vm := range vms {
+	for _, vm := range vms.Items {
 		t.Logf("vm: %s/%s", vm.GetNamespace(), vm.GetName())
 	}
 }

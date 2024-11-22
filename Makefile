@@ -1,5 +1,5 @@
 REGISTRY ?= swr.cn-southwest-2.myhuaweicloud.com/wutong
-VERSION ?= v1.16.0-alpha1
+VERSION ?= v1.16.0-alpha.1
 export REGISTRY
 export VERSION
 
@@ -19,7 +19,7 @@ build-gateway:
 build-monitor:
 	./build.sh monitor
 
-build-mq:
+build-mq: 
 	./build.sh mq
 
 build-webcli:

@@ -25,20 +25,17 @@ import (
 	"time"
 
 	"github.com/eapache/channels"
-	"k8s.io/apimachinery/pkg/labels"
-
 	"github.com/pquerna/ffjson/ffjson"
-
+	"github.com/sirupsen/logrus"
 	conf "github.com/wutong-paas/wutong/cmd/node/option"
 	"github.com/wutong-paas/wutong/node/nodem/client"
-
-	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/policy/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"

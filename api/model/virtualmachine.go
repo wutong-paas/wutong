@@ -219,8 +219,8 @@ type DeleteVMPortRequest struct {
 }
 
 type ListVMsResponse struct {
-	VMs   []VMProfile `json:"vms"`
-	Total int         `json:"total"`
+	VMs   []*VMProfile `json:"vms"`
+	Total int          `json:"total"`
 }
 
 type ListVMVolumesResponse struct {
@@ -247,12 +247,12 @@ type ChangeServiceAppRequest struct {
 
 type CloneVMRequest struct {
 	CloneName string `json:"cloneName" validate:"cloneName|required"`
+	Operator  string `json:"operator"`
 }
 
 type CreateVMSnapshotRequest struct {
-	SnapshotName string `json:"snapshotName" validate:"snapshotName|required"`
-	Description  string `json:"description"`
-	Operator     string `json:"operator"`
+	Description string `json:"description"`
+	Operator    string `json:"operator"`
 }
 
 type VMSnapshot struct {

@@ -125,7 +125,7 @@ func InitApplication(next http.Handler) http.Handler {
 // InitVeleroBackupOrRestore
 func InitVeleroBackupOrRestore(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if ok := kube.IsVeleroInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()); !ok {
+		if ok := kube.IsVeleroInstalled(kube.KubeClient(), kube.APIExtClient()); !ok {
 			httputil.ReturnError(r, w, 500, "集群中未检测到 Velero 服务，使用该功能请联系管理员安装 Velero 服务！")
 			return
 		}
@@ -137,7 +137,7 @@ func InitVeleroBackupOrRestore(next http.Handler) http.Handler {
 // InitVM -
 func InitVM(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if ok := kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()); !ok {
+		if ok := kube.IsKubevirtInstalled(kube.KubeClient(), kube.APIExtClient()); !ok {
 			httputil.ReturnError(r, w, 500, "集群中未检测到 Kubevirt 服务，使用该功能请联系管理员安装 Kubevirt 服务！")
 			return
 		}
@@ -149,7 +149,7 @@ func InitVM(next http.Handler) http.Handler {
 // InitVMID -
 func InitVMID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if ok := kube.IsKubevirtInstalled(kube.RegionClientset(), kube.RegionAPIExtClientset()); !ok {
+		if ok := kube.IsKubevirtInstalled(kube.KubeClient(), kube.APIExtClient()); !ok {
 			httputil.ReturnError(r, w, 500, "集群中未检测到 Kubevirt 服务，使用该功能请联系管理员安装 Kubevirt 服务！")
 			return
 		}

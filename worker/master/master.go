@@ -45,6 +45,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
 // Controller app runtime master controller
@@ -197,6 +198,7 @@ func (m *Controller) Start() error {
 		go m.helmAppController.Start()
 		defer m.helmAppController.Stop()
 
+		ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
 		// start controller
 		mgr, err := ctrl.NewManager(m.restConfig, ctrl.Options{
 			Scheme:           common.Scheme,

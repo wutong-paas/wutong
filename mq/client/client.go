@@ -55,7 +55,8 @@ type mqClient struct {
 // NewMqClient new a mq client
 func NewMqClient(mqAddr string) (MQClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	conn, err := grpc.NewClient(mqAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	// conn, err := grpc.NewClient(mqAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, mqAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
