@@ -396,9 +396,8 @@ func (s *ServiceAction) UpdateVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req
 					vm.SetResourceVersion(latest.ResourceVersion)
 				}
 			}
-			return err
 		}
-		return nil
+		return err
 	}); err != nil {
 		logrus.Errorf("update vm failed, error: %s", err.Error())
 		return nil, fmt.Errorf("启动虚拟机 %s 失败！", vmID)
@@ -428,7 +427,11 @@ func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*ap
 		return nil, fmt.Errorf("获取虚拟机 %s 还原信息失败！", vmID)
 	}
 	if len(restores.Items) > 0 {
-		return nil, fmt.Errorf("虚拟机 %s 正在还原中，无法重启！可通过删除还原任务来终止还原！", vmID)
+		for _, restore := range restores.Items {
+			if restore.Status.Complete == nil || !*restore.Status.Complete {
+				return nil, fmt.Errorf("虚拟机 %s 正在还原中，无法重启！可通过删除还原任务来终止还原！", vmID)
+			}
+		}
 	}
 
 	memory, err := cast.ToIntE(vm.Annotations["wutong.io/vm-request-memory"])
@@ -440,18 +443,16 @@ func (s *ServiceAction) StartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*ap
 		return nil, fmt.Errorf("虚拟机申请内存 %dGi 超过当前环境内存限额，无法启动！", memory)
 	}
 
+	vm.Spec.Running = util.Ptr(true)
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		vm.Spec.Running = util.Ptr(true)
 		if _, err := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{}); err != nil {
 			if k8sErrors.IsConflict(err) {
-				var e error
-				if vm, e = kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); e == nil {
-					return e
+				if latest, _ := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); latest != nil {
+					vm.SetResourceVersion(latest.ResourceVersion)
 				}
 			}
-			return err
 		}
-		return nil
+		return err
 	}); err != nil {
 		logrus.Errorf("failed to start vm, error: %s", err.Error())
 		return nil, fmt.Errorf("启动虚拟机 %s 失败！", vmID)
@@ -471,17 +472,16 @@ func (s *ServiceAction) StopVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api
 		return nil, fmt.Errorf("获取虚拟机 %s 信息失败！", vmID)
 	}
 
+	vm.Spec.Running = util.Ptr(false)
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		vm.Spec.Running = util.Ptr(false)
 		if _, err := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{}); err != nil {
 			if k8sErrors.IsConflict(err) {
-				if vm, _ := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); vm != nil {
-					vm.SetResourceVersion(vm.ResourceVersion)
+				if latest, _ := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); latest != nil {
+					vm.SetResourceVersion(latest.ResourceVersion)
 				}
 			}
-			return err
 		}
-		return nil
+		return err
 	}); err != nil {
 		logrus.Errorf("failed to stop vm, error: %s", err.Error())
 		return nil, fmt.Errorf("停止虚拟机 %s 失败！", vmID)
@@ -506,7 +506,11 @@ func (s *ServiceAction) RestartVM(tenantEnv *dbmodel.TenantEnvs, vmID string) (*
 		return nil, fmt.Errorf("获取虚拟机 %s 还原信息失败！", vmID)
 	}
 	if len(restores.Items) > 0 {
-		return nil, fmt.Errorf("虚拟机 %s 正在还原中，无法重启！可通过删除还原任务来终止还原！", vmID)
+		for _, restore := range restores.Items {
+			if restore.Status.Complete == nil || !*restore.Status.Complete {
+				return nil, fmt.Errorf("虚拟机 %s 正在还原中，无法重启！可通过删除还原任务来终止还原！", vmID)
+			}
+		}
 	}
 
 	if err := kube.KubevirtClient().VirtualMachineInstance(tenantEnv.Namespace).Delete(context.Background(), vmID, metav1.DeleteOptions{}); err != nil {
@@ -595,19 +599,18 @@ func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 		return fmt.Errorf("获取虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
 	}
 
+	svc.Labels["wutong.io/vm-port-enabled"] = "true"
+	svc.Spec.Selector = map[string]string{
+		"wutong.io/vm-id":     vmID,
+		"vm.kubevirt.io/name": vmID,
+	}
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		svc.Labels["wutong.io/vm-port-enabled"] = "true"
-		svc.Spec.Selector = map[string]string{
-			"wutong.io/vm-id":     vmID,
-			"vm.kubevirt.io/name": vmID,
-		}
-		_, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{})
-		if err != nil {
-			latest, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
-			if err != nil {
-				return err
+		if _, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{}); err != nil {
+			if k8sErrors.IsConflict(err) {
+				if latest, _ := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{}); latest != nil {
+					svc.SetResourceVersion(latest.ResourceVersion)
+				}
 			}
-			svc.SetResourceVersion(latest.ResourceVersion)
 		}
 		return err
 	})
@@ -638,13 +641,12 @@ func (s *ServiceAction) EnableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string,
 		for _, ing := range gateways {
 			ing.Labels["creator"] = "Wutong"
 			err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-				_, err = s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{})
-				if err != nil {
-					latest, err := s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Get(context.Background(), ing.Name, metav1.GetOptions{})
-					if err != nil {
-						return err
+				if _, err = s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{}); err != nil {
+					if k8sErrors.IsConflict(err) {
+						if latest, _ := s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Get(context.Background(), ing.Name, metav1.GetOptions{}); latest != nil {
+							ing.SetResourceVersion(latest.ResourceVersion)
+						}
 					}
-					ing.SetResourceVersion(latest.ResourceVersion)
 				}
 				return err
 			})
@@ -670,15 +672,14 @@ func (s *ServiceAction) DisableVMPort(tenantEnv *dbmodel.TenantEnvs, vmID string
 		return fmt.Errorf("获取虚拟机 %s 端口 %d(%s) 失败！", vmID, req.VMPort, req.Protocol)
 	}
 
+	svc.Labels["wutong.io/vm-port-enabled"] = "false"
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		svc.Labels["wutong.io/vm-port-enabled"] = "false"
-		_, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{})
-		if err != nil {
-			latest, err := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{})
-			if err != nil {
-				return err
+		if _, err = s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Update(context.Background(), svc, metav1.UpdateOptions{}); err != nil {
+			if k8sErrors.IsConflict(err) {
+				if latest, _ := s.kubeClient.CoreV1().Services(tenantEnv.Namespace).Get(context.Background(), svcName, metav1.GetOptions{}); latest != nil {
+					svc.SetResourceVersion(latest.ResourceVersion)
+				}
 			}
-			svc.SetResourceVersion(latest.ResourceVersion)
 		}
 		return err
 	})
@@ -717,15 +718,14 @@ func (s *ServiceAction) DisableVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID
 		return fmt.Errorf("获取虚拟机 %s 网关失败！", vmID)
 	}
 
+	ing.Labels["creator"] = ""
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		ing.Labels["creator"] = ""
-		_, err = s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{})
-		if err != nil {
-			latest, err := s.kubeClient.NetworkingV1().Ingresses(tenantEnv.TenantName).Get(context.Background(), gatewayID, metav1.GetOptions{})
-			if err != nil {
-				return err
+		if _, err = s.kubeClient.NetworkingV1().Ingresses(tenantEnv.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{}); err != nil {
+			if k8sErrors.IsConflict(err) {
+				if latest, _ := s.kubeClient.NetworkingV1().Ingresses(tenantEnv.TenantName).Get(context.Background(), gatewayID, metav1.GetOptions{}); latest != nil {
+					ing.SetResourceVersion(latest.ResourceVersion)
+				}
 			}
-			ing.SetResourceVersion(latest.ResourceVersion)
 		}
 		return err
 	})
@@ -1039,13 +1039,12 @@ func (s *ServiceAction) UpdateVMPortGateway(tenantEnv *dbmodel.TenantEnvs, vmID,
 
 	var updateVMPortGatewayFunc = func(ing *networkingv1.Ingress) error {
 		return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-			_, err = s.kubeClient.NetworkingV1().Ingresses(ing.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{})
-			if err != nil {
-				latest, err := s.kubeClient.NetworkingV1().Ingresses(ing.Namespace).Get(context.Background(), gatewayID, metav1.GetOptions{})
-				if err != nil {
-					return err
+			if _, err = s.kubeClient.NetworkingV1().Ingresses(ing.Namespace).Update(context.Background(), ing, metav1.UpdateOptions{}); err != nil {
+				if k8sErrors.IsConflict(err) {
+					if latest, _ := s.kubeClient.NetworkingV1().Ingresses(ing.Namespace).Get(context.Background(), gatewayID, metav1.GetOptions{}); latest != nil {
+						ing.SetResourceVersion(latest.ResourceVersion)
+					}
 				}
-				ing.SetResourceVersion(latest.ResourceVersion)
 			}
 			return err
 		})
@@ -1430,15 +1429,12 @@ func (s *ServiceAction) AddVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID string, 
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		if _, err := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{}); err != nil {
 			if k8sErrors.IsConflict(err) {
-				if latest, getLatestErr := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); getLatestErr != nil {
-					return getLatestErr
-				} else {
+				if latest, _ := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); latest != nil {
 					vm.SetResourceVersion(latest.ResourceVersion)
 				}
 			}
-			return err
 		}
-		return nil
+		return err
 	}); err != nil {
 		logrus.Errorf("add vm volume failed, error: %s", err.Error())
 		return fmt.Errorf("虚拟机 %s 添加存储卷 %s 失败！", vmID, req.VolumeName)
@@ -1479,15 +1475,12 @@ func (s *ServiceAction) DeleteVMVolume(tenantEnv *dbmodel.TenantEnvs, vmID, volu
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		if _, err := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{}); err != nil {
 			if k8sErrors.IsConflict(err) {
-				if latest, getLatestErr := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); getLatestErr != nil {
-					return getLatestErr
-				} else {
+				if latest, _ := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); latest != nil {
 					vm.SetResourceVersion(latest.ResourceVersion)
 				}
 			}
-			return err
 		}
-		return nil
+		return err
 	}); err != nil {
 		logrus.Errorf("delete vm volume failed, error: %s", err.Error())
 		return fmt.Errorf("虚拟机 %s 删除存储卷 %s 失败！", vmID, volumeName)
@@ -1536,15 +1529,12 @@ func (s *ServiceAction) RemoveBootDisk(tenantEnv *dbmodel.TenantEnvs, vmID strin
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		if _, err := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Update(context.Background(), vm, metav1.UpdateOptions{}); err != nil {
 			if k8sErrors.IsConflict(err) {
-				if latest, getLatestErr := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); getLatestErr != nil {
-					return getLatestErr
-				} else {
+				if latest, _ := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{}); latest != nil {
 					vm.SetResourceVersion(latest.ResourceVersion)
 				}
 			}
-			return err
 		}
-		return nil
+		return err
 	}); err != nil {
 		logrus.Errorf("update vm failed, error: %s", err.Error())
 		return fmt.Errorf("更新虚拟机 %s 启动顺序失败！", vmID)
@@ -1728,7 +1718,11 @@ func (s *ServiceAction) CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID stri
 		return fmt.Errorf("获取虚拟机 %s 还原列表失败！", vmID)
 	}
 	if len(restores.Items) > 0 {
-		return fmt.Errorf("当前虚拟机存在未完成的还原任务，请等待还原完成后再操作！可通过删除还原任务来终止还原！")
+		for _, restore := range restores.Items {
+			if restore.Status.Complete == nil || !*restore.Status.Complete {
+				return fmt.Errorf("当前虚拟机存在未完成的还原任务，请等待还原完成后再操作！可通过删除还原任务来终止还原！")
+			}
+		}
 	}
 
 	snapshot, err := kube.KubevirtClient().VirtualMachineSnapshot(tenantEnv.Namespace).Get(context.Background(), req.SnapshotName, metav1.GetOptions{})
