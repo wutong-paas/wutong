@@ -519,7 +519,7 @@ func (c *clusterAction) ListStorageClasses(ctx context.Context) []model.StorageC
 
 		if sc.Name == "wutongsssc" {
 			// 置顶
-			sc.DisplayName = "共享存储（文件）"
+			sc.DisplayName = "共享存储(文件)"
 			result = append([]model.StorageClass{sc}, result...)
 		} else {
 			result = append(result, sc)

@@ -391,6 +391,8 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 				return
 			}
 
+			// tenantEnvID can not null
+			tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 			if targetID, ok = r.Context().Value(ctxutil.ContextKey(targetKey)).(string); !ok {
 				var reqDataMap map[string]interface{}
 				if err = json.Unmarshal(body, &reqDataMap); err != nil {
@@ -406,6 +408,10 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 					httputil.ReturnError(r, w, 400, "操作对象未指定")
 					return
 				}
+			}
+			if target == dbmodel.TargetTypeVM {
+				// 使用tenantEnvID作为targetID的前缀，避免不同环境下的targetID冲突
+				targetID = fmt.Sprintf("%s/%s", tenantEnvID, targetID)
 			}
 
 			// eventLog check the latest event
@@ -423,9 +429,6 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 					operator = operatorI.(string)
 				}
 			}
-
-			// tenantEnvID can not null
-			tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 
 			event, err := util.CreateEvent(target, optType, targetID, tenantEnvID, string(body), operator, synType)
 			if err != nil {
