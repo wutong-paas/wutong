@@ -524,6 +524,9 @@ func (v2 *V2) vmIDRouter() chi.Router {
 	r.Post("/restores", middleware.WrapEL(controller.GetManager().CreateVMRestore, dbmodel.TargetTypeVM, "恢复虚拟机快照", dbmodel.SyncEventType))
 	r.Get("/restores", controller.GetManager().ListVMRestores)
 	r.Delete("/restores/{restore_id}", middleware.WrapEL(controller.GetManager().DeleteVMRestore, dbmodel.TargetTypeVM, "删除虚拟机恢复", dbmodel.SyncEventType))
+	r.Post("/export", middleware.WrapEL(controller.GetManager().ExportVM, dbmodel.TargetTypeVM, "导出虚拟机", dbmodel.SyncEventType))
+	r.Get("/export/status", controller.GetManager().GetVMExportStatus)
+	r.Get("/export/download", controller.GetManager().DownloadVMExport)
 	return r
 }
 

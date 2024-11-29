@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"path"
 	"runtime"
 	"testing"
 
@@ -81,4 +82,27 @@ func TestBootDisk(t *testing.T) {
 	}
 
 	t.Log(containsBootDisk(disks))
+}
+
+func TestUrlPathBase(t *testing.T) {
+	testdata := []struct {
+		url  string
+		want string
+	}{
+		{
+			url:  "http://www.baidu.com/abc/test.pdf",
+			want: "test.pdf",
+		},
+		{
+			url:  "http://www.baidu.com/abc/test",
+			want: "test",
+		},
+	}
+
+	for _, v := range testdata {
+		got := path.Base(v.url)
+		if got != v.want {
+			t.Errorf("path.Base(%v) = %v, want %v", v.url, got, v.want)
+		}
+	}
 }

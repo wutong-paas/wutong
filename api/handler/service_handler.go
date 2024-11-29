@@ -161,6 +161,9 @@ type ServiceHandler interface {
 	CreateVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.CreateVMRestoreRequest) error
 	ListVMRestores(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.ListVMRestoresResponse, error)
 	DeleteVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, restoreID string) error
+	ExportVM(tenantEnv *dbmodel.TenantEnvs, vmID string) error
+	GetVMExportStatus(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMExportStatusResponse, error)
+	DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DownloadVMExportRequest) error
 
 	// Scheduling
 	GetServiceSchedulingDetails(serviceID string) (*api_model.GetServiceSchedulingDetailsResponse, error)

@@ -1364,7 +1364,7 @@ func (t *TenantEnvStruct) ChangeServiceApp(w http.ResponseWriter, r *http.Reques
 func (t *TenantEnvStruct) CloneVM(w http.ResponseWriter, r *http.Request) {
 	var req api_model.CloneVMRequest
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
-		logrus.Errorf("start operation validate request body failure")
+		logrus.Errorf("failed to validate clone vm request")
 		return
 	}
 
@@ -1382,7 +1382,7 @@ func (t *TenantEnvStruct) CloneVM(w http.ResponseWriter, r *http.Request) {
 func (t *TenantEnvStruct) CreateVMSnapshot(w http.ResponseWriter, r *http.Request) {
 	var req api_model.CreateVMSnapshotRequest
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
-		logrus.Errorf("start operation validate request body failure")
+		logrus.Errorf("failed to validate create vm snapshot request")
 		return
 	}
 
@@ -1428,7 +1428,7 @@ func (t *TenantEnvStruct) DeleteVMSnapshot(w http.ResponseWriter, r *http.Reques
 func (t *TenantEnvStruct) CreateVMRestore(w http.ResponseWriter, r *http.Request) {
 	var req api_model.CreateVMRestoreRequest
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
-		logrus.Errorf("start operation validate request body failure")
+		logrus.Errorf("failed to validate create vm restore request")
 		return
 	}
 
@@ -1469,4 +1469,55 @@ func (t *TenantEnvStruct) DeleteVMRestore(w http.ResponseWriter, r *http.Request
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) ExportVM(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	err := handler.GetServiceManager().ExportVM(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+func (t *TenantEnvStruct) GetVMExportStatus(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+
+	status, err := handler.GetServiceManager().GetVMExportStatus(tenantEnv, vmID)
+	if err != nil {
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, status)
+}
+
+func (t *TenantEnvStruct) DownloadVMExport(w http.ResponseWriter, r *http.Request) {
+	exportID := r.URL.Query().Get("exportID")
+	if exportID == "" {
+		httputil.ReturnError(r, w, 400, "export id is required")
+		return
+	}
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		httputil.ReturnError(r, w, 400, "export format is required")
+	}
+
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	vmID := r.Context().Value(ctxutil.ContextKey("vm_id")).(string)
+	err := handler.GetServiceManager().DownloadVMExport(tenantEnv, vmID, &api_model.DownloadVMExportRequest{
+		ExportID:       exportID,
+		Format:         format,
+		ResponseWriter: w,
+	})
+	if err != nil {
+		logrus.Errorf("failed to download vm export: %v", err)
+		httputil.ReturnError(r, w, 500, err.Error())
+		return
+	}
 }

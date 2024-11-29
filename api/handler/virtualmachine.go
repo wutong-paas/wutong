@@ -19,9 +19,15 @@
 package handler
 
 import (
+	"archive/zip"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
+	"path"
 	"runtime"
 	"slices"
 	"sort"
@@ -49,6 +55,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	kubevirtclonev1alpha1 "kubevirt.io/api/clone/v1alpha1"
 	kubevirtcorev1 "kubevirt.io/api/core/v1"
+	kubevirtexportvebeta1 "kubevirt.io/api/export/v1beta1"
 	kubevirtsnaphostv1betav1 "kubevirt.io/api/snapshot/v1beta1"
 	cdicorev1beta1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 )
@@ -1792,6 +1799,239 @@ func (s *ServiceAction) DeleteVMRestore(tenantEnv *dbmodel.TenantEnvs, vmID, res
 	return nil
 }
 
+const (
+	tokenSecret = "wt-vm-export-token"
+)
+
+// ExportVM 导出虚拟机
+func (s *ServiceAction) ExportVM(tenantEnv *dbmodel.TenantEnvs, vmID string) error {
+	// 1、首先查看当前命名空间是否存在存储 Token 的 secret，如果不存在则创建
+	if _, err := kube.GetCachedResources(s.KubeClient()).SecretLister.Secrets(tenantEnv.Namespace).Get(tokenSecret); err != nil {
+		if k8sErrors.IsNotFound(err) {
+			if _, err := s.KubeClient().CoreV1().Secrets(tenantEnv.Namespace).Create(context.Background(), &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tokenSecret,
+					Namespace: tenantEnv.Namespace,
+				},
+				StringData: map[string]string{
+					"token": tokenSecret,
+				},
+			}, metav1.CreateOptions{}); err != nil {
+				logrus.Errorf("failed to create secret, error: %s", err.Error())
+				return fmt.Errorf("创建 Token Secret 失败！")
+			}
+		} else {
+			logrus.Errorf("failed to get secret, error: %s", err.Error())
+			return fmt.Errorf("获取 Token Secret 失败！")
+		}
+	}
+
+	// 如果当前虚拟机正在运行，需要提示用户先关闭虚拟机
+	vm, err := kube.KubevirtClient().VirtualMachine(tenantEnv.Namespace).Get(context.Background(), vmID, metav1.GetOptions{})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("虚拟机 %s 不存在！", vmID)
+		}
+		logrus.Errorf("failed to get vm, error: %s", err.Error())
+		return fmt.Errorf("获取虚拟机 %s 失败！", vmID)
+	}
+
+	if vm.Spec.Running != nil && *vm.Spec.Running {
+		return fmt.Errorf("虚拟机 %s 正在运行，请先关闭虚拟机！", vmID)
+	}
+
+	export := &kubevirtexportvebeta1.VirtualMachineExport{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%d", vmID, time.Now().UnixMilli()),
+			Namespace: tenantEnv.Namespace,
+		},
+		Spec: kubevirtexportvebeta1.VirtualMachineExportSpec{
+			TTLDuration: &metav1.Duration{Duration: time.Hour * 8}, // 设置导出的生存时间为 8 小时
+			Source: corev1.TypedLocalObjectReference{
+				APIGroup: &kubevirtcorev1.VirtualMachineGroupVersionKind.Group,
+				Kind:     kubevirtcorev1.VirtualMachineGroupVersionKind.Kind,
+				Name:     vmID,
+			},
+			TokenSecretRef: util.Ptr(tokenSecret),
+		},
+	}
+	if _, err := kube.KubevirtClient().VirtualMachineExport(tenantEnv.Namespace).Create(context.Background(), export, metav1.CreateOptions{}); err != nil {
+		logrus.Errorf("failed to export vm, error: %s", err.Error())
+		return fmt.Errorf("导出虚拟机 %s 失败！", vmID)
+	}
+	return nil
+}
+
+const (
+	VMExportStatusEmpty   = ""
+	VMExportStatusPending = "Pending"
+	VMExportStatusReady   = "Ready"
+)
+
+var formatDisplayName = map[kubevirtexportvebeta1.ExportVolumeFormat]string{
+	kubevirtexportvebeta1.KubeVirtRaw: "disk.img",
+	kubevirtexportvebeta1.KubeVirtGz:  "disk.img.gz",
+	kubevirtexportvebeta1.Dir:         "dir",
+	kubevirtexportvebeta1.ArchiveGz:   "tar.gz",
+}
+
+// GetVMExportStatus 获取虚拟机导出状态
+func (s *ServiceAction) GetVMExportStatus(tenantEnv *dbmodel.TenantEnvs, vmID string) (*api_model.GetVMExportStatusResponse, error) {
+	exports, err := kube.KubevirtClient().VirtualMachineExport(tenantEnv.Namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil, fmt.Errorf("导出任务 %s 不存在！", vmID)
+		}
+		logrus.Errorf("failed to get export, error: %s", err.Error())
+		return nil, fmt.Errorf("获取导出任务 %s 失败！", vmID)
+	}
+
+	if len(exports.Items) == 0 {
+		return &api_model.GetVMExportStatusResponse{
+			Status: VMExportStatusEmpty,
+		}, nil
+	}
+
+	// 获取最新的导出任务
+	sort.Slice(exports.Items, func(i, j int) bool {
+		return exports.Items[i].CreationTimestamp.After(exports.Items[j].CreationTimestamp.Time)
+	})
+
+	latest := exports.Items[0]
+
+	if latest.Status == nil {
+		return &api_model.GetVMExportStatusResponse{
+			Status: VMExportStatusEmpty,
+		}, nil
+	}
+
+	var exportItems []api_model.VMExportItem
+	if latest.Status != nil && latest.Status.Links != nil && latest.Status.Links.Internal != nil {
+		for _, volume := range latest.Status.Links.Internal.Volumes {
+			var formats []api_model.VMExportFormat
+			for _, format := range volume.Formats {
+				formats = append(formats, api_model.VMExportFormat{
+					DisplayName: formatDisplayName[format.Format],
+					Format:      string(format.Format),
+				})
+			}
+			exportItems = append(exportItems, api_model.VMExportItem{
+				ExportID: volume.Name,
+				Formats:  formats,
+			})
+		}
+	}
+
+	switch latest.Status.Phase {
+	case kubevirtexportvebeta1.Pending:
+		return &api_model.GetVMExportStatusResponse{
+			ExportItems: exportItems,
+			Status:      VMExportStatusPending,
+		}, nil
+	case kubevirtexportvebeta1.Ready:
+		return &api_model.GetVMExportStatusResponse{
+			ExportItems: exportItems,
+			Status:      VMExportStatusReady,
+		}, nil
+	case kubevirtexportvebeta1.Terminated:
+		kube.KubevirtClient().VirtualMachineExport(tenantEnv.Namespace).Delete(context.Background(), latest.Name, metav1.DeleteOptions{})
+		return &api_model.GetVMExportStatusResponse{
+			Status: VMExportStatusEmpty,
+		}, nil
+	default:
+		return &api_model.GetVMExportStatusResponse{
+			Status: VMExportStatusEmpty,
+		}, fmt.Errorf("导出任务状态异常！请重新导出或联系管理员！")
+	}
+}
+
+// DownloadVMExport 下载虚拟机导出文件
+func (s *ServiceAction) DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DownloadVMExportRequest) error {
+	export, err := kube.KubevirtClient().VirtualMachineExport(tenantEnv.Namespace).Get(context.Background(), req.ExportID, metav1.GetOptions{})
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return fmt.Errorf("请先导出虚拟机 %s！", vmID)
+		}
+		logrus.Errorf("failed to get export, error: %s", err.Error())
+		return fmt.Errorf("获取导出任务 %s 失败！", vmID)
+	}
+
+	if export.Status != nil && export.Status.Phase != kubevirtexportvebeta1.Ready {
+		return fmt.Errorf("导出任务 %s 还未完成！", vmID)
+	}
+
+	if export.Status.Links == nil || export.Status.Links.Internal == nil || export.Status.Links.Internal.Cert == "" {
+		return fmt.Errorf("导出任务 %s 证书信息为空！", vmID)
+	}
+
+	if len(export.Status.Links.Internal.Volumes) == 0 {
+		return fmt.Errorf("导出任务 %s 未找到存储卷！", vmID)
+	}
+
+	req.ResponseWriter.Header().Set("Content-Type", "application/zip")
+	req.ResponseWriter.Header().Set("Content-Disposition", "attachment; filename="+vmID+".zip")
+
+	// var buf bytes.Buffer
+	zipWriter := zip.NewWriter(req.ResponseWriter)
+	defer zipWriter.Close()
+
+	certPool := x509.NewCertPool()
+	if ok := certPool.AppendCertsFromPEM([]byte(export.Status.Links.Internal.Cert)); !ok {
+		logrus.Errorf("failed to append cert to pool")
+		return fmt.Errorf("加载证书失败！")
+	}
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: certPool,
+			},
+		},
+	}
+
+	for _, volume := range export.Status.Links.Internal.Volumes {
+		var downloadUrl string
+		for _, format := range volume.Formats {
+			if string(format.Format) == req.Format {
+				downloadUrl = format.Url
+			}
+		}
+		if downloadUrl == "" {
+			continue
+		}
+
+		downloadRequest, err := http.NewRequest(http.MethodGet, downloadUrl, nil)
+		if err != nil {
+			logrus.Errorf("failed to create download request, error: %s", err.Error())
+			return fmt.Errorf("创建下载请求失败！")
+		}
+		downloadRequest.Header.Set("x-kubevirt-export-token", tokenSecret)
+
+		resp, err := client.Do(downloadRequest)
+		if err != nil {
+			logrus.Errorf("failed to download export, error: %s", err.Error())
+			return fmt.Errorf("下载导出任务 %s 失败！", vmID)
+		}
+		defer resp.Body.Close()
+
+		req.ResponseWriter.WriteHeader(resp.StatusCode)
+
+		zipFile, err := zipWriter.Create(volume.Name + "-" + path.Base(downloadUrl))
+		if err != nil {
+			logrus.Errorf("failed to create zip file, error: %s", err.Error())
+			return fmt.Errorf("创建压缩文件失败！")
+		}
+
+		_, err = io.Copy(zipFile, resp.Body)
+		if err != nil {
+			logrus.Errorf("failed to copy zip file, error: %s", err.Error())
+			return fmt.Errorf("下载文件失败！")
+		}
+	}
+
+	return nil
+}
+
 // -------------------------- 私有函数 ------------------------------------
 
 // buildVMBase 构建虚拟机基础结构实例
@@ -2018,7 +2258,7 @@ func filebrowserRunCmd(username, bcryptedPassword string) string {
     [Unit]
     Description=FileBrowser Service
     After=network.target
-    
+
     [Service]
     ExecStartPre=mkdir -p /filebrowser
     ExecStart=/usr/local/bin/filebrowser -a 0.0.0.0 -r /filebrowser -p 6173
@@ -2027,7 +2267,7 @@ func filebrowserRunCmd(username, bcryptedPassword string) string {
     Group=root
     Environment=FB_USERNAME=%s
     Environment=FB_PASSWORD=%s
-    
+
     [Install]
     WantedBy=multi-user.target
     EOF'

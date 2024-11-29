@@ -988,7 +988,7 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 				return err
 			}
 			for _, vo := range volumes {
-				if vo.VolumeType == dbmodel.ShareFileVolumeType.String() || vo.VolumeType == dbmodel.MemoryFSVolumeType.String() {
+				if vo.VolumeType == dbmodel.ShareFileVolumeType.String() || vo.VolumeType == dbmodel.MemoryFSVolumeType.String() || vo.VolumeType == dbmodel.ConfigFileVolumeType.String() {
 					continue
 				}
 				if vo.VolumeType == dbmodel.LocalVolumeType.String() && !ts.IsState() {
@@ -996,7 +996,7 @@ func (s *ServiceAction) ServiceUpdate(sc map[string]interface{}) error {
 					return err
 				}
 				// if component use volume, what it accessMode is rwo, can't change volume type to stateless
-				if vo.AccessMode == "RWO" && !ts.IsState() {
+				if vo.AccessMode == "RWO" && !ts.IsState() && vo.VolumeType != dbmodel.ConfigFileVolumeType.String() {
 					err := fmt.Errorf("service[%s] volume[%s] access_mode is RWO, can't change type to stateless", ts.ServiceAlias, vo.VolumeName)
 					return err
 				}
@@ -1914,6 +1914,9 @@ func (s *ServiceAction) UpdVolume(sid string, req *api_model.UpdVolumeReq) error
 	}
 	v.VolumePath = req.VolumePath
 	v.Mode = req.Mode
+	if req.VolumeType == "config-file" {
+		v.AccessMode = "RWX"
+	}
 	if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).UpdateModel(v); err != nil {
 		tx.Rollback()
 		return err
@@ -2346,7 +2349,7 @@ func (s *ServiceAction) ListServiceInstances(namespace, serviceID string) (Servi
 	}
 
 	slices.SortStableFunc(pods, func(i, j *corev1.Pod) int {
-		if i.CreationTimestamp.Time.After(j.CreationTimestamp.Time) {
+		if i.CreationTimestamp.Time.Before(j.CreationTimestamp.Time) {
 			return 1
 		}
 		return -1
@@ -2495,7 +2498,7 @@ func (s *ServiceAction) ListServiceInstanceContainerOptions(service *dbmodel.Ten
 	}
 
 	slices.SortStableFunc(pods, func(i, j *corev1.Pod) int {
-		if i.CreationTimestamp.Time.After(j.CreationTimestamp.Time) {
+		if i.CreationTimestamp.Time.Before(j.CreationTimestamp.Time) {
 			return 1
 		}
 		return -1
@@ -2571,7 +2574,6 @@ func readContainerStatus(pod *corev1.Pod, containerName string) string {
 	if containerStatus, ok := containerStatusMap[containerName]; ok {
 		if containerStatus.State.Waiting != nil {
 			return ContainerStatusWaiting
-
 		}
 		if !containerStatus.Ready && containerStatus.State.Terminated != nil {
 			if containerStatus.State.Terminated.Reason == "OOMKilled" {

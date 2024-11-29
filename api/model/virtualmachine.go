@@ -18,6 +18,8 @@
 
 package model
 
+import "net/http"
+
 type VMProfile struct {
 	Name               string        `json:"name"`
 	DisplayName        string        `json:"displayName"`
@@ -283,4 +285,27 @@ type VMRestore struct {
 
 type ListVMRestoresResponse struct {
 	Restores []VMRestore `json:"restores"`
+}
+
+type ExportVMResponse struct{}
+
+type VMExportFormat struct {
+	DisplayName string `json:"displayName"`
+	Format      string `json:"format"`
+}
+
+type VMExportItem struct {
+	ExportID string `json:"exportID"`
+	Formats  []VMExportFormat
+}
+
+type GetVMExportStatusResponse struct {
+	ExportItems []VMExportItem `json:"exportItems"`
+	Status      string         `json:"status"`
+}
+
+type DownloadVMExportRequest struct {
+	ExportID       string
+	Format         string // 下载虚拟机导出文件的格式
+	ResponseWriter http.ResponseWriter
 }

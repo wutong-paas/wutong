@@ -49,7 +49,7 @@ func ParseVolumeTypeOption(detail *pb.StorageClassDetail) string {
 	return "unknown"
 }
 
-func transferVolumeTypeOption(name string, opts ...interface{}) *dbmodel.VolumeType {
+func transferVolumeTypeOption(name string, _ ...interface{}) *dbmodel.VolumeType {
 	if name == v1.WutongStatefuleShareStorageClass {
 		return &dbmodel.ShareFileVolumeType
 	}
@@ -211,11 +211,11 @@ func hackVolumeOptionAccessMode(vt string) []string {
 }
 
 // TODO finish volume share policy
-func hackVolumeOptionSharePolicy(volumeType string) []string {
+func hackVolumeOptionSharePolicy(_ string) []string {
 	return []string{"exclusive"}
 }
 
 // TODO finish vollume backup policy
-func hackVolumeOptionBackupPolicy(volumeType string) []string {
+func hackVolumeOptionBackupPolicy(_ string) []string {
 	return []string{"exclusive"}
 }

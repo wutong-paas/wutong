@@ -119,6 +119,9 @@ type TenantEnvInterface interface {
 	CreateVMRestore(w http.ResponseWriter, r *http.Request)
 	ListVMRestores(w http.ResponseWriter, r *http.Request)
 	DeleteVMRestore(w http.ResponseWriter, r *http.Request)
+	ExportVM(w http.ResponseWriter, r *http.Request)
+	GetVMExportStatus(w http.ResponseWriter, r *http.Request)
+	DownloadVMExport(w http.ResponseWriter, r *http.Request)
 }
 
 // ServiceInterface ServiceInterface

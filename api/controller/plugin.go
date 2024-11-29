@@ -19,7 +19,6 @@
 package controller
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/wutong-paas/wutong/api/handler/share"
@@ -425,19 +424,15 @@ func (t *TenantEnvStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 //	    "$ref": "#/responses/commandResponse"
 //	  description: 统一返回格式
 func (t *TenantEnvStruct) SysPluginBuild(w http.ResponseWriter, r *http.Request) {
-	log.Println("debug 000")
 	var build api_model.BuildSysPluginStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build.Body, nil)
 	if !ok {
-		log.Println("debug 111")
 		return
 	}
-	log.Println("debug 222")
 	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	build.PluginID = pluginID
 	pbv, err := handler.GetPluginManager().BuildSysPluginManual(&build)
 	if err != nil {
-		log.Println("debug 333")
 		err.Handle(r, w)
 		return
 	}
