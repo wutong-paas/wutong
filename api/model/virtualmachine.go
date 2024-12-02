@@ -295,7 +295,7 @@ type VMExportFormat struct {
 }
 
 type VMExportItem struct {
-	ExportID string `json:"exportID"`
+	ExportID string `json:"exportId"`
 	Formats  []VMExportFormat
 }
 
