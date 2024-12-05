@@ -404,10 +404,10 @@ func (t *TenantEnvStruct) BuildList(w http.ResponseWriter, r *http.Request) {
 
 // BuildVersionIsExist -
 func (t *TenantEnvStruct) BuildVersionIsExist(w http.ResponseWriter, r *http.Request) {
-	statusMap := make(map[string]bool)
+	statusMap := make(map[string]any)
 	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	buildVersion := chi.URLParam(r, "build_version")
-	_, err := db.GetManager().VersionInfoDao().GetVersionByDeployVersion(buildVersion, serviceID)
+	versionInfo, err := db.GetManager().VersionInfoDao().GetVersionByDeployVersion(buildVersion, serviceID)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get build version status erro, %v", err))
 		return
@@ -416,9 +416,9 @@ func (t *TenantEnvStruct) BuildVersionIsExist(w http.ResponseWriter, r *http.Req
 		statusMap["status"] = false
 	} else {
 		statusMap["status"] = true
+		statusMap["image"] = versionInfo.RepoURL
 	}
 	httputil.ReturnSuccess(r, w, statusMap)
-
 }
 
 // DeleteBuildVersion -
