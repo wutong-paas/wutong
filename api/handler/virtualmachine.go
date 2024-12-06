@@ -1947,15 +1947,25 @@ func (s *ServiceAction) GetVMExportStatus(tenantEnv *dbmodel.TenantEnvs, vmID st
 
 // DownloadVMExport 下载虚拟机导出文件
 func (s *ServiceAction) DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID string, req *api_model.DownloadVMExportRequest) error {
-	export, err := kube.KubevirtClient().VirtualMachineExport(tenantEnv.Namespace).Get(context.Background(), req.ExportID, metav1.GetOptions{})
+	exports, err := kube.KubevirtClient().VirtualMachineExport(tenantEnv.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return fmt.Errorf("请先导出虚拟机 %s！", vmID)
+			return fmt.Errorf("导出任务 %s 不存在！", vmID)
 		}
 		logrus.Errorf("failed to get export, error: %s", err.Error())
 		return fmt.Errorf("获取导出任务 %s 失败！", vmID)
 	}
 
+	if len(exports.Items) == 0 {
+		return fmt.Errorf("导出任务 %s 不存在！", vmID)
+	}
+
+	// 获取最新的导出任务
+	sort.Slice(exports.Items, func(i, j int) bool {
+		return exports.Items[i].CreationTimestamp.After(exports.Items[j].CreationTimestamp.Time)
+	})
+
+	export := exports.Items[0]
 	if export.Status != nil && export.Status.Phase != kubevirtexportvebeta1.Ready {
 		return fmt.Errorf("导出任务 %s 还未完成！", vmID)
 	}
@@ -1970,8 +1980,8 @@ func (s *ServiceAction) DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID str
 
 	req.ResponseWriter.Header().Set("Content-Type", "application/zip")
 	req.ResponseWriter.Header().Set("Content-Disposition", "attachment; filename="+vmID+".zip")
+	req.ResponseWriter.Header().Set("Transfer-Encoding", "chunked")
 
-	// var buf bytes.Buffer
 	zipWriter := zip.NewWriter(req.ResponseWriter)
 	defer zipWriter.Close()
 
@@ -2012,9 +2022,11 @@ func (s *ServiceAction) DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID str
 			logrus.Errorf("failed to download export, error: %s", err.Error())
 			return fmt.Errorf("下载导出任务 %s 失败！", vmID)
 		}
-		defer resp.Body.Close()
 
-		req.ResponseWriter.WriteHeader(resp.StatusCode)
+		if resp.StatusCode != http.StatusOK {
+			logrus.Errorf("failed to download export, status code: %d", resp.StatusCode)
+			return fmt.Errorf("下载导出任务 %s 失败！", vmID)
+		}
 
 		zipFile, err := zipWriter.Create(volume.Name + "-" + path.Base(downloadUrl))
 		if err != nil {
@@ -2023,6 +2035,7 @@ func (s *ServiceAction) DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID str
 		}
 
 		_, err = io.Copy(zipFile, resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			logrus.Errorf("failed to copy zip file, error: %s", err.Error())
 			return fmt.Errorf("下载文件失败！")

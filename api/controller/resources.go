@@ -1891,11 +1891,11 @@ func (t *TenantEnvStruct) ListServiceInstanceContainerOptions(w http.ResponseWri
 	if err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			logrus.Error("record not found:", err)
-			httputil.ReturnError(r, w, 404, fmt.Sprintf("get service instance containers tree error, %v", err))
+			httputil.ReturnError(r, w, 404, "获取组件实例容器选项列表失败!")
 			return
 		}
 		logrus.Error("get service instance contianers tree error:", err)
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get service instance containers tree error, %v", err))
+		httputil.ReturnError(r, w, 500, "获取组件实例容器选项列表失败!")
 		return
 	}
 	httputil.ReturnSuccess(r, w, pods)
@@ -1909,11 +1909,11 @@ func (t *TenantEnvStruct) ListServiceInstanceEvents(w http.ResponseWriter, r *ht
 	if err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			logrus.Error("record not found:", err)
-			httputil.ReturnError(r, w, 404, fmt.Sprintf("get pods error, %v", err))
+			httputil.ReturnError(r, w, 404, "未获取到组件实例事件列表!")
 			return
 		}
 		logrus.Error("get pods error:", err)
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("get pods error, %v", err))
+		httputil.ReturnError(r, w, 500, "获取组件实例事件列表失败!")
 		return
 	}
 	httputil.ReturnSuccess(r, w, pods)
@@ -1977,7 +1977,8 @@ func (t *TenantEnvStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
 	tspD.FailureAction = tsp.FailureAction
 	//注意端口问题
 	if err := handler.GetServiceManager().ServiceProbe(&tspD, "add"); err != nil {
-		httputil.ReturnError(r, w, 500, fmt.Sprintf("add service probe error, %v", err))
+		logrus.Errorf("failed to add service probe, err: %v", err)
+		httputil.ReturnError(r, w, 500, fmt.Sprintf("组件添加探针失败, %v", err))
 		return
 	}
 	httputil.ReturnSuccess(r, w, nil)

@@ -42,13 +42,14 @@ func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
 		app := model.NewAppStatusFromExport(&tr)
 		db.GetManager().AppDao().DeleteModelByEventId(app.EventID)
 		if err := db.GetManager().AppDao().AddModel(app); err != nil {
-			httputil.ReturnError(r, w, 502, fmt.Sprintf("Failed to export app %s: %v", app.EventID, err))
+			logrus.Errorf("Failed to add app status to database: %v", err)
+			httputil.ReturnError(r, w, 502, "导出应用失败")
 			return
 		}
 
 		err := handler.GetAppHandler().ExportApp(&tr)
 		if err != nil {
-			httputil.ReturnError(r, w, 501, fmt.Sprintf("Failed to export app: %v", err))
+			httputil.ReturnError(r, w, 501, "导出应用失败")
 			return
 		}
 
@@ -56,7 +57,7 @@ func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		eventID := strings.TrimSpace(chi.URLParam(r, "eventID"))
 		if eventID == "" {
-			httputil.ReturnError(r, w, 400, "Arguments eventID is must defined.")
+			httputil.ReturnError(r, w, 400, "event id is required.")
 			return
 		}
 

@@ -1498,7 +1498,7 @@ func (t *TenantEnvStruct) GetVMExportStatus(w http.ResponseWriter, r *http.Reque
 }
 
 func (t *TenantEnvStruct) DownloadVMExport(w http.ResponseWriter, r *http.Request) {
-	exportID := r.URL.Query().Get("exportID")
+	exportID := r.URL.Query().Get("exportId")
 	if exportID == "" {
 		httputil.ReturnError(r, w, 400, "export id is required")
 		return
