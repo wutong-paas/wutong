@@ -1980,7 +1980,6 @@ func (s *ServiceAction) DownloadVMExport(tenantEnv *dbmodel.TenantEnvs, vmID str
 
 	req.ResponseWriter.Header().Set("Content-Type", "application/zip")
 	req.ResponseWriter.Header().Set("Content-Disposition", "attachment; filename="+vmID+".zip")
-	req.ResponseWriter.Header().Set("Transfer-Encoding", "chunked")
 
 	zipWriter := zip.NewWriter(req.ResponseWriter)
 	defer zipWriter.Close()
