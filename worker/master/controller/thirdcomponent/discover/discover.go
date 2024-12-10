@@ -109,6 +109,7 @@ func (k *kubernetesDiscover) Discover(ctx context.Context, update chan *v1alpha1
 					update <- new
 				} else {
 					logrus.Errorf("discover kubernetes endpoints %s change failure %s", component.Spec.EndpointSource.KubernetesService.Name, err.Error())
+					time.Sleep(time.Second * 5)
 				}
 			}()
 		}

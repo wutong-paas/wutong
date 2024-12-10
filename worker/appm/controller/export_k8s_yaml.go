@@ -54,7 +54,7 @@ func (s *exportK8sYamlController) Stop() error {
 	return nil
 }
 
-func (s *exportK8sYamlController) exportOne(app v1.AppService, r *WutongExport) error {
+func (s *exportK8sYamlController) exportOne(app v1.AppService, _ *WutongExport) error {
 	exportApp := fmt.Sprintf("%v-%v", s.AppName, s.AppVersion)
 	exportPath := fmt.Sprintf("/wtdata/app/yaml/%v/%v-yaml/%v", exportApp, exportApp, s.AppName)
 	logrus.Infof("start export app %s to k8s yaml spec", s.AppName)

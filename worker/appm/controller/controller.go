@@ -221,7 +221,7 @@ func (m *Manager) StartExportK8sYamlController(appName, appVersion string, end b
 	return nil
 }
 
-func (m *Manager) callback(controllerID string, err error) {
+func (m *Manager) callback(controllerID string, _ error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	delete(m.controllers, controllerID)
