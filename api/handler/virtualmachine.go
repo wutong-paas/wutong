@@ -2522,21 +2522,12 @@ func timeString(t time.Time) string {
 	return t.Local().Format("2006-01-02 15:04:05")
 }
 
-var cloneStatusMap = map[kubevirtclonev1alpha1.VirtualMachineClonePhase]string{
-	kubevirtclonev1alpha1.CreatingTargetVM:   "克隆(创建目标虚拟机)",
-	kubevirtclonev1alpha1.SnapshotInProgress: "克隆(快照中)",
-	kubevirtclonev1alpha1.RestoreInProgress:  "克隆(快照还原中)",
-	kubevirtclonev1alpha1.Succeeded:          "克隆(成功)",
-	kubevirtclonev1alpha1.Failed:             "克隆(失败)",
-	kubevirtclonev1alpha1.Unknown:            "克隆(未知)",
-}
-
 func cloningVMStatus(cloningVM *kubevirtclonev1alpha1.VirtualMachineClone) string {
 	if cloningVM == nil {
 		return ""
 	}
 
-	return cloneStatusMap[cloningVM.Status.Phase]
+	return "VMClone" + string(cloningVM.Status.Phase)
 }
 
 func snapshotsFromList(list *kubevirtsnaphostv1betav1.VirtualMachineSnapshotList) []api_model.VMSnapshot {
