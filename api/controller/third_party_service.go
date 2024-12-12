@@ -56,18 +56,11 @@ func (t *ThirdPartyServiceController) addEndpoints(w http.ResponseWriter, r *htt
 	// if address is not ip, and then it is domain
 	address := validation.SplitEndpointAddress(data.Address)
 	sid := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	if validation.IsDomainNotIP(address) {
-		// handle domain, check can add new endpoint or not
-		if !canAddDomainEndpoint(sid, true) {
-			logrus.Warningf("new endpoint addres[%s] is domian", address)
-			httputil.ReturnError(r, w, 400, "do not support multi domain endpoints")
-			return
-		}
-	}
-	if !canAddDomainEndpoint(sid, false) {
-		// handle ip, check can add new endpoint or not
-		logrus.Warningf("new endpoint address[%s] is ip, but already has domain endpoint", address)
-		httputil.ReturnError(r, w, 400, "do not support multi domain endpoints")
+
+	// 服务实例为域名类型
+	if !canAddDomainEndpoint(sid, validation.IsDomainNotIP(address)) {
+		logrus.Warningf("new endpoint addres[%s] is domian", address)
+		httputil.ReturnError(r, w, 400, "服务实例不允许同时存在域名和IP类型的端点，并且只允许一个域名类型的端点")
 		return
 	}
 
@@ -82,6 +75,9 @@ func (t *ThirdPartyServiceController) addEndpoints(w http.ResponseWriter, r *htt
 	httputil.ReturnSuccess(r, w, "success")
 }
 
+// canAddDomainEndpoint 检测是否可以添加域名类型的端点
+// 1. 服务实例不允许同时存在域名和IP类型的端点
+// 2. 服务实例只允许一个域名类型的端点
 func canAddDomainEndpoint(sid string, isDomain bool) bool {
 	endpoints, err := db.GetManager().EndpointsDao().List(sid)
 	if err != nil {
@@ -90,12 +86,14 @@ func canAddDomainEndpoint(sid string, isDomain bool) bool {
 	}
 
 	if len(endpoints) > 0 && isDomain {
+		// 已经存在服务实例，新添加了域名类型的端点
 		return false
 	}
 	if !isDomain {
 		for _, ep := range endpoints {
 			address := validation.SplitEndpointAddress(ep.IP)
 			if validation.IsDomainNotIP(address) {
+				// 已经有一个域名类型的端点，不允许添加新的IP类型的端点
 				return false
 			}
 		}

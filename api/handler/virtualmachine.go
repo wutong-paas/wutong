@@ -2504,6 +2504,12 @@ func vmConditions(vm *kubevirtcorev1.VirtualMachine) []api_model.VMCondition {
 	}
 
 	for _, cond := range vm.Status.Conditions {
+		// 忽略
+		if slices.Contains([]string{
+			kubevirtcorev1.VirtualMachineInstanceReasonDisksNotMigratable,
+		}, cond.Reason) {
+			continue
+		}
 		result = append(result, api_model.VMCondition{
 			Type:           string(cond.Type),
 			Status:         cond.Status == corev1.ConditionTrue,

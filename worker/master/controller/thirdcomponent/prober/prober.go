@@ -47,16 +47,14 @@ func (pb *prober) probe(thirdComponent *v1alpha1.ThirdComponent, endpointStatus 
 	}
 
 	result, output, err := pb.runProbeWithRetries(probeSpec, thirdComponent, endpointStatus, endpointID, maxProbeRetries)
-	if err != nil || (result != probe.Success) {
-		// Probe failed in one way or another.
-		if err != nil {
-			pb.logger.Infof("probe for %q errored: %v", endpointID, err)
-			pb.recordContainerEvent(thirdComponent, v1.EventTypeWarning, "EndpointUnhealthy", "probe errored: %v", err)
-		} else { // result != probe.Success
-			pb.logger.Debugf("probe for %q failed (%v): %s", endpointID, result, output)
-			pb.recordContainerEvent(thirdComponent, v1.EventTypeWarning, "EndpointUnhealthy", "probe failed: %s", output)
-		}
+	if err != nil {
+		pb.logger.Infof("probe for %q errored: %v", endpointID, err)
+		pb.recordContainerEvent(thirdComponent, v1.EventTypeWarning, "EndpointUnhealthy", "probe errored: %v", err)
 		return results.Failure, err
+	} else if result != probe.Success {
+		pb.logger.Debugf("probe for %q failed (%v): %s", endpointID, result, output)
+		pb.recordContainerEvent(thirdComponent, v1.EventTypeWarning, "EndpointUnhealthy", "probe failed: %s", output)
+		return results.Failure, nil
 	}
 	return results.Success, nil
 }
