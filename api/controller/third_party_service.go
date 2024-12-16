@@ -27,6 +27,7 @@ import (
 	ctxutil "github.com/wutong-paas/wutong/api/util/ctx"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/errors"
+	dbmodel "github.com/wutong-paas/wutong/db/model"
 	validation "github.com/wutong-paas/wutong/util/endpoint"
 	httputil "github.com/wutong-paas/wutong/util/http"
 )
@@ -55,6 +56,7 @@ func (t *ThirdPartyServiceController) addEndpoints(w http.ResponseWriter, r *htt
 	}
 	// if address is not ip, and then it is domain
 	address := validation.SplitEndpointAddress(data.Address)
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	sid := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 
 	// 服务实例为域名类型
@@ -64,7 +66,7 @@ func (t *ThirdPartyServiceController) addEndpoints(w http.ResponseWriter, r *htt
 		return
 	}
 
-	if err := handler.Get3rdPartySvcHandler().AddEndpoints(sid, &data); err != nil {
+	if err := handler.Get3rdPartySvcHandler().AddEndpoints(tenantEnv, sid, &data); err != nil {
 		if err == errors.ErrRecordAlreadyExist {
 			httputil.ReturnError(r, w, 400, err.Error())
 			return
@@ -107,7 +109,9 @@ func (t *ThirdPartyServiceController) updEndpoints(w http.ResponseWriter, r *htt
 		return
 	}
 
-	if err := handler.Get3rdPartySvcHandler().UpdEndpoints(&data); err != nil {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	sid := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	if err := handler.Get3rdPartySvcHandler().UpdEndpoints(tenantEnv, sid, &data); err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}
@@ -119,8 +123,9 @@ func (t *ThirdPartyServiceController) delEndpoints(w http.ResponseWriter, r *htt
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &data, nil) {
 		return
 	}
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	sid := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
-	if err := handler.Get3rdPartySvcHandler().DelEndpoints(data.EpID, sid); err != nil {
+	if err := handler.Get3rdPartySvcHandler().DelEndpoints(tenantEnv, data.EpID, sid); err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 		return
 	}

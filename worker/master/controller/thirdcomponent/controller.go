@@ -101,12 +101,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (res recon
 	if err != nil {
 		component.Status.Phase = v1alpha1.ComponentFailed
 		component.Status.Reason = err.Error()
+		component.Status.Endpoints = nil
 		r.updateStatus(ctx, component)
 		return ctrl.Result{}, nil
 	}
 	if discover == nil {
 		component.Status.Phase = v1alpha1.ComponentFailed
 		component.Status.Reason = "third component source not support"
+		component.Status.Endpoints = nil
 		r.updateStatus(ctx, component)
 		return ctrl.Result{}, nil
 	}
@@ -119,6 +121,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (res recon
 		r.updateStatus(ctx, component)
 		return ctrl.Result{}, nil
 	}
+	component.Status.Endpoints = endpoints
 
 	if len(endpoints) == 0 {
 		component.Status.Phase = v1alpha1.ComponentPending
@@ -133,45 +136,39 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (res recon
 		selector, _ := labels.Parse(labels.FormatLabels(map[string]string{
 			"service_id": component.Labels["service_id"],
 		}))
-		if err = r.Client.List(ctx, &services, &client.ListOptions{LabelSelector: selector}); err != nil {
-			return commonResult, nil
-		}
-		log.Infof("list component service success, size:%d", len(services.Items))
-		if len(services.Items) == 0 {
-			log.Warning("component service is empty")
-			return commonResult, nil
-		}
-
-		// init component port
-		var portMap = make(map[int][]*v1alpha1.ThirdComponentEndpointStatus)
-		for _, end := range component.Status.Endpoints {
-			port := end.Address.GetPort()
-			if end.ServicePort != 0 {
-				port = end.ServicePort
+		r.Client.List(ctx, &services, &client.ListOptions{LabelSelector: selector})
+		if len(services.Items) > 0 {
+			// init component port
+			var portMap = make(map[int][]*v1alpha1.ThirdComponentEndpointStatus)
+			for _, end := range component.Status.Endpoints {
+				port := end.Address.GetPort()
+				if end.ServicePort != 0 {
+					port = end.ServicePort
+				}
+				portMap[port] = append(portMap[end.Address.GetPort()], end)
 			}
-			portMap[port] = append(portMap[end.Address.GetPort()], end)
-		}
 
-		// create endpoint for component service
-		if len(component.Spec.Ports) == 1 && len(component.Spec.EndpointSource.StaticEndpoints) > 1 {
-			svc := services.Items[0]
-			ep := createEndpointsOnlyOnePort(component, svc, component.Status.Endpoints)
-			if ep != nil {
-				controllerutil.SetControllerReference(component, ep, r.Scheme)
-				r.applyEndpointService(ctx, log, &svc, ep)
-			}
-		} else {
-			for _, service := range services.Items {
-				service := service
-				for _, port := range service.Spec.Ports {
-					// if component port not exist in endpoint port list, ignore it.
-					sourceEndpoint, ok := portMap[int(port.Port)]
-					if !ok {
-						continue
+			// create endpoint for component service
+			if len(component.Spec.Ports) == 1 && len(component.Spec.EndpointSource.StaticEndpoints) > 1 {
+				svc := services.Items[0]
+				ep := createEndpointsOnlyOnePort(component, svc, component.Status.Endpoints)
+				if ep != nil {
+					controllerutil.SetControllerReference(component, ep, r.Scheme)
+					r.applyEndpointService(ctx, log, &svc, ep)
+				}
+			} else {
+				for _, service := range services.Items {
+					service := service
+					for _, port := range service.Spec.Ports {
+						// if component port not exist in endpoint port list, ignore it.
+						sourceEndpoint, ok := portMap[int(port.Port)]
+						if !ok {
+							continue
+						}
+						endpoint := createEndpoint(component, &service, sourceEndpoint)
+						controllerutil.SetControllerReference(component, &endpoint, r.Scheme)
+						r.applyEndpointService(ctx, log, &service, &endpoint)
 					}
-					endpoint := createEndpoint(component, &service, sourceEndpoint)
-					controllerutil.SetControllerReference(component, &endpoint, r.Scheme)
-					r.applyEndpointService(ctx, log, &service, &endpoint)
 				}
 			}
 		}

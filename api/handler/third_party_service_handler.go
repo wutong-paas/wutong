@@ -19,6 +19,7 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -29,8 +30,11 @@ import (
 	"github.com/wutong-paas/wutong/api/model"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
+	"github.com/wutong-paas/wutong/pkg/apis/wutong/v1alpha1"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	"github.com/wutong-paas/wutong/util"
 	"github.com/wutong-paas/wutong/worker/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ThirdPartyServiceHanlder handles business logic for all third-party services
@@ -50,7 +54,22 @@ func Create3rdPartySvcHandler(dbmanager db.Manager, statusCli *client.AppRuntime
 }
 
 // AddEndpoints adds endpoints for third-party service.
-func (t *ThirdPartyServiceHanlder) AddEndpoints(sid string, d *model.AddEndpiontsReq) error {
+func (t *ThirdPartyServiceHanlder) AddEndpoints(tenantEnv *dbmodel.TenantEnvs, sid string, d *model.AddEndpiontsReq) error {
+	newId := util.NewUUID()
+	tpc, err := kube.WutongClient().WutongV1alpha1().ThirdComponents(tenantEnv.Namespace).Get(context.Background(), sid, metav1.GetOptions{})
+	if err != nil {
+		logrus.Warningf("failed to get third component: %v", err)
+		return err
+	}
+	tpc.Spec.EndpointSource.StaticEndpoints = append(tpc.Spec.EndpointSource.StaticEndpoints, &v1alpha1.ThirdComponentEndpoint{
+		Address: d.Address,
+		Name:    newId,
+	})
+	_, err = kube.WutongClient().WutongV1alpha1().ThirdComponents(tenantEnv.Namespace).Update(context.Background(), tpc, metav1.UpdateOptions{})
+	if err != nil {
+		logrus.Warningf("failed to update third component: %v", err)
+		return err
+	}
 	address, port := convertAddressPort(d.Address)
 	if port == 0 {
 		//set default port by service port
@@ -60,7 +79,7 @@ func (t *ThirdPartyServiceHanlder) AddEndpoints(sid string, d *model.AddEndpiont
 		}
 	}
 	ep := &dbmodel.Endpoint{
-		UUID:      util.NewUUID(),
+		UUID:      newId,
 		ServiceID: sid,
 		IP:        address,
 		Port:      port,
@@ -70,12 +89,28 @@ func (t *ThirdPartyServiceHanlder) AddEndpoints(sid string, d *model.AddEndpiont
 	}
 
 	logrus.Debugf("add new endpoint[address: %s, port: %d]", address, port)
-	t.statusCli.AddThirdPartyEndpoint(ep)
+	// t.statusCli.AddThirdPartyEndpoint(ep)
 	return nil
 }
 
 // UpdEndpoints updates endpoints for third-party service.
-func (t *ThirdPartyServiceHanlder) UpdEndpoints(d *model.UpdEndpiontsReq) error {
+func (t *ThirdPartyServiceHanlder) UpdEndpoints(tenantEnv *dbmodel.TenantEnvs, sid string, d *model.UpdEndpiontsReq) error {
+	tpc, err := kube.WutongClient().WutongV1alpha1().ThirdComponents(tenantEnv.Namespace).Get(context.Background(), sid, metav1.GetOptions{})
+	if err != nil {
+		logrus.Warningf("failed to get third component: %v", err)
+		return err
+	}
+	for _, ep := range tpc.Spec.EndpointSource.StaticEndpoints {
+		if ep.Name == d.EpID {
+			ep.Address = d.Address
+		}
+	}
+	_, err = kube.WutongClient().WutongV1alpha1().ThirdComponents(tenantEnv.Namespace).Update(context.Background(), tpc, metav1.UpdateOptions{})
+	if err != nil {
+		logrus.Warningf("failed to update third component: %v", err)
+		return err
+	}
+
 	ep, err := t.dbmanager.EndpointsDao().GetByUUID(d.EpID)
 	if err != nil {
 		logrus.Warningf("EpID: %s; error getting endpoints: %v", d.EpID, err)
@@ -90,7 +125,7 @@ func (t *ThirdPartyServiceHanlder) UpdEndpoints(d *model.UpdEndpiontsReq) error 
 		return err
 	}
 
-	t.statusCli.UpdThirdPartyEndpoint(ep)
+	// t.statusCli.UpdThirdPartyEndpoint(ep)
 
 	return nil
 }
@@ -118,16 +153,33 @@ func convertAddressPort(s string) (address string, port int) {
 }
 
 // DelEndpoints deletes endpoints for third-party service.
-func (t *ThirdPartyServiceHanlder) DelEndpoints(epid, sid string) error {
-	ep, err := t.dbmanager.EndpointsDao().GetByUUID(epid)
+func (t *ThirdPartyServiceHanlder) DelEndpoints(tenantEnv *dbmodel.TenantEnvs, epid, sid string) error {
+	tpc, err := kube.WutongClient().WutongV1alpha1().ThirdComponents(tenantEnv.Namespace).Get(context.Background(), sid, metav1.GetOptions{})
 	if err != nil {
-		logrus.Warningf("EpID: %s; error getting endpoints: %v", epid, err)
+		logrus.Warningf("failed to get third component: %v", err)
 		return err
 	}
+	for idx, ep := range tpc.Spec.EndpointSource.StaticEndpoints {
+		if ep.Name == epid {
+			tpc.Spec.EndpointSource.StaticEndpoints = append(tpc.Spec.EndpointSource.StaticEndpoints[:idx], tpc.Spec.EndpointSource.StaticEndpoints[idx+1:]...)
+		}
+	}
+	_, err = kube.WutongClient().WutongV1alpha1().ThirdComponents(tenantEnv.Namespace).Update(context.Background(), tpc, metav1.UpdateOptions{})
+	if err != nil {
+		logrus.Warningf("failed to update third component: %v", err)
+		return err
+	}
+
+	// ep, err := t.dbmanager.EndpointsDao().GetByUUID(epid)
+	// if err != nil {
+	// 	logrus.Warningf("EpID: %s; error getting endpoints: %v", epid, err)
+	// 	return err
+	// }
 	if err := t.dbmanager.EndpointsDao().DelByUUID(epid); err != nil {
 		return err
 	}
-	t.statusCli.DelThirdPartyEndpoint(ep)
+
+	// t.statusCli.DelThirdPartyEndpoint(ep)
 
 	return nil
 }

@@ -26,3 +26,12 @@ func GetServicesStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	httputil.ReturnNoFomart(r, w, 200, servicesStatus)
 }
+
+func GetServicesStatusWithFormat(w http.ResponseWriter, r *http.Request) {
+	servicesStatus, err := handler.GetServiceManager().GetAllServicesStatus()
+	if err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, servicesStatus)
+}
