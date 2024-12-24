@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -2655,7 +2656,11 @@ func readContainerEvents(events *corev1.EventList) ServiceInstanceEvents {
 	if len(events.Items) == 0 {
 		return nil
 	}
+
 	var res ServiceInstanceEvents
+	sort.Slice(events.Items, func(i, j int) bool {
+		return events.Items[i].CreationTimestamp.Time.After(events.Items[j].CreationTimestamp.Time)
+	})
 	for _, e := range events.Items {
 		age := " - "
 		if !e.FirstTimestamp.IsZero() {

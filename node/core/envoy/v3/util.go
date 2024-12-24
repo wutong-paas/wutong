@@ -31,55 +31,54 @@ import (
 	routev3 "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
 	"github.com/envoyproxy/go-control-plane/pkg/conversion"
 	rsrc "github.com/envoyproxy/go-control-plane/pkg/resource/v3"
-	"github.com/gogo/protobuf/proto"
-	"github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 	v1 "github.com/wutong-paas/wutong/node/core/envoy/v1"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	any "google.golang.org/protobuf/types/known/anypb"
-	ptypes "google.golang.org/protobuf/types/known/durationpb"
-	_struct "google.golang.org/protobuf/types/known/structpb"
-	wrappers "google.golang.org/protobuf/types/known/wrapperspb"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/durationpb"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // MessageToStruct converts from proto message to proto Struct
-func MessageToStruct(msg protoreflect.ProtoMessage) *_struct.Struct {
+func MessageToStruct(msg protoreflect.ProtoMessage) *structpb.Struct {
 	s, err := conversion.MessageToStruct(msg)
 	if err != nil {
 		logrus.Error(err.Error())
-		return &_struct.Struct{}
+		return &structpb.Struct{}
 	}
 	return s
 }
 
 // Message2Any converts from proto message to proto any
-func Message2Any(msg protoreflect.ProtoMessage) *any.Any {
-	a := &any.Any{}
+func Message2Any(msg protoreflect.ProtoMessage) *anypb.Any {
+	a := &anypb.Any{}
 	err := a.MarshalFrom(msg)
 	if err != nil {
 		logrus.Error(err.Error())
-		return &any.Any{}
+		return &anypb.Any{}
 	}
 	return a
 }
 
 // ConversionUInt32 conversion uint32 to wrappers uint32
-func ConversionUInt32(value uint32) *wrappers.UInt32Value {
-	return &wrappers.UInt32Value{
+func ConversionUInt32(value uint32) *wrapperspb.UInt32Value {
+	return &wrapperspb.UInt32Value{
 		Value: value,
 	}
 }
 
 // ConversionTypeUInt32 conversion uint32 to proto uint32
-func ConversionTypeUInt32(value uint32) *types.UInt32Value {
-	return &types.UInt32Value{
+func ConversionTypeUInt32(value uint32) *wrapperspb.UInt32Value {
+	return &wrapperspb.UInt32Value{
 		Value: value,
 	}
 }
 
 // ConverTimeDuration second
-func ConverTimeDuration(second int64) *ptypes.Duration {
-	return &ptypes.Duration{
+func ConverTimeDuration(second int64) *durationpb.Duration {
+	return &durationpb.Duration{
 		Seconds: second,
 	}
 }
@@ -319,7 +318,7 @@ func GetWutongInboundPluginOptions(sr map[string]interface{}) (r WutongInboundPl
 }
 
 // ParseLocalityLbEndpointsResource parse envoy xds server response ParseLocalityLbEndpointsResource
-func ParseLocalityLbEndpointsResource(resources []*any.Any) []*endpointv3.ClusterLoadAssignment {
+func ParseLocalityLbEndpointsResource(resources []*anypb.Any) []*endpointv3.ClusterLoadAssignment {
 	var endpoints []*endpointv3.ClusterLoadAssignment
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
@@ -335,7 +334,7 @@ func ParseLocalityLbEndpointsResource(resources []*any.Any) []*endpointv3.Cluste
 }
 
 // ParseClustersResource parse envoy xds server response ParseClustersResource
-func ParseClustersResource(resources []*any.Any) []*configclusterv3.Cluster {
+func ParseClustersResource(resources []*anypb.Any) []*configclusterv3.Cluster {
 	var clusters []*configclusterv3.Cluster
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
@@ -351,7 +350,7 @@ func ParseClustersResource(resources []*any.Any) []*configclusterv3.Cluster {
 }
 
 // ParseListenerResource parse envoy xds server response ListenersResource
-func ParseListenerResource(resources []*any.Any) []*listenerv3.Listener {
+func ParseListenerResource(resources []*anypb.Any) []*listenerv3.Listener {
 	var listeners []*listenerv3.Listener
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
@@ -367,7 +366,7 @@ func ParseListenerResource(resources []*any.Any) []*listenerv3.Listener {
 }
 
 // ParseRouteConfigurationsResource parse envoy xds server response RouteConfigurationsResource
-func ParseRouteConfigurationsResource(resources []*any.Any) []*routev3.RouteConfiguration {
+func ParseRouteConfigurationsResource(resources []*anypb.Any) []*routev3.RouteConfiguration {
 	var routes []*routev3.RouteConfiguration
 	for _, resource := range resources {
 		switch resource.GetTypeUrl() {
