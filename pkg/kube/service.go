@@ -48,7 +48,7 @@ func (s *Services) Decorate(setting *api_model.KubeResourceCustomSetting) {
 				Ports: s.Services[i].Spec.Ports,
 				Type:  s.Services[i].Spec.Type,
 				Selector: map[string]string{
-					"name": s.Services[i].Labels["name"],
+					"name": s.Services[i].Labels["service_alias"],
 				},
 			}
 			s.Services[i].Status = corev1.ServiceStatus{}

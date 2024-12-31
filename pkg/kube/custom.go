@@ -24,6 +24,10 @@ func GetResourcesYamlFormat(clientset kubernetes.Interface, namespace string, se
 
 	if len(customSetting.Namespace) > 0 && !sliceContains(builtinNamespaces, customSetting.Namespace) {
 		objs = append(objs, &corev1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Namespace",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: customSetting.Namespace,
 				Labels: map[string]string{
