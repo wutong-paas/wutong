@@ -414,7 +414,7 @@ func (s *ServiceAction) CreateRestore(tenantEnvID, serviceID string, req api_mod
 			return errors.New("当前组件处于运行中，请先关闭组件！")
 		}
 	}
-	// 2、校验当前是否有未完成的还原任务
+	// 2、校验当前是否有未完成的恢复任务
 	var restores velerov1.RestoreList
 	err = kube.RuntimeClient().List(context.Background(), &restores, &client.ListOptions{
 		Namespace:     "velero",
@@ -429,7 +429,7 @@ func (s *ServiceAction) CreateRestore(tenantEnvID, serviceID string, req api_mod
 			restore.Status.Phase == velerov1.RestorePhaseInProgress ||
 			restore.Status.Phase == velerov1.RestorePhaseWaitingForPluginOperations ||
 			restore.Status.Phase == velerov1.RestorePhaseWaitingForPluginOperationsPartiallyFailed {
-			return errors.New("当前组件还存在未完成的还原任务！")
+			return errors.New("当前组件还存在未完成的恢复任务！")
 		}
 	}
 
@@ -475,7 +475,7 @@ func (s *ServiceAction) CreateRestore(tenantEnvID, serviceID string, req api_mod
 
 	err = kube.RuntimeClient().Create(context.Background(), restore)
 	if err != nil {
-		return errors.New("创建还原任务失败！")
+		return errors.New("创建恢复任务失败！")
 	}
 	return nil
 }
@@ -485,11 +485,11 @@ func (s *ServiceAction) DeleteRestore(serviceID, restoreID string) error {
 	var r velerov1.Restore
 	err := kube.RuntimeClient().Get(context.Background(), types.NamespacedName{Name: restoreID, Namespace: "velero"}, &r)
 	if err != nil {
-		return errors.New("获取待删除还原记录失败！")
+		return errors.New("获取待删除恢复记录失败！")
 	}
 
 	if r.Labels["wutong.io/service_id"] != serviceID {
-		return errors.New("当前还原记录不属于该组件！")
+		return errors.New("当前恢复记录不属于该组件！")
 	}
 
 	err = kube.RuntimeClient().Delete(context.Background(), &velerov1.Restore{
