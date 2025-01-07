@@ -338,3 +338,10 @@ type HelmAppsInterface interface {
 type RegistryAuthSecretInterface interface {
 	RegistryAuthSecret(w http.ResponseWriter, r *http.Request)
 }
+
+type ContainerImageInterface interface {
+	IsContainerImageLocaled(w http.ResponseWriter, r *http.Request)
+	SaveContainerImage(w http.ResponseWriter, r *http.Request)
+	LoadContainerImage(w http.ResponseWriter, r *http.Request)
+	DownloadContainerImage(w http.ResponseWriter, r *http.Request)
+}

@@ -67,6 +67,12 @@ func (v2 *V2) Routes() chi.Router {
 	r.Get("/helm/{helm_namespace}/apps", controller.GetManager().ListHelmApps)
 	r.Get("/helm/{helm_namespace}/apps/{helm_name}/resources", controller.GetManager().ListHelmAppResources)
 
+	// container image local management
+	r.Get("/container-images/is-localed", controller.GetManager().IsContainerImageLocaled)
+	r.Post("/container-images/save", controller.GetManager().SaveContainerImage)
+	r.Post("/container-images/load", controller.GetManager().LoadContainerImage)
+	r.Get("/container-images/download", controller.GetManager().DownloadContainerImage)
+
 	return r
 }
 

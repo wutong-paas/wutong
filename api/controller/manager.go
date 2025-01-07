@@ -51,6 +51,7 @@ type V2Manager interface {
 	api.ApplicationInterface
 	api.HelmAppsInterface
 	api.RegistryAuthSecretInterface
+	api.ContainerImageInterface
 }
 
 var defaultV2Manager V2Manager

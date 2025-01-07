@@ -4,12 +4,12 @@ local _M = {
   defaultHTML = [[
     <!DOCTYPE html>
     <html lang="en">
-
+    
     <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta http-equiv="refresh" content="10">
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta http-equiv="refresh" content="10" />
         <title>Loading...</title>
         <style type="text/css">
             html,
@@ -17,23 +17,24 @@ local _M = {
                 width: 100%;
                 height: 100%;
             }
-
+    
             body {
+                margin: 0;
+                padding: 0;
                 background: #f8f8f8;
             }
-
+    
             .content {
                 width: 400px;
                 height: 300px;
                 margin: 0 auto;
-                padding: 80px 0 50px;
                 display: block;
                 position: absolute;
-                top: 50%;
+                top: 40%;
                 left: 50%;
-                margin: -150px 0 0 -200px; 
+                margin: -150px 0 0 -200px;
             }
-
+    
             .text {
                 margin: 0 20px;
                 color: #666;
@@ -41,16 +42,18 @@ local _M = {
                 line-height: 30px;
                 text-align: center;
             }
+    
             .text2 {
                 color: #666;
                 font-size: 14px;
                 margin: 20px 0;
                 text-align: center;
             }
+    
             .text2 a {
                 color: #666;
             }
-
+    
             .link {
                 width: 285px;
                 height: 50px;
@@ -65,131 +68,131 @@ local _M = {
                 cursor: pointer;
                 background: #1890ff;
             }
-
+    
             /**/
             .loader {
                 width: 140px;
                 margin: 50px auto 0;
             }
-
+    
             .loader-inner {
                 margin-left: 40px;
             }
-
+    
             @-webkit-keyframes rotate_pacman_half_up {
                 0% {
                     -webkit-transform: rotate(270deg);
                     transform: rotate(270deg);
                 }
-
+    
                 50% {
                     -webkit-transform: rotate(360deg);
                     transform: rotate(360deg);
                 }
-
+    
                 100% {
                     -webkit-transform: rotate(270deg);
                     transform: rotate(270deg);
                 }
             }
-
+    
             @keyframes rotate_pacman_half_up {
                 0% {
                     -webkit-transform: rotate(270deg);
                     transform: rotate(270deg);
                 }
-
+    
                 50% {
                     -webkit-transform: rotate(360deg);
                     transform: rotate(360deg);
                 }
-
+    
                 100% {
                     -webkit-transform: rotate(270deg);
                     transform: rotate(270deg);
                 }
             }
-
+    
             @-webkit-keyframes rotate_pacman_half_down {
                 0% {
                     -webkit-transform: rotate(90deg);
                     transform: rotate(90deg);
                 }
-
+    
                 50% {
                     -webkit-transform: rotate(0deg);
                     transform: rotate(0deg);
                 }
-
+    
                 100% {
                     -webkit-transform: rotate(90deg);
                     transform: rotate(90deg);
                 }
             }
-
+    
             @keyframes rotate_pacman_half_down {
                 0% {
                     -webkit-transform: rotate(90deg);
                     transform: rotate(90deg);
                 }
-
+    
                 50% {
                     -webkit-transform: rotate(0deg);
                     transform: rotate(0deg);
                 }
-
+    
                 100% {
                     -webkit-transform: rotate(90deg);
                     transform: rotate(90deg);
                 }
             }
-
+    
             @-webkit-keyframes pacman-balls {
                 75% {
                     opacity: 0.7;
                 }
-
+    
                 100% {
                     -webkit-transform: translate(-100px, -6.25px);
                     transform: translate(-100px, -6.25px);
                 }
             }
-
+    
             @keyframes pacman-balls {
                 75% {
                     opacity: 0.7;
                 }
-
+    
                 100% {
                     -webkit-transform: translate(-100px, -6.25px);
                     transform: translate(-100px, -6.25px);
                 }
             }
-
+    
             .pacman {
                 position: relative;
             }
-
+    
             .pacman>div:nth-child(2) {
                 -webkit-animation: pacman-balls 1s -0.99s infinite linear;
                 animation: pacman-balls 1s -0.99s infinite linear;
             }
-
+    
             .pacman>div:nth-child(3) {
                 -webkit-animation: pacman-balls 1s -0.66s infinite linear;
                 animation: pacman-balls 1s -0.66s infinite linear;
             }
-
+    
             .pacman>div:nth-child(4) {
                 -webkit-animation: pacman-balls 1s -0.33s infinite linear;
                 animation: pacman-balls 1s -0.33s infinite linear;
             }
-
+    
             .pacman>div:nth-child(5) {
                 -webkit-animation: pacman-balls 1s 0s infinite linear;
                 animation: pacman-balls 1s 0s infinite linear;
             }
-
+    
             .pacman>div:first-of-type {
                 width: 0px;
                 height: 0px;
@@ -203,7 +206,7 @@ local _M = {
                 position: relative;
                 left: -30px;
             }
-
+    
             .pacman>div:nth-child(2) {
                 width: 0px;
                 height: 0px;
@@ -218,7 +221,7 @@ local _M = {
                 position: relative;
                 left: -30px;
             }
-
+    
             .pacman>div:nth-child(3),
             .pacman>div:nth-child(4),
             .pacman>div:nth-child(5),
@@ -235,6 +238,22 @@ local _M = {
                 top: 20px;
                 left: 70px;
             }
+    
+            .reason-wrap {
+                background: #fff7d1;
+                font-size: 14px;
+                display: flex;
+                flex-direction: column;
+                align-items: start;
+                color: #555555;
+                padding: 12px;
+                width: 280px;
+                margin: 20px auto;
+            }
+    
+            .reason-wrap div:not(:first-child) {
+                margin-top: 8px;
+            }
         </style>
         <script type="text/javascript">
             function myrefresh() {
@@ -242,11 +261,11 @@ local _M = {
             }
         </script>
     </head>
-
+            
     <body>
         <div class="content">
-            <p class="text">您的应用正在准备中，请稍等一会儿</p>
-            <a class="link" onclick="javascript:myrefresh();" style="cursor:pointer;">刷 新</a>
+            <p class="text">您的组件正在准备中，请稍等一会儿</p>
+            <a class="link" onclick="javascript:myrefresh();" style="cursor: pointer">刷 新</a>
             <div class="loader">
                 <div class="loader-inner pacman">
                     <div></div>
@@ -256,10 +275,16 @@ local _M = {
                     <div></div>
                 </div>
             </div>
-            POWER
+            <div class="reason-wrap">
+                <div>显示当前页面可能的原因，请依次确认排查：</div>
+                <div>1. 组件未处于正常运行状态</div>
+                <div>2. 组件端口对外服务已关闭</div>
+                <div>3. 组件网关配置异常</div>
+                <div>4. 网关异常，请联系管理员</div>
+            </div>
         </div>
     </body>
-
+            
     </html>
   ]]
 }

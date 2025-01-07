@@ -66,6 +66,7 @@ type V2Routes struct {
 	ApplicationController
 	HelmAppsController
 	RegistryAuthSecretStruct
+	ContainerImageStruct
 }
 
 // Show test

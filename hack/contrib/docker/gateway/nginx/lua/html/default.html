@@ -2,10 +2,10 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="refresh" content="10">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="refresh" content="10" />
     <title>Loading...</title>
     <style type="text/css">
         html,
@@ -15,6 +15,8 @@
         }
 
         body {
+            margin: 0;
+            padding: 0;
             background: #f8f8f8;
         }
 
@@ -22,12 +24,11 @@
             width: 400px;
             height: 300px;
             margin: 0 auto;
-            padding: 80px 0 50px;
             display: block;
             position: absolute;
-            top: 50%;
+            top: 40%;
             left: 50%;
-            margin: -150px 0 0 -200px; 
+            margin: -150px 0 0 -200px;
         }
 
         .text {
@@ -37,12 +38,14 @@
             line-height: 30px;
             text-align: center;
         }
+
         .text2 {
             color: #666;
             font-size: 14px;
             margin: 20px 0;
             text-align: center;
         }
+
         .text2 a {
             color: #666;
         }
@@ -231,6 +234,22 @@
             top: 20px;
             left: 70px;
         }
+
+        .reason-wrap {
+            background: #fff7d1;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            color: #555555;
+            padding: 12px;
+            width: 280px;
+            margin: 20px auto;
+        }
+
+        .reason-wrap div:not(:first-child) {
+            margin-top: 8px;
+        }
     </style>
     <script type="text/javascript">
         function myrefresh() {
@@ -241,8 +260,8 @@
 
 <body>
     <div class="content">
-        <p class="text">您的应用正在准备中，请稍等一会儿</p>
-        <a class="link" onclick="javascript:myrefresh();" style="cursor:pointer;">刷 新</a>
+        <p class="text">您的组件正在准备中，请稍等一会儿</p>
+        <a class="link" onclick="javascript:myrefresh();" style="cursor: pointer">刷 新</a>
         <div class="loader">
             <div class="loader-inner pacman">
                 <div></div>
@@ -252,7 +271,13 @@
                 <div></div>
             </div>
         </div>
-        <p class="text2">Power By <a href="https://www.wutong-paas.com" target="_blank" rel="noopener noreferrer">Wutong</a></p>
+        <div class="reason-wrap">
+            <div>显示当前页面可能的原因，请依次确认排查：</div>
+            <div>1. 组件未处于正常运行状态</div>
+            <div>2. 组件端口对外服务已关闭</div>
+            <div>3. 组件网关配置异常</div>
+            <div>4. 网关异常，请联系管理员</div>
+        </div>
     </div>
 </body>
 
