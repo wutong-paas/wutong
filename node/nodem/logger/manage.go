@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/cmd/node/option"
+	"github.com/wutong-paas/wutong/util/containerutil"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
 	// Register grpc event types
@@ -84,7 +85,7 @@ func (c *ContainerLogManage) handleLogger() {
 		case cevent := <-c.cchan:
 			switch cevent.Action {
 			case sources.CONTAINER_ACTION_START, sources.CONTAINER_ACTION_CREATE:
-				if cevent.Container.ContainerRuntime == sources.ContainerRuntimeDocker {
+				if cevent.Container.ContainerRuntime == containerutil.ContainerRuntimeDocker {
 					if cevent.Action == sources.CONTAINER_ACTION_CREATE {
 						continue
 					}
@@ -138,7 +139,7 @@ func (c *ContainerLogManage) handleLogger() {
 					}()
 				}
 			case sources.CONTAINER_ACTION_STOP, sources.CONTAINER_ACTION_DESTROY, sources.CONTAINER_ACTION_DIE:
-				if cevent.Container.ContainerRuntime == sources.ContainerRuntimeDocker && cevent.Action != sources.CONTAINER_ACTION_STOP {
+				if cevent.Container.ContainerRuntime == containerutil.ContainerRuntimeDocker && cevent.Action != sources.CONTAINER_ACTION_STOP {
 					continue
 				}
 				if logger, ok := c.containerLogs.Load(cevent.Container.GetId()); ok {
@@ -184,7 +185,7 @@ func (c *ContainerLogManage) loollist() {
 				if err != nil || cj == nil || cj.GetLogPath() == "" {
 					continue
 				}
-				if cj.ContainerRuntime == sources.ContainerRuntimeDocker {
+				if cj.ContainerRuntime == containerutil.ContainerRuntimeDocker {
 					loggerType := cj.HostConfig.LogConfig.Type
 					if loggerType != "json-file" && loggerType != "syslog" {
 						continue
@@ -389,7 +390,7 @@ type ContainerEnv struct {
 }
 
 func (container *ContainerLog) provideLoggerInfo() (*Info, error) {
-	if container.ContainerRuntime == sources.ContainerRuntimeDocker {
+	if container.ContainerRuntime == containerutil.ContainerRuntimeDocker {
 		return container.provideDockerdLoggerInfo()
 	}
 	return container.provideContainerdLoggerInfo()

@@ -66,7 +66,7 @@ type V2Routes struct {
 	ApplicationController
 	HelmAppsController
 	RegistryAuthSecretStruct
-	ContainerImageStruct
+	AppStoreVersionStruct
 }
 
 // Show test

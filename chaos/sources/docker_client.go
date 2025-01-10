@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	dockercli "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/util/containerutil"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -84,7 +85,7 @@ func (d *dockerClientImpl) InspectContainer(containerID string) (*ContainerDesc,
 		return nil, err
 	}
 	return &ContainerDesc{
-		ContainerRuntime: ContainerRuntimeDocker,
+		ContainerRuntime: containerutil.ContainerRuntimeDocker,
 		ContainerJSON:    &container,
 	}, nil
 }

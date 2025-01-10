@@ -21,6 +21,7 @@ package option
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"github.com/wutong-paas/wutong/util/containerutil"
 )
 
 // Config config
@@ -68,6 +69,8 @@ type Config struct {
 	WtHub                string
 	WtWorker             string
 	VirtVNCAPI           []string
+	ContainerRuntime     string
+	RuntimeEndpoint      string
 }
 
 // APIServer  apiserver server
@@ -131,6 +134,8 @@ func (a *APIServer) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.WtWorker, "worker-api", "wt-worker:6535", "the wt-worker server api")
 	fs.StringSliceVar(&a.EventLogEndpoints, "event-log", []string{"local=>wt-eventlog:6363"}, "event log websocket address")
 	fs.StringSliceVar(&a.VirtVNCAPI, "virt-vnc-api", []string{"wt-virt-vnc"}, "the virt-vnc api")
+	fs.StringVar(&a.ContainerRuntime, "container-runtime", containerutil.ContainerRuntimeDocker, "container runtime, support docker and containerd")
+	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", containerutil.DefaultDockerSock, "container runtime endpoint")
 }
 
 // SetLog 设置log

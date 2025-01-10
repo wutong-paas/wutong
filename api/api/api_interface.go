@@ -339,9 +339,9 @@ type RegistryAuthSecretInterface interface {
 	RegistryAuthSecret(w http.ResponseWriter, r *http.Request)
 }
 
-type ContainerImageInterface interface {
-	IsContainerImageLocaled(w http.ResponseWriter, r *http.Request)
-	SaveContainerImage(w http.ResponseWriter, r *http.Request)
-	LoadContainerImage(w http.ResponseWriter, r *http.Request)
-	DownloadContainerImage(w http.ResponseWriter, r *http.Request)
+// AppStoreVersionInterface app store version interface
+type AppStoreVersionInterface interface {
+	ExportAppStoreVersionStatus(w http.ResponseWriter, r *http.Request)
+	ExportAppStoreVersion(w http.ResponseWriter, r *http.Request)
+	DownloadAppStoreVersion(w http.ResponseWriter, r *http.Request)
 }

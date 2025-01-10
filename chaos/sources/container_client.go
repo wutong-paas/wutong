@@ -9,18 +9,8 @@ import (
 	"github.com/docker/docker/api/types/events"
 	dockercli "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/util/containerutil"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
-)
-
-const (
-	// ContainerRuntimeDocker docker runtime
-	ContainerRuntimeDocker = "docker"
-	// ContainerRuntimeContainerd containerd runtime
-	ContainerRuntimeContainerd = "containerd"
-	// DefaultDockerSock docker runtime endpoint
-	DefaultDockerSock = "/var/run/dockershim.sock"
-	// DefaultContainerdSock containerd runtime endpoint
-	DefaultContainerdSock = "/run/containerd/containerd.sock"
 )
 
 const (
@@ -53,14 +43,14 @@ type ContainerDesc struct {
 }
 
 func (c *ContainerDesc) GetLogPath() string {
-	if c.ContainerRuntime == ContainerRuntimeDocker {
+	if c.ContainerRuntime == containerutil.ContainerRuntimeDocker {
 		return c.ContainerJSON.LogPath
 	}
 	return c.ContainerStatus.GetLogPath()
 }
 
 func (c *ContainerDesc) GetId() string {
-	if c.ContainerRuntime == ContainerRuntimeDocker {
+	if c.ContainerRuntime == containerutil.ContainerRuntimeDocker {
 		return c.ContainerJSON.ID
 	}
 	return c.ContainerStatus.GetId()
@@ -84,12 +74,12 @@ type ClientFactory interface {
 func NewContainerImageClient(containerRuntime, endpoint string, timeout time.Duration) (c ContainerImageCli, err error) {
 	logrus.Infof("create container client runtime %s endpoint %s", containerRuntime, endpoint)
 	switch containerRuntime {
-	case ContainerRuntimeDocker:
+	case containerutil.ContainerRuntimeDocker:
 		factory := &dockerClientFactory{}
 		c, err = factory.NewClient(
 			endpoint, timeout,
 		)
-	case ContainerRuntimeContainerd:
+	case containerutil.ContainerRuntimeContainerd:
 		factory := &containerdClientFactory{}
 		c, err = factory.NewClient(
 			endpoint, timeout,

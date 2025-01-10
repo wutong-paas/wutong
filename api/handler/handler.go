@@ -125,6 +125,7 @@ func InitHandle(conf option.Config) error {
 	defServiceEventHandler = NewServiceEventHandler()
 	defApplicationHandler = NewApplicationHandler(statusCli, prometheusCli, wutongClient, kubeClient)
 	defRegistryAuthSecretHandler = CreateRegistryAuthSecretManager(dbmanager, mqClient)
+	defAppStoreVersionHandler = CreateAppStoreVersionManager(&conf)
 	return nil
 }
 
@@ -283,4 +284,11 @@ var defRegistryAuthSecretHandler RegistryAuthSecretHandler
 // GetRegistryAuthSecretHandler -
 func GetRegistryAuthSecretHandler() RegistryAuthSecretHandler {
 	return defRegistryAuthSecretHandler
+}
+
+var defAppStoreVersionHandler AppStoreVersionHandler
+
+// GetAppStoreVersionHandler -
+func GetAppStoreVersionHandler() AppStoreVersionHandler {
+	return defAppStoreVersionHandler
 }

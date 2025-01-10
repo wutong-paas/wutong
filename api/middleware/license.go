@@ -8,10 +8,10 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/pkg/kube"
 	httputil "github.com/wutong-paas/wutong/util/http"
 	"github.com/wutong-paas/wutong/util/k8s"
@@ -92,25 +92,25 @@ func GetLicenseCrtAndSig() (crt *x509.Certificate, sig []byte, err error) {
 	k8scli := k8s.GetClientSet()
 	license, getErr := kube.GetCachedResources(k8scli).SecretLister.Secrets("wt-system").Get("wutong-region-license")
 	if getErr != nil {
-		log.Printf("wutong-region license: get secret error: %v", getErr)
+		logrus.Errorf("wutong-region license: get secret error: %v", getErr)
 		return
 	}
 	crtData := license.Data["license.crt"]
 	sig = license.Data["license.sig"]
 	if crtData == nil && sig == nil {
-		log.Printf("wutong-region license: crtData or sigData is nil")
+		logrus.Errorf("wutong-region license: crtData or sigData is nil")
 		return
 	}
 
 	b, _ := pem.Decode(crtData)
 	if b == nil {
-		log.Printf("wutong-region license: pem.Decode failed")
+		logrus.Errorf("wutong-region license: pem.Decode failed")
 		return
 	}
 
 	crt, err = x509.ParseCertificate(b.Bytes)
 	if err != nil {
-		log.Printf("wutong-region license: x509.ParseCertificate error: %v", err)
+		logrus.Errorf("wutong-region license: x509.ParseCertificate error: %v", err)
 		return
 	}
 
@@ -123,12 +123,12 @@ func VerifyLicense(licensePlaintextKey string, cert *x509.Certificate, sig []byt
 	// 对证书有效期进行验证
 	if cert.NotBefore.After(time.Now()) || cert.NotAfter.Before(time.Now()) {
 		msg := fmt.Sprintf("wutong-region license: cert is expired, notBefore: %v, notAfter: %v", cert.NotBefore, cert.NotAfter)
-		log.Println(msg)
+		logrus.Error(msg)
 		return errors.New(msg)
 	}
 
 	// 打印证书过期时间
-	log.Printf("wutong-region license: cert is valid now, and will be expired at %v", cert.NotAfter.Format(time.RFC3339))
+	logrus.Infof("wutong-region license: cert is valid now, and will be expired at %v", cert.NotAfter.Format(time.RFC3339))
 
 	// 对签名进行验证
 	h := sha256.New()
@@ -137,7 +137,7 @@ func VerifyLicense(licensePlaintextKey string, cert *x509.Certificate, sig []byt
 	pub := cert.PublicKey.(*rsa.PublicKey)
 	err = rsa.VerifyPKCS1v15(pub, crypto.SHA256, Sha256Code, sig)
 	if err != nil {
-		log.Printf("wutong-region license: verify error: %v", err)
+		logrus.Errorf("wutong-region license: verify error: %v", err)
 		return err
 	}
 	return nil

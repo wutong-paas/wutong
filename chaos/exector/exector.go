@@ -35,6 +35,7 @@ import (
 	"github.com/wutong-paas/wutong/mq/api/grpc/pb"
 	mqclient "github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/containerutil"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	workermodel "github.com/wutong-paas/wutong/worker/discover/model"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -71,7 +72,7 @@ func NewManager(conf option.Config, mqc mqclient.MQClient) (Manager, error) {
 	}
 	containerdClient := imageClient.GetContainerdClient()
 
-	if containerdClient == nil && conf.ContainerRuntime == sources.ContainerRuntimeContainerd {
+	if containerdClient == nil && conf.ContainerRuntime == containerutil.ContainerRuntimeContainerd {
 		return nil, fmt.Errorf("containerd client is nil")
 	}
 

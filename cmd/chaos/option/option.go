@@ -24,8 +24,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/mq/client"
+	"github.com/wutong-paas/wutong/util/containerutil"
 )
 
 // Config config server
@@ -101,8 +101,8 @@ func (a *Builder) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.CachePVCName, "pvc-cache-name", "cache", "pvc name of cache")
 	fs.StringVar(&a.CacheMode, "cache-mode", "sharefile", "volume cache mount type, can be hostpath and sharefile, default is sharefile, which mount using pvc")
 	fs.StringVar(&a.CachePath, "cache-path", "/cache", "volume cache mount path, when cache-mode using hostpath, default path is /cache")
-	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
-	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.DefaultDockerSock, "container runtime endpoint")
+	fs.StringVar(&a.ContainerRuntime, "container-runtime", containerutil.ContainerRuntimeDocker, "container runtime, support docker and containerd")
+	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", containerutil.DefaultDockerSock, "container runtime endpoint")
 	fs.StringVar(&a.MQAPI, "mq-api", "wt-mq:6300", "acp_mq api")
 	fs.StringSliceVar(&a.EtcdEndPoints, "etcd-endpoints", []string{"http://wt-etcd:2379"}, "etcd v3 cluster endpoints.")
 }

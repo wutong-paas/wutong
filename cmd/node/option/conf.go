@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/wutong-paas/wutong/chaos/sources"
 	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/containerutil"
 	etcdutil "github.com/wutong-paas/wutong/util/etcd"
 	client "go.etcd.io/etcd/client/v3"
 	criapis "k8s.io/cri-api/pkg/apis"
@@ -193,8 +194,8 @@ func (a *Conf) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.ImageRepositoryHost, "image-repo-host", "wutong.me", "The host of image repository")
 	fs.StringVar(&a.GatewayVIP, "gateway-vip", "", "The vip of gateway")
 	fs.StringVar(&a.HostsFile, "hostsfile", "/newetc/hosts", "/etc/hosts mapped path in the container. eg. /etc/hosts:/tmp/hosts. Do not set hostsfile to /etc/hosts")
-	fs.StringVar(&a.ContainerRuntime, "container-runtime", sources.ContainerRuntimeDocker, "container runtime, support docker and containerd")
-	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", sources.DefaultDockerSock, "container runtime endpoint")
+	fs.StringVar(&a.ContainerRuntime, "container-runtime", containerutil.ContainerRuntimeDocker, "container runtime, support docker and containerd")
+	fs.StringVar(&a.RuntimeEndpoint, "runtime-endpoint", containerutil.DefaultDockerSock, "container runtime endpoint")
 	fs.BoolVar(&a.EnableDebugPprof, "enable-debug-pprof", false, "enable debug pprof")
 	fs.StringSliceVar(&a.EtcdEndpoints, "etcd", []string{"http://wt-etcd:2379"}, "the path of node in etcd")
 	fs.StringVar(&a.PrometheusAPI, "prometheus", "http://wt-monitor:9999", "the prometheus server address")
@@ -257,8 +258,8 @@ func (a *Conf) ParseClient(ctx context.Context, etcdClientArgs *etcdutil.ClientA
 
 	// set defult container runtime
 	if a.ContainerRuntime == "" {
-		a.ContainerRuntime = sources.ContainerRuntimeDocker
-		a.RuntimeEndpoint = sources.DefaultDockerSock
+		a.ContainerRuntime = containerutil.ContainerRuntimeDocker
+		a.RuntimeEndpoint = containerutil.DefaultDockerSock
 	}
 	return nil
 }

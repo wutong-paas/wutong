@@ -69,7 +69,6 @@ func (a *AppStruct) ExportApp(w http.ResponseWriter, r *http.Request) {
 
 		httputil.ReturnSuccess(r, w, res)
 	}
-
 }
 
 // Download -
@@ -179,7 +178,6 @@ func (a *AppStruct) NewUpload(w http.ResponseWriter, r *http.Request) {
 		st := upload.NewStorage(dirName)
 		st.UploadHandler(w, r)
 	}
-
 }
 
 // Upload -
@@ -234,7 +232,6 @@ func (a *AppStruct) Upload(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Headers", "x-requested-with,Content-Type,X-Custom-Header")
 		httputil.ReturnSuccess(r, w, nil)
 	}
-
 }
 
 // ImportApp -
@@ -329,5 +326,4 @@ func (a *AppStruct) ImportApp(w http.ResponseWriter, r *http.Request) {
 		}
 		httputil.ReturnSuccess(r, w, "successfully deleted")
 	}
-
 }

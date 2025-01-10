@@ -67,12 +67,6 @@ func (v2 *V2) Routes() chi.Router {
 	r.Get("/helm/{helm_namespace}/apps", controller.GetManager().ListHelmApps)
 	r.Get("/helm/{helm_namespace}/apps/{helm_name}/resources", controller.GetManager().ListHelmAppResources)
 
-	// container image local management
-	r.Get("/container-images/is-localed", controller.GetManager().IsContainerImageLocaled)
-	r.Post("/container-images/save", controller.GetManager().SaveContainerImage)
-	r.Post("/container-images/load", controller.GetManager().LoadContainerImage)
-	r.Get("/container-images/download", controller.GetManager().DownloadContainerImage)
-
 	return r
 }
 
@@ -573,6 +567,23 @@ func (v2 *V2) appRouter() chi.Router {
 	r.Post("/import", controller.GetManager().ImportApp)
 	r.Get("/import/{eventID}", controller.GetManager().ImportApp)
 	r.Delete("/import/{eventID}", controller.GetManager().ImportApp)
+
+	// app store version
+	r.Mount("/store", v2.appStoreRouter())
+	return r
+}
+
+func (v2 *V2) appStoreRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Mount("/version", v2.appStoreVersionRouter())
+	return r
+}
+
+func (v2 *V2) appStoreVersionRouter() chi.Router {
+	r := chi.NewRouter()
+	r.Get("/export/{versionID}", controller.GetManager().ExportAppStoreVersionStatus)
+	r.Post("/export/{versionID}", controller.GetManager().ExportAppStoreVersion)
+	r.Get("/export/{versionID}/download", controller.GetManager().DownloadAppStoreVersion)
 	return r
 }
 

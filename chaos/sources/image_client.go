@@ -9,6 +9,7 @@ import (
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/event"
+	"github.com/wutong-paas/wutong/util/containerutil"
 )
 
 // ImageClient image client
@@ -35,12 +36,12 @@ type ImageClientFactory interface {
 func NewImageClient(containerRuntime, endpoint string, timeout time.Duration) (c ImageClient, err error) {
 	logrus.Infof("create container client runtime %s endpoint %s", containerRuntime, endpoint)
 	switch containerRuntime {
-	case ContainerRuntimeDocker:
+	case containerutil.ContainerRuntimeDocker:
 		factory := &dockerImageCliFactory{}
 		c, err = factory.NewClient(
 			endpoint, timeout,
 		)
-	case ContainerRuntimeContainerd:
+	case containerutil.ContainerRuntimeContainerd:
 		factory := &containerdImageCliFactory{}
 		c, err = factory.NewClient(
 			endpoint, timeout,

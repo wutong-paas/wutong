@@ -18,12 +18,11 @@
 
 package handler
 
-import (
-	apimodel "github.com/wutong-paas/wutong/api/model"
-)
+import "github.com/wutong-paas/wutong/api/model"
 
-// RegistryAuthSecretHandler registry auth secret handler
-type RegistryAuthSecretHandler interface {
-	AddOrUpdateRegistryAuthSecret(req *apimodel.AddOrUpdateRegistryAuthSecretStruct) error
-	DeleteRegistryAuthSecret(req *apimodel.DeleteRegistryAuthSecretStruct) error
+// AppStoreVersionHandler app store version handler
+type AppStoreVersionHandler interface {
+	ExportStatus(versionId string) (string, string)
+	Export(versionId string, req *model.AppStoreVersionExportImageInfo) error
+	Download(versionId string) (string, error)
 }

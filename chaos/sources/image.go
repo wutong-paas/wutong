@@ -51,6 +51,7 @@ import (
 	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/util"
+	"github.com/wutong-paas/wutong/util/containerutil"
 
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types"
@@ -668,7 +669,7 @@ func ImagesPullAndPush(sourceImage, targetImage, username, password string, logg
 	if sock == "" {
 		sock = os.Getenv("CONTAINERD_SOCK")
 		if sock == "" {
-			sock = DefaultContainerdSock
+			sock = containerutil.DefaultContainerdSock
 		}
 	}
 	containerdClient, err := containerd.New(sock)

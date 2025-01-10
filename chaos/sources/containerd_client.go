@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/typeurl/v2"
 	dockercli "github.com/docker/docker/client"
 	"github.com/sirupsen/logrus"
+	"github.com/wutong-paas/wutong/util/containerutil"
 	"github.com/wutong-paas/wutong/util/criutil"
 	"google.golang.org/grpc"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -68,7 +69,7 @@ func (c *containerdClientImpl) InspectContainer(containerID string) (*ContainerD
 		return nil, err
 	}
 	return &ContainerDesc{
-		ContainerRuntime: ContainerRuntimeContainerd,
+		ContainerRuntime: containerutil.ContainerRuntimeContainerd,
 		ContainerStatus:  containerStatus.GetStatus(),
 		Info:             containerStatus.GetInfo(),
 	}, nil
