@@ -123,9 +123,9 @@ type CreateVMRequest struct {
 	OSVersion     string       `json:"osVersion"`
 	OSSourceFrom  OSSourceFrom `json:"osSourceFrom" validate:"osSourceFrom|required"`
 	OSSourceURL   string       `json:"osSourceURL" validate:"osSourceURL|required"`
-	OSDiskSize    int64        `json:"osDiskSize" validate:"osDiskSize|required"`
-	RequestCPU    int64        `json:"requestCPU" validate:"requestCPU|required"`       // m
-	RequestMemory int64        `json:"requestMemory" validate:"requestMemory|required"` // GiB
+	OSDiskSize    uint32       `json:"osDiskSize" validate:"osDiskSize|required"`       // GiB
+	RequestCPU    uint32       `json:"requestCPU" validate:"requestCPU|required"`       // m
+	RequestMemory uint32       `json:"requestMemory" validate:"requestMemory|required"` // GiB
 	Running       bool         `json:"running"`
 	// Size        VMSize            `json:"size"`
 	// HostNodeName string `json:"hostNodeName"`
@@ -155,8 +155,8 @@ type GetVMConditionsResponse struct {
 type UpdateVMRequest struct {
 	DisplayName        string   `json:"displayName"`
 	Desc               string   `json:"desc"`
-	RequestCPU         int64    `json:"requestCPU"`    // m
-	RequestMemory      int64    `json:"requestMemory"` // GiB
+	RequestCPU         uint32   `json:"requestCPU"`    // m
+	RequestMemory      uint32   `json:"requestMemory"` // GiB
 	DefaultLoginUser   string   `json:"defaultLoginUser"`
 	Operator           string   `json:"operator"`
 	NodeSelectorLabels []string `json:"nodeSelectorLabels"`

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	rt "runtime"
+
 	"github.com/sirupsen/logrus"
 	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/util"
@@ -244,6 +246,38 @@ func keepVMStatements(vm *kubevirtcorev1.VirtualMachine) {
 		}); err != nil {
 			logrus.Warningf("failed to update vm %s: %v", vm.Name, err)
 		}
+	}
+}
+
+type kubevirtInfo struct {
+	Arch            string
+	Version         string
+	ImageRegistry   string
+	ImageTag        string
+	ImagePullPolicy corev1.PullPolicy
+}
+
+var defaultKubeVirtInfo = &kubevirtInfo{
+	Arch:            rt.GOARCH,
+	Version:         "v1.3.0",
+	ImageRegistry:   "quay.io/kubevirt",
+	ImageTag:        "v1.3.0",
+	ImagePullPolicy: corev1.PullIfNotPresent,
+}
+
+func KubeVirtInfo() *kubevirtInfo {
+	kubevirt, err := KubevirtClient().KubeVirt("kubevirt").Get(context.Background(), "kubevirt", metav1.GetOptions{})
+	if err != nil {
+		logrus.Warningf("failed to get kubevirt: %v", err)
+		return defaultKubeVirtInfo
+	}
+
+	return &kubevirtInfo{
+		Arch:            util.If(kubevirt.Status.DefaultArchitecture != "", kubevirt.Status.DefaultArchitecture, rt.GOARCH),
+		Version:         util.If(kubevirt.Status.TargetKubeVirtVersion != "", kubevirt.Status.TargetKubeVirtVersion, "v1.3.0"),
+		ImageRegistry:   util.If(kubevirt.Status.TargetKubeVirtRegistry != "", kubevirt.Status.TargetKubeVirtRegistry, "quay.io/kubevirt"),
+		ImageTag:        util.If(kubevirt.Status.TargetKubeVirtVersion != "", kubevirt.Status.TargetKubeVirtVersion, "v1.3.0"),
+		ImagePullPolicy: util.If(kubevirt.Spec.ImagePullPolicy != "", kubevirt.Spec.ImagePullPolicy, corev1.PullIfNotPresent),
 	}
 }
 

@@ -38,7 +38,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 	api_model "github.com/wutong-paas/wutong/api/model"
-	"github.com/wutong-paas/wutong/chaos"
 	"github.com/wutong-paas/wutong/db"
 	dbmodel "github.com/wutong-paas/wutong/db/model"
 	"github.com/wutong-paas/wutong/pkg/kube"
@@ -60,7 +59,7 @@ import (
 	cdicorev1beta1 "kubevirt.io/containerized-data-importer-api/pkg/apis/core/v1beta1"
 )
 
-var defailtOSDiskSize int64 = 40
+var defailtOSDiskSize uint32 = 40
 
 var (
 	bootDiskName            = "bootdisk"
@@ -174,8 +173,13 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 			}, {
 				Name: bootDiskName,
 				VolumeSource: kubevirtcorev1.VolumeSource{
-					DataVolume: &kubevirtcorev1.DataVolumeSource{
-						Name: dvName,
+					// DataVolume: &kubevirtcorev1.DataVolumeSource{
+					// 	Name: dvName,
+					// },
+					PersistentVolumeClaim: &kubevirtcorev1.PersistentVolumeClaimVolumeSource{
+						PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: dvName,
+						},
 					},
 				},
 			},
@@ -242,11 +246,12 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 			},
 		})
 
+		kubevirtInfo := kube.KubeVirtInfo()
 		vm.Spec.Template.Spec.Volumes = append(vm.Spec.Template.Spec.Volumes, kubevirtcorev1.Volume{
 			Name: virtioContainerDiskName,
 			VolumeSource: kubevirtcorev1.VolumeSource{
 				ContainerDisk: &kubevirtcorev1.ContainerDiskSource{
-					Image: chaos.VIRTIOCONTAINERDISKIMAGENAME,
+					Image: fmt.Sprintf("%s/%s:%s", kubevirtInfo.ImageRegistry, "virtio-container-disk", kubevirtInfo.ImageTag),
 				},
 			},
 		})
@@ -278,6 +283,14 @@ func (s *ServiceAction) CreateVM(tenantEnv *dbmodel.TenantEnvs, req *api_model.C
 			VMPort:   6173,
 			Protocol: api_model.VMPortProtocolHTTP,
 		})
+	} else {
+		// 该功能待集成，自动为 windows 虚拟机添加 RDP 端口
+		if req.LoadVirtioDriver {
+			s.AddVMPort(tenantEnv, req.Name, &api_model.AddVMPortRequest{
+				VMPort:   3389,
+				Protocol: api_model.VMPortProtocolRDP,
+			})
+		}
 	}
 
 	result.Status = string(created.Status.PrintableStatus)
@@ -2156,7 +2169,7 @@ func createContainerDiskPVC(req *api_model.CreateVMRequest, tenantEnv *dbmodel.T
 			},
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: *resource.NewQuantity(req.OSDiskSize*1024*1024*1024, resource.BinarySI),
+					corev1.ResourceStorage: *resource.NewQuantity(int64(req.OSDiskSize)*1024*1024*1024, resource.BinarySI),
 				},
 			},
 		},
@@ -2171,7 +2184,7 @@ func createContainerDiskPVC(req *api_model.CreateVMRequest, tenantEnv *dbmodel.T
 }
 
 // buildVMDataVolumeTemplates 构建虚拟机数据盘模板
-func buildVMDataVolumeTemplates(name string, sourceFrom api_model.OSSourceFrom, sourceUrl string, size int64) []kubevirtcorev1.DataVolumeTemplateSpec {
+func buildVMDataVolumeTemplates(name string, sourceFrom api_model.OSSourceFrom, sourceUrl string, size uint32) []kubevirtcorev1.DataVolumeTemplateSpec {
 	var source *cdicorev1beta1.DataVolumeSource
 	switch sourceFrom {
 	case api_model.OSSourceFromHTTP:
@@ -2204,7 +2217,7 @@ func buildVMDataVolumeTemplates(name string, sourceFrom api_model.OSSourceFrom, 
 					},
 					Resources: corev1.VolumeResourceRequirements{
 						Requests: corev1.ResourceList{
-							corev1.ResourceStorage: *resource.NewQuantity(size*1024*1024*1024, resource.BinarySI),
+							corev1.ResourceStorage: *resource.NewQuantity(int64(size)*1024*1024*1024, resource.BinarySI),
 						},
 					},
 				},

@@ -55,7 +55,6 @@ func init() {
 	NODESHELLIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "node-shell"), "stable")
 	WTCHANNELIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "wt-channel"), "stable")
 	VIRTVNCIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "virt-vnc"), "stable")
-	VIRTIOCONTAINERDISKIMAGENAME = fmt.Sprintf("%s:%s", path.Join(constants.WutongOnlineImageRepository, "virtio-container-disk"), "v1.3.0-alpha.0")
 }
 
 // GetImageUserInfoV2 -
@@ -106,9 +105,6 @@ var WTCHANNELIMAGENAME string
 
 // VIRTVNCIMAGENAME virt-vnc image name
 var VIRTVNCIMAGENAME string
-
-// VIRTIOCONTAINERDISKIMAGENAME virtio-container-disk image name
-var VIRTIOCONTAINERDISKIMAGENAME string
 
 // CIVERSION -
 var CIVERSION string
