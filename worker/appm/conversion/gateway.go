@@ -463,7 +463,11 @@ func (a *AppServiceBuild) createInnerService(port *model.TenantEnvServicesPort) 
 
 func (a *AppServiceBuild) createOuterService(port *model.TenantEnvServicesPort) *corev1.Service {
 	var service corev1.Service
-	service.Name = workerutil.KeepMaxLength(fmt.Sprintf("%s-%d-%dout", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort), 63)
+	service.Name = port.K8sServiceName
+	if service.Name == "" {
+		service.Name = fmt.Sprintf("%s-%d-%d", a.appService.GetK8sWorkloadName(), port.ID, port.ContainerPort)
+	}
+	service.Name = workerutil.KeepMaxLength(service.Name, 59) + "-out"
 	service.Namespace = a.appService.GetNamespace()
 	service.Labels = a.appService.GetCommonLabels(map[string]string{
 		"service_type":    "outer",
