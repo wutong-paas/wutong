@@ -575,15 +575,15 @@ func (v2 *V2) appRouter() chi.Router {
 
 func (v2 *V2) appStoreRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Mount("/version", v2.appStoreVersionRouter())
+	r.Mount("/version/{versionID}", v2.appStoreVersionRouter())
 	return r
 }
 
 func (v2 *V2) appStoreVersionRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Get("/export/{versionID}", controller.GetManager().ExportAppStoreVersionStatus)
-	r.Post("/export/{versionID}", controller.GetManager().ExportAppStoreVersion)
-	r.Get("/export/{versionID}/download", controller.GetManager().DownloadAppStoreVersion)
+	r.Get("/export/image", controller.GetManager().ExportAppStoreVersionStatus)
+	r.Post("/export/image", controller.GetManager().ExportAppStoreVersion)
+	r.Get("/export/image/download", controller.GetManager().DownloadAppStoreVersion)
 	return r
 }
 
