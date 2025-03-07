@@ -1843,7 +1843,7 @@ func (t *TenantEnvStruct) ListServiceInstanceLogs(w http.ResponseWriter, r *http
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		httputil.ReturnError(r, w, 404, "Streaming unsupported!")
+		httputil.ReturnError(r, w, 400, "Streaming unsupported!")
 		return
 	}
 

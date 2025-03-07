@@ -56,7 +56,7 @@ func InitTenantEnv(next http.Handler) http.Handler {
 		tenantName := chi.URLParam(r, "tenant_name")
 		tenantEnvName := chi.URLParam(r, "tenant_env_name")
 		if tenantEnvName == "" {
-			httputil.ReturnError(r, w, 404, "cant find tenant env")
+			httputil.ReturnError(r, w, 400, "cant find tenant env")
 			return
 		}
 		tenantEnv, err := db.GetManager().TenantEnvDao().GetTenantEnvIDByName(tenantName, tenantEnvName)
@@ -82,7 +82,7 @@ func InitService(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		serviceAlias := chi.URLParam(r, "service_alias")
 		if serviceAlias == "" {
-			httputil.ReturnError(r, w, 404, "cant find service alias")
+			httputil.ReturnError(r, w, 400, "cant find service alias")
 			return
 		}
 		tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id"))
@@ -156,7 +156,7 @@ func InitVMID(next http.Handler) http.Handler {
 
 		vmID := chi.URLParam(r, "vm_id")
 		if vmID == "" {
-			httputil.ReturnError(r, w, 404, "need vm id")
+			httputil.ReturnError(r, w, 400, "need vm id")
 			return
 		}
 		ctx := context.WithValue(r.Context(), ctxutil.ContextKey("vm_id"), vmID)
@@ -173,7 +173,7 @@ func InitPlugin(next http.Handler) http.Handler {
 		pluginID := chi.URLParam(r, "plugin_id")
 		tenantEnvID := r.Context().Value(ctxutil.ContextKey("tenant_env_id")).(string)
 		if pluginID == "" {
-			httputil.ReturnError(r, w, 404, "need plugin id")
+			httputil.ReturnError(r, w, 400, "need plugin id")
 			return
 		}
 		_, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, tenantEnvID)
@@ -199,7 +199,7 @@ func InitSysPlugin(next http.Handler) http.Handler {
 
 		pluginID := chi.URLParam(r, "plugin_id")
 		if pluginID == "" {
-			httputil.ReturnError(r, w, 404, "need plugin id")
+			httputil.ReturnError(r, w, 400, "need plugin id")
 			return
 		}
 		_, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(pluginID, "")
