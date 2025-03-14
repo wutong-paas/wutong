@@ -20,6 +20,7 @@ package controller
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -48,6 +49,8 @@ import (
 	httputil "github.com/wutong-paas/wutong/util/http"
 	"github.com/wutong-paas/wutong/worker/client"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // V2Routes v2Routes
@@ -1806,7 +1809,7 @@ func (t *TenantEnvStruct) ListServiceInstanceContainers(w http.ResponseWriter, r
 	httputil.ReturnSuccess(r, w, pods)
 }
 
-// ListServiceInstanceLogs 获取组组件实例日志
+// ListServiceInstanceLogs 获取组件实例日志
 // swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/instances/{instance_id}/logs v2 ListServiceInstanceLogs
 //
 // 获取组件实例日志
@@ -1882,6 +1885,132 @@ func (t *TenantEnvStruct) ListServiceInstanceLogs(w http.ResponseWriter, r *http
 			}
 		}
 	}
+}
+
+// ListServiceInstanceStaticLogs 获取组件实例静态日志
+// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/instances/{instance_id}/static/logs v2 ListServiceInstanceStaticLogs
+//
+// 获取组件实例静态日志
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) ListServiceInstanceStaticLogs(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	instance := chi.URLParam(r, "instance_id")
+
+	req := api_model.ServiceInstanceLogReq{
+		Container:  r.URL.Query().Get("container"),
+		TailLines:  cast.ToInt64(r.URL.Query().Get("tailLines")),
+		Timestamps: cast.ToBool(r.URL.Query().Get("timestamps")),
+		Previous:   cast.ToBool(r.URL.Query().Get("previous")),
+	}
+
+	if req.TailLines <= 0 {
+		req.TailLines = 1024
+	}
+
+	logreq := handler.GetServiceManager().KubeClient().CoreV1().Pods(tenantEnv.Namespace).GetLogs(instance, &corev1.PodLogOptions{
+		Container:  req.Container,
+		Follow:     false, // 持续获取日志
+		TailLines:  &req.TailLines,
+		Timestamps: req.Timestamps, // 显示时间戳
+		Previous:   req.Previous,
+	})
+
+	stream, err := logreq.Stream(r.Context())
+	if err != nil {
+		httputil.ReturnError(r, w, 404, "获取组件实例流式日志失败")
+		return
+	}
+	defer stream.Close()
+
+	b, err := io.ReadAll(stream)
+	if err != nil {
+		httputil.ReturnError(r, w, 404, "获取组件实例流式日志失败")
+		return
+	}
+	httputil.ReturnSuccess(r, w, string(b))
+}
+
+type PodDescription struct {
+	ApiVersion string
+	Kind       string
+	Meta       metav1.ObjectMeta
+	Spec       corev1.PodSpec
+	Status     corev1.PodStatus
+}
+
+// GetServiceInstanceDescription 获取组件实例描述信息
+// swagger:operation GET  /v2/tenants/{tenant_name}/envs/{tenant_env_name}/services/{service_alias}/instances/{instance_id}/description v2 GetServiceInstanceDescription
+//
+// 获取组件实例静态日志
+//
+// ---
+// consumes:
+// - application/json
+// - application/x-protobuf
+//
+// produces:
+// - application/json
+// - application/xml
+//
+// responses:
+//
+//	default:
+//	  schema:
+//	    "$ref": "#/responses/commandResponse"
+//	  description: 统一返回格式
+func (t *TenantEnvStruct) GetServiceInstanceDescription(w http.ResponseWriter, r *http.Request) {
+	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
+	instance := chi.URLParam(r, "instance_id")
+
+	req := api_model.ServiceInstanceLogReq{
+		Container:  r.URL.Query().Get("container"),
+		TailLines:  cast.ToInt64(r.URL.Query().Get("tailLines")),
+		Timestamps: cast.ToBool(r.URL.Query().Get("timestamps")),
+		Previous:   cast.ToBool(r.URL.Query().Get("previous")),
+	}
+
+	if req.TailLines <= 0 {
+		req.TailLines = 1024
+	}
+
+	pod, err := handler.GetServiceManager().KubeClient().CoreV1().Pods(tenantEnv.Namespace).Get(context.Background(), instance, metav1.GetOptions{})
+	if err != nil {
+		httputil.ReturnError(r, w, 404, "获取组件实例描述信息失败")
+		return
+	}
+
+	podDescription := PodDescription{
+		ApiVersion: pod.APIVersion,
+		Kind:       pod.Kind,
+		Meta: metav1.ObjectMeta{
+			Name:      pod.Name,
+			Namespace: pod.Namespace,
+		},
+		Spec:   pod.Spec,
+		Status: pod.Status,
+	}
+	b, v := yaml.Marshal(podDescription)
+	if v != nil {
+		httputil.ReturnError(r, w, 404, "获取组件实例描述信息失败")
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, string(b))
 }
 
 // ListServiceInstanceContainerOptions 获取组件实例容器选项列表

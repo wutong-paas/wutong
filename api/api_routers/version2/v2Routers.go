@@ -342,9 +342,10 @@ func (v2 *V2) serviceRouter() chi.Router {
 	r.Get("/instances", controller.GetManager().ListServiceInstances)
 	r.Get("/instances/{instance_id}/containers", controller.GetManager().ListServiceInstanceContainers)
 	r.Get("/instances/{instance_id}/logs", controller.GetManager().ListServiceInstanceLogs)
+	r.Get("/instances/{instance_id}/static/logs", controller.GetManager().ListServiceInstanceStaticLogs)
+	r.Get("/instances/{instance_id}/description", controller.GetManager().GetServiceInstanceDescription)
 	r.Get("/instance/container/options", controller.GetManager().ListServiceInstanceContainerOptions)
 	r.Get("/instances/{instance_id}/events", controller.GetManager().ListServiceInstanceEvents)
-
 	//应用探针 增 删 改(surce)
 	r.Post("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "add-service-probe", dbmodel.SyncEventType))
 	r.Put("/probe", middleware.WrapEL(controller.GetManager().Probe, dbmodel.TargetTypeService, "update-service-probe", dbmodel.SyncEventType))
