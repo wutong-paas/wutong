@@ -7,6 +7,7 @@ import (
 	wutongscheme "github.com/wutong-paas/wutong/pkg/generated/clientset/versioned/scheme"
 	apiext "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilversion "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -40,6 +41,29 @@ func KubeClient() kubernetes.Interface {
 	}
 
 	return kubeClient
+}
+
+func Version() string {
+	v, err := KubeClient().Discovery().ServerVersion()
+	if err != nil {
+		logrus.Errorf("failed to get server version: %v", err)
+		return ""
+	}
+	return v.String()
+}
+
+func VersionGTE(major, minor uint) bool {
+	v := Version()
+	if v == "" {
+		return false
+	}
+	sv, err := utilversion.ParseGeneric(v)
+	if err != nil {
+		logrus.Errorf("failed to parse server version: %v", err)
+		return false
+	}
+
+	return sv.AtLeast(utilversion.MajorMinor(major, minor))
 }
 
 func APIExtClient() apiext.Interface {

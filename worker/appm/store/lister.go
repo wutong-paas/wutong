@@ -23,6 +23,7 @@ import (
 	crdlisters "k8s.io/apiextensions-apiserver/pkg/client/listers/apiextensions/v1"
 	appsv1 "k8s.io/client-go/listers/apps/v1"
 	autoscalingv1 "k8s.io/client-go/listers/autoscaling/v1"
+	autoscalingv2 "k8s.io/client-go/listers/autoscaling/v2"
 	corev1 "k8s.io/client-go/listers/core/v1"
 	networkingv1 "k8s.io/client-go/listers/networking/v1"
 	betav1 "k8s.io/client-go/listers/networking/v1beta1"
@@ -31,22 +32,23 @@ import (
 
 // Lister kube-api client cache
 type Lister struct {
-	Ingress                 networkingv1.IngressLister
-	BetaIngress             betav1.IngressLister
-	Service                 corev1.ServiceLister
-	Secret                  corev1.SecretLister
-	StatefulSet             appsv1.StatefulSetLister
-	Deployment              appsv1.DeploymentLister
-	Pod                     corev1.PodLister
-	ReplicaSets             appsv1.ReplicaSetLister
-	ConfigMap               corev1.ConfigMapLister
-	Endpoints               corev1.EndpointsLister
-	Nodes                   corev1.NodeLister
-	StorageClass            storagev1.StorageClassLister
-	Claims                  corev1.PersistentVolumeClaimLister
-	HorizontalPodAutoscaler autoscalingv1.HorizontalPodAutoscalerLister
-	CRD                     crdlisters.CustomResourceDefinitionLister
-	HelmApp                 v1alpha1.HelmAppLister
-	ComponentDefinition     v1alpha1.ComponentDefinitionLister
-	ThirdComponent          v1alpha1.ThirdComponentLister
+	Ingress                   networkingv1.IngressLister
+	BetaIngress               betav1.IngressLister
+	Service                   corev1.ServiceLister
+	Secret                    corev1.SecretLister
+	StatefulSet               appsv1.StatefulSetLister
+	Deployment                appsv1.DeploymentLister
+	Pod                       corev1.PodLister
+	ReplicaSets               appsv1.ReplicaSetLister
+	ConfigMap                 corev1.ConfigMapLister
+	Endpoints                 corev1.EndpointsLister
+	Nodes                     corev1.NodeLister
+	StorageClass              storagev1.StorageClassLister
+	Claims                    corev1.PersistentVolumeClaimLister
+	HorizontalPodAutoscalerV1 autoscalingv1.HorizontalPodAutoscalerLister
+	HorizontalPodAutoscalerV2 autoscalingv2.HorizontalPodAutoscalerLister
+	CRD                       crdlisters.CustomResourceDefinitionLister
+	HelmApp                   v1alpha1.HelmAppLister
+	ComponentDefinition       v1alpha1.ComponentDefinitionLister
+	ThirdComponent            v1alpha1.ThirdComponentLister
 }

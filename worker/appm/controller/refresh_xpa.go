@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/wutong-paas/wutong/pkg/kube"
 	"github.com/wutong-paas/wutong/worker/appm/f"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 )
@@ -55,16 +56,29 @@ func (a *refreshXPAController) Begin() {
 }
 
 func (a *refreshXPAController) applyOne(clientset kubernetes.Interface, app *v1.AppService) error {
-	for _, hpa := range app.GetHPAs() {
-		f.EnsureHPA(hpa, clientset)
-	}
-
-	for _, hpa := range app.GetDelHPAs() {
-		logrus.Debugf("hpa name: %s; start deleting hpa.", hpa.GetName())
-		err := clientset.AutoscalingV1().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(context.Background(), hpa.GetName(), metav1.DeleteOptions{})
-		if err != nil {
-			// don't return error, hope it is ok next time
-			logrus.Warningf("error deleting secret(%#v): %v", hpa, err)
+	if kube.VersionGTE(1, 23) {
+		for _, v2hpa := range app.GetV2HPAs() {
+			f.EnsureV2HPA(v2hpa, clientset)
+		}
+		for _, v2hpa := range app.GetDelV2HPAs() {
+			logrus.Debugf("v2 hpa name: %s; start deleting hpa.", v2hpa.GetName())
+			err := clientset.AutoscalingV2().HorizontalPodAutoscalers(v2hpa.GetNamespace()).Delete(context.Background(), v2hpa.GetName(), metav1.DeleteOptions{})
+			if err != nil {
+				// don't return error, hope it is ok next time
+				logrus.Warningf("error deleting hpa v2(%#v): %v", v2hpa, err)
+			}
+		}
+	} else {
+		for _, hpa := range app.GetHPAs() {
+			f.EnsureHPA(hpa, clientset)
+		}
+		for _, hpa := range app.GetDelHPAs() {
+			logrus.Debugf("hpa name: %s; start deleting hpa.", hpa.GetName())
+			err := clientset.AutoscalingV1().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(context.Background(), hpa.GetName(), metav1.DeleteOptions{})
+			if err != nil {
+				// don't return error, hope it is ok next time
+				logrus.Warningf("error deleting hpa(%#v): %v", hpa, err)
+			}
 		}
 	}
 

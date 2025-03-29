@@ -176,12 +176,20 @@ func (s *stopController) stopOne(app v1.AppService) error {
 			}
 		}
 	}
-	//step 7: deleta all hpa
+	//step 7: delete all hpa
 	if hpas := app.GetHPAs(); len(hpas) != 0 {
 		for _, hpa := range hpas {
 			err := s.manager.client.AutoscalingV1().HorizontalPodAutoscalers(hpa.GetNamespace()).Delete(s.ctx, hpa.GetName(), metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				return fmt.Errorf("删除 HPA 资源错误：%v", err)
+			}
+		}
+	}
+	if v2hpas := app.GetV2HPAs(); len(v2hpas) != 0 {
+		for _, v2hpa := range v2hpas {
+			err := s.manager.client.AutoscalingV2().HorizontalPodAutoscalers(v2hpa.GetNamespace()).Delete(s.ctx, v2hpa.GetName(), metav1.DeleteOptions{})
+			if err != nil && !errors.IsNotFound(err) {
+				return fmt.Errorf("删除 HPA V2 资源错误：%v", err)
 			}
 		}
 	}

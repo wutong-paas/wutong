@@ -30,6 +30,7 @@ import (
 	"github.com/wutong-paas/wutong/util/k8s"
 	v1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	betav1 "k8s.io/api/networking/v1beta1"
@@ -156,6 +157,8 @@ type AppService struct {
 	workload         client.Object
 	hpas             []*autoscalingv1.HorizontalPodAutoscaler
 	delHPAs          []*autoscalingv1.HorizontalPodAutoscaler
+	v2hpas           []*autoscalingv2.HorizontalPodAutoscaler
+	delV2HPAs        []*autoscalingv2.HorizontalPodAutoscaler
 	replicasets      []*v1.ReplicaSet
 	services         []*corev1.Service
 	delServices      []*corev1.Service
@@ -729,6 +732,18 @@ func (a *AppService) SetDeletedResources(old *AppService) {
 			a.delHPAs = append(a.delHPAs, o)
 		}
 	}
+	for _, o := range old.GetV2HPAs() {
+		del := true
+		for _, n := range a.GetV2HPAs() {
+			if o.Name == n.Name {
+				del = false
+				break
+			}
+		}
+		if del {
+			a.delV2HPAs = append(a.delV2HPAs, o)
+		}
+	}
 }
 
 // DistinguishPod uses replica set to distinguish between old and new pods
@@ -810,6 +825,24 @@ func (a *AppService) SetHPA(hpa *autoscalingv1.HorizontalPodAutoscaler) {
 	a.hpas = append(a.hpas, hpa)
 }
 
+// SetV2HPAs -
+func (a *AppService) SetV2HPAs(v2hpas []*autoscalingv2.HorizontalPodAutoscaler) {
+	a.v2hpas = v2hpas
+}
+
+// SetV2HPA -
+func (a *AppService) SetV2HPA(v2hpa *autoscalingv2.HorizontalPodAutoscaler) {
+	if len(a.v2hpas) > 0 {
+		for i, old := range a.v2hpas {
+			if old.GetName() == v2hpa.GetName() {
+				a.v2hpas[i] = v2hpa
+				return
+			}
+		}
+	}
+	a.v2hpas = append(a.v2hpas, v2hpa)
+}
+
 // SetServiceMonitor -
 func (a *AppService) SetServiceMonitor(sm *monitorv1.ServiceMonitor) {
 	for i, s := range a.serviceMonitor {
@@ -860,6 +893,29 @@ func (a *AppService) DelHPA(hpa *autoscalingv1.HorizontalPodAutoscaler) {
 	for i, old := range a.hpas {
 		if old.GetName() == hpa.GetName() {
 			a.hpas = append(a.hpas[0:i], a.hpas[i+1:]...)
+			return
+		}
+	}
+}
+
+// GetV2HPAs -
+func (a *AppService) GetV2HPAs() []*autoscalingv2.HorizontalPodAutoscaler {
+	return a.v2hpas
+}
+
+// GetDelV2HPAs -
+func (a *AppService) GetDelV2HPAs() []*autoscalingv2.HorizontalPodAutoscaler {
+	return a.delV2HPAs
+}
+
+// DelV2HPA -
+func (a *AppService) DelV2HPA(v2hpa *autoscalingv2.HorizontalPodAutoscaler) {
+	if len(a.v2hpas) == 0 {
+		return
+	}
+	for i, old := range a.v2hpas {
+		if old.GetName() == v2hpa.GetName() {
+			a.v2hpas = append(a.v2hpas[0:i], a.v2hpas[i+1:]...)
 			return
 		}
 	}

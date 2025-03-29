@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-//Informer kube-api client cache
+// Informer kube-api client cache
 type Informer struct {
 	Namespace               cache.SharedIndexInformer
 	Ingress                 cache.SharedIndexInformer
@@ -39,21 +39,22 @@ type Informer struct {
 	Claims                  cache.SharedIndexInformer
 	Events                  cache.SharedIndexInformer
 	HorizontalPodAutoscaler cache.SharedIndexInformer
-	CRD                     cache.SharedIndexInformer
-	HelmApp                 cache.SharedIndexInformer
-	ComponentDefinition     cache.SharedIndexInformer
-	ThirdComponent          cache.SharedIndexInformer
-	CRS                     map[string]cache.SharedIndexInformer
+	// V2HorizontalPodAutoscaler cache.SharedIndexInformer
+	CRD                 cache.SharedIndexInformer
+	HelmApp             cache.SharedIndexInformer
+	ComponentDefinition cache.SharedIndexInformer
+	ThirdComponent      cache.SharedIndexInformer
+	CRS                 map[string]cache.SharedIndexInformer
 }
 
-//StartCRS -
+// StartCRS -
 func (i *Informer) StartCRS(stop chan struct{}) {
 	for k := range i.CRS {
 		go i.CRS[k].Run(stop)
 	}
 }
 
-//Start statrt
+// Start statrt
 func (i *Informer) Start(stop chan struct{}) {
 	go i.Namespace.Run(stop)
 	go i.Ingress.Run(stop)
@@ -69,6 +70,7 @@ func (i *Informer) Start(stop chan struct{}) {
 	go i.StorageClass.Run(stop)
 	go i.Events.Run(stop)
 	go i.HorizontalPodAutoscaler.Run(stop)
+	// go i.V2HorizontalPodAutoscaler.Run(stop)
 	go i.Claims.Run(stop)
 	go i.CRD.Run(stop)
 	go i.HelmApp.Run(stop)
@@ -76,12 +78,14 @@ func (i *Informer) Start(stop chan struct{}) {
 	go i.ThirdComponent.Run(stop)
 }
 
-//Ready if all kube informers is syncd, store is ready
+// Ready if all kube informers is syncd, store is ready
 func (i *Informer) Ready() bool {
 	if i.Namespace.HasSynced() && i.Ingress.HasSynced() && i.Service.HasSynced() && i.Secret.HasSynced() &&
 		i.StatefulSet.HasSynced() && i.Deployment.HasSynced() && i.Pod.HasSynced() &&
 		i.ConfigMap.HasSynced() && i.Nodes.HasSynced() && i.Events.HasSynced() &&
-		i.HorizontalPodAutoscaler.HasSynced() && i.StorageClass.HasSynced() && i.Claims.HasSynced() && i.CRD.HasSynced() {
+		i.HorizontalPodAutoscaler.HasSynced() &&
+		// i.HorizontalPodAutoscaler.HasSynced() && i.V2HorizontalPodAutoscaler.HasSynced() &&
+		i.StorageClass.HasSynced() && i.Claims.HasSynced() && i.CRD.HasSynced() {
 		return true
 	}
 	return false

@@ -28,8 +28,10 @@ var (
 	APIVersionV1Ingress = "networking.k8s.io/v1"
 	//APIVersionV1beta1Ingress -
 	APIVersionV1beta1Ingress = "networking.k8s.io/v1beta1"
-	//APIVersionHorizontalPodAutoscaler -q
-	APIVersionHorizontalPodAutoscaler = "autoscaling/v2"
+	//APIVersionHorizontalPodAutoscalerV1 -
+	APIVersionHorizontalPodAutoscalerV1 = "autoscaling/v1"
+	//APIVersionHorizontalPodAutoscalerV2 -
+	APIVersionHorizontalPodAutoscalerV2 = "autoscaling/v2"
 	//APIVersionGateway -
 	APIVersionGateway = "gateway.networking.k8s.io/v1beta1"
 	//APIVersionHTTPRoute -

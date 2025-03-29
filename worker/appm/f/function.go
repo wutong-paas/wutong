@@ -30,6 +30,7 @@ import (
 	"github.com/wutong-paas/wutong/util/apply"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	betav1 "k8s.io/api/networking/v1beta1"
@@ -341,6 +342,26 @@ func EnsureHPA(new *autoscalingv1.HorizontalPodAutoscaler, clientSet kubernetes.
 	_, err = clientSet.AutoscalingV1().HorizontalPodAutoscalers(new.Namespace).Update(context.Background(), new, metav1.UpdateOptions{})
 	if err != nil {
 		logrus.Warningf("error updating hpa %s: %v", new.Namespace+"/"+new.Name, err)
+		return
+	}
+}
+
+func EnsureV2HPA(new *autoscalingv2.HorizontalPodAutoscaler, clientSet kubernetes.Interface) {
+	_, err := clientSet.AutoscalingV1().HorizontalPodAutoscalers(new.Namespace).Get(context.Background(), new.Name, metav1.GetOptions{})
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			_, err = clientSet.AutoscalingV2().HorizontalPodAutoscalers(new.Namespace).Create(context.Background(), new, metav1.CreateOptions{})
+			if err != nil {
+				logrus.Warningf("error creating hpa v2 %s: %v", new.Namespace+"/"+new.Name, err)
+			}
+			return
+		}
+		logrus.Errorf("error getting hpa v2(%s): %v", fmt.Sprintf("%s/%s", new.Namespace, new.Name), err)
+		return
+	}
+	_, err = clientSet.AutoscalingV2().HorizontalPodAutoscalers(new.Namespace).Update(context.Background(), new, metav1.UpdateOptions{})
+	if err != nil {
+		logrus.Warningf("error updating hpa v2 %s: %v", new.Namespace+"/"+new.Name, err)
 		return
 	}
 }

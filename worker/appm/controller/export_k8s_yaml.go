@@ -8,9 +8,11 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 	"github.com/wutong-paas/wutong/chaos"
+	"github.com/wutong-paas/wutong/pkg/kube"
 	v1 "github.com/wutong-paas/wutong/worker/appm/types/v1"
 	appv1 "k8s.io/api/apps/v1"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
@@ -250,20 +252,41 @@ func (s *exportK8sYamlController) exportOne(app v1.AppService, _ *WutongExport) 
 		}
 	}
 
-	if hpas := app.GetHPAs(); len(hpas) != 0 {
-		for _, hpa := range hpas {
-			hpa.Kind = "HorizontalPodAutoscaler"
-			hpa.Namespace = ""
-			hpa.APIVersion = APIVersionHorizontalPodAutoscaler
-			hpa.Status = autoscalingv1.HorizontalPodAutoscalerStatus{}
-			if len(hpa.ResourceVersion) == 0 {
-				hpaBytes, err := yaml.Marshal(hpa)
-				if err != nil {
-					return fmt.Errorf("hpa to yaml failure %v", err)
+	if kube.VersionGTE(1, 23) {
+		if v2hpas := app.GetV2HPAs(); len(v2hpas) != 0 {
+			for _, v2hpa := range v2hpas {
+				v2hpa.Kind = "HorizontalPodAutoscaler"
+				v2hpa.Namespace = ""
+				v2hpa.APIVersion = APIVersionHorizontalPodAutoscalerV2
+				v2hpa.Status = autoscalingv2.HorizontalPodAutoscalerStatus{}
+				if len(v2hpa.ResourceVersion) == 0 {
+					hpaBytes, err := yaml.Marshal(v2hpa)
+					if err != nil {
+						return fmt.Errorf("hpa to yaml failure %v", err)
+					}
+					err = write(path.Join(exportPath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n", true)
+					if err != nil {
+						return fmt.Errorf("write hpa yaml failure %v", err)
+					}
 				}
-				err = write(path.Join(exportPath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n", true)
-				if err != nil {
-					return fmt.Errorf("write hpa yaml failure %v", err)
+			}
+		}
+	} else {
+		if hpas := app.GetHPAs(); len(hpas) != 0 {
+			for _, hpa := range hpas {
+				hpa.Kind = "HorizontalPodAutoscaler"
+				hpa.Namespace = ""
+				hpa.APIVersion = APIVersionHorizontalPodAutoscalerV1
+				hpa.Status = autoscalingv1.HorizontalPodAutoscalerStatus{}
+				if len(hpa.ResourceVersion) == 0 {
+					hpaBytes, err := yaml.Marshal(hpa)
+					if err != nil {
+						return fmt.Errorf("hpa to yaml failure %v", err)
+					}
+					err = write(path.Join(exportPath, "HorizontalPodAutoscaler.yaml"), hpaBytes, "\n---\n", true)
+					if err != nil {
+						return fmt.Errorf("write hpa yaml failure %v", err)
+					}
 				}
 			}
 		}

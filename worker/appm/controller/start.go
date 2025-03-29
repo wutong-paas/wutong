@@ -192,6 +192,17 @@ func (s *startController) startOne(app v1.AppService) error {
 			}
 		}
 	}
+	if v2hpas := app.GetV2HPAs(); len(v2hpas) != 0 {
+		for _, v2hpa := range v2hpas {
+			if len(v2hpa.ResourceVersion) == 0 {
+				_, err := s.manager.client.AutoscalingV2().HorizontalPodAutoscalers(v2hpa.GetNamespace()).Create(s.ctx, v2hpa, metav1.CreateOptions{})
+				if err != nil && !errors.IsAlreadyExists(err) {
+					logrus.Debugf("hpa v2: %#v", v2hpa)
+					return fmt.Errorf("create hpa v2: %v", err)
+				}
+			}
+		}
+	}
 
 	//step 7: create CR resource
 	if crd, _ := s.manager.store.GetCrd(store.ServiceMonitor); crd != nil {

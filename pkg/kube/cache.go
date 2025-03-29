@@ -9,9 +9,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/informers"
+	autoscalinginformersv1 "k8s.io/client-go/informers/autoscaling/v1"
+	autoscalinginformersv2 "k8s.io/client-go/informers/autoscaling/v2"
 	"k8s.io/client-go/kubernetes"
 	appsv1 "k8s.io/client-go/listers/apps/v1"
 	autoscalingv1 "k8s.io/client-go/listers/autoscaling/v1"
+	autoscalingv2 "k8s.io/client-go/listers/autoscaling/v2"
 	corev1 "k8s.io/client-go/listers/core/v1"
 	networkingv1 "k8s.io/client-go/listers/networking/v1"
 	storagev1 "k8s.io/client-go/listers/storage/v1"
@@ -29,6 +32,7 @@ type CachedResources struct {
 	ServiceLister               corev1.ServiceLister
 	IngressV1Lister             networkingv1.IngressLister
 	HPAV1Lister                 autoscalingv1.HorizontalPodAutoscalerLister
+	HPAV2Lister                 autoscalingv2.HorizontalPodAutoscalerLister
 	EventLister                 corev1.EventLister
 	StorageClassLister          storagev1.StorageClassLister
 	NodeLister                  corev1.NodeLister
@@ -69,7 +73,6 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	secretInformer := sharedInformers.Core().V1().Secrets()
 	serviceInformer := sharedInformers.Core().V1().Services()
 	ingressV1Informer := sharedInformers.Networking().V1().Ingresses()
-	hpaV1Informer := sharedInformers.Autoscaling().V1().HorizontalPodAutoscalers()
 	eventInformer := filteredSharedInformer.Core().V1().Events()
 	storageClassInformer := sharedInformers.Storage().V1().StorageClasses()
 	nodeInformer := sharedInformers.Core().V1().Nodes()
@@ -84,7 +87,8 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	secretSharedInformer := secretInformer.Informer()
 	serviceSharedInformer := serviceInformer.Informer()
 	ingressV1SharedInformer := ingressV1Informer.Informer()
-	hpaV1SharedInformer := hpaV1Informer.Informer()
+	// hpaV1SharedInformer := hpaV1Informer.Informer()
+	// hpaV2SharedInformer := hpaV2Informer.Informer()
 	eventSharedInformer := eventInformer.Informer()
 	storageClassSharedInformer := storageClassInformer.Informer()
 	nodeSharedInformer := nodeInformer.Informer()
@@ -98,12 +102,24 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		"secretSharedInformer":                secretSharedInformer,
 		"serviceSharedInformer":               serviceSharedInformer,
 		"ingressV1SharedInformer":             ingressV1SharedInformer,
-		"hpaV1SharedInformer":                 hpaV1SharedInformer,
 		"eventSharedInformer":                 eventSharedInformer,
 		"storageClassSharedInformer":          storageClassSharedInformer,
 		"nodeSharedInformer":                  nodeSharedInformer,
 		"persistentVolumeClaimSharedInformer": persistentVolumeClaimSharedInformer,
 	}
+
+	var hpaV1Informer autoscalinginformersv1.HorizontalPodAutoscalerInformer
+	var hpaV2Informer autoscalinginformersv2.HorizontalPodAutoscalerInformer
+	if VersionGTE(1, 23) {
+		hpaV2Informer = sharedInformers.Autoscaling().V2().HorizontalPodAutoscalers()
+		hpaV2SharedInformer := hpaV2Informer.Informer()
+		informers["hpaV2SharedInformer"] = hpaV2SharedInformer
+	} else {
+		hpaV1Informer = sharedInformers.Autoscaling().V1().HorizontalPodAutoscalers()
+		hpaV1SharedInformer := hpaV1Informer.Informer()
+		informers["hpaV1SharedInformer"] = hpaV1SharedInformer
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(len(informers))
 	for k, v := range informers {
@@ -119,7 +135,7 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 	filteredSharedInformer.Start(wait.NeverStop)
 	sharedInformers.WaitForCacheSync(wait.NeverStop)
 	filteredSharedInformer.WaitForCacheSync(wait.NeverStop)
-	return &CachedResources{
+	result := &CachedResources{
 		DeploymentLister:            deploymentInformer.Lister(),
 		StatefuleSetLister:          statefuleSetInformer.Lister(),
 		PodLister:                   podInformer.Lister(),
@@ -127,10 +143,16 @@ func initializeCachedResources(clientset kubernetes.Interface) *CachedResources 
 		SecretLister:                secretInformer.Lister(),
 		ServiceLister:               serviceInformer.Lister(),
 		IngressV1Lister:             ingressV1Informer.Lister(),
-		HPAV1Lister:                 hpaV1Informer.Lister(),
 		EventLister:                 eventInformer.Lister(),
 		StorageClassLister:          storageClassInformer.Lister(),
 		NodeLister:                  nodeInformer.Lister(),
 		PersistentVolumeClaimLister: persistentVolumeClaimInformer.Lister(),
 	}
+	if VersionGTE(1, 23) {
+		result.HPAV2Lister = hpaV2Informer.Lister()
+	} else {
+		result.HPAV1Lister = hpaV1Informer.Lister()
+	}
+
+	return result
 }
