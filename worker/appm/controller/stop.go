@@ -66,7 +66,6 @@ func (s *stopController) Begin() {
 	s.manager.callback(s.controllerID, nil)
 }
 func (s *stopController) stopOne(app v1.AppService) error {
-
 	var zero int64
 	//step 1: delete services
 	if services := app.GetServices(true); services != nil {

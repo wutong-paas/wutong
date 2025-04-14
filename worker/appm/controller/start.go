@@ -63,7 +63,8 @@ func (s *startController) Begin() {
 					if err != ErrWaitTimeOut {
 						service.Logger.Error(util.Translation("start service error"), event.GetCallbackLoggerOption())
 						logrus.Errorf("start service %s failure %s", service.K8sComponentName, err.Error())
-						s.errorCallback(service)
+						// dp 注释：取消掉由于组件启动失败后自动停止的逻辑，因为这样导致无法得知组件运行失败的原因
+						// s.errorCallback(service)
 					} else {
 						logrus.Debugf("Start service %s timeout, please wait or read service log.", service.K8sComponentName)
 						service.Logger.Error(util.Translation("start service timeout"), event.GetTimeoutLoggerOption())
