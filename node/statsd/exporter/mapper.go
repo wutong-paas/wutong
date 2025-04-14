@@ -70,7 +70,7 @@ func (m *MetricMapper) InitFromYAMLString(fileContents string) error {
 		return err
 	}
 
-	if n.Defaults.Buckets == nil || len(n.Defaults.Buckets) == 0 {
+	if len(n.Defaults.Buckets) == 0 {
 		n.Defaults.Buckets = prometheus.DefBuckets
 	}
 
@@ -117,7 +117,7 @@ func (m *MetricMapper) InitFromYAMLString(fileContents string) error {
 			currentMapping.TimerType = n.Defaults.TimerType
 		}
 
-		if currentMapping.Buckets == nil || len(currentMapping.Buckets) == 0 {
+		if len(currentMapping.Buckets) == 0 {
 			currentMapping.Buckets = n.Defaults.Buckets
 		}
 
@@ -198,7 +198,7 @@ func InitMapping() (*MetricMapper, error) {
 		Labels: prometheus.Labels{"service_id": "$1", "port": "$2", "protocol": "$3", "client": "$4"},
 	}
 	n.Mappings = append(n.Mappings, m1, m2, m3, m4, m5, m6)
-	if n.Defaults.Buckets == nil || len(n.Defaults.Buckets) == 0 {
+	if len(n.Defaults.Buckets) == 0 {
 		n.Defaults.Buckets = prometheus.DefBuckets
 	}
 
@@ -244,7 +244,7 @@ func InitMapping() (*MetricMapper, error) {
 			currentMapping.TimerType = n.Defaults.TimerType
 		}
 
-		if currentMapping.Buckets == nil || len(currentMapping.Buckets) == 0 {
+		if len(currentMapping.Buckets) == 0 {
 			currentMapping.Buckets = n.Defaults.Buckets
 		}
 

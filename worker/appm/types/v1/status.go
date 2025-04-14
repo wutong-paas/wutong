@@ -54,7 +54,7 @@ func (a *AppService) IsClosed() bool {
 		return a.workload == nil
 	}
 	if a.IsThirdComponent() {
-		if a.endpoints == nil || len(a.endpoints) == 0 {
+		if len(a.endpoints) == 0 {
 			return true
 		}
 	} else {

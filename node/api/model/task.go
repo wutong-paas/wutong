@@ -24,12 +24,12 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
-//Shell 执行脚本配置
+// Shell 执行脚本配置
 type Shell struct {
 	Cmd []string `json:"cmd"`
 }
 
-//TaskTemp 任务模版
+// TaskTemp 任务模版
 type TaskTemp struct {
 	Name       string            `json:"name" validate:"name|required"`
 	ID         string            `json:"id" validate:"id|uuid"`
@@ -43,16 +43,16 @@ type TaskTemp struct {
 	Labels     map[string]string `json:"labels,omitempty"`
 }
 
-//DependStrategy 依赖策略
+// DependStrategy 依赖策略
 type DependStrategy struct {
 	DependTaskID      string `json:"depend_task_id"`
 	DetermineStrategy string `json:"strategy"`
 }
 
-//AtLeastOnceStrategy 至少已执行一次
+// AtLeastOnceStrategy 至少已执行一次
 var AtLeastOnceStrategy = "AtLeastOnce"
 
-//SameNodeStrategy 相同节点已执行
+// SameNodeStrategy 相同节点已执行
 var SameNodeStrategy = "SameNode"
 
 func (t TaskTemp) String() string {
@@ -60,7 +60,7 @@ func (t TaskTemp) String() string {
 	return string(res)
 }
 
-//Task 任务
+// Task 任务
 type Task struct {
 	Name    string    `json:"name" validate:"name|required"`
 	ID      string    `json:"id" validate:"id|uuid"`
@@ -98,12 +98,12 @@ func (t Task) String() string {
 	return string(res)
 }
 
-//Decode Decode
+// Decode Decode
 func (t *Task) Decode(data []byte) error {
 	return ffjson.Unmarshal(data, t)
 }
 
-//UpdataOutPut 更新状态
+// UpdataOutPut 更新状态
 func (t *Task) UpdataOutPut(output TaskOutPut) {
 	updateIndex := -1
 	for i, oldOut := range t.OutPut {
@@ -119,9 +119,9 @@ func (t *Task) UpdataOutPut(output TaskOutPut) {
 	t.OutPut = append(t.OutPut, &output)
 }
 
-//CanBeDelete 能否被删除
+// CanBeDelete 能否被删除
 func (t Task) CanBeDelete() bool {
-	if t.Status == nil || len(t.Status) == 0 {
+	if len(t.Status) == 0 {
 		return true
 	}
 	for _, v := range t.Status {
@@ -132,13 +132,13 @@ func (t Task) CanBeDelete() bool {
 	return true
 }
 
-//Scheduler 调度状态
+// Scheduler 调度状态
 type Scheduler struct {
 	Mode   string                     `json:"mode"` //立即调度（Intime），触发调度（Passive）
 	Status map[string]SchedulerStatus `json:"status"`
 }
 
-//SchedulerStatus 调度状态
+// SchedulerStatus 调度状态
 type SchedulerStatus struct {
 	Status          string    `json:"status"`
 	Message         string    `json:"message"`
@@ -146,7 +146,7 @@ type SchedulerStatus struct {
 	SchedulerMaster string    `json:"scheduler_master"` //调度的管理节点
 }
 
-//TaskOutPut 任务输出
+// TaskOutPut 任务输出
 type TaskOutPut struct {
 	NodeID string            `json:"node_id"`
 	JobID  string            `json:"job_id"`
@@ -159,14 +159,14 @@ type TaskOutPut struct {
 	Body       string             `json:"body"`
 }
 
-//ParseTaskOutPut json parse
+// ParseTaskOutPut json parse
 func ParseTaskOutPut(body string) (t TaskOutPut, err error) {
 	t.Body = body
 	err = ffjson.Unmarshal([]byte(body), &t)
 	return
 }
 
-//TaskOutPutStatus 输出数据
+// TaskOutPutStatus 输出数据
 type TaskOutPutStatus struct {
 	Name string `json:"name"`
 	//节点属性
@@ -177,7 +177,7 @@ type TaskOutPutStatus struct {
 	NextGroups      []string `json:"next_groups,omitempty"`
 }
 
-//TaskStatus 任务状态
+// TaskStatus 任务状态
 type TaskStatus struct {
 	JobID        string    `json:"job_id"`
 	Status       string    `json:"status"` //执行状态，create init exec complete timeout
@@ -190,7 +190,7 @@ type TaskStatus struct {
 	Message   string `json:"message,omitempty"`
 }
 
-//TaskGroup 任务组
+// TaskGroup 任务组
 type TaskGroup struct {
 	Name       string           `json:"name" validate:"name|required"`
 	ID         string           `json:"id" validate:"id|uuid"`
@@ -204,7 +204,7 @@ func (t TaskGroup) String() string {
 	return string(res)
 }
 
-//CanBeDelete 是否能被删除
+// CanBeDelete 是否能被删除
 func (t TaskGroup) CanBeDelete() bool {
 	if t.Status == nil || len(t.Status.TaskStatus) == 0 {
 		return true
@@ -217,7 +217,7 @@ func (t TaskGroup) CanBeDelete() bool {
 	return true
 }
 
-//TaskGroupStatus 任务组状态
+// TaskGroupStatus 任务组状态
 type TaskGroupStatus struct {
 	TaskStatus map[string]TaskStatus `json:"task_status"`
 	InitTime   time.Time             `json:"init_time"`

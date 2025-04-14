@@ -317,7 +317,7 @@ func (w *watcher) Close() error {
 }
 
 func (p *probeManager) updateAllServicesProbe() {
-	if p.services == nil || len(p.services) == 0 {
+	if len(p.services) == 0 {
 		return
 	}
 	for _, pro := range p.serviceProbe {

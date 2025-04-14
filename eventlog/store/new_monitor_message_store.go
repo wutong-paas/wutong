@@ -206,7 +206,7 @@ func CreateCacheMonitorMessageList(eventID string) *CacheMonitorMessageList {
 // Insert 认为mms的hostname一致
 // 每次收到消息进行gc
 func (c *CacheMonitorMessageList) Insert(mms ...MonitorMessage) {
-	if mms == nil || len(mms) < 1 {
+	if len(mms) == 0 {
 		return
 	}
 	c.UpdateTime = time.Now()
