@@ -219,6 +219,11 @@ func keepVMStatements(vm *kubevirtcorev1.VirtualMachine) {
 			vm.Annotations["wutong.io/creator"] = vmCreator
 			changed = true
 		}
+		vmDisplayName := vmClone.Annotations["wutong.io/display-name"]
+		if vm.Annotations["wutong.io/display-name"] != vmDisplayName {
+			vm.Annotations["wutong.io/display-name"] = vmDisplayName
+			changed = true
+		}
 		if vm.Annotations["wutong.io/last-modifier"] == "" {
 			vm.Annotations["wutong.io/last-modifier"] = vmCreator
 			changed = true

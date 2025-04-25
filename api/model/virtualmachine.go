@@ -248,8 +248,9 @@ type ChangeServiceAppRequest struct {
 }
 
 type CloneVMRequest struct {
-	CloneName string `json:"cloneName" validate:"cloneName|required"`
-	Operator  string `json:"operator"`
+	CloneName        string `json:"cloneName" validate:"cloneName|required"`
+	CloneDisplayName string `json:"cloneDisplayName" validate:"cloneDisplayName|required"`
+	Operator         string `json:"operator"`
 }
 
 type CreateVMSnapshotRequest struct {

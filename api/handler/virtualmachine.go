@@ -1594,7 +1594,8 @@ func (s *ServiceAction) CloneVM(tenantEnv *dbmodel.TenantEnvs, vmID string, req 
 			Namespace: vm.Namespace,
 			Labels:    labels,
 			Annotations: map[string]string{
-				"wutong.io/creator": req.Operator,
+				"wutong.io/creator":      req.Operator,
+				"wutong.io/display-name": req.CloneDisplayName,
 			},
 		},
 		Spec: kubevirtclonev1alpha1.VirtualMachineCloneSpec{
@@ -2370,6 +2371,12 @@ func vmProfileFromKubeVirtVM(vm *kubevirtcorev1.VirtualMachine, vmi *kubevirtcor
 			Arch:    vm.Spec.Template.Spec.Architecture,
 		},
 		InternalDomainName: vm.Name,
+	}
+
+	if result.DisplayName == "" {
+		if vmc, _ := kube.KubevirtClient().VirtualMachineClone(vm.Namespace).Get(context.Background(), vm.Name, metav1.GetOptions{}); vmc != nil {
+			result.DisplayName = vmc.Annotations["wutong.io/display-name"]
+		}
 	}
 
 	containsBootDisk := func(vm *kubevirtcorev1.VirtualMachine) bool {
