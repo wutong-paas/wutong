@@ -2591,7 +2591,8 @@ func restoresFromList(list *kubevirtsnaphostv1betav1.VirtualMachineRestoreList) 
 	var result []api_model.VMRestore
 	for _, item := range list.Items {
 		result = append(result, api_model.VMRestore{
-			SnapshotName: item.Name,
+			RestoreName:  item.Name,
+			SnapshotName: item.Spec.VirtualMachineSnapshotName,
 			Description:  item.Annotations["wutong.io/vm-restore-desc"],
 			Creator:      item.Annotations["wutong.io/vm-restore-operator"],
 			Status:       restoreVMStatus(&item),
