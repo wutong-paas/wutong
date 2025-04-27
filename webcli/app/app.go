@@ -760,11 +760,7 @@ func (app *App) tryExecRequest(ns, pod, c string, args []string) (server.Slave, 
 	var slave server.Slave
 	slave, err := NewExecContext(request, app.config)
 	if err != nil {
-		// 如果是 /bin/bash 失败了，那么使用 /bin/sh 重试
-		if args[0] == "/bin/bash" {
-			args[0] = "/bin/sh"
-			return app.tryExecRequest(ns, pod, c, args)
-		}
+		return nil, err
 	}
 	return slave, err
 }
@@ -815,7 +811,8 @@ func SetConfigDefaults(config *rest.Config) error {
 
 // GetContainerArgs get default container name
 func (app *App) GetContainerArgs(namespace, podname, containerName string) (string, string, []string, error) {
-	var args = []string{"/bin/bash"}
+	// var args = []string{"/bin/bash"}
+	var args = []string{"sh", "-c", "clear; (bash 2>/dev/null || ash 2>/dev/null || sh)"}
 	pod, err := app.coreClient.CoreV1().Pods(namespace).Get(context.Background(), podname, metav1.GetOptions{})
 	if err != nil {
 		return "", "", args, err
