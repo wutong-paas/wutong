@@ -44,9 +44,15 @@ func (v *ShareFileVolume) CreateVolume(define *Define) error {
 		labels := v.as.GetCommonLabels(map[string]string{"volume_name": volumeMountName})
 		annotations := map[string]string{"volume_name": v.svm.VolumeName}
 		claim := newVolumeClaim(volumeMountName, volumeMountPath, v.svm.AccessMode, v1.WutongStatefuleShareStorageClass, v.svm.VolumeCapacity, labels, annotations)
+		// claim := newVolumeClaim(volumeMountName, volumeMountPath, v.svm.AccessMode, v.svm.VolumeAccessMode, v1.WutongStatefuleShareStorageClass, v.svm.VolumeCapacity, labels, annotations)
 		v.as.SetClaim(claim)
 
 		statefulset.Spec.VolumeClaimTemplates = append(statefulset.Spec.VolumeClaimTemplates, *claim)
+		// if v.svm.VolumeAccessMode != "RWX" {
+		// 	statefulset.Spec.VolumeClaimTemplates = append(statefulset.Spec.VolumeClaimTemplates, *claim)
+		// } else {
+		// 	v.as.SetClaimManually(claim)
+		// }
 		vo := corev1.Volume{Name: volumeMountName}
 		vo.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{ClaimName: claim.GetName(), ReadOnly: volumeReadOnly}
 		define.volumes = append(define.volumes, vo)
@@ -69,6 +75,7 @@ func (v *ShareFileVolume) CreateVolume(define *Define) error {
 		})
 		annotations := map[string]string{"volume_name": v.svm.VolumeName}
 		claim := newVolumeClaim(volumeMountName, volumeMountPath, v.svm.AccessMode, v1.WutongStatefuleShareStorageClass, v.svm.VolumeCapacity, labels, annotations)
+		// claim := newVolumeClaim(volumeMountName, volumeMountPath, v.svm.AccessMode, v.svm.VolumeAccessMode, v1.WutongStatefuleShareStorageClass, v.svm.VolumeCapacity, labels, annotations)
 		v.as.SetClaim(claim)
 		v.as.SetClaimManually(claim)
 

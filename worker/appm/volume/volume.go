@@ -95,6 +95,7 @@ func (b *Base) setBaseInfo(as *v1.AppService, serviceVolume *dbmodel.TenantEnvSe
 }
 
 func newVolumeClaim(name, _, accessMode, storageClassName string, capacity int64, labels, annotations map[string]string) *corev1.PersistentVolumeClaim {
+	// func newVolumeClaim(name, _, accessMode, volumeAccessMode, storageClassName string, capacity int64, labels, annotations map[string]string) *corev1.PersistentVolumeClaim {
 	logrus.Debugf("volume annotaion is %+v", annotations)
 	if capacity == 0 {
 		logrus.Warnf("claim[%s] capacity is 0, set 20G default", name)
@@ -109,7 +110,10 @@ func newVolumeClaim(name, _, accessMode, storageClassName string, capacity int64
 			Namespace:   "string",
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes:      []corev1.PersistentVolumeAccessMode{parseAccessMode(accessMode)},
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				parseAccessMode(accessMode),
+				// util.If(volumeAccessMode != "", parseAccessMode(volumeAccessMode), parseAccessMode(accessMode)),
+			},
 			StorageClassName: &storageClassName,
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: map[corev1.ResourceName]resource.Quantity{

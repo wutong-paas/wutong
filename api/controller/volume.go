@@ -172,6 +172,7 @@ func (t *TenantEnvStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
 		SharePolicy:        avs.Body.SharePolicy,
 		BackupPolicy:       avs.Body.BackupPolicy,
 		ReclaimPolicy:      avs.Body.ReclaimPolicy,
+		// VolumeAccessMode:   avs.Body.AccessMode,
 	}
 	if !strings.HasPrefix(tsv.VolumePath, "/") {
 		httputil.ReturnError(r, w, 400, "volume path is invalid,must begin with /")
@@ -414,6 +415,7 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 		ReclaimPolicy:      avs.Body.ReclaimPolicy,
 		AllowExpansion:     avs.Body.AllowExpansion,
 		Mode:               avs.Body.Mode,
+		// VolumeAccessMode:   avs.Body.AccessMode,
 	}
 
 	if err := handler.GetServiceManager().VolumnVar(tsv, tenantEnvID, avs.Body.FileContent, "add"); err != nil {

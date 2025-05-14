@@ -253,6 +253,7 @@ type UpdVolumeReq struct {
 	FileContent string `json:"file_content"`
 	VolumePath  string `json:"volume_path" validate:"volume_path|required"`
 	Mode        *int32 `json:"mode"`
+	AccessMode  string `json:"access_mode"`
 }
 
 // VolumeWithStatusResp volume status

@@ -50,6 +50,7 @@ func (v *OtherVolume) CreateVolume(define *Define) error {
 	labels := v.as.GetCommonLabels(map[string]string{"volume_name": v.svm.VolumeName, "version": v.as.DeployVersion, "reclaim_policy": v.svm.ReclaimPolicy})
 	annotations := map[string]string{"volume_name": v.svm.VolumeName}
 	claim := newVolumeClaim(volumeMountName, volumeMountPath, v.svm.AccessMode, v.svm.VolumeType, v.svm.VolumeCapacity, labels, annotations)
+	// claim := newVolumeClaim(volumeMountName, volumeMountPath, v.svm.AccessMode, v.svm.VolumeAccessMode, v.svm.VolumeType, v.svm.VolumeCapacity, labels, annotations)
 	logrus.Debugf("storage class is : %s, claim value is : %s", v.svm.VolumeType, claim.GetName())
 	claim.Annotations = map[string]string{
 		client.LabelOS: func() string {
@@ -65,8 +66,10 @@ func (v *OtherVolume) CreateVolume(define *Define) error {
 	vo.PersistentVolumeClaim = &corev1.PersistentVolumeClaimVolumeSource{ClaimName: claim.GetName(), ReadOnly: volumeReadOnly}
 	define.volumes = append(define.volumes, vo)
 	if statefulset != nil {
+		// if statefulset != nil && v.svm.VolumeAccessMode != "RWX" {
 		statefulset.Spec.VolumeClaimTemplates = append(statefulset.Spec.VolumeClaimTemplates, *claim)
-		logrus.Debugf("stateset.Spec.VolumeClaimTemplates: %+v", statefulset.Spec.VolumeClaimTemplates)
+		// } else {
+		// 	v.as.SetClaimManually(claim)
 	}
 
 	vm := corev1.VolumeMount{

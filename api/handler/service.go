@@ -689,6 +689,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				AllowExpansion: volumn.AllowExpansion,
 				// VolumeProviderName 使用的存储驱动别名
 				VolumeProviderName: volumn.VolumeProviderName,
+				// VolumeAccessMode:   volumn.AccessMode,
 			}
 			v.ServiceID = ts.ServiceID
 			if volumn.VolumeType == "" {
@@ -1917,6 +1918,8 @@ func (s *ServiceAction) UpdVolume(sid string, req *api_model.UpdVolumeReq) error
 	v.Mode = req.Mode
 	if req.VolumeType == "config-file" {
 		v.AccessMode = "RWX"
+	} else if req.AccessMode != "" {
+		v.AccessMode = req.AccessMode
 	}
 	if err := db.GetManager().TenantEnvServiceVolumeDaoTransactions(tx).UpdateModel(v); err != nil {
 		tx.Rollback()

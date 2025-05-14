@@ -488,6 +488,9 @@ type TenantEnvServiceVolume struct {
 	// VolumeProviderName 使用的存储驱动别名
 	VolumeProviderName string `gorm:"column:volume_provider_name" json:"volume_provider_name"`
 	Mode               *int32 `gorm:"column:mode" json:"mode"`
+	// VolumeAccessMode 存储访问模式
+	// 特别说明：基于该新增字段值来创建 RWX 或 RWO 类型的 PV（历史数据原因，如果基于 AccessMode 来创建 PV，在组件重启时可能会导致 PV 数据丢失）
+	// VolumeAccessMode string `gorm:"column:volume_access_mode" json:"volume_access_mode"`
 }
 
 // TableName 表名
