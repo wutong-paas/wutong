@@ -80,20 +80,20 @@ func (s *startController) Begin() {
 	}
 }
 
-func (s *startController) errorCallback(app v1.AppService) error {
-	app.Logger.Info("开始清理已创建的资源...", event.GetLoggerOption("starting"))
-	stopController := stopController{
-		manager: s.manager,
-		ctx:     s.ctx,
-	}
-	if err := stopController.stopOne(app); err != nil {
-		logrus.Errorf("stop app failure after start failure. %s", err.Error())
-		app.Logger.Error(fmt.Sprintf("应用组件 %s 关闭失败，错误信息：", app.K8sComponentName), event.GetLoggerOption("failure"))
-		app.Logger.Error("	--- "+err.Error(), event.GetLoggerOption("failure"))
-		return err
-	}
-	return nil
-}
+// func (s *startController) errorCallback(app v1.AppService) error {
+// 	app.Logger.Info("开始清理已创建的资源...", event.GetLoggerOption("starting"))
+// 	stopController := stopController{
+// 		manager: s.manager,
+// 		ctx:     s.ctx,
+// 	}
+// 	if err := stopController.stopOne(app); err != nil {
+// 		logrus.Errorf("stop app failure after start failure. %s", err.Error())
+// 		app.Logger.Error(fmt.Sprintf("应用组件 %s 关闭失败，错误信息：", app.K8sComponentName), event.GetLoggerOption("failure"))
+// 		app.Logger.Error("	--- "+err.Error(), event.GetLoggerOption("failure"))
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func (s *startController) startOne(app v1.AppService) error {
 	//first: check and create namespace

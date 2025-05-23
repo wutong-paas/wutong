@@ -93,7 +93,7 @@ type Storer interface {
 	GetTenantEnvResourceList() []TenantEnvResource
 	GetTenantEnvRunningApp(tenantEnvID string) []*v1.AppService
 	GetNeedBillingStatus(serviceIDs []string) map[string]string
-	OnDeletes(obj ...interface{})
+	OnDeletes(obj ...any)
 	RegistPodUpdateListener(string, chan<- *corev1.Pod)
 	UnRegistPodUpdateListener(string)
 	RegisterVolumeTypeListener(string, chan<- *model.TenantEnvServiceVolumeType)
@@ -127,7 +127,7 @@ const (
 // Event holds the context of an event.
 type Event struct {
 	Type EventType
-	Obj  interface{}
+	Obj  any
 }
 
 // appRuntimeStore app runtime store
@@ -137,7 +137,7 @@ type appRuntimeStore struct {
 	clientset              kubernetes.Interface
 	crdClient              *internalclientset.Clientset
 	wutongClient           wutongversioned.Interface
-	crClients              map[string]interface{}
+	crClients              map[string]any
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	informers              *Informer
@@ -173,7 +173,7 @@ func NewStore(
 		appServices:         sync.Map{},
 		conf:                conf,
 		dbmanager:           dbmanager,
-		crClients:           make(map[string]interface{}),
+		crClients:           make(map[string]any),
 		resourceCache:       NewResourceCache(),
 		podUpdateListeners:  make(map[string]chan<- *corev1.Pod, 1),
 		volumeTypeListeners: make(map[string]chan<- *model.TenantEnvServiceVolumeType, 1),
@@ -259,7 +259,7 @@ func NewStore(
 
 	// Endpoint Event Handler
 	epEventHandler := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			ep := obj.(*corev1.Endpoints)
 
 			serviceID := ep.Labels["service_id"]
@@ -275,7 +275,7 @@ func NewStore(
 				}
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			ep := obj.(*corev1.Endpoints)
 			serviceID := ep.Labels["service_id"]
 			version := ep.Labels["version"]
@@ -291,7 +291,7 @@ func NewStore(
 				}
 			}
 		},
-		UpdateFunc: func(old, cur interface{}) {
+		UpdateFunc: func(old, cur any) {
 			cep := cur.(*corev1.Endpoints)
 
 			serviceID := cep.Labels["service_id"]
@@ -310,14 +310,15 @@ func NewStore(
 	}
 
 	store.informers.Namespace.AddEventHandler(store.nsEventHandler())
-	store.informers.Deployment.AddEventHandlerWithResyncPeriod(store, time.Second*10)
-	store.informers.StatefulSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
+	// fix: 组件状态长时间不准确问题，单独为 deployment、replicaset、statefulset 添加事件处理器 dp 202505022
+	store.informers.Deployment.AddEventHandlerWithResyncPeriod(store.deploymentEventHandler(), time.Second*10)
+	store.informers.StatefulSet.AddEventHandlerWithResyncPeriod(store.statefulsetEventHandler(), time.Second*10)
+	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store.replicasetEventHandler(), time.Second*10)
 	store.informers.Pod.AddEventHandlerWithResyncPeriod(store.podEventHandler(), time.Second*10)
 	store.informers.Secret.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Service.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Ingress.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.ConfigMap.AddEventHandlerWithResyncPeriod(store, time.Second*10)
-	store.informers.ReplicaSet.AddEventHandlerWithResyncPeriod(store, time.Second*10)
 	store.informers.Endpoints.AddEventHandlerWithResyncPeriod(epEventHandler, time.Second*10)
 	store.informers.Nodes.AddEventHandlerWithResyncPeriod(store.nodeEventHandler(), time.Second*10)
 	store.informers.CRD.AddEventHandlerWithResyncPeriod(store.crdEventHandler(), time.Second*10)
@@ -397,7 +398,7 @@ func (a *appRuntimeStore) checkReplicasetWhetherDelete(app *v1.AppService, rs *a
 	}
 }
 
-func (a *appRuntimeStore) OnAdd(obj interface{}, isInInitialList bool) {
+func (a *appRuntimeStore) OnAdd(obj any, isInInitialList bool) {
 	if thirdComponent, ok := obj.(*v1alpha1.ThirdComponent); ok {
 		serviceID := thirdComponent.Labels["service_id"]
 		createrID := thirdComponent.Labels["creater_id"]
@@ -405,61 +406,6 @@ func (a *appRuntimeStore) OnAdd(obj interface{}, isInInitialList bool) {
 			appservice, _ := a.getAppService(serviceID, "", createrID, true)
 			if appservice != nil {
 				appservice.SetWorkload(thirdComponent)
-				return
-			}
-		}
-	}
-	if deployment, ok := obj.(*appsv1.Deployment); ok {
-		serviceID := deployment.Labels["service_id"]
-		version := deployment.Labels["version"]
-		createrID := deployment.Labels["creater_id"]
-		if serviceID != "" && version != "" && createrID != "" {
-			_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
-			if err == gorm.ErrRecordNotFound {
-				got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
-				if err == nil && got.ID > 0 {
-					// 已经被删除的组件
-					a.conf.KubeClient.AppsV1().Deployments(deployment.Namespace).Delete(context.Background(), deployment.Name, metav1.DeleteOptions{})
-					return
-				}
-			}
-			appservice, _ := a.getAppService(serviceID, version, createrID, true)
-			if appservice != nil {
-				appservice.SetDeployment(deployment)
-				return
-			}
-		}
-	}
-	if statefulset, ok := obj.(*appsv1.StatefulSet); ok {
-		serviceID := statefulset.Labels["service_id"]
-		version := statefulset.Labels["version"]
-		createrID := statefulset.Labels["creater_id"]
-		if serviceID != "" && version != "" && createrID != "" {
-			_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
-			if err == gorm.ErrRecordNotFound {
-				got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
-				if err == nil && got.ID > 0 {
-					// 已经被删除的组件
-					a.conf.KubeClient.AppsV1().StatefulSets(statefulset.Namespace).Delete(context.Background(), statefulset.Name, metav1.DeleteOptions{})
-					return
-				}
-			}
-			appservice, _ := a.getAppService(serviceID, version, createrID, true)
-			if appservice != nil {
-				appservice.SetStatefulSet(statefulset)
-				return
-			}
-		}
-	}
-	if replicaset, ok := obj.(*appsv1.ReplicaSet); ok {
-		serviceID := replicaset.Labels["service_id"]
-		version := replicaset.Labels["version"]
-		createrID := replicaset.Labels["creater_id"]
-		if serviceID != "" && version != "" && createrID != "" {
-			appservice, _ := a.getAppService(serviceID, version, createrID, true)
-			if appservice != nil {
-				appservice.SetReplicaSets(replicaset)
-				a.checkReplicasetWhetherDelete(appservice, replicaset)
 				return
 			}
 		}
@@ -574,30 +520,6 @@ func (a *appRuntimeStore) OnAdd(obj interface{}, isInInitialList bool) {
 			}
 		}
 	}
-	if sm, ok := obj.(*monitorv1.ServiceMonitor); ok {
-		serviceID := sm.Labels["service_id"]
-		version := sm.Labels["version"]
-		createrID := sm.Labels["creater_id"]
-		if serviceID != "" && createrID != "" {
-			appservice, err := a.getAppService(serviceID, version, createrID, true)
-			if err == conversion.ErrServiceNotFound {
-				smClient, err := a.GetServiceMonitorClient()
-				if err != nil {
-					logrus.Errorf("create service monitor client failure %s", err.Error())
-				}
-				if smClient != nil {
-					err := smClient.MonitoringV1().ServiceMonitors(sm.GetNamespace()).Delete(context.Background(), sm.GetName(), metav1.DeleteOptions{})
-					if err != nil && !k8sErrors.IsNotFound(err) {
-						logrus.Errorf("delete service monitor failure: %s", err.Error())
-					}
-				}
-			}
-			if appservice != nil {
-				appservice.SetServiceMonitor(sm)
-				return
-			}
-		}
-	}
 }
 
 // getAppService if  creator is true, will create new app service where not found in store
@@ -615,7 +537,7 @@ func (a *appRuntimeStore) getAppService(serviceID, _, createrID string, creator 
 	}
 	return appservice, nil
 }
-func (a *appRuntimeStore) OnUpdate(oldObj, newObj interface{}) {
+func (a *appRuntimeStore) OnUpdate(oldObj, newObj any) {
 	// ingress update maybe change owner component
 	if ingress, ok := newObj.(*networkingv1.Ingress); ok {
 		oldIngress := oldObj.(*networkingv1.Ingress)
@@ -645,10 +567,10 @@ func (a *appRuntimeStore) OnUpdate(oldObj, newObj interface{}) {
 	}
 	a.OnAdd(newObj, true)
 }
-func (a *appRuntimeStore) OnDelete(objs interface{}) {
+func (a *appRuntimeStore) OnDelete(objs any) {
 	a.OnDeletes(objs)
 }
-func (a *appRuntimeStore) OnDeletes(objs ...interface{}) {
+func (a *appRuntimeStore) OnDeletes(objs ...any) {
 	for i := range objs {
 		obj := objs[i]
 		if thirdComponent, ok := obj.(*v1alpha1.ThirdComponent); ok {
@@ -658,51 +580,6 @@ func (a *appRuntimeStore) OnDeletes(objs ...interface{}) {
 				appservice, _ := a.getAppService(serviceID, "", createrID, true)
 				if appservice != nil {
 					appservice.DeleteWorkload(thirdComponent)
-					if appservice.IsClosed() {
-						a.DeleteAppService(appservice)
-					}
-					return
-				}
-			}
-		}
-		if deployment, ok := obj.(*appsv1.Deployment); ok {
-			serviceID := deployment.Labels["service_id"]
-			version := deployment.Labels["version"]
-			createrID := deployment.Labels["creater_id"]
-			if serviceID != "" && version != "" && createrID != "" {
-				appservice, _ := a.getAppService(serviceID, version, createrID, false)
-				if appservice != nil {
-					appservice.DeleteDeployment(deployment)
-					if appservice.IsClosed() {
-						a.DeleteAppService(appservice)
-					}
-					return
-				}
-			}
-		}
-		if statefulset, ok := obj.(*appsv1.StatefulSet); ok {
-			serviceID := statefulset.Labels["service_id"]
-			version := statefulset.Labels["version"]
-			createrID := statefulset.Labels["creater_id"]
-			if serviceID != "" && version != "" && createrID != "" {
-				appservice, _ := a.getAppService(serviceID, version, createrID, false)
-				if appservice != nil {
-					appservice.DeleteStatefulSet(statefulset)
-					if appservice.IsClosed() {
-						a.DeleteAppService(appservice)
-					}
-					return
-				}
-			}
-		}
-		if replicaset, ok := obj.(*appsv1.ReplicaSet); ok {
-			serviceID := replicaset.Labels["service_id"]
-			version := replicaset.Labels["version"]
-			createrID := replicaset.Labels["creater_id"]
-			if serviceID != "" && version != "" && createrID != "" {
-				appservice, _ := a.getAppService(serviceID, version, createrID, false)
-				if appservice != nil {
-					appservice.DeleteReplicaSet(replicaset)
 					if appservice.IsClosed() {
 						a.DeleteAppService(appservice)
 					}
@@ -957,7 +834,7 @@ func (a *appRuntimeStore) UpdateGetAppService(serviceID string) *v1.AppService {
 }
 
 func (a *appRuntimeStore) GetAllAppServices() (apps []*v1.AppService) {
-	a.appServices.Range(func(k, value interface{}) bool {
+	a.appServices.Range(func(k, value any) bool {
 		appService, _ := value.(*v1.AppService)
 		if appService != nil {
 			apps = append(apps, appService)
@@ -1058,7 +935,7 @@ func (a *appRuntimeStore) GetAppServicesStatus(serviceIDs []string) map[string]s
 	statusMap := make(map[string]string, len(serviceIDs))
 	if len(serviceIDs) == 0 {
 		// When serviceIDs is empty, return the status of all services
-		a.appServices.Range(func(k, v interface{}) bool {
+		a.appServices.Range(func(k, v any) bool {
 			appService, _ := v.(*v1.AppService)
 			statusMap[appService.ServiceID] = a.GetAppServiceStatus(appService.ServiceID)
 			return true
@@ -1162,7 +1039,7 @@ func appStopping(statuses []string) bool {
 func (a *appRuntimeStore) GetNeedBillingStatus(serviceIDs []string) map[string]string {
 	statusMap := make(map[string]string, len(serviceIDs))
 	if len(serviceIDs) == 0 {
-		a.appServices.Range(func(k, v interface{}) bool {
+		a.appServices.Range(func(k, v any) bool {
 			appService, _ := v.(*v1.AppService)
 			status := a.GetAppServiceStatus(appService.ServiceID)
 			if !isClosedStatus(status) {
@@ -1184,86 +1061,6 @@ func isClosedStatus(curStatus string) bool {
 	return curStatus == v1.BUILDEFAILURE || curStatus == v1.CLOSED || curStatus == v1.UNDEPLOY || curStatus == v1.BUILDING || curStatus == v1.UNKNOW
 }
 
-// func getServiceInfoFromPod(pod *corev1.Pod) v1.AbnormalInfo {
-// 	var ai v1.AbnormalInfo
-// 	if len(pod.Spec.Containers) > 0 {
-// 		var i = 0
-// 		container := pod.Spec.Containers[0]
-// 		for _, env := range container.Env {
-// 			if env.Name == "WT_SERVICE_ID" {
-// 				ai.ServiceID = env.Value
-// 				i++
-// 			}
-// 			if env.Name == "WT_SERVICE_ALIAS" {
-// 				ai.ServiceAlias = env.Value
-// 				i++
-// 			}
-// 			// 兼容 v1.2.0 之前的版本
-// 			if ai.ServiceID == "" {
-// 				if env.Name == "SERVICE_ID" {
-// 					ai.ServiceID = env.Value
-// 					i++
-// 				}
-// 			}
-// 			if ai.ServiceAlias == "" {
-// 				if env.Name == "SERVICE_NAME" {
-// 					ai.ServiceAlias = env.Value
-// 					i++
-// 				}
-// 			}
-
-// 			if i == 2 {
-// 				break
-// 			}
-// 		}
-// 	}
-// 	ai.PodName = pod.Name
-// 	ai.TenantEnvID = pod.Namespace
-// 	return ai
-// }
-
-// func (a *appRuntimeStore) analyzePodStatus(pod *corev1.Pod) {
-// 	for _, containerStatus := range pod.Status.ContainerStatuses {
-// 		if containerStatus.LastTerminationState.Terminated != nil {
-// 			ai := getServiceInfoFromPod(pod)
-// 			ai.ContainerName = containerStatus.Name
-// 			ai.Reason = containerStatus.LastTerminationState.Terminated.Reason
-// 			ai.Message = containerStatus.LastTerminationState.Terminated.Message
-// 			ai.CreateTime = time.Now()
-// 			a.addAbnormalInfo(&ai)
-// 		}
-// 	}
-// }
-
-// func (a *appRuntimeStore) addAbnormalInfo(ai *v1.AbnormalInfo) {
-// 	switch ai.Reason {
-// 	case "OOMKilled":
-// 		a.dbmanager.NotificationEventDao().AddModel(&model.NotificationEvent{
-// 			Kind:          "service",
-// 			KindID:        ai.ServiceID,
-// 			Hash:          ai.Hash(),
-// 			Type:          "UnNormal",
-// 			Message:       fmt.Sprintf("Container %s OOMKilled %s", ai.ContainerName, ai.Message),
-// 			Reason:        "OOMKilled",
-// 			Count:         ai.Count,
-// 			ServiceName:   ai.ServiceAlias,
-// 			TenantEnvName: ai.TenantEnvID,
-// 		})
-// 	default:
-// 		db.GetManager().NotificationEventDao().AddModel(&model.NotificationEvent{
-// 			Kind:          "service",
-// 			KindID:        ai.ServiceID,
-// 			Hash:          ai.Hash(),
-// 			Type:          "UnNormal",
-// 			Message:       fmt.Sprintf("Container %s restart %s", ai.ContainerName, ai.Message),
-// 			Reason:        ai.Reason,
-// 			Count:         ai.Count,
-// 			ServiceName:   ai.ServiceAlias,
-// 			TenantEnvName: ai.TenantEnvID,
-// 		})
-// 	}
-// }
-
 // GetTenantEnvResource get tenant env resource
 func (a *appRuntimeStore) GetTenantEnvResource(tenantEnvID string) TenantEnvResource {
 	return a.resourceCache.GetTenantEnvResource(tenantEnvID)
@@ -1276,7 +1073,7 @@ func (a *appRuntimeStore) GetTenantEnvResourceList() []TenantEnvResource {
 
 // GetTenantEnvRunningApp get running app by tenantEnv
 func (a *appRuntimeStore) GetTenantEnvRunningApp(tenantEnvID string) (list []*v1.AppService) {
-	a.appServices.Range(func(k, v interface{}) bool {
+	a.appServices.Range(func(k, v any) bool {
 		appService, _ := v.(*v1.AppService)
 		if appService != nil && (appService.TenantEnvID == tenantEnvID || tenantEnvID == corev1.NamespaceAll || appService.GetNamespace() == tenantEnvID) && !appService.IsClosed() {
 			list = append(list, appService)
@@ -1286,9 +1083,164 @@ func (a *appRuntimeStore) GetTenantEnvRunningApp(tenantEnvID string) (list []*v1
 	return
 }
 
+func (a *appRuntimeStore) deploymentEventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj any) {
+			deployment := obj.(*appsv1.Deployment)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(deployment.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
+				if err == gorm.ErrRecordNotFound {
+					got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
+					if err == nil && got.ID > 0 {
+						// 已经被删除的组件
+						a.conf.KubeClient.AppsV1().Deployments(deployment.Namespace).Delete(context.Background(), deployment.Name, metav1.DeleteOptions{})
+						return
+					}
+				}
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+				if appservice != nil {
+					appservice.SetDeployment(deployment)
+				}
+			}
+		},
+		DeleteFunc: func(obj any) {
+			deployment := obj.(*appsv1.Deployment)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(deployment.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				appservice, _ := a.getAppService(serviceID, version, createrID, false)
+				if appservice != nil {
+					appservice.DeleteDeployment(deployment)
+					if appservice.IsClosed() {
+						a.DeleteAppService(appservice)
+					}
+				}
+			}
+		},
+		UpdateFunc: func(old, cur any) {
+			deployment := cur.(*appsv1.Deployment)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(deployment.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
+				if err == gorm.ErrRecordNotFound {
+					got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
+					if err == nil && got.ID > 0 {
+						// 已经被删除的组件
+						a.conf.KubeClient.AppsV1().Deployments(deployment.Namespace).Delete(context.Background(), deployment.Name, metav1.DeleteOptions{})
+						return
+					}
+				}
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+				if appservice != nil {
+					appservice.SetDeployment(deployment)
+				}
+			}
+		},
+	}
+}
+
+func (a *appRuntimeStore) replicasetEventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj any) {
+			rs := obj.(*appsv1.ReplicaSet)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(rs.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+				if appservice != nil {
+					appservice.SetReplicaSets(rs)
+					a.checkReplicasetWhetherDelete(appservice, rs)
+					return
+				}
+			}
+		},
+		DeleteFunc: func(obj any) {
+			rs := obj.(*appsv1.ReplicaSet)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(rs.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				appservice, _ := a.getAppService(serviceID, version, createrID, false)
+				if appservice != nil {
+					appservice.DeleteReplicaSet(rs)
+					if appservice.IsClosed() {
+						a.DeleteAppService(appservice)
+					}
+					return
+				}
+			}
+		},
+		UpdateFunc: func(old, cur any) {
+			rs := cur.(*appsv1.ReplicaSet)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(rs.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+				if appservice != nil {
+					appservice.SetReplicaSets(rs)
+					a.checkReplicasetWhetherDelete(appservice, rs)
+					return
+				}
+			}
+		},
+	}
+}
+
+func (a *appRuntimeStore) statefulsetEventHandler() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj any) {
+			sts := obj.(*appsv1.StatefulSet)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(sts.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
+				if err == gorm.ErrRecordNotFound {
+					got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
+					if err == nil && got.ID > 0 {
+						// 已经被删除的组件
+						a.conf.KubeClient.AppsV1().Deployments(sts.Namespace).Delete(context.Background(), sts.Name, metav1.DeleteOptions{})
+						return
+					}
+				}
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+				if appservice != nil {
+					appservice.SetStatefulSet(sts)
+				}
+			}
+		},
+		DeleteFunc: func(obj any) {
+			sts := obj.(*appsv1.StatefulSet)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(sts.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				appservice, _ := a.getAppService(serviceID, version, createrID, false)
+				if appservice != nil {
+					appservice.DeleteStatefulSet(sts)
+					if appservice.IsClosed() {
+						a.DeleteAppService(appservice)
+					}
+				}
+			}
+		},
+		UpdateFunc: func(old, cur any) {
+			sts := cur.(*appsv1.StatefulSet)
+			_, serviceID, version, createrID := k8sutil.ExtractLabels(sts.GetLabels())
+			if serviceID != "" && version != "" && createrID != "" {
+				_, err := a.dbmanager.TenantEnvServiceDao().GetServiceByID(serviceID)
+				if err == gorm.ErrRecordNotFound {
+					got, err := a.dbmanager.TenantEnvServiceDeleteDao().GetServiceByID(serviceID)
+					if err == nil && got.ID > 0 {
+						// 已经被删除的组件
+						a.conf.KubeClient.AppsV1().Deployments(sts.Namespace).Delete(context.Background(), sts.Name, metav1.DeleteOptions{})
+						return
+					}
+				}
+				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+				if appservice != nil {
+					appservice.SetStatefulSet(sts)
+				}
+			}
+		},
+	}
+}
+
 func (a *appRuntimeStore) podEventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			pod := obj.(*corev1.Pod)
 			a.resourceCache.SetPodResource(pod)
 			_, serviceID, version, createrID := k8sutil.ExtractLabels(pod.GetLabels())
@@ -1299,7 +1251,7 @@ func (a *appRuntimeStore) podEventHandler() cache.ResourceEventHandlerFuncs {
 				}
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			pod := obj.(*corev1.Pod)
 			a.resourceCache.RemovePod(pod)
 			_, serviceID, version, createrID := k8sutil.ExtractLabels(pod.GetLabels())
@@ -1313,7 +1265,7 @@ func (a *appRuntimeStore) podEventHandler() cache.ResourceEventHandlerFuncs {
 				}
 			}
 		},
-		UpdateFunc: func(old, cur interface{}) {
+		UpdateFunc: func(old, cur any) {
 			pod := cur.(*corev1.Pod)
 			a.resourceCache.SetPodResource(pod)
 			_, serviceID, version, createrID := k8sutil.ExtractLabels(pod.GetLabels())
@@ -1335,7 +1287,7 @@ func (a *appRuntimeStore) podEventHandler() cache.ResourceEventHandlerFuncs {
 
 func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			evt := obj.(*corev1.Event)
 			recordType, ok := rc2RecordType[evt.InvolvedObject.Kind]
 			if !ok {
@@ -1363,7 +1315,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 				logrus.Warningf("update or create scaling record: %v", err)
 			}
 		},
-		UpdateFunc: func(old, cur interface{}) {
+		UpdateFunc: func(old, cur any) {
 			oevt := old.(*corev1.Event)
 			cevt := cur.(*corev1.Event)
 
@@ -1400,7 +1352,7 @@ func (a *appRuntimeStore) evtEventHandler() cache.ResourceEventHandlerFuncs {
 
 func (a *appRuntimeStore) nsEventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
-		UpdateFunc: func(old, cur interface{}) {
+		UpdateFunc: func(old, cur any) {
 			ns := cur.(*corev1.Namespace)
 
 			// check if the namespace is created by Wutong
@@ -1421,20 +1373,20 @@ func (a *appRuntimeStore) nsEventHandler() cache.ResourceEventHandlerFuncs {
 
 func (a *appRuntimeStore) nodeEventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			node := obj.(*corev1.Node)
 			if err := a.keepNodeShellPod(node.Name); err != nil {
 				logrus.Errorf("keep node-shell pod err: %v", err)
 			}
 		},
-		UpdateFunc: func(old, cur interface{}) {
+		UpdateFunc: func(old, cur any) {
 			node := cur.(*corev1.Node)
 
 			if err := a.keepNodeShellPod(node.Name); err != nil {
 				logrus.Errorf("keep node-shell pod err: %v", err)
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			node := obj.(*corev1.Node)
 			pod := fmt.Sprintf("wt-node-shell-%s", node.Name)
 			a.clientset.CoreV1().Pods(corev1.NamespaceAll).Delete(context.Background(), pod, metav1.DeleteOptions{})
@@ -1448,7 +1400,7 @@ func (a *appRuntimeStore) crdEventHandler() cache.ResourceEventHandlerFuncs {
 	}
 
 	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+		AddFunc: func(obj any) {
 			crd := obj.(*apiextensions.CustomResourceDefinition)
 			if isKubevirtVMCRD(crd) {
 				if err := a.keepWTChannel(); err != nil {
@@ -1456,7 +1408,7 @@ func (a *appRuntimeStore) crdEventHandler() cache.ResourceEventHandlerFuncs {
 				}
 			}
 		},
-		UpdateFunc: func(old, cur interface{}) {
+		UpdateFunc: func(old, cur any) {
 			crd := cur.(*apiextensions.CustomResourceDefinition)
 			if isKubevirtVMCRD(crd) {
 				if err := a.keepWTChannel(); err != nil {
@@ -1464,7 +1416,7 @@ func (a *appRuntimeStore) crdEventHandler() cache.ResourceEventHandlerFuncs {
 				}
 			}
 		},
-		DeleteFunc: func(obj interface{}) {
+		DeleteFunc: func(obj any) {
 			crd := obj.(*apiextensions.CustomResourceDefinition)
 			if isKubevirtVMCRD(crd) {
 				a.recycleWTChannel()
