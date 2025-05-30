@@ -430,7 +430,7 @@ func WrapEL(f http.HandlerFunc, target, optType string, synType int) http.Handle
 				}
 			}
 
-			event, err := util.CreateEvent(target, optType, targetID, tenantEnvID, string(body), operator, synType)
+			event, err := util.CreateEvent(target, optType, targetID, tenantEnvID, operator, synType)
 			if err != nil {
 				logrus.Error("create event error : ", err)
 				httputil.ReturnError(r, w, 500, "操作失败")

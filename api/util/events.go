@@ -82,16 +82,12 @@ func checkTimeout(event *dbmodel.ServiceEvent) bool {
 }
 
 // CreateEvent save event
-func CreateEvent(target, optType, targetID, tenantEnvID, reqBody, userName string, synType int) (*dbmodel.ServiceEvent, error) {
-	if len(reqBody) > 1024 {
-		reqBody = reqBody[0:1024]
-	}
+func CreateEvent(target, optType, targetID, tenantEnvID, userName string, synType int) (*dbmodel.ServiceEvent, error) {
 	event := dbmodel.ServiceEvent{
 		EventID:     util.NewUUID(),
 		TenantEnvID: tenantEnvID,
 		Target:      target,
 		TargetID:    targetID,
-		RequestBody: reqBody,
 		UserName:    userName,
 		StartTime:   time.Now().Format(time.RFC3339),
 		SynType:     synType,
