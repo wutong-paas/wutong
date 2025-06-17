@@ -116,6 +116,7 @@ func (i *ipManager) updateIP(ips ...net.IP) error {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 	leaseClient := clientv3.NewLease(i.etcdCli)
+	defer leaseClient.Close()
 	for in := range ips {
 		ip := ips[in]
 		if id, ok := i.ipLease[ip.String()]; ok {
@@ -125,7 +126,7 @@ func (i *ipManager) updateIP(ips ...net.IP) error {
 				logrus.Warningf("keep alive ip key failure %s", err.Error())
 			}
 		}
-		res, err := leaseClient.Grant(ctx, 10)
+		res, err := leaseClient.Grant(ctx, 10*60) // 10 minutes
 		if err != nil {
 			logrus.Errorf("put gateway ip to etcd failure %s", err.Error())
 			continue

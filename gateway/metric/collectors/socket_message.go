@@ -64,7 +64,7 @@ type SocketCollector struct {
 	requests        *prometheus.CounterVec
 	listener        net.Listener
 	metricMapping   map[string]interface{}
-	hosts           sets.String
+	hosts           sets.Set[string]
 	metricsPerHost  bool
 }
 
@@ -193,7 +193,7 @@ func NewSocketCollector(gatewayHost string, metricsPerHost bool) (*SocketCollect
 
 // SetHosts sets the hostnames that are being served by the ingress controller
 // This set of hostnames is used to filter the metrics to be exposed
-func (sc *SocketCollector) SetHosts(hosts sets.String) {
+func (sc *SocketCollector) SetHosts(hosts sets.Set[string]) {
 	sc.hosts = hosts
 }
 

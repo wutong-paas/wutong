@@ -31,7 +31,7 @@ import (
 type Collector interface {
 	Start()
 	Stop()
-	SetHosts(sets.String)
+	SetHosts(sets.Set[string])
 	SetServerNum(httpNum, tcpNum int)
 	RemoveHostMetric([]string)
 }
@@ -75,11 +75,11 @@ func (c *collector) SetServerNum(httpNum, tcpNum int) {
 	c.gatewayController.SetServerNum(httpNum, tcpNum)
 }
 
-func (c *collector) SetHosts(hosts sets.String) {
+func (c *collector) SetHosts(hosts sets.Set[string]) {
 	c.socket.SetHosts(hosts)
 }
 
-//RemoveHostMetric -
+// RemoveHostMetric -
 func (c *collector) RemoveHostMetric(hosts []string) {
 	c.socket.RemoveMetrics(hosts, c.registry)
 }

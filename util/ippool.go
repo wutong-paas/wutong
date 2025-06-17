@@ -27,16 +27,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//IPEVENTTYPE ip change event type
+// IPEVENTTYPE ip change event type
 type IPEVENTTYPE int
 
-//IPEVENT ip change event
+// IPEVENT ip change event
 type IPEVENT struct {
 	Type IPEVENTTYPE
 	IP   net.IP
 }
 
-//IPPool ip pool
+// IPPool ip pool
 type IPPool struct {
 	ctx                 context.Context
 	cancel              context.CancelFunc
@@ -58,7 +58,7 @@ const (
 	UPDATE
 )
 
-//NewIPPool new ip pool
+// NewIPPool new ip pool
 func NewIPPool(ignoreInterfaceName []string) *IPPool {
 	ctx, cancel := context.WithCancel(context.Background())
 	ippool := &IPPool{
@@ -73,14 +73,14 @@ func NewIPPool(ignoreInterfaceName []string) *IPPool {
 	return ippool
 }
 
-//Ready ready
+// Ready ready
 func (i *IPPool) Ready() bool {
 	logrus.Info("waiting ip pool start ready")
 	<-i.startReady
 	return true
 }
 
-//GetHostIPs get host ips
+// GetHostIPs get host ips
 func (i *IPPool) GetHostIPs() []net.IP {
 	i.lock.Lock()
 	defer i.lock.Unlock()
@@ -91,17 +91,17 @@ func (i *IPPool) GetHostIPs() []net.IP {
 	return ips
 }
 
-//GetWatchIPChan watch ip change
+// GetWatchIPChan watch ip change
 func (i *IPPool) GetWatchIPChan() <-chan IPEVENT {
 	return i.EventCh
 }
 
-//Close close
+// Close close
 func (i *IPPool) Close() {
 	i.cancel()
 }
 
-//LoopCheckIPs loop check ips
+// LoopCheckIPs loop check ips
 func (i *IPPool) LoopCheckIPs() {
 	Exec(i.ctx, func() error {
 		logrus.Debugf("start loop watch ips from all interface")
@@ -120,8 +120,7 @@ func (i *IPPool) LoopCheckIPs() {
 			_, ok := i.HostIPs[v.To4().String()]
 			if ok {
 				i.EventCh <- IPEVENT{Type: UPDATE, IP: v.To4()}
-			}
-			if !ok {
+			} else {
 				i.EventCh <- IPEVENT{Type: ADD, IP: v.To4()}
 			}
 			newIP[v.To4().String()] = v.To4()
@@ -137,7 +136,7 @@ func (i *IPPool) LoopCheckIPs() {
 			close(i.startReady)
 		})
 		return nil
-	}, time.Second*5)
+	}, time.Minute*5)
 }
 
 func (i *IPPool) getInterfaceIPs() ([]net.IP, error) {

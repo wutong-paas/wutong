@@ -34,7 +34,7 @@ import (
 	"github.com/wutong-paas/wutong/api/util/bcode"
 	"github.com/wutong-paas/wutong/db"
 	"github.com/wutong-paas/wutong/db/model"
-	"github.com/wutong-paas/wutong/mq/client"
+	mqclient "github.com/wutong-paas/wutong/mq/client"
 	"github.com/wutong-paas/wutong/util"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
@@ -42,12 +42,12 @@ import (
 // GatewayAction -
 type GatewayAction struct {
 	dbmanager db.Manager
-	mqclient  client.MQClient
+	mqclient  mqclient.MQClient
 	etcdCli   *clientv3.Client
 }
 
 // CreateGatewayManager creates gateway manager.
-func CreateGatewayManager(dbmanager db.Manager, mqclient client.MQClient, etcdCli *clientv3.Client) *GatewayAction {
+func CreateGatewayManager(dbmanager db.Manager, mqclient mqclient.MQClient, etcdCli *clientv3.Client) *GatewayAction {
 	return &GatewayAction{
 		dbmanager: dbmanager,
 		mqclient:  mqclient,
@@ -721,8 +721,8 @@ func (g *GatewayAction) SendTaskDeprecated(in map[string]interface{}) error {
 	for k, v := range in {
 		body[k] = v
 	}
-	err = g.mqclient.SendBuilderTopic(client.TaskStruct{
-		Topic:    client.WorkerTopic,
+	err = g.mqclient.SendBuilderTopic(mqclient.TaskStruct{
+		Topic:    mqclient.WorkerTopic,
 		TaskType: "apply_rule",
 		TaskBody: body,
 	})
@@ -734,8 +734,8 @@ func (g *GatewayAction) SendTaskDeprecated(in map[string]interface{}) error {
 
 // SendTask sends apply rules task
 func (g *GatewayAction) SendTask(task *ComponentIngressTask) error {
-	err := g.mqclient.SendBuilderTopic(client.TaskStruct{
-		Topic:    client.WorkerTopic,
+	err := g.mqclient.SendBuilderTopic(mqclient.TaskStruct{
+		Topic:    mqclient.WorkerTopic,
 		TaskType: "apply_rule",
 		TaskBody: task,
 	})
@@ -998,6 +998,7 @@ type IPAndAvailablePort struct {
 	AvailablePort int    `json:"available_port"`
 }
 
+// Deprecated: 该接口废弃，新版本使用 Console 配置的网关IP
 // GetGatewayIPs get all gateway node ips
 func (g *GatewayAction) GetGatewayIPs() []IPAndAvailablePort {
 	defaultAvailablePort, _ := g.GetAvailablePort("0.0.0.0", false)
@@ -1005,6 +1006,7 @@ func (g *GatewayAction) GetGatewayIPs() []IPAndAvailablePort {
 		IP:            "0.0.0.0",
 		AvailablePort: defaultAvailablePort,
 	}}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	res, err := clientv3.NewKV(g.etcdCli).Get(ctx, "/wutong/gateway/ips", clientv3.WithPrefix())

@@ -200,30 +200,11 @@ func NewGWController(ctx context.Context, clientset kubernetes.Interface, cfg *o
 	return gwc, nil
 }
 
-func poolsEqual(a []*v1.Pool, b []*v1.Pool) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for _, ap := range a {
-		flag := false
-		for _, bp := range b {
-			if ap.Equals(bp) {
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			return false
-		}
-	}
-	return true
-}
-
 // getHosts returns a list of the hostsnames and tobe remove hostname
 // that are not associated anymore to the NGINX configuration.
-func getHosts(rucfg, newcfg *v1.Config) (remove []string, current sets.String) {
-	old := sets.NewString()
-	new := sets.NewString()
+func getHosts(rucfg, newcfg *v1.Config) (remove []string, current sets.Set[string]) {
+	old := sets.Set[string]{}
+	new := sets.Set[string]{}
 	if rucfg != nil {
 		for _, s := range rucfg.L7VS {
 			if !old.Has(s.ServerName) {
@@ -238,5 +219,5 @@ func getHosts(rucfg, newcfg *v1.Config) (remove []string, current sets.String) {
 			}
 		}
 	}
-	return old.Difference(new).List(), new
+	return old.Difference(new).UnsortedList(), new
 }

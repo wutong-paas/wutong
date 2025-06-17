@@ -170,7 +170,7 @@ func NewTaskQueue(syncFn func(interface{}) error) *Queue {
 // NewCustomTaskQueue ...
 func NewCustomTaskQueue(syncFn func(interface{}) error, fn func(interface{}) (interface{}, error)) *Queue {
 	q := &Queue{
-		queue:      workqueue.NewTypedRateLimitingQueue[any](workqueue.DefaultTypedControllerRateLimiter[any]()),
+		queue:      workqueue.NewTypedRateLimitingQueue(workqueue.DefaultTypedControllerRateLimiter[any]()),
 		sync:       syncFn,
 		workerDone: make(chan bool),
 		fn:         fn,

@@ -102,6 +102,29 @@ func (s *ServiceAction) SetTenantEnvServicePluginRelation(tenantEnvID, serviceID
 	// 	return nil, util.CreateAPIHandleError(400, fmt.Errorf("can not add this kind plugin, a same kind plugin has been linked"))
 	// }
 
+	// v2.0.0 版本迁移后，检查旧版本系统插件，移除
+	relations, err := db.GetManager().TenantEnvServicePluginRelationDao().GetALLRelationByServiceID(serviceID)
+	if err != nil {
+		return nil, util.CreateAPIHandleErrorFromDBError("get all relations by service id", err)
+	}
+
+	for _, relation := range relations {
+		relatedPlugin, err := db.GetManager().TenantEnvPluginDao().GetPluginByID(relation.PluginID, tenantEnvID)
+		if (err != nil && err == gorm.ErrRecordNotFound) ||
+			(relatedPlugin != nil && relatedPlugin.PluginName == plugin.PluginName && relatedPlugin.PluginType == plugin.PluginType) {
+			// 迁移之前安装的系统插件，移除
+			// db.GetManager().TenantEnvServicePluginRelationDao().UpdateModel(relation)
+			if err := db.GetManager().TenantEnvServicePluginRelationDao().DeleteRelationByServiceIDAndPluginID(
+				serviceID,
+				relation.PluginID,
+			); err != nil {
+				logrus.Warningf("delete old sys plugin relation %s error, %v", relation.PluginID, err)
+			}
+			db.GetManager().TenantEnvPluginVersionENVDao().DeleteEnvByPluginID(serviceID, relation.PluginID)
+			db.GetManager().TenantEnvPluginVersionConfigDao().DeletePluginConfig(serviceID, relation.PluginID)
+		}
+	}
+
 	crt, err := db.GetManager().TenantEnvServicePluginRelationDao().CheckPluginBeforeInstall(
 		serviceID,
 		plugin.PluginModel,

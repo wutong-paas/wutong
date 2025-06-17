@@ -1977,17 +1977,6 @@ func (t *TenantEnvStruct) GetServiceInstanceDescription(w http.ResponseWriter, r
 	tenantEnv := r.Context().Value(ctxutil.ContextKey("tenant_env")).(*dbmodel.TenantEnvs)
 	instance := chi.URLParam(r, "instance_id")
 
-	req := api_model.ServiceInstanceLogReq{
-		Container:  r.URL.Query().Get("container"),
-		TailLines:  cast.ToInt64(r.URL.Query().Get("tailLines")),
-		Timestamps: cast.ToBool(r.URL.Query().Get("timestamps")),
-		Previous:   cast.ToBool(r.URL.Query().Get("previous")),
-	}
-
-	if req.TailLines <= 0 {
-		req.TailLines = 1024
-	}
-
 	pod, err := handler.GetServiceManager().KubeClient().CoreV1().Pods(tenantEnv.Namespace).Get(context.Background(), instance, metav1.GetOptions{})
 	if err != nil {
 		httputil.ReturnError(r, w, 404, "获取组件实例描述信息失败")

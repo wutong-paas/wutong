@@ -49,10 +49,6 @@ type stat struct {
 	Status string `json:"status"`
 }
 
-type exportInfo struct {
-	status string
-}
-
 const (
 	exportStatusNotExport  = "未导出"
 	exportStatusProcessing = "导出中"

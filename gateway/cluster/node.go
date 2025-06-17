@@ -54,7 +54,7 @@ func (n *NodeManager) Start() error {
 		return err
 	}
 	if ok := n.checkGatewayPort(); !ok {
-		return fmt.Errorf("Check gateway node port failure")
+		return fmt.Errorf("check gateway node port failure")
 	}
 	return nil
 }
