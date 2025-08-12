@@ -44,6 +44,7 @@ import (
 	"github.com/wutong-paas/wutong/gateway/defaults"
 	"github.com/wutong-paas/wutong/gateway/util"
 	v1 "github.com/wutong-paas/wutong/gateway/v1"
+	coreutil "github.com/wutong-paas/wutong/util"
 	istroe "github.com/wutong-paas/wutong/util/ingress-nginx/ingress/controller/store"
 	ik8s "github.com/wutong-paas/wutong/util/ingress-nginx/k8s"
 	corev1 "k8s.io/api/core/v1"
@@ -1051,7 +1052,7 @@ func (s *k8sStore) GetServiceProtocol(key string, port int32) corev1.Protocol {
 func (s *k8sStore) Run(stopCh chan struct{}) {
 	// start informers
 	s.informers.Run(stopCh)
-	// go s.loopUpdateIngress()
+	go s.loopUpdateIngress()
 }
 
 // syncSecrets synchronizes data from all Secrets referenced by the given
@@ -1144,46 +1145,46 @@ func (s *k8sStore) GetBackendConfiguration() config.Configuration {
 	return s.backendConfig
 }
 
-// func (s *k8sStore) loopUpdateIngress() {
-// 	for ipevent := range s.node.IPManager().NeedUpdateGatewayPolicy() {
-// 		ingress := s.listers.Ingress.List()
-// 		for i := range ingress {
-// 			var meta *metav1.ObjectMeta
-// 			var superIngress interface{}
-// 			netIngress, ok := ingress[i].(*networkingv1.Ingress)
-// 			if ok && netIngress != nil {
-// 				superIngress = netIngress
-// 				meta = &netIngress.ObjectMeta
-// 			} else {
-// 				betaIngress, ok := ingress[i].(*betav1.Ingress)
-// 				if !ok || betaIngress == nil {
-// 					continue
-// 				}
-// 				superIngress = betaIngress
-// 				meta = &betaIngress.ObjectMeta
-// 			}
+func (s *k8sStore) loopUpdateIngress() {
+	for ipevent := range s.node.IPManager().NeedUpdateGatewayPolicy() {
+		ingress := s.listers.Ingress.List()
+		for i := range ingress {
+			var meta *metav1.ObjectMeta
+			var superIngress interface{}
+			netIngress, ok := ingress[i].(*networkingv1.Ingress)
+			if ok && netIngress != nil {
+				superIngress = netIngress
+				meta = &netIngress.ObjectMeta
+			} else {
+				betaIngress, ok := ingress[i].(*betav1.Ingress)
+				if !ok || betaIngress == nil {
+					continue
+				}
+				superIngress = betaIngress
+				meta = &betaIngress.ObjectMeta
+			}
 
-// 			if s.annotations.Extract(meta).L4.L4Host == ipevent.IP.String() {
-// 				s.extractAnnotations(superIngress)
-// 				s.secretIngressMap.update(superIngress)
-// 				s.syncSecrets(superIngress)
+			if s.annotations.Extract(meta).L4.L4Host == ipevent.IP.String() {
+				s.extractAnnotations(superIngress)
+				s.secretIngressMap.update(superIngress)
+				s.syncSecrets(superIngress)
 
-// 				s.updateCh.In() <- Event{
-// 					Type: func() EventType {
-// 						switch ipevent.Type {
-// 						case coreutil.ADD:
-// 							return CreateEvent
-// 						case coreutil.UPDATE:
-// 							return UpdateEvent
-// 						case coreutil.DEL:
-// 							return DeleteEvent
-// 						default:
-// 							return UpdateEvent
-// 						}
-// 					}(),
-// 					Obj: ingress[i],
-// 				}
-// 			}
-// 		}
-// 	}
-// }
+				s.updateCh.In() <- Event{
+					Type: func() EventType {
+						switch ipevent.Type {
+						case coreutil.ADD:
+							return CreateEvent
+						case coreutil.UPDATE:
+							return UpdateEvent
+						case coreutil.DEL:
+							return DeleteEvent
+						default:
+							return UpdateEvent
+						}
+					}(),
+					Obj: ingress[i],
+				}
+			}
+		}
+	}
+}

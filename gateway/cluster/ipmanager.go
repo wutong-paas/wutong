@@ -126,7 +126,8 @@ func (i *ipManager) updateIP(ips ...net.IP) error {
 				logrus.Warningf("keep alive ip key failure %s", err.Error())
 			}
 		}
-		res, err := leaseClient.Grant(ctx, 10*60) // 10 minutes
+		res, err := leaseClient.Grant(ctx, 10)
+		// res, err := leaseClient.Grant(ctx, 10*60) // 10 minutes
 		if err != nil {
 			logrus.Errorf("put gateway ip to etcd failure %s", err.Error())
 			continue

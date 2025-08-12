@@ -136,7 +136,8 @@ func (i *IPPool) LoopCheckIPs() {
 			close(i.startReady)
 		})
 		return nil
-	}, time.Minute*5)
+	}, time.Second*5)
+	// }, time.Minute*5)
 }
 
 func (i *IPPool) getInterfaceIPs() ([]net.IP, error) {
